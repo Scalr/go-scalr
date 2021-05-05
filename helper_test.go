@@ -9,6 +9,8 @@ import (
 )
 
 const defaultAccountID = "acc-svrcncgh453bi8g"
+const defaultIdentityProviderID = "idp-sohkb0o1phrdmr8"
+const defaultUserID = "user-suh84u6vuvidtbg"
 const badIdentifier = "! / nope"
 
 func testClient(t *testing.T) *Client {
@@ -35,6 +37,50 @@ func createEnvironment(t *testing.T, client *Client) (*Environment, func()) {
 			t.Errorf("Error destroying environment! WARNING: Dangling resources\n"+
 				"may exist! The full error is shown below.\n\n"+
 				"Environment: %s\nError: %s", env.ID, err)
+		}
+	}
+}
+
+func createUser(t *testing.T, client *Client) (*User, func()) {
+	ctx := context.Background()
+	usr, err := client.Users.Create(ctx, UserCreateOptions{
+		Email:            String("tst-" + randomString(t) + "@scalr.com"),
+		IdentityProvider: &IdentityProvider{ID: defaultIdentityProviderID},
+		Status:           UserStatusActive,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return usr, func() {
+		if err := client.Users.Delete(ctx, usr.ID); err != nil {
+			t.Errorf("Error destroying user! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"User: %s\nError: %s", usr.ID, err)
+		}
+	}
+}
+
+func createTeam(t *testing.T, client *Client) (*Team, func()) {
+	ctx := context.Background()
+	users := []*User{{ID: defaultUserID}}
+	team, err := client.Teams.Create(ctx, TeamCreateOptions{
+		Name:             String("tst-" + randomString(t)),
+		Description:      String("Team created by scalr-go tests"),
+		IdentityProvider: &IdentityProvider{ID: defaultIdentityProviderID},
+		Account:          &Account{ID: defaultAccountID},
+		Users:            users,
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return team, func() {
+		if err := client.Teams.Delete(ctx, team.ID); err != nil {
+			t.Errorf("Error destroying team! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"Team: %s\nError: %s", team.ID, err)
 		}
 	}
 }
