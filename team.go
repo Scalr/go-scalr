@@ -74,7 +74,7 @@ func (o TeamCreateOptions) valid() error {
 
 	for i, usr := range o.Users {
 		if usr != nil && !validStringID(&usr.ID) {
-			return errors.New(fmt.Sprintf("invalid value for user ID: %v (idx: %v)", usr.ID, i))
+			return fmt.Errorf("invalid value for user ID: %v (idx: %v)", usr.ID, i)
 		}
 	}
 	return nil
