@@ -87,6 +87,7 @@ func TestWorkspacesCreate(t *testing.T) {
 			assert.NotEmpty(t, item.ID)
 			assert.Equal(t, *options.Name, item.Name)
 			assert.Equal(t, *options.AutoApply, item.AutoApply)
+			assert.Equal(t, false, item.HasActiveState)
 			assert.Equal(t, *options.Operations, item.Operations)
 			assert.Equal(t, *options.TerraformVersion, item.TerraformVersion)
 			assert.Equal(t, *options.WorkingDirectory, item.WorkingDirectory)

@@ -59,6 +59,7 @@ type Workspace struct {
 	TerraformVersion     string                `jsonapi:"attr,terraform-version"`
 	VCSRepo              *VCSRepo              `jsonapi:"attr,vcs-repo"`
 	WorkingDirectory     string                `jsonapi:"attr,working-directory"`
+	HasActiveState       bool                  `jsonapi:"attr,has-active-state"`
 
 	// Relations
 	CurrentRun  *Run                `jsonapi:"relation,current-run"`
