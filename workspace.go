@@ -83,6 +83,7 @@ type VCSRepo struct {
 	IngressSubmodules bool     `json:"ingress-submodules"`
 	Path              string   `json:"path"`
 	TriggerPrefixes   []string `json:"trigger-prefixes,omitempty"`
+	DryRunsEnabled    bool     `json:"dry-runs-enabled"`
 }
 
 // WorkspaceActions represents the workspace actions.
@@ -177,6 +178,7 @@ type VCSRepoOptions struct {
 	IngressSubmodules *bool     `json:"ingress-submodules,omitempty"`
 	Path              *string   `json:"path,omitempty"`
 	TriggerPrefixes   *[]string `json:"trigger-prefixes,omitempty"`
+	DryRunsEnabled    *bool     `json:"dry-runs-enabled,omitempty"`
 }
 
 type VcsProviderOptions struct {
