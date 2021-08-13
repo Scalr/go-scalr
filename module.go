@@ -36,6 +36,7 @@ type Module struct {
 	Provider string                `jsonapi:"attr,provider"`
 	VCSRepo  *ModuleVCSRepoOptions `jsonapi:"attr,vcs-repo"`
 	Status   ModuleStatus          `jsonapi:"attr,status"`
+	Source   string                `jsonapi:"attr,source"`
 	// Relation
 	VcsProvider *VcsProviderOptions `jsonapi:"relation,vcs-provider"`
 	Account     *Account            `jsonapi:"relation,account,omitempty"`
@@ -95,7 +96,7 @@ func (s *modules) List(ctx context.Context, options ModuleListOptions) (*ModuleL
 
 type ModuleCreateOptions struct {
 	//// For internal use only!
-	//ID string `jsonapi:"primary,modules"`
+	ID string `jsonapi:"primary,modules"`
 
 	// Settings for the module VCS repository.
 	VCSRepo *ModuleVCSRepoOptions `jsonapi:"attr,vcs-repo"`
@@ -107,7 +108,7 @@ type ModuleCreateOptions struct {
 	Account *Account `jsonapi:"relation,account,omitempty"`
 
 	// Specifies the Environment for module
-	Environment *Environment `jsonapi:"relation,account,omitempty"`
+	Environment *Environment `jsonapi:"relation,environment,omitempty"`
 }
 
 // ModuleVCSRepoOptions represents the configuration options of a VCS integration.
@@ -135,7 +136,7 @@ func (s *modules) Create(ctx context.Context, options ModuleCreateOptions) (*Mod
 		return nil, err
 	}
 	//// Make sure we don't send a user provided ID.
-	//options.ID = ""
+	options.ID = ""
 
 	req, err := s.client.newRequest("POST", "modules", &options)
 	if err != nil {
