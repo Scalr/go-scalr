@@ -63,10 +63,11 @@ type Workspace struct {
 	Hooks                *Hooks                `jsonapi:"attr,hooks"`
 
 	// Relations
-	CurrentRun  *Run                `jsonapi:"relation,current-run"`
-	Environment *Environment        `jsonapi:"relation,environment"`
-	CreatedBy   *User               `jsonapi:"relation,created-by"`
-	VcsProvider *VcsProviderOptions `jsonapi:"relation,vcs-provider"`
+	CurrentRun    *Run                `jsonapi:"relation,current-run"`
+	Environment   *Environment        `jsonapi:"relation,environment"`
+	CreatedBy     *User               `jsonapi:"relation,created-by"`
+	VcsProvider   *VcsProviderOptions `jsonapi:"relation,vcs-provider"`
+	ModuleVersion *ModuleVersion      `jsonapi:"relation,module-version,omitempty"`
 }
 
 // Hooks contains the custom hooks field.
@@ -170,6 +171,8 @@ type WorkspaceCreateOptions struct {
 
 	// Specifies the Environment for workspace.
 	Environment *Environment `jsonapi:"relation,environment"`
+	// Specifies the Module based on create workspace
+	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
 }
 
 // VCSRepoOptions represents the configuration options of a VCS integration.
@@ -327,6 +330,8 @@ type WorkspaceUpdateOptions struct {
 
 	// Specifies the VcsProvider for workspace vcs-repo.
 	VcsProvider *VcsProviderOptions `jsonapi:"relation,vcs-provider,omitempty"`
+	// Specifies the Module based on create workspace
+	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
 }
 
 // Update settings of an existing workspace.
