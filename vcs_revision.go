@@ -8,10 +8,10 @@ import (
 )
 
 // Compile-time proof of interface implementation.
-var _ VcsRevisions = (*vcs_revisions)(nil)
+var _ VcsRevisions = (*vcsRevisions)(nil)
 
 // VCS revision implements VcsRevisions.
-type vcs_revisions struct {
+type vcsRevisions struct {
 	client *Client
 }
 
@@ -31,7 +31,7 @@ type VcsRevision struct {
 }
 
 // Read a VCS revision by its ID.
-func (s *vcs_revisions) Read(ctx context.Context, vcsRevisionID string) (*VcsRevision, error) {
+func (s *vcsRevisions) Read(ctx context.Context, vcsRevisionID string) (*VcsRevision, error) {
 	if !validStringID(&vcsRevisionID) {
 		return nil, errors.New("invalid value for vcs revision ID")
 	}
