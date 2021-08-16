@@ -65,7 +65,7 @@ func TestModulesCreate(t *testing.T) {
 
 	t.Run("when options has invalid vcs repo identifier", func(t *testing.T) {
 		w, err := client.Modules.Create(ctx, ModuleCreateOptions{
-			VCSRepo:     &ModuleVCSRepoOptions{Identifier: "foo/bar"},
+			VCSRepo:     &ModuleVCSRepo{Identifier: "foo/bar"},
 			VcsProvider: &VcsProviderOptions{ID: *String(badIdentifier)},
 		})
 		assert.Nil(t, w)
@@ -75,7 +75,7 @@ func TestModulesCreate(t *testing.T) {
 	t.Run("when an error is returned from the api", func(t *testing.T) {
 		ws, err := client.Modules.Create(ctx, ModuleCreateOptions{
 			Environment: &Environment{ID: *String(badIdentifier)},
-			VCSRepo:     &ModuleVCSRepoOptions{Identifier: "foo/bar"},
+			VCSRepo:     &ModuleVCSRepo{Identifier: "foo/bar"},
 			VcsProvider: &VcsProviderOptions{ID: "vcs-test"},
 		})
 		assert.Nil(t, ws)

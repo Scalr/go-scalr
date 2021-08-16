@@ -31,12 +31,12 @@ type modules struct {
 }
 
 type Module struct {
-	ID       string                `jsonapi:"primary,modules"`
-	Name     string                `jsonapi:"attr,name"`
-	Provider string                `jsonapi:"attr,provider"`
-	VCSRepo  *ModuleVCSRepoOptions `jsonapi:"attr,vcs-repo"`
-	Status   ModuleStatus          `jsonapi:"attr,status"`
-	Source   string                `jsonapi:"attr,source"`
+	ID       string         `jsonapi:"primary,modules"`
+	Name     string         `jsonapi:"attr,name"`
+	Provider string         `jsonapi:"attr,provider"`
+	VCSRepo  *ModuleVCSRepo `jsonapi:"attr,vcs-repo"`
+	Status   ModuleStatus   `jsonapi:"attr,status"`
+	Source   string         `jsonapi:"attr,source"`
 	// Relation
 	VcsProvider *VcsProviderOptions `jsonapi:"relation,vcs-provider"`
 	Account     *Account            `jsonapi:"relation,account,omitempty"`
@@ -57,7 +57,7 @@ const (
 // ModuleVCSRepo contains the configuration of a VCS integration.
 type ModuleVCSRepo struct {
 	Identifier string  `json:"identifier"`
-	Path       string  `json:"path"`
+	Path       *string `json:"path"`
 	TagPrefix  *string `json:"tag-prefix,omitempty"`
 }
 
@@ -99,7 +99,7 @@ type ModuleCreateOptions struct {
 	ID string `jsonapi:"primary,modules"`
 
 	// Settings for the module VCS repository.
-	VCSRepo *ModuleVCSRepoOptions `jsonapi:"attr,vcs-repo"`
+	VCSRepo *ModuleVCSRepo `jsonapi:"attr,vcs-repo"`
 
 	// Specifies the VcsProvider for module vcs-repo.
 	VcsProvider *VcsProviderOptions `jsonapi:"relation,vcs-provider"`
@@ -109,13 +109,6 @@ type ModuleCreateOptions struct {
 
 	// Specifies the Environment for module
 	Environment *Environment `jsonapi:"relation,environment,omitempty"`
-}
-
-// ModuleVCSRepoOptions represents the configuration options of a VCS integration.
-type ModuleVCSRepoOptions struct {
-	Identifier string  `json:"identifier,omitempty"`
-	Path       *string `json:"path,omitempty"`
-	TagPrefix  *string `json:"tag-prefix,omitempty"`
 }
 
 func (o ModuleCreateOptions) valid() error {
