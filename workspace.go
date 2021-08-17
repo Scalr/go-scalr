@@ -331,7 +331,7 @@ type WorkspaceUpdateOptions struct {
 	// Specifies the VcsProvider for workspace vcs-repo.
 	VcsProvider *VcsProviderOptions `jsonapi:"relation,vcs-provider,omitempty"`
 	// Specifies the Module based on create workspace
-	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
+	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version"`
 }
 
 // Update settings of an existing workspace.
