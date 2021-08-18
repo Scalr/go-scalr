@@ -9,6 +9,7 @@ import (
 )
 
 const defaultAccountID = "acc-svrcncgh453bi8g"
+const defaultModuleID = "mod-svsmkkjo8sju4o0"
 const badIdentifier = "! / nope"
 
 func testClient(t *testing.T) *Client {
