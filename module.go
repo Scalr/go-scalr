@@ -45,7 +45,6 @@ type Module struct {
 	Environment         *Environment        `jsonapi:"relation,environment,omitempty"`
 	CreatedBy           *User               `jsonapi:"relation,created-by,omitempty"`
 	LatestModuleVersion *ModuleVersion      `jsonapi:"relation,latest-module-version,omitempty"`
-	ModuleVersions      *[]ModuleVersion    `jsonapi:"relation,module-versions,omitempty"`
 }
 
 // ModuleStatus represents a module state.
