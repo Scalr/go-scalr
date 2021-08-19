@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 )
 
 // Compile-time proof of interface implementation.
@@ -31,16 +32,21 @@ type modules struct {
 }
 
 type Module struct {
-	ID       string         `jsonapi:"primary,modules"`
-	Name     string         `jsonapi:"attr,name"`
-	Provider string         `jsonapi:"attr,provider"`
-	VCSRepo  *ModuleVCSRepo `jsonapi:"attr,vcs-repo"`
-	Status   ModuleStatus   `jsonapi:"attr,status"`
-	Source   string         `jsonapi:"attr,source"`
+	ID          string         `jsonapi:"primary,modules"`
+	CreatedAt   time.Time      `jsonapi:"attr,created-at,iso8601"`
+	Name        string         `jsonapi:"attr,name"`
+	Provider    string         `jsonapi:"attr,provider"`
+	Source      string         `jsonapi:"attr,source"`
+	Description string         `jsonapi:"attr,description,omitempty"`
+	VCSRepo     *ModuleVCSRepo `jsonapi:"attr,vcs-repo"`
+	Status      ModuleStatus   `jsonapi:"attr,status"`
 	// Relation
-	VcsProvider *VcsProviderOptions `jsonapi:"relation,vcs-provider"`
-	Account     *Account            `jsonapi:"relation,account,omitempty"`
-	Environment *Environment        `jsonapi:"relation,environment,omitempty"`
+	VcsProvider         *VcsProviderOptions `jsonapi:"relation,vcs-provider"`
+	Account             *Account            `jsonapi:"relation,account,omitempty"`
+	Environment         *Environment        `jsonapi:"relation,environment,omitempty"`
+	CreatedBy           *User               `jsonapi:"relation,created-by,omitempty"`
+	LatestModuleVersion *ModuleVersion      `jsonapi:"relation,latest-module-version,omitempty"`
+	ModuleVersions      []*ModuleVersion    `jsonapi:"relation,module-versions,omitempty"`
 }
 
 // ModuleStatus represents a module state.

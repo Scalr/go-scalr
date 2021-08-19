@@ -111,6 +111,7 @@ type Client struct {
 	ConfigurationVersions ConfigurationVersions
 	VcsRevisions          VcsRevisions
 	Modules               Modules
+	ModuleVersions        ModuleVersions
 }
 
 // NewClient creates a new Scalr API client.
@@ -187,6 +188,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.ConfigurationVersions = &configurationVersions{client: client}
 	client.VcsRevisions = &vcsRevisions{client: client}
 	client.Modules = &modules{client: client}
+	client.ModuleVersions = &moduleVersions{client: client}
 
 	return client, nil
 }

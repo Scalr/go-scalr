@@ -98,5 +98,5 @@ export SCALR_TOKEN=
 ```
 You can run the acceptance tests like this:
 ```
-make testacc
+make test
 ```
