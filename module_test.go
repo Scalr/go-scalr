@@ -105,6 +105,27 @@ func TestModulesRead(t *testing.T) {
 	})
 }
 
+func TestModulesReadBySource(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+	module, err := client.Modules.Read(ctx, defaultModuleID)
+	require.NoError(t, err)
+
+	t.Run("with valid source", func(t *testing.T) {
+		m, err := client.Modules.ReadBySource(ctx, module.Source)
+		require.NoError(t, err)
+		assert.NotEmpty(t, m.Source)
+		assert.Equal(t, module.ID, m.ID)
+		assert.Equal(t, module.Source, m.Source)
+	})
+
+	t.Run("Invalid source", func(t *testing.T) {
+		_, err := client.Modules.ReadBySource(ctx, "invalidSource")
+		require.Error(t, err)
+		assert.Equal(t, err, ErrResourceNotFound)
+	})
+}
+
 func TestModulesDelete(t *testing.T) {
 	client := testClient(t)
 	ctx := context.Background()

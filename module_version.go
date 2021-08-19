@@ -16,6 +16,8 @@ type ModuleVersions interface {
 	List(ctx context.Context, options ModuleVersionListOptions) (*ModuleVersionList, error)
 	// Read a module version by its ID.
 	Read(ctx context.Context, moduleVersionID string) (*ModuleVersion, error)
+	// ReadBySemanticVersion read module version by module and semantic version
+	ReadBySemanticVersion(ctx context.Context, moduleId string, version string) (*ModuleVersion, error)
 }
 
 // moduleVersions implements ModuleVersions.
@@ -32,8 +34,9 @@ type ModuleVersionList struct {
 // ModuleVersion represents a Scalr module version.
 type ModuleVersion struct {
 	ID           string              `jsonapi:"primary,module-versions"`
-	IsRootModule bool                `jsonapi:"attr"`
+	IsRootModule bool                `jsonapi:"attr,is-root-module"`
 	Status       ModuleVersionStatus `jsonapi:"attr,status"`
+	Version      string              `jsonapi:"attr,version"`
 }
 
 type ModuleVersionStatus string
@@ -101,4 +104,31 @@ func (s *moduleVersions) List(ctx context.Context, options ModuleVersionListOpti
 	}
 
 	return mv, nil
+}
+
+func (s *moduleVersions) ReadBySemanticVersion(ctx context.Context, moduleID string, version string) (*ModuleVersion, error) {
+	if !validStringID(&moduleID) {
+		return nil, errors.New("invalid value for module id")
+	}
+
+	v := &version
+	if !validString(v) {
+		return nil, errors.New("invalid value for version")
+	}
+
+	req, err := s.client.newRequest("GET", "module-versions", &ModuleVersionListOptions{Module: moduleID, Version: v})
+	if err != nil {
+		return nil, err
+	}
+
+	mvl := &ModuleVersionList{}
+	err = s.client.do(ctx, req, mvl)
+	if err != nil {
+		return nil, err
+	}
+	if len(mvl.Items) != 1 {
+		return nil, ErrResourceNotFound
+	}
+
+	return mvl.Items[0], nil
 }
