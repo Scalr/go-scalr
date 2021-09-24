@@ -83,8 +83,8 @@ type RoleListOptions struct {
 	ListOptions
 
 	Account *string `url:"filter[account],omitempty"`
-	Name    string  `url:"filter[name],omitempty"`
 	Role    string  `url:"filter[role],omitempty"`
+	Name    string  `url:"filter[role][name],omitempty"`
 	Query   string  `url:"query,omitempty"`
 	Include string  `url:"include,omitempty"`
 }
