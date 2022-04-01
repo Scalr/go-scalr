@@ -80,6 +80,7 @@ type Hooks struct {
 	PostApply string `json:"post-apply"`
 }
 
+// test
 // WorkspaceVCSRepo contains the configuration of a VCS integration.
 type WorkspaceVCSRepo struct {
 	Branch            string   `json:"branch"`
