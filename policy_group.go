@@ -58,16 +58,18 @@ type Policy struct {
 
 // PolicyGroupVCSRepo contains the configuration of a VCS integration.
 type PolicyGroupVCSRepo struct {
-	Identifier string `json:"identifier"`
-	Branch     string `json:"branch"`
-	Path       string `json:"path"`
+	Identifier        string `json:"identifier"`
+	Branch            string `json:"branch"`
+	Path              string `json:"path"`
+	IngressSubmodules bool   `json:"ingress-submodules"`
 }
 
 // PolicyGroupVCSRepoOptions contains the configuration options of a VCS integration.
 type PolicyGroupVCSRepoOptions struct {
-	Identifier *string `json:"identifier"`
-	Branch     *string `json:"branch,omitempty"`
-	Path       *string `json:"path,omitempty"`
+	Identifier        *string `json:"identifier"`
+	Branch            *string `json:"branch,omitempty"`
+	Path              *string `json:"path,omitempty"`
+	IngressSubmodules *bool   `json:"ingress-submodules,omitempty"`
 }
 
 // PolicyGroup represents a Scalr policy group.
