@@ -60,9 +60,10 @@ const (
 
 // ModuleVCSRepo contains the configuration of a VCS integration.
 type ModuleVCSRepo struct {
-	Identifier string  `json:"identifier"`
-	Path       *string `json:"path"`
-	TagPrefix  *string `json:"tag-prefix,omitempty"`
+	Identifier        string  `json:"identifier"`
+	Path              *string `json:"path"`
+	TagPrefix         *string `json:"tag-prefix,omitempty"`
+	IngressSubmodules *bool   `json:"ingress-submodules,omitempty"`
 }
 
 // ModuleList represents a list of module.
