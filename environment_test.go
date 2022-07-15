@@ -107,9 +107,13 @@ func TestEnvironmentsCreate(t *testing.T) {
 		assert.EqualError(t, err, "invalid value for account ID")
 	})
 	t.Run("with valid options", func(t *testing.T) {
+		provider_configuration, remove_provider_configuration := createProviderConfiguration(t, client, "consul", "consul")
+		defer remove_provider_configuration()
+
 		options := EnvironmentCreateOptions{
-			Name:    String("tst-" + randomString(t)),
-			Account: &Account{ID: defaultAccountID},
+			Name:                          String("tst-" + randomString(t)),
+			Account:                       &Account{ID: defaultAccountID},
+			DefaultProviderConfigurations: []*ProviderConfiguration{provider_configuration},
 		}
 
 		env, err := client.Environments.Create(ctx, options)
@@ -123,7 +127,9 @@ func TestEnvironmentsCreate(t *testing.T) {
 		defer client.Environments.Delete(ctx, env.ID)
 
 		assert.Equal(t, *options.Name, env.Name)
-		assert.Equal(t, *&options.Account.ID, env.Account.ID)
+		assert.Equal(t, options.Account.ID, env.Account.ID)
+		assert.Len(t, env.DefaultProviderConfigurations, 1)
+		assert.Equal(t, provider_configuration.ID, env.DefaultProviderConfigurations[0].ID)
 	})
 
 }
@@ -164,20 +170,18 @@ func TestEnvironmentsUpdate(t *testing.T) {
 
 	t.Run("with valid options", func(t *testing.T) {
 		envTest, envTestCleanup := createEnvironment(t, client)
+		defer envTestCleanup()
+		providerConfiguration, removeProviderConfiguration := createProviderConfiguration(t, client, "consul", "consul")
+		defer removeProviderConfiguration()
 
 		options := EnvironmentUpdateOptions{
-			Name:                  String("tst-" + randomString(t)),
-			CostEstimationEnabled: Bool(false),
+			Name:                          String("tst-" + randomString(t)),
+			CostEstimationEnabled:         Bool(false),
+			DefaultProviderConfigurations: []*ProviderConfiguration{providerConfiguration},
 		}
 
 		env, err := client.Environments.Update(ctx, envTest.ID, options)
-		if err != nil {
-			envTestCleanup()
-		}
 		require.NoError(t, err)
-
-		// Make sure we clean up the updated env.
-		defer client.Environments.Delete(ctx, env.ID)
 
 		// Also get a fresh result from the API to ensure we get the
 		// expected values back.
@@ -190,6 +194,8 @@ func TestEnvironmentsUpdate(t *testing.T) {
 		} {
 			assert.Equal(t, *options.Name, item.Name)
 			assert.Equal(t, *options.CostEstimationEnabled, item.CostEstimationEnabled)
+			assert.Len(t, item.DefaultProviderConfigurations, 1)
+			assert.Equal(t, providerConfiguration.ID, item.DefaultProviderConfigurations[0].ID)
 		}
 	})
 

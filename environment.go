@@ -55,10 +55,12 @@ type Environment struct {
 	Status                EnvironmentStatus `jsonapi:"attr,status"`
 
 	// Relations
-	Account          *Account           `jsonapi:"relation,account"`
-	CloudCredentials []*CloudCredential `jsonapi:"relation,cloud-credentials"`
-	PolicyGroups     []*PolicyGroup     `jsonapi:"relation,policy-groups"`
-	CreatedBy        *User              `jsonapi:"relation,created-by"`
+	Account                       *Account                 `jsonapi:"relation,account"`
+	CloudCredentials              []*CloudCredential       `jsonapi:"relation,cloud-credentials"`
+	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups"`
+	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations"`
+	ProviderConfigurations        []*ProviderConfiguration `jsonapi:"relation,provider-configurations"`
+	CreatedBy                     *User                    `jsonapi:"relation,created-by"`
 }
 
 // Organization is Environment included in Workspace - always prefer Environment
@@ -81,9 +83,10 @@ type EnvironmentCreateOptions struct {
 	CostEstimationEnabled *bool   `jsonapi:"attr,cost-estimation-enabled,omitempty"`
 
 	// Relations
-	Account          *Account           `jsonapi:"relation,account"`
-	CloudCredentials []*CloudCredential `jsonapi:"relation,cloud-credentials,omitempty"`
-	PolicyGroups     []*PolicyGroup     `jsonapi:"relation,policy-groups,omitempty"`
+	Account                       *Account                 `jsonapi:"relation,account"`
+	CloudCredentials              []*CloudCredential       `jsonapi:"relation,cloud-credentials,omitempty"`
+	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups,omitempty"`
+	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations,omitempty"`
 }
 
 func (o EnvironmentCreateOptions) valid() error {
@@ -179,8 +182,9 @@ type EnvironmentUpdateOptions struct {
 	CostEstimationEnabled *bool   `jsonapi:"attr,cost-estimation-enabled,omitempty"`
 
 	// Relations
-	CloudCredentials []*CloudCredential `jsonapi:"relation,cloud-credentials"`
-	PolicyGroups     []*PolicyGroup     `jsonapi:"relation,policy-groups"`
+	CloudCredentials              []*CloudCredential       `jsonapi:"relation,cloud-credentials"`
+	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups"`
+	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations,omitempty"`
 }
 
 // Update settings of an existing environment.
