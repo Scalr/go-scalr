@@ -287,6 +287,19 @@ func TestWorkspacesUpdate(t *testing.T) {
 		assert.Equal(t, int(20), *wsAfter.RunOperationTimeout)
 	})
 
+	t.Run("reset AutoQueueRuns to null", func(t *testing.T) {
+		wsTest, _ := createWorkspace(t, client, envTest)
+
+		wsWithFalse, err := client.Workspaces.Update(ctx, wsTest.ID, WorkspaceUpdateOptions{AutoQueueRuns: Bool(false)})
+		require.NoError(t, err)
+		assert.Equal(t, false, *wsWithFalse.AutoQueueRuns)
+
+		wsWithNil, err := client.Workspaces.Update(ctx, wsTest.ID, WorkspaceUpdateOptions{AutoQueueRuns: nil})
+		require.NoError(t, err)
+		var nilBool *bool
+		assert.Equal(t, nilBool, wsWithNil.AutoQueueRuns)
+	})
+
 	t.Run("when attaching/detaching an agent pool", func(t *testing.T) {
 
 		options := WorkspaceUpdateOptions{

@@ -196,7 +196,7 @@ type WorkspaceCreateOptions struct {
 	WorkingDirectory *string `jsonapi:"attr,working-directory,omitempty"`
 
 	// Indicates if runs have to be queued automatically when a new configuration version is uploaded.
-	AutoQueueRuns *bool `jsonapi:"attr,auto-queue-runs,omitempty"`
+	AutoQueueRuns *bool `jsonapi:"attr,auto-queue-runs"`
 
 	// Specifies the VcsProvider for workspace vcs-repo. Required if vcs-repo attr passed
 	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider,omitempty"`
@@ -370,7 +370,7 @@ type WorkspaceUpdateOptions struct {
 	WorkingDirectory *string `jsonapi:"attr,working-directory,omitempty"`
 
 	// Indicates if runs have to be queued automatically when a new configuration version is uploaded.
-	AutoQueueRuns *bool `jsonapi:"attr,auto-queue-runs,omitempty"`
+	AutoQueueRuns *bool `jsonapi:"attr,auto-queue-runs"`
 
 	// Specifies the VcsProvider for workspace vcs-repo.
 	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider"`
