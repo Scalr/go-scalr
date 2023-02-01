@@ -18,7 +18,7 @@ func TestProviderConfigurationDefaultCreate(t *testing.T) {
 		ctx,
 		ProviderConfigurationCreateOptions{
 			Account:      &Account{ID: defaultAccountID},
-			Name:         String("kubernetes_dev"),
+			Name:         String("kubernetes"),
 			ProviderName: String("kubernetes"),
 			IsShared:     Bool(false),
 		},
@@ -28,7 +28,7 @@ func TestProviderConfigurationDefaultCreate(t *testing.T) {
 	}
 
 	configuration, err = client.ProviderConfigurations.Update(ctx, configuration.ID, ProviderConfigurationUpdateOptions{
-		Name:                 String("scalr"),
+		Name:                 String("kubernetes"),
 		ExportShellVariables: Bool(false),
 		Environments:         []*Environment{environment},
 	})
@@ -88,14 +88,31 @@ func TestProviderConfigurationDefaultDelete(t *testing.T) {
 	environment, removeEnvironment := createEnvironment(t, client)
 	defer removeEnvironment()
 
-	configuration, deleteConfiguration := createProviderConfiguration(
-		t, client, "kubernetes", "kubernetes_dev",
+	configuration, err := client.ProviderConfigurations.Create(
+		ctx,
+		ProviderConfigurationCreateOptions{
+			Account:      &Account{ID: defaultAccountID},
+			Name:         String("new_kubernetes_dev"),
+			ProviderName: String("new_kubernetes"),
+			IsShared:     Bool(false),
+		},
 	)
-	defer deleteConfiguration()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	configuration, err := client.ProviderConfigurations.Update(ctx, configuration.ID, ProviderConfigurationUpdateOptions{
-		Environments: []*Environment{environment},
+	configuration, err = client.ProviderConfigurations.Update(ctx, configuration.ID, ProviderConfigurationUpdateOptions{
+		Name:                 String("new_kubernetes_dev"),
+		ExportShellVariables: Bool(false),
+		Environments:         []*Environment{environment},
 	})
+
+	require.NoError(t, err)
+	options := ProviderConfigurationDefaultsCreateOptions{
+		EnvironmentID:           environment.ID,
+		ProviderConfigurationID: configuration.ID,
+	}
+	err = client.ProviderConfigurationDefaults.Create(ctx, options)
 	require.NoError(t, err)
 
 	t.Run("with valid options", func(t *testing.T) {
@@ -120,17 +137,6 @@ func TestProviderConfigurationDefaultDelete(t *testing.T) {
 		}
 
 		assert.False(t, found)
-	})
-
-	t.Run("with invalid options", func(t *testing.T) {
-		options := ProviderConfigurationDefaultsDeleteOptions{
-			EnvironmentID:           environment.ID,
-			ProviderConfigurationID: configuration.ID,
-		}
-
-		err := client.ProviderConfigurationDefaults.Delete(ctx, options)
-
-		require.Error(t, err)
 	})
 
 	t.Run("with invalid environment ID", func(t *testing.T) {

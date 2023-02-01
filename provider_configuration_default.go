@@ -105,11 +105,16 @@ func (s *providerConfigurationDefault) Delete(ctx context.Context, options Provi
 		return err
 	}
 
+	found := false
 	for i, pc := range environment.DefaultProviderConfigurations {
 		if pc.ID == options.ProviderConfigurationID {
 			environment.DefaultProviderConfigurations = append(environment.DefaultProviderConfigurations[:i], environment.DefaultProviderConfigurations[i+1:]...)
+			found = true
 			break
 		}
+	}
+	if !found {
+		return errors.New("provider configuration is not in the list of default provider configurations")
 	}
 
 	updateOpts := EnvironmentUpdateOptions{
