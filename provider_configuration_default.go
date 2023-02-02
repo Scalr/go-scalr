@@ -72,7 +72,7 @@ func (s *providerConfigurationDefault) Create(ctx context.Context, options Provi
 
 	for _, pc := range environment.DefaultProviderConfigurations {
 		if pc.ID == options.ProviderConfigurationID {
-			return nil
+			return errors.New("provider configuration with ID " + options.ProviderConfigurationID + " is already default for environment with ID" + options.EnvironmentID)
 		}
 	}
 
