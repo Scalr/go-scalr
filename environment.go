@@ -188,7 +188,7 @@ type EnvironmentUpdateOptions struct {
 	// Relations
 	CloudCredentials              []*CloudCredential       `jsonapi:"relation,cloud-credentials,omitempty"`
 	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups,omitempty"`
-	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations,omitempty"`
+	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations"`
 }
 
 // Update settings of an existing environment.
