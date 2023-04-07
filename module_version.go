@@ -126,11 +126,14 @@ func (s *moduleVersions) ReadBySemanticVersion(ctx context.Context, moduleID str
 	if err != nil {
 		return nil, err
 	}
-	if len(mvl.Items) != 1 {
-		return nil, ResourceNotFoundError{
-			Message: fmt.Sprintf("ModuleVersion with Module ID '%v' and version '%v' not found.", moduleID, version),
-		}
+
+	for _, item := range(mvl.Items) {
+	    if item.IsRootModule {
+	        return item, nil
+	    }
 	}
 
-	return mvl.Items[0], nil
+	return nil, ResourceNotFoundError{
+        Message: fmt.Sprintf("ModuleVersion with Module ID '%v' and version '%v' not found.", moduleID, version),
+    }
 }
