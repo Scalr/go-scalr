@@ -63,15 +63,16 @@ type OAuth struct {
 
 // VcsProvider represents a Scalr IACP VcsProvider.
 type VcsProvider struct {
-	ID       string   `jsonapi:"primary,vcs-providers"`
-	Name     string   `jsonapi:"attr,name"`
-	Url      string   `jsonapi:"attr,url"`
-	VcsType  VcsType  `jsonapi:"attr,vcs-type"`
-	AuthType AuthType `jsonapi:"attr,auth-type"`
-	OAuth    *OAuth   `jsonapi:"attr,oauth"`
-	Token    *string  `jsonapi:"attr,token"`
-	Username *string  `jsonapi:"attr,username"`
-	IsShared bool     `jsonapi:"attr,is-shared"`
+	ID                 string   `jsonapi:"primary,vcs-providers"`
+	Name               string   `jsonapi:"attr,name"`
+	Url                string   `jsonapi:"attr,url"`
+	VcsType            VcsType  `jsonapi:"attr,vcs-type"`
+	AuthType           AuthType `jsonapi:"attr,auth-type"`
+	OAuth              *OAuth   `jsonapi:"attr,oauth"`
+	Token              *string  `jsonapi:"attr,token"`
+	Username           *string  `jsonapi:"attr,username"`
+	IsShared           bool     `jsonapi:"attr,is-shared"`
+	DraftPrRunsEnabled bool     `jsonapi:"attr,draft-pr-runs-enabled"`
 
 	// Relations
 	Environments []*Environment `jsonapi:"relation,environments"`
@@ -119,15 +120,16 @@ func (s *vcsProviders) List(ctx context.Context, options VcsProvidersListOptions
 
 // VcsProviderCreateOptions represents the options for creating a new vcs provider.
 type VcsProviderCreateOptions struct {
-	ID       string   `jsonapi:"primary,vcs-providers"`
-	Name     *string  `jsonapi:"attr,name"`
-	VcsType  VcsType  `jsonapi:"attr,vcs-type"`
-	AuthType AuthType `jsonapi:"attr,auth-type"`
-	OAuth    *OAuth   `jsonapi:"attr,oauth"`
-	Token    string   `jsonapi:"attr,token"`
-	Url      *string  `jsonapi:"attr,url"`
-	Username *string  `jsonapi:"attr,username"`
-	IsShared *bool    `jsonapi:"attr,is-shared,omitempty"`
+	ID                 string   `jsonapi:"primary,vcs-providers"`
+	Name               *string  `jsonapi:"attr,name"`
+	VcsType            VcsType  `jsonapi:"attr,vcs-type"`
+	AuthType           AuthType `jsonapi:"attr,auth-type"`
+	OAuth              *OAuth   `jsonapi:"attr,oauth"`
+	Token              string   `jsonapi:"attr,token"`
+	Url                *string  `jsonapi:"attr,url"`
+	Username           *string  `jsonapi:"attr,username"`
+	IsShared           *bool    `jsonapi:"attr,is-shared,omitempty"`
+	DraftPrRunsEnabled *bool    `jsonapi:"attr,draft-pr-runs-enabled,omitempty"`
 
 	// Relations
 	Environments []*Environment `jsonapi:"relation,environments,omitempty"`
@@ -178,12 +180,13 @@ func (s *vcsProviders) Read(ctx context.Context, vcsProviderID string) (*VcsProv
 // VcsProviderUpdateOptions represents the options for updating a vcs provider.
 type VcsProviderUpdateOptions struct {
 	// For internal use only!
-	ID       string  `jsonapi:"primary,vcs-providers"`
-	Name     *string `jsonapi:"attr,name,omitempty"`
-	Token    *string `jsonapi:"attr,token,omitempty"`
-	Url      *string `jsonapi:"attr,url,omitempty"`
-	Username *string `jsonapi:"attr,username,omitempty"`
-	IsShared *bool   `jsonapi:"attr,is-shared,omitempty"`
+	ID                 string  `jsonapi:"primary,vcs-providers"`
+	Name               *string `jsonapi:"attr,name,omitempty"`
+	Token              *string `jsonapi:"attr,token,omitempty"`
+	Url                *string `jsonapi:"attr,url,omitempty"`
+	Username           *string `jsonapi:"attr,username,omitempty"`
+	IsShared           *bool   `jsonapi:"attr,is-shared,omitempty"`
+	DraftPrRunsEnabled *bool   `jsonapi:"attr,draft-pr-runs-enabled,omitempty"`
 
 	// Relations
 	Environments []*Environment `jsonapi:"relation,environments"`
