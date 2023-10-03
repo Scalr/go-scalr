@@ -68,6 +68,14 @@ jobs:
           path: fatmouse
           ref: ${{ inputs.pr_branch }}
           token: ${{steps.generate_token.outputs.token}}
+      - name: Get pr labels
+        id: pr-labels
+        uses: ./fatmouse/.github/actions/pr-labels
+        with:
+          github_token: ${{steps.generate_token.outputs.token}}
+          owner: Scalr
+          repo: fatmouse
+          pr_id: ${{ inputs.pr_id }}
       - name: Set DB_BRANCH
         if: ${{ contains(github.event.head_commit.message, '[DB_BRANCH]') }}
         run: echo "DB_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
