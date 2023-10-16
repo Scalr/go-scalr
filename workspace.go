@@ -118,6 +118,7 @@ type WorkspaceVCSRepo struct {
 	IngressSubmodules bool     `json:"ingress-submodules"`
 	Path              string   `json:"path"`
 	TriggerPrefixes   []string `json:"trigger-prefixes,omitempty"`
+	TriggerPatterns   string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    bool     `json:"dry-runs-enabled"`
 }
 
@@ -252,6 +253,7 @@ type WorkspaceVCSRepoOptions struct {
 	IngressSubmodules *bool     `json:"ingress-submodules,omitempty"`
 	Path              *string   `json:"path,omitempty"`
 	TriggerPrefixes   *[]string `json:"trigger-prefixes,omitempty"`
+	TriggerPatterns   *string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    *bool     `json:"dry-runs-enabled,omitempty"`
 }
 
