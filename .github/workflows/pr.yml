@@ -68,6 +68,14 @@ jobs:
           path: fatmouse
           ref: ${{ inputs.pr_branch }}
           token: ${{steps.generate_token.outputs.token}}
+      - name: Get pr labels
+        id: pr-labels
+        uses: ./fatmouse/.github/actions/pr-labels
+        with:
+          github_token: ${{steps.generate_token.outputs.token}}
+          owner: Scalr
+          repo: fatmouse
+          pr_id: ${{ inputs.pr_id }}
       - name: Set DB_BRANCH
         if: ${{ contains(github.event.head_commit.message, '[DB_BRANCH]') }}
         run: echo "DB_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
@@ -117,7 +125,7 @@ jobs:
           --branch ${{ inputs.pr_branch }} \
           --run-url ${{ steps.get-job-id.outputs.html_url }} \
           --skip-ui-build \
-          --agent-pool-id="${{vars.TACO_APOOL_ID}}" \
+          --agent-pool-id="${{ !contains(steps.pr-labels.outputs.labels, ' e2e:tev2_on_server ') && vars.TACO_APOOL_ID || '' }}" \
           ${{ env.RUN_TAG }}
       - name: Get Scalr hostname
         shell: bash
