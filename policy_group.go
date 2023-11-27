@@ -78,6 +78,7 @@ type PolicyGroup struct {
 	ErrorMessage string              `jsonapi:"attr,error-message"`
 	OpaVersion   string              `jsonapi:"attr,opa-version"`
 	VCSRepo      *PolicyGroupVCSRepo `jsonapi:"attr,vcs-repo"`
+	IsEnforced   bool                `jsonapi:"attr,is-enforced"`
 
 	// Relations
 	Account      *Account       `jsonapi:"relation,account"`
@@ -112,10 +113,12 @@ type PolicyGroupCreateOptions struct {
 	Name       *string                    `jsonapi:"attr,name"`
 	OpaVersion *string                    `jsonapi:"attr,opa-version,omitempty"`
 	VCSRepo    *PolicyGroupVCSRepoOptions `jsonapi:"attr,vcs-repo"`
+	IsEnforced *bool                      `jsonapi:"attr,is-enforced,omitempty"`
 
 	// Relations
-	Account     *Account     `jsonapi:"relation,account"`
-	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider"`
+	Account      *Account       `jsonapi:"relation,account"`
+	VcsProvider  *VcsProvider   `jsonapi:"relation,vcs-provider"`
+	Environments []*Environment `jsonapi:"relation,environments"`
 }
 
 func (o PolicyGroupCreateOptions) valid() error {
@@ -146,6 +149,7 @@ type PolicyGroupUpdateOptions struct {
 	Name       *string                    `jsonapi:"attr,name,omitempty"`
 	OpaVersion *string                    `jsonapi:"attr,opa-version,omitempty"`
 	VCSRepo    *PolicyGroupVCSRepoOptions `jsonapi:"attr,vcs-repo,omitempty"`
+	IsEnforced *bool                      `jsonapi:"attr,is-enforced,omitempty"`
 
 	// Relations
 	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider,omitempty"`
