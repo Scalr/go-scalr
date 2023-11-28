@@ -105,6 +105,7 @@ func TestWorkspacesCreate(t *testing.T) {
 			WorkingDirectory:          String("bar/"),
 			RunOperationTimeout:       Int(15),
 			AutoQueueRuns:             AutoQueueRunsModePtr(AutoQueueRunsModeNever),
+			IacPlatform:               WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
 		}
 
 		ws, err := client.Workspaces.Create(ctx, options)
@@ -129,6 +130,7 @@ func TestWorkspacesCreate(t *testing.T) {
 			assert.Equal(t, *options.WorkingDirectory, item.WorkingDirectory)
 			assert.Equal(t, options.RunOperationTimeout, item.RunOperationTimeout)
 			assert.Equal(t, *options.AutoQueueRuns, item.AutoQueueRuns)
+			assert.Equal(t, *options.IacPlatform, item.IaCPlatform)
 		}
 	})
 
@@ -305,6 +307,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 			TerraformVersion:          String("1.2.9"),
 			RunOperationTimeout:       Int(20),
 			AutoQueueRuns:             AutoQueueRunsModePtr(AutoQueueRunsModeAlways),
+			IacPlatform:               WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
 		}
 
 		wsAfter, err := client.Workspaces.Update(ctx, wsTest.ID, options)
@@ -319,6 +322,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 		assert.NotEqual(t, wsTest.TerraformVersion, wsAfter.TerraformVersion)
 		assert.Equal(t, wsTest.WorkingDirectory, wsAfter.WorkingDirectory)
 		assert.Equal(t, int(20), *wsAfter.RunOperationTimeout)
+		assert.Equal(t, wsTest.IaCPlatform, wsAfter.IaCPlatform)
 	})
 
 	t.Run("when attaching/detaching an agent pool", func(t *testing.T) {
@@ -351,6 +355,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 			ExecutionMode:             WorkspaceExecutionModePtr(WorkspaceExecutionModeLocal),
 			TerraformVersion:          String("1.1.9"),
 			WorkingDirectory:          String("baz/"),
+			IacPlatform:               WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
 		}
 
 		w, err := client.Workspaces.Update(ctx, wsTest.ID, options)
@@ -371,6 +376,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 			assert.Equal(t, *options.ExecutionMode, item.ExecutionMode)
 			assert.Equal(t, *options.TerraformVersion, item.TerraformVersion)
 			assert.Equal(t, *options.WorkingDirectory, item.WorkingDirectory)
+			assert.Equal(t, *options.IacPlatform, item.IaCPlatform)
 		}
 	})
 
@@ -406,6 +412,7 @@ func TestWorkspacesUpdateByID(t *testing.T) {
 			ForceLatestRun:   Bool(true),
 			ExecutionMode:    WorkspaceExecutionModePtr(WorkspaceExecutionModeRemote),
 			TerraformVersion: String("1.2.9"),
+			IacPlatform:      WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
 		}
 
 		wAfter, err := client.Workspaces.Update(ctx, wTest.ID, options)
@@ -416,6 +423,7 @@ func TestWorkspacesUpdateByID(t *testing.T) {
 		assert.NotEqual(t, wTest.ForceLatestRun, wAfter.ForceLatestRun)
 		assert.NotEqual(t, wTest.TerraformVersion, wAfter.TerraformVersion)
 		assert.Equal(t, wTest.WorkingDirectory, wAfter.WorkingDirectory)
+		assert.Equal(t, wTest.IaCPlatform, wAfter.IaCPlatform)
 	})
 
 	t.Run("with valid options", func(t *testing.T) {
@@ -426,6 +434,7 @@ func TestWorkspacesUpdateByID(t *testing.T) {
 			ExecutionMode:    WorkspaceExecutionModePtr(WorkspaceExecutionModeLocal),
 			TerraformVersion: String("1.1.9"),
 			WorkingDirectory: String("baz/"),
+			IacPlatform:      WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
 		}
 
 		w, err := client.Workspaces.Update(ctx, wTest.ID, options)
@@ -445,6 +454,7 @@ func TestWorkspacesUpdateByID(t *testing.T) {
 			assert.Equal(t, *options.ExecutionMode, item.ExecutionMode)
 			assert.Equal(t, *options.TerraformVersion, item.TerraformVersion)
 			assert.Equal(t, *options.WorkingDirectory, item.WorkingDirectory)
+			assert.Equal(t, *options.IacPlatform, item.IaCPlatform)
 		}
 	})
 

@@ -39,3 +39,8 @@ func AutoQueueRunsModePtr(v WorkspaceAutoQueueRuns) *WorkspaceAutoQueueRuns {
 func ServiceAccountStatusPtr(v ServiceAccountStatus) *ServiceAccountStatus {
 	return &v
 }
+
+// WorkspaceIaCPlatformPtr returns a pointer to the given execution mode
+func WorkspaceIaCPlatformPtr(v WorkspaceIaCPlatform) *WorkspaceIaCPlatform {
+	return &v
+}
