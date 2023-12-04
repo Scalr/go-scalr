@@ -59,6 +59,15 @@ const (
 	AutoQueueRunsModeNever     WorkspaceAutoQueueRuns = "never"
 )
 
+// WorkspaceIaCPlatform represents an IaC platform used in this workspace.
+type WorkspaceIaCPlatform string
+
+// Available IaC platforms
+const (
+	WorkspaceIaCPlatformTerraform WorkspaceIaCPlatform = "terraform"
+	WorkspaceIaCPlatformOpenTofu  WorkspaceIaCPlatform = "opentofu"
+)
+
 // WorkspaceList represents a list of workspaces.
 type WorkspaceList struct {
 	*Pagination
@@ -82,6 +91,7 @@ type Workspace struct {
 	ExecutionMode             WorkspaceExecutionMode `jsonapi:"attr,execution-mode"`
 	Permissions               *WorkspacePermissions  `jsonapi:"attr,permissions"`
 	TerraformVersion          string                 `jsonapi:"attr,terraform-version"`
+	IaCPlatform               WorkspaceIaCPlatform   `jsonapi:"attr,iac-platform"`
 	VCSRepo                   *WorkspaceVCSRepo      `jsonapi:"attr,vcs-repo"`
 	WorkingDirectory          string                 `jsonapi:"attr,working-directory"`
 	ApplySchedule             string                 `jsonapi:"attr,apply-schedule"`
@@ -206,6 +216,9 @@ type WorkspaceCreateOptions struct {
 	// The version of Terraform to use for this workspace. Upon creating a
 	// workspace, the latest version is selected unless otherwise specified.
 	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+
+	// The IaC platform to use for this workspace.
+	IacPlatform *WorkspaceIaCPlatform `jsonapi:"attr,iac-platform,omitempty"`
 
 	// Settings for the workspace's VCS repository. If omitted, the workspace is
 	// created without a VCS repo. If included, you must specify at least the
@@ -387,6 +400,9 @@ type WorkspaceUpdateOptions struct {
 
 	// The version of Terraform to use for this workspace.
 	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+
+	// The IaC platform to use for this workspace.
+	IacPlatform *WorkspaceIaCPlatform `jsonapi:"attr,iac-platform,omitempty"`
 
 	// To delete a workspace's existing VCS repo, specify null instead of an
 	// object. To modify a workspace's existing VCS repo, include whichever of
