@@ -40,7 +40,7 @@ func ServiceAccountStatusPtr(v ServiceAccountStatus) *ServiceAccountStatus {
 	return &v
 }
 
-// WorkspaceIaCPlatformPtr returns a pointer to the given execution mode
+// WorkspaceIaCPlatformPtr returns a pointer to the given IaC platform
 func WorkspaceIaCPlatformPtr(v WorkspaceIaCPlatform) *WorkspaceIaCPlatform {
 	return &v
 }
