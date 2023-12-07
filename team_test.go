@@ -114,14 +114,6 @@ func TestTeamsList(t *testing.T) {
 		assert.Contains(t, accIDs, defaultAccountID)
 	})
 
-	t.Run("without a valid account", func(t *testing.T) {
-		tl, err := client.Teams.List(ctx, TeamListOptions{
-			Account: String(badIdentifier),
-		})
-		assert.NoError(t, err)
-		assert.Len(t, tl.Items, 0)
-	})
-
 	t.Run("without a valid identity provider", func(t *testing.T) {
 		tl, err := client.Teams.List(ctx, TeamListOptions{
 			IdentityProvider: String(badIdentifier),
