@@ -86,7 +86,7 @@ func (s *policyGroupEnvironment) Create(ctx context.Context, options PolicyGroup
 	if err != nil {
 		return err
 	}
-	req, err := s.client.newJsonRequest("POST", u, payload)
+	req, err := s.client.newRequest("POST", u, payload)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (s *policyGroupEnvironment) Update(ctx context.Context, options PolicyGroup
 	if err != nil {
 		return err
 	}
-	req, err := s.client.newJsonRequest("PATCH", u, payload)
+	req, err := s.client.newRequest("PATCH", u, payload)
 	if err != nil {
 		return err
 	}
