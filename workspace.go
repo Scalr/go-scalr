@@ -110,7 +110,7 @@ type Workspace struct {
 	AgentPool            *AgentPool            `jsonapi:"relation,agent-pool"`
 	ModuleVersion        *ModuleVersion        `jsonapi:"relation,module-version,omitempty"`
 	Tags                 []*Tag                `jsonapi:"relation,tags"`
-	ConfigurationVesrion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
+	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
 }
 
 // Hooks contains the custom hooks field.

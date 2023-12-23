@@ -28,7 +28,7 @@ type runs struct {
 // RunStatus represents a run state.
 type RunStatus string
 
-//List all available run statuses.
+// List all available run statuses.
 const (
 	RunApplied            RunStatus = "applied"
 	RunApplyQueued        RunStatus = "apply_queued"
@@ -90,6 +90,7 @@ type RunCreateOptions struct {
 	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
 	// Specifies the workspace where the run will be executed.
 	Workspace *Workspace `jsonapi:"relation,workspace"`
+	IsDestroy *bool      `jsonapi:"attr,is-destroy,omitempty"`
 }
 
 func (o RunCreateOptions) valid() error {
@@ -99,6 +100,7 @@ func (o RunCreateOptions) valid() error {
 	if !validStringID(&o.Workspace.ID) {
 		return errors.New("invalid value for workspace ID")
 	}
+	// TODO: CV is not required, if it is omitted run will be triggered from the latest.
 	if o.ConfigurationVersion == nil {
 		return errors.New("configuration-version is required")
 	}
