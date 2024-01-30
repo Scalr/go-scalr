@@ -2,9 +2,10 @@ package scalr
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestSlackIntegrationsCreate(t *testing.T) {
@@ -30,6 +31,7 @@ func TestSlackIntegrationsCreate(t *testing.T) {
 				SlackIntegrationEventRunErrored,
 			},
 			ChannelId:    String("C123"),
+			RunMode:      String("apply"),
 			Account:      &Account{ID: defaultAccountID},
 			Connection:   slackConnection,
 			Environments: []*Environment{env1},
@@ -50,6 +52,7 @@ func TestSlackIntegrationsCreate(t *testing.T) {
 			assert.Equal(t, options.Account, item.Account)
 			assert.Equal(t, *options.ChannelId, item.ChannelId)
 			assert.Equal(t, options.Events, item.Events)
+			assert.Equal(t, *options.RunMode, item.RunMode)
 		}
 
 		err = client.SlackIntegrations.Delete(ctx, si.ID)
@@ -81,6 +84,7 @@ func TestSlackIntegrationsUpdate(t *testing.T) {
 			Name:         String("test-" + randomString(t)),
 			Events:       []string{SlackIntegrationEventRunApprovalRequired, SlackIntegrationEventRunErrored},
 			Environments: []*Environment{env2},
+			RunMode:      String("dry"),
 		}
 
 		si, err := client.SlackIntegrations.Update(ctx, si.ID, options)
@@ -95,6 +99,7 @@ func TestSlackIntegrationsUpdate(t *testing.T) {
 		} {
 			assert.NotEmpty(t, item.ID)
 			assert.Equal(t, *options.Name, item.Name)
+			assert.Equal(t, *options.RunMode, item.RunMode)
 			assert.Equal(t, options.Events, item.Events)
 		}
 	})
