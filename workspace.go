@@ -2,10 +2,14 @@ package scalr
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"time"
+
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
 
 // Compile-time proof of interface implementation.
@@ -33,6 +37,9 @@ type Workspaces interface {
 
 	// SetSchedule sets run schedules for workspace.
 	SetSchedule(ctx context.Context, workspaceID string, options WorkspaceRunScheduleOptions) (*Workspace, error)
+
+	// ReeadOutputs reads workspace outputs.
+	ReadOutputs(ctx context.Context, workspaceID string) ([]*Output, error)
 }
 
 // workspaces implements Workspaces.
@@ -73,6 +80,17 @@ type WorkspaceList struct {
 	*Pagination
 	Items []*Workspace
 }
+
+type Output struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Sensitive bool   `json:"sensitive"`
+}
+
+// type WorkspaceOutputs struct {
+// 	*Pagination
+// 	Items []*Output
+// }
 
 // Workspace represents a Scalr workspace.
 type Workspace struct {
@@ -367,6 +385,56 @@ func (s *workspaces) ReadByID(ctx context.Context, workspaceID string) (*Workspa
 	}
 
 	return w, nil
+}
+
+// This is brutal hack, but believe me,
+// I really tried to make the outputs work with jsonapi model.
+func customDo(ctx context.Context, c *Client, req *retryablehttp.Request) ([]byte, error) {
+	req = req.WithContext(ctx)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+			return nil, err
+		}
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+type OutputsResponse struct {
+	Data []*Output `json:"data"`
+}
+
+func (s *workspaces) ReadOutputs(ctx context.Context, workspaceID string) ([]*Output, error) {
+	if !validStringID(&workspaceID) {
+		return nil, errors.New("invalid value for workspace ID")
+	}
+
+	options := struct{}{}
+	u := fmt.Sprintf("workspaces/%s/outputs", url.QueryEscape(workspaceID))
+	req, err := s.client.newRequest("GET", u, options)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := customDo(ctx, s.client, req)
+	if err != nil {
+		return nil, err
+	}
+	var resp OutputsResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response body: %v", err)
+	}
+
+	return resp.Data, nil
 }
 
 // WorkspaceUpdateOptions represents the options for updating a workspace.
