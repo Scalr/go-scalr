@@ -204,7 +204,7 @@ type ProviderConfigurationUpdateOptions struct {
 	GoogleWorkloadProviderName *string        `jsonapi:"attr,google-workload-provider-name"`
 	GoogleProject              *string        `jsonapi:"attr,google-project"`
 	GoogleCredentials          *string        `jsonapi:"attr,google-credentials"`
-	GoogleUseDefaultProject    *bool          `jsonapi:"attr,google-use-default-project"`
+	GoogleUseDefaultProject    *bool          `jsonapi:"attr,google-use-default-project,omitempty"`
 	ScalrHostname              *string        `jsonapi:"attr,scalr-hostname"`
 	ScalrToken                 *string        `jsonapi:"attr,scalr-token"`
 }
