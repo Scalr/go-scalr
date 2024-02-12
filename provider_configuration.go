@@ -57,6 +57,7 @@ type ProviderConfiguration struct {
 	GoogleWorkloadProviderName string `jsonapi:"attr,google-workload-provider-name"`
 	GoogleProject              string `jsonapi:"attr,google-project"`
 	GoogleCredentials          string `jsonapi:"attr,google-credentials"`
+	GoogleUseDefaultProject    bool   `jsonapi:"attr,google-use-default-project"`
 	ScalrHostname              string `jsonapi:"attr,scalr-hostname"`
 	ScalrToken                 string `jsonapi:"attr,scalr-token"`
 
@@ -125,6 +126,7 @@ type ProviderConfigurationCreateOptions struct {
 	GoogleWorkloadProviderName *string `jsonapi:"attr,google-workload-provider-name,omitempty"`
 	GoogleProject              *string `jsonapi:"attr,google-project,omitempty"`
 	GoogleCredentials          *string `jsonapi:"attr,google-credentials,omitempty"`
+	GoogleUseDefaultProject    *bool   `jsonapi:"attr,google-use-default-project,omitempty"`
 	ScalrHostname              *string `jsonapi:"attr,scalr-hostname,omitempty"`
 	ScalrToken                 *string `jsonapi:"attr,scalr-token,omitempty"`
 
@@ -202,6 +204,7 @@ type ProviderConfigurationUpdateOptions struct {
 	GoogleWorkloadProviderName *string        `jsonapi:"attr,google-workload-provider-name"`
 	GoogleProject              *string        `jsonapi:"attr,google-project"`
 	GoogleCredentials          *string        `jsonapi:"attr,google-credentials"`
+	GoogleUseDefaultProject    *bool          `jsonapi:"attr,google-use-default-project"`
 	ScalrHostname              *string        `jsonapi:"attr,scalr-hostname"`
 	ScalrToken                 *string        `jsonapi:"attr,scalr-token"`
 }
