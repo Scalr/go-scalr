@@ -49,7 +49,7 @@ jobs:
         with:
           github-token: ${{steps.generate_token.outputs.token}}
           script: |
-            github.repos.createCommitStatus({
+            github.rest.repos.createCommitStatus({
               owner: 'Scalr',
               repo: '${{ inputs.repo }}',
               sha: '${{ inputs.pr_head_sha }}',
@@ -152,7 +152,7 @@ jobs:
         with:
           github-token: ${{steps.generate_token.outputs.token}}
           script: |
-            github.repos.createCommitStatus({
+            github.rest.repos.createCommitStatus({
               owner: 'Scalr',
               repo: '${{ inputs.repo }}',
               sha: '${{ inputs.pr_head_sha }}',
@@ -167,7 +167,7 @@ jobs:
         with:
           github-token: ${{steps.generate_token.outputs.token}}
           script: |
-            github.repos.createCommitStatus({
+            github.rest.repos.createCommitStatus({
               owner: 'Scalr',
               repo: '${{ inputs.repo }}',
               sha: '${{ inputs.pr_head_sha }}',
