@@ -15,14 +15,14 @@ on:
         description: Pull request branch
       base_branch:
         description: Base branch of pull request
-concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     name: tests
+    concurrency:
+      group: ${{ github.workflow }}-${{ inputs.pr_id }}
+      cancel-in-progress: true
     env:
       SCALR_TOKEN: ${{ secrets.SCALR_TOKEN }}
       UPSTREAM_ID: ${{ github.run_number }}
