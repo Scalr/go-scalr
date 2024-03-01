@@ -15,14 +15,14 @@ on:
         description: Pull request branch
       base_branch:
         description: Base branch of pull request
-concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     name: tests
+    concurrency:
+      group: ${{ github.workflow }}-${{ inputs.pr_id }}
+      cancel-in-progress: true
     env:
       SCALR_TOKEN: ${{ secrets.SCALR_TOKEN }}
       UPSTREAM_ID: ${{ github.run_number }}
@@ -34,7 +34,7 @@ jobs:
           app_id: ${{vars.SUDO_GHA_APP_ID}}
           installation_id: ${{vars.SUDO_GHA_APP_INSTALLATION_ID}}
           private_key: ${{secrets.SUDO_GHA_APP_PRIVATE_KEY}}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Log pr link
         run: |
           echo ":taco: Pull request: https://github.com/Scalr/${{ inputs.repo }}/pull/${{ inputs.pr_id }} " >> $GITHUB_STEP_SUMMARY
@@ -45,11 +45,11 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           job_name: ${{ github.job }}
       - name: Set pending status
-        uses: actions/github-script@v3
+        uses: actions/github-script@v7
         with:
           github-token: ${{steps.generate_token.outputs.token}}
           script: |
-            github.repos.createCommitStatus({
+            github.rest.repos.createCommitStatus({
               owner: 'Scalr',
               repo: '${{ inputs.repo }}',
               sha: '${{ inputs.pr_head_sha }}',
@@ -58,11 +58,11 @@ jobs:
               context: 'go-scalr',
               target_url: '${{ steps.get-job-id.outputs.html_url }}',
             })
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.18"
       - name: Clone fatmouse repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: Scalr/fatmouse
           path: fatmouse
@@ -80,11 +80,11 @@ jobs:
         if: ${{ contains(github.event.head_commit.message, '[DB_BRANCH]') }}
         run: echo "DB_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
       - id: auth
-        uses: google-github-actions/auth@v0
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v2
       - name: Copy secrets
         shell: bash
         run: |
@@ -148,11 +148,11 @@ jobs:
         run: make test
       - name: Set commit status after tests
         if: ${{ always() && (steps.run-tests.outcome == 'failure' ||  steps.run-tests.outcome == 'success') }}
-        uses: actions/github-script@v3
+        uses: actions/github-script@v7
         with:
           github-token: ${{steps.generate_token.outputs.token}}
           script: |
-            github.repos.createCommitStatus({
+            github.rest.repos.createCommitStatus({
               owner: 'Scalr',
               repo: '${{ inputs.repo }}',
               sha: '${{ inputs.pr_head_sha }}',
@@ -163,11 +163,11 @@ jobs:
             })
       - name: Set commit status on interrupted workflow
         if: ${{ always() && steps.run-tests.outcome != 'failure' &&  steps.run-tests.outcome != 'success' }}
-        uses: actions/github-script@v3
+        uses: actions/github-script@v7
         with:
           github-token: ${{steps.generate_token.outputs.token}}
           script: |
-            github.repos.createCommitStatus({
+            github.rest.repos.createCommitStatus({
               owner: 'Scalr',
               repo: '${{ inputs.repo }}',
               sha: '${{ inputs.pr_head_sha }}',
@@ -178,7 +178,7 @@ jobs:
             })
       - name: Add comment on failed tests
         if: ${{ always() && steps.run-tests.outcome == 'failure' }}
-        uses: actions/github-script@v5
+        uses: actions/github-script@v7
         with:
           script: |
             const issue_number = ${{ inputs.pr_id }};
