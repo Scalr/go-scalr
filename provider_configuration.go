@@ -64,6 +64,7 @@ type ProviderConfiguration struct {
 	Account      *Account                          `jsonapi:"relation,account"`
 	Parameters   []*ProviderConfigurationParameter `jsonapi:"relation,parameters"`
 	Environments []*Environment                    `jsonapi:"relation,environments"`
+	Owners       []*Team                           `jsonapi:"relation,owners"`
 }
 
 // ProviderConfigurationsListOptions represents the options for listing provider configurations.
@@ -132,6 +133,7 @@ type ProviderConfigurationCreateOptions struct {
 
 	Account      *Account       `jsonapi:"relation,account,omitempty"`
 	Environments []*Environment `jsonapi:"relation,environments,omitempty"`
+	Owners       []*Team        `jsonapi:"relation,owners"`
 }
 
 // Create is used to create a new provider configuration.
@@ -207,6 +209,7 @@ type ProviderConfigurationUpdateOptions struct {
 	GoogleUseDefaultProject    *bool          `jsonapi:"attr,google-use-default-project,omitempty"`
 	ScalrHostname              *string        `jsonapi:"attr,scalr-hostname"`
 	ScalrToken                 *string        `jsonapi:"attr,scalr-token"`
+	Owners                     []*Team        `jsonapi:"relation,owners"`
 }
 
 // Update an existing provider configuration.
