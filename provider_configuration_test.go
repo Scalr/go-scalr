@@ -91,6 +91,9 @@ func TestProviderConfigurationCreateScalr(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("success scalr", func(t *testing.T) {
+		ownerTeam, ownerTeamCleanup := createTeam(t, client, nil)
+		defer ownerTeamCleanup()
+
 		options := ProviderConfigurationCreateOptions{
 			Account:              &Account{ID: defaultAccountID},
 			Name:                 String("scalr_dev"),
@@ -98,6 +101,7 @@ func TestProviderConfigurationCreateScalr(t *testing.T) {
 			ExportShellVariables: Bool(false),
 			ScalrHostname:        String(scalrHostname),
 			ScalrToken:           String(scalrToken),
+			Owners:               []*Team{{ID: ownerTeam.ID}},
 		}
 		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
 		if err != nil {
@@ -114,6 +118,7 @@ func TestProviderConfigurationCreateScalr(t *testing.T) {
 		assert.Equal(t, *options.ExportShellVariables, pcfg.ExportShellVariables)
 		assert.Equal(t, *options.ScalrHostname, pcfg.ScalrHostname)
 		assert.Equal(t, "", pcfg.ScalrToken)
+		assert.Equal(t, &options.Owners, &pcfg.Owners)
 	})
 }
 
@@ -573,6 +578,9 @@ func TestProviderConfigurationUpdateScalr(t *testing.T) {
 		}
 		defer client.ProviderConfigurations.Delete(ctx, configuration.ID)
 
+		ownerTeam, ownerTeamCleanup := createTeam(t, client, nil)
+		defer ownerTeamCleanup()
+
 		updateOptions := ProviderConfigurationUpdateOptions{
 			Name:                 String("scalr_prod"),
 			ExportShellVariables: Bool(true),
@@ -580,6 +588,7 @@ func TestProviderConfigurationUpdateScalr(t *testing.T) {
 			ScalrToken:           String(scalrToken),
 			IsShared:             Bool(true),
 			Environments:         []*Environment{},
+			Owners:               []*Team{{ID: ownerTeam.ID}},
 		}
 		updatedConfiguration, err := client.ProviderConfigurations.Update(
 			ctx, configuration.ID, updateOptions,
@@ -589,6 +598,7 @@ func TestProviderConfigurationUpdateScalr(t *testing.T) {
 		assert.Equal(t, *updateOptions.ExportShellVariables, updatedConfiguration.ExportShellVariables)
 		assert.Equal(t, *updateOptions.ScalrHostname, updatedConfiguration.ScalrHostname)
 		assert.Equal(t, *updateOptions.IsShared, updatedConfiguration.IsShared)
+		assert.Equal(t, &updateOptions.Owners, &updatedConfiguration.Owners)
 	})
 }
 
