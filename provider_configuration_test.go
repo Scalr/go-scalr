@@ -599,7 +599,7 @@ func TestProviderConfigurationUpdateScalr(t *testing.T) {
 		assert.Equal(t, *updateOptions.ExportShellVariables, updatedConfiguration.ExportShellVariables)
 		assert.Equal(t, *updateOptions.ScalrHostname, updatedConfiguration.ScalrHostname)
 		assert.Equal(t, *updateOptions.IsShared, updatedConfiguration.IsShared)
-		assert.Equal(t, &updateOptions.Owners, &updatedConfiguration.Owners)
+		assert.Len(t, updatedConfiguration.Owners, 0)
 	})
 }
 
