@@ -33,6 +33,9 @@ type Workspaces interface {
 
 	// SetSchedule sets run schedules for workspace.
 	SetSchedule(ctx context.Context, workspaceID string, options WorkspaceRunScheduleOptions) (*Workspace, error)
+
+	// Read outputs
+	ReadOutputs(ctx context.Context, workspaceID string) (*OutputsList, error)
 }
 
 // workspaces implements Workspaces.
@@ -172,6 +175,17 @@ type WorkspaceFilter struct {
 type WorkspaceRunScheduleOptions struct {
 	ApplySchedule   *string `json:"apply-schedule"`
 	DestroySchedule *string `json:"destroy-schedule"`
+}
+
+type Output struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Sensitive bool   `json:"sensitive"`
+}
+
+type OutputsList struct {
+	*Pagination
+	Items []*Output
 }
 
 // List all the workspaces within an environment.
@@ -498,4 +512,24 @@ func (s *workspaces) SetSchedule(ctx context.Context, workspaceID string, option
 	}
 
 	return w, nil
+}
+
+func (s *workspaces) ReadOutputs(ctx context.Context, workspaceID string) (*OutputsList, error) {
+	if !validStringID(&workspaceID) {
+		return nil, errors.New("invalid value for workspace ID")
+	}
+
+	u := fmt.Sprintf("workspaces/%s/outputs", url.QueryEscape(workspaceID))
+	req, err := s.client.newJsonRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	outputs := &OutputsList{}
+	err = s.client.do(ctx, req, outputs)
+	if err != nil {
+		return nil, err
+	}
+
+	return outputs, nil
 }

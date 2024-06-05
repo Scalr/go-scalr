@@ -354,7 +354,6 @@ func (c *Client) newJsonRequest(method, path string, v interface{}) (*retryableh
 }
 
 func (c *Client) createRequest(method, url string, rawBody interface{}, reqHeaders http.Header) (*retryablehttp.Request, error) {
-
 	req, err := retryablehttp.NewRequest(method, url, rawBody)
 	if err != nil {
 		return nil, err

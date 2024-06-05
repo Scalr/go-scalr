@@ -13,7 +13,6 @@ var _ Runs = (*runs)(nil)
 
 // Runs describes all the run related methods that the Scalr API supports.
 type Runs interface {
-
 	// Read a run by its ID.
 	Read(ctx context.Context, runID string) (*Run, error)
 	// Create a new run with the given options.
@@ -28,7 +27,7 @@ type runs struct {
 // RunStatus represents a run state.
 type RunStatus string
 
-//List all available run statuses.
+// List all available run statuses.
 const (
 	RunApplied            RunStatus = "applied"
 	RunApplyQueued        RunStatus = "apply_queued"
