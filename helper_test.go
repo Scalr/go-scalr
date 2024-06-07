@@ -1,7 +1,11 @@
 package scalr
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -9,6 +13,7 @@ import (
 	"github.com/hashicorp/go-uuid"
 )
 
+const tfArchiveBase64 = "H4sIAECmYWYAA+2STQrCMBCFu84phh5AJ/8rD5NFKgVbpZ10I97dpj9ShHYjRcR8mwfhTZiXF/ItHbN9QUSrNQxqRkWhRp0AroxEKSRaC8gltzwDvfNeA6El1/SruIZ81bn6vOLrbUWxcc+U46U/AsX+K1fWB9pK9xH9exil1vvn0sz9C2t5379SGjPAvRZa8uf9XwPdAkEe/wHP4c4AOncJHk7zGXswtnSJ0dX6ui2p7KKTmuDfB0Uc/Ha6RCKRSKzxBOV743QACgAA"
 const defaultAccountID = "acc-svrcncgh453bi8g"
 const defaultAccountName = "mainiacp"
 const defaultModuleID = "mod-svsmkkjo8sju4o0"
@@ -167,6 +172,7 @@ func createConfigurationVersion(t *testing.T, client *Client, ws *Workspace) (*C
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return cv, func() {
 		if wsCleanup != nil {
 			wsCleanup()
@@ -176,11 +182,14 @@ func createConfigurationVersion(t *testing.T, client *Client, ws *Workspace) (*C
 
 func createRun(t *testing.T, client *Client, ws *Workspace, cv *ConfigurationVersion) (*Run, func()) {
 	var wsCleanup func()
+	var cvCleanup func()
 
 	if ws == nil {
 		ws, wsCleanup = createWorkspace(t, client, nil)
 	}
-	cv, cvCleanup := createConfigurationVersion(t, client, ws)
+	if cv == nil {
+		cv, cvCleanup = createConfigurationVersion(t, client, ws)
+	}
 
 	ctx := context.Background()
 	run, err := client.Runs.Create(ctx, RunCreateOptions{
@@ -393,31 +402,6 @@ func createProviderConfiguration(t *testing.T, client *Client, providerName stri
 	}
 }
 
-func createProviderConfigurationScalr(t *testing.T, client *Client, providerName string, configurationName string, scalrHostname string, scalrToken string) (*ProviderConfiguration, func()) {
-	ctx := context.Background()
-	config, err := client.ProviderConfigurations.Create(
-		ctx,
-		ProviderConfigurationCreateOptions{
-			Account:       &Account{ID: defaultAccountID},
-			Name:          String(configurationName),
-			ProviderName:  String(providerName),
-			ScalrToken:    String(scalrToken),
-			ScalrHostname: String(scalrHostname),
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return config, func() {
-		if err := client.ProviderConfigurations.Delete(ctx, config.ID); err != nil {
-			t.Errorf("Error destroying provider configuration ! WARNING: Dangling resources\n"+
-				"may exist! The full error is shown below.\n\n"+
-				"Provider configuration: %s\nError: %s", config.ID, err)
-		}
-	}
-}
-
 func createServiceAccount(
 	t *testing.T,
 	client *Client,
@@ -542,4 +526,33 @@ func createSlackIntegration(
 				"Webhook: %s\nError: %s", si.ID, err)
 		}
 	}
+}
+
+func uploadBlob(blobURL string) error {
+	data, _ := base64.StdEncoding.DecodeString(tfArchiveBase64)
+	req, err := http.NewRequest("PUT", blobURL, bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	} else {
+		body := &bytes.Buffer{}
+		_, err := body.ReadFrom(resp.Body)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode >= 300 {
+			return fmt.Errorf("Bad status code on blob upload")
+		}
+	}
+
+	return nil
 }

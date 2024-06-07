@@ -84,7 +84,7 @@ func TestAccessTokenDelete(t *testing.T) {
 		err := client.AccessTokens.Delete(ctx, apt.ID)
 		require.NoError(t, err)
 
-		l, err := client.AgentPoolTokens.List(ctx, ap.ID, AccessTokenListOptions{})
+		l, _ := client.AgentPoolTokens.List(ctx, ap.ID, AccessTokenListOptions{})
 		assert.Len(t, l.Items, 0)
 	})
 

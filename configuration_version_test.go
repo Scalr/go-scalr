@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,11 +22,17 @@ func TestConfigurationVersionsCreate(t *testing.T) {
 			ConfigurationVersionCreateOptions{Workspace: wsTest},
 		)
 		require.NoError(t, err)
+		assert.Equal(t, ConfigurationPending, cv.Status)
+		assert.Contains(t, cv.Links["upload"], "blobs/")
 
 		// Get a refreshed view of the configuration version.
 		refreshed, err := client.ConfigurationVersions.Read(ctx, cv.ID)
 		require.NoError(t, err)
-		assert.Equal(t, cv, refreshed)
+		assert.Equal(t, cv.ID, refreshed.ID)
+		assert.Equal(t, ConfigurationPending, refreshed.Status)
+		assert.Equal(t, cv.Workspace, refreshed.Workspace)
+		assert.Equal(t, cv.Links["self"], refreshed.Links["self"])
+		assert.Equal(t, "", refreshed.Links["upload"])
 	})
 	t.Run("when no workspace is provided", func(t *testing.T) {
 		_, err := client.ConfigurationVersions.Create(ctx, ConfigurationVersionCreateOptions{})
@@ -39,6 +46,26 @@ func TestConfigurationVersionsCreate(t *testing.T) {
 		)
 		assert.Nil(t, cv)
 		assert.EqualError(t, err, "invalid value for workspace ID")
+	})
+
+	t.Run("with uploaded blob", func(t *testing.T) {
+		cv, err := client.ConfigurationVersions.Create(ctx,
+			ConfigurationVersionCreateOptions{Workspace: wsTest},
+		)
+		require.NoError(t, err)
+		uploadBlob(cv.Links["upload"])
+
+		i := 1
+		for ; i <= 10; i++ {
+			refreshed, err := client.ConfigurationVersions.Read(ctx, cv.ID)
+			require.NoError(t, err)
+			assert.Equal(t, cv.ID, refreshed.ID)
+			if refreshed.Status == ConfigurationUploaded {
+				return
+			}
+			time.Sleep(time.Second)
+		}
+		assert.NotEqual(t, 10, i)
 	})
 }
 

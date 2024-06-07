@@ -29,7 +29,7 @@ type configurationVersions struct {
 // ConfigurationStatus represents a configuration version status.
 type ConfigurationStatus string
 
-//List all available configuration version statuses.
+// List all available configuration version statuses.
 const (
 	ConfigurationErrored  ConfigurationStatus = "errored"
 	ConfigurationPending  ConfigurationStatus = "pending"
@@ -44,6 +44,8 @@ type ConfigurationVersion struct {
 	Status ConfigurationStatus `jsonapi:"attr,status"`
 	// Relations
 	Workspace *Workspace `jsonapi:"relation,workspace"`
+	// Links
+	Links map[string]string
 }
 
 // ConfigurationVersionCreateOptions represents the options for creating a
