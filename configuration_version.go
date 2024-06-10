@@ -44,8 +44,6 @@ type ConfigurationVersion struct {
 	Status ConfigurationStatus `jsonapi:"attr,status"`
 	// Relations
 	Workspace *Workspace `jsonapi:"relation,workspace"`
-	// Links
-	Links map[string]string
 }
 
 // ConfigurationVersionCreateOptions represents the options for creating a

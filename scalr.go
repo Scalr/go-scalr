@@ -101,8 +101,6 @@ func DefaultConfig() *Config {
 
 	// Set the default user agent.
 	config.Headers.Set("User-Agent", userAgent)
-	// Set the default API Profile.
-	config.Headers.Set("Prefer", "profile=preview")
 
 	return config
 }
@@ -354,6 +352,7 @@ func (c *Client) newJsonRequest(method, path string, v interface{}) (*retryableh
 }
 
 func (c *Client) createRequest(method, url string, rawBody interface{}, reqHeaders http.Header) (*retryablehttp.Request, error) {
+
 	req, err := retryablehttp.NewRequest(method, url, rawBody)
 	if err != nil {
 		return nil, err
@@ -423,27 +422,14 @@ func (c *Client) do(ctx context.Context, req *retryablehttp.Request, v interface
 		return fmt.Errorf("v must be a struct or an io.Writer")
 	}
 
-	response, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
 	// Try to get the Items and Pagination struct fields.
 	items := dst.FieldByName("Items")
 	pagination := dst.FieldByName("Pagination")
-	links := dst.FieldByName("Links")
-
-	if links.IsValid() {
-		if links.Type().Kind() != reflect.Map {
-			return fmt.Errorf("v.Links must be a map")
-		}
-		unmarshalLinks(bytes.NewReader(response), links)
-	}
 
 	// Unmarshal a single value if v does not contain the
 	// Items and Pagination struct fields.
 	if !items.IsValid() || !pagination.IsValid() {
-		return jsonapi.UnmarshalPayload(bytes.NewReader(response), v)
+		return jsonapi.UnmarshalPayload(resp.Body, v)
 	}
 
 	// Return an error if v.Items is not a slice.
@@ -452,8 +438,11 @@ func (c *Client) do(ctx context.Context, req *retryablehttp.Request, v interface
 	}
 
 	// Create a temporary buffer and copy all the read data into it.
+	body := bytes.NewBuffer(nil)
+	reader := io.TeeReader(resp.Body, body)
+
 	// Unmarshal as a list of values as v.Items is a slice.
-	raw, err := jsonapi.UnmarshalManyPayload(bytes.NewReader(response), items.Type().Elem())
+	raw, err := jsonapi.UnmarshalManyPayload(reader, items.Type().Elem())
 	if err != nil {
 		return err
 	}
@@ -472,7 +461,7 @@ func (c *Client) do(ctx context.Context, req *retryablehttp.Request, v interface
 
 	// As we are getting a list of values, we need to decode
 	// the pagination details out of the response body.
-	p, err := parsePagination(bytes.NewReader(response))
+	p, err := parsePagination(body)
 	if err != nil {
 		return err
 	}
@@ -515,30 +504,6 @@ func parsePagination(body io.Reader) (*Pagination, error) {
 	}
 
 	return &raw.Meta.Pagination, nil
-}
-
-func unmarshalLinks(body io.Reader, links reflect.Value) error {
-	var raw struct {
-		Data struct {
-			Links map[string]string `json:"links"`
-		} `json:"data"`
-	}
-
-	// JSON decode the raw response.
-	if err := json.NewDecoder(body).Decode(&raw); err != nil {
-		return err
-	}
-
-	links.Set(reflect.MakeMap(reflect.ValueOf(raw.Data.Links).Type()))
-
-	// Add all of the results to the new map.
-	for k, v := range raw.Data.Links {
-		targetKey := reflect.ValueOf(k)
-		targetValue := reflect.ValueOf(v)
-		links.SetMapIndex(targetKey, targetValue)
-	}
-
-	return nil
 }
 
 // checkResponseCode can be used to check the status code of an HTTP request.
