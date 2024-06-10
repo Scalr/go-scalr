@@ -108,13 +108,14 @@ type Workspace struct {
 	VarFiles                  []string               `jsonapi:"attr,var-files"`
 
 	// Relations
-	CurrentRun    *Run           `jsonapi:"relation,current-run"`
-	Environment   *Environment   `jsonapi:"relation,environment"`
-	CreatedBy     *User          `jsonapi:"relation,created-by"`
-	VcsProvider   *VcsProvider   `jsonapi:"relation,vcs-provider"`
-	AgentPool     *AgentPool     `jsonapi:"relation,agent-pool"`
-	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
-	Tags          []*Tag         `jsonapi:"relation,tags"`
+	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
+	Environment          *Environment          `jsonapi:"relation,environment"`
+	CreatedBy            *User                 `jsonapi:"relation,created-by"`
+	VcsProvider          *VcsProvider          `jsonapi:"relation,vcs-provider"`
+	AgentPool            *AgentPool            `jsonapi:"relation,agent-pool"`
+	ModuleVersion        *ModuleVersion        `jsonapi:"relation,module-version,omitempty"`
+	Tags                 []*Tag                `jsonapi:"relation,tags"`
+	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
 }
 
 // Hooks contains the custom hooks field.
