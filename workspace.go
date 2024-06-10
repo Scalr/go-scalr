@@ -1,7 +1,9 @@
 package scalr
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -35,7 +37,7 @@ type Workspaces interface {
 	SetSchedule(ctx context.Context, workspaceID string, options WorkspaceRunScheduleOptions) (*Workspace, error)
 
 	// Read outputs
-	ReadOutputs(ctx context.Context, workspaceID string) (*OutputsList, error)
+	ReadOutputs(ctx context.Context, workspaceID string) ([]*Output, error)
 }
 
 // workspaces implements Workspaces.
@@ -181,11 +183,6 @@ type Output struct {
 	Name      string `json:"name"`
 	Value     string `json:"value"`
 	Sensitive bool   `json:"sensitive"`
-}
-
-type OutputsList struct {
-	*Pagination
-	Items []*Output
 }
 
 // List all the workspaces within an environment.
@@ -514,7 +511,7 @@ func (s *workspaces) SetSchedule(ctx context.Context, workspaceID string, option
 	return w, nil
 }
 
-func (s *workspaces) ReadOutputs(ctx context.Context, workspaceID string) (*OutputsList, error) {
+func (s *workspaces) ReadOutputs(ctx context.Context, workspaceID string) ([]*Output, error) {
 	if !validStringID(&workspaceID) {
 		return nil, errors.New("invalid value for workspace ID")
 	}
@@ -525,11 +522,18 @@ func (s *workspaces) ReadOutputs(ctx context.Context, workspaceID string) (*Outp
 		return nil, err
 	}
 
-	outputs := &OutputsList{}
-	err = s.client.do(ctx, req, outputs)
-	if err != nil {
+	buffer := &bytes.Buffer{}
+	if err = s.client.do(ctx, req, buffer); err != nil {
 		return nil, err
 	}
 
-	return outputs, nil
+	outputs := struct {
+		Data []*Output `json:"data"`
+	}{}
+
+	if err = json.Unmarshal(buffer.Bytes(), &outputs); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response body: %v", err)
+	}
+
+	return outputs.Data, nil
 }
