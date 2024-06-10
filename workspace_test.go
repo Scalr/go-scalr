@@ -563,6 +563,6 @@ func TestWorkspacesReadOutputs(t *testing.T) {
 		outputs, err := client.Workspaces.ReadOutputs(ctx, wsTest.ID)
 		require.NoError(t, err)
 
-		assert.Empty(t, outputs.Items)
+		assert.Empty(t, outputs)
 	})
 }
