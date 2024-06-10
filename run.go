@@ -83,7 +83,8 @@ type Run struct {
 // RunCreateOptions represents the options for creating a new run.
 type RunCreateOptions struct {
 	// For internal use only!
-	ID string `jsonapi:"primary,runs"`
+	ID        string `jsonapi:"primary,runs"`
+	IsDestroy *bool  `jsonapi:"attr,is-destroy,omitempty"`
 
 	// Specifies the configuration version to use for this run.
 	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
