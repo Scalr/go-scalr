@@ -99,7 +99,7 @@ func (o RunCreateOptions) valid() error {
 	if !validStringID(&o.Workspace.ID) {
 		return errors.New("invalid value for workspace ID")
 	}
-	if !validStringID(&o.ConfigurationVersion.ID) {
+	if o.ConfigurationVersion != nil && !validStringID(&o.ConfigurationVersion.ID) {
 		return errors.New("invalid value for configuration-version ID")
 	}
 	return nil
