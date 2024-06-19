@@ -543,3 +543,25 @@ func createSlackIntegration(
 		}
 	}
 }
+
+func createRunScheduleRule(t *testing.T, client *Client, workspace *Workspace, mode ScheduleMode) (*RunScheduleRule, func()) {
+	ctx := context.Background()
+	options := RunScheduleRuleCreateOptions{
+		Schedule:     "0 0 * * *",
+		ScheduleMode: mode,
+		Workspace:    workspace,
+	}
+	rule, err := client.RunScheduleRules.Create(ctx, options)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return rule, func() {
+		if err := client.RunScheduleRules.Delete(ctx, rule.ID); err != nil {
+			t.Errorf("Error destroying run schedule rule! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"Run schedule rule: %s\nError: %s", rule.ID, err)
+		}
+	}
+}
