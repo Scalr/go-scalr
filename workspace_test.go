@@ -551,3 +551,18 @@ func TestWorkspacesSetSchedule(t *testing.T) {
 		assert.EqualError(t, err, "invalid value for workspace ID")
 	})
 }
+
+func TestWorkspacesReadOutputs(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+
+	wsTest, wsTestCleanup := createWorkspace(t, client, nil)
+	defer wsTestCleanup()
+
+	t.Run("no outputs", func(t *testing.T) {
+		outputs, err := client.Workspaces.ReadOutputs(ctx, wsTest.ID)
+		require.NoError(t, err)
+
+		assert.Empty(t, outputs)
+	})
+}

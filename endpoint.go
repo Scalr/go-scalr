@@ -101,7 +101,7 @@ func (o EndpointCreateOptions) valid() error {
 		return errors.New("name is required")
 	}
 	if !validString(o.Url) {
-		return errors.New("Url is required")
+		return errors.New("url is required")
 	}
 	return nil
 }

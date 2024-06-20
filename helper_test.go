@@ -167,6 +167,7 @@ func createConfigurationVersion(t *testing.T, client *Client, ws *Workspace) (*C
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return cv, func() {
 		if wsCleanup != nil {
 			wsCleanup()
@@ -176,11 +177,14 @@ func createConfigurationVersion(t *testing.T, client *Client, ws *Workspace) (*C
 
 func createRun(t *testing.T, client *Client, ws *Workspace, cv *ConfigurationVersion) (*Run, func()) {
 	var wsCleanup func()
+	var cvCleanup func()
 
 	if ws == nil {
 		ws, wsCleanup = createWorkspace(t, client, nil)
 	}
-	cv, cvCleanup := createConfigurationVersion(t, client, ws)
+	if cv == nil {
+		cv, cvCleanup = createConfigurationVersion(t, client, ws)
+	}
 
 	ctx := context.Background()
 	run, err := client.Runs.Create(ctx, RunCreateOptions{
@@ -378,31 +382,6 @@ func createProviderConfiguration(t *testing.T, client *Client, providerName stri
 			Name:         String(configurationName),
 			ProviderName: String(providerName),
 			IsShared:     Bool(true),
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return config, func() {
-		if err := client.ProviderConfigurations.Delete(ctx, config.ID); err != nil {
-			t.Errorf("Error destroying provider configuration ! WARNING: Dangling resources\n"+
-				"may exist! The full error is shown below.\n\n"+
-				"Provider configuration: %s\nError: %s", config.ID, err)
-		}
-	}
-}
-
-func createProviderConfigurationScalr(t *testing.T, client *Client, providerName string, configurationName string, scalrHostname string, scalrToken string) (*ProviderConfiguration, func()) {
-	ctx := context.Background()
-	config, err := client.ProviderConfigurations.Create(
-		ctx,
-		ProviderConfigurationCreateOptions{
-			Account:       &Account{ID: defaultAccountID},
-			Name:          String(configurationName),
-			ProviderName:  String(providerName),
-			ScalrToken:    String(scalrToken),
-			ScalrHostname: String(scalrHostname),
 		},
 	)
 	if err != nil {

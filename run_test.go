@@ -56,7 +56,7 @@ func TestRunsCreate(t *testing.T) {
 		}
 
 		_, err := client.Runs.Create(ctx, options)
-		assert.EqualError(t, err, "configuration-version is required")
+		assert.EqualError(t, err, "Invalid Relationship\n\nNo configuration versions available to create the run from. Upload at least one or link the workspace to a VCS provider.")
 	})
 
 	t.Run("with invalid configuration-version ID", func(t *testing.T) {

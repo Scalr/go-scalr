@@ -1,7 +1,9 @@
 package scalr
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -33,6 +35,9 @@ type Workspaces interface {
 
 	// SetSchedule sets run schedules for workspace.
 	SetSchedule(ctx context.Context, workspaceID string, options WorkspaceRunScheduleOptions) (*Workspace, error)
+
+	// Read outputs
+	ReadOutputs(ctx context.Context, workspaceID string) ([]*Output, error)
 }
 
 // workspaces implements Workspaces.
@@ -103,13 +108,14 @@ type Workspace struct {
 	VarFiles                  []string               `jsonapi:"attr,var-files"`
 
 	// Relations
-	CurrentRun    *Run           `jsonapi:"relation,current-run"`
-	Environment   *Environment   `jsonapi:"relation,environment"`
-	CreatedBy     *User          `jsonapi:"relation,created-by"`
-	VcsProvider   *VcsProvider   `jsonapi:"relation,vcs-provider"`
-	AgentPool     *AgentPool     `jsonapi:"relation,agent-pool"`
-	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
-	Tags          []*Tag         `jsonapi:"relation,tags"`
+	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
+	Environment          *Environment          `jsonapi:"relation,environment"`
+	CreatedBy            *User                 `jsonapi:"relation,created-by"`
+	VcsProvider          *VcsProvider          `jsonapi:"relation,vcs-provider"`
+	AgentPool            *AgentPool            `jsonapi:"relation,agent-pool"`
+	ModuleVersion        *ModuleVersion        `jsonapi:"relation,module-version,omitempty"`
+	Tags                 []*Tag                `jsonapi:"relation,tags"`
+	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
 }
 
 // Hooks contains the custom hooks field.
@@ -172,6 +178,12 @@ type WorkspaceFilter struct {
 type WorkspaceRunScheduleOptions struct {
 	ApplySchedule   *string `json:"apply-schedule"`
 	DestroySchedule *string `json:"destroy-schedule"`
+}
+
+type Output struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Sensitive bool   `json:"sensitive"`
 }
 
 // List all the workspaces within an environment.
@@ -498,4 +510,31 @@ func (s *workspaces) SetSchedule(ctx context.Context, workspaceID string, option
 	}
 
 	return w, nil
+}
+
+func (s *workspaces) ReadOutputs(ctx context.Context, workspaceID string) ([]*Output, error) {
+	if !validStringID(&workspaceID) {
+		return nil, errors.New("invalid value for workspace ID")
+	}
+
+	u := fmt.Sprintf("workspaces/%s/outputs", url.QueryEscape(workspaceID))
+	req, err := s.client.newJsonRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := &bytes.Buffer{}
+	if err = s.client.do(ctx, req, buffer); err != nil {
+		return nil, err
+	}
+
+	outputs := struct {
+		Data []*Output `json:"data"`
+	}{}
+
+	if err = json.Unmarshal(buffer.Bytes(), &outputs); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response body: %v", err)
+	}
+
+	return outputs.Data, nil
 }
