@@ -141,9 +141,11 @@ func TestRunScheduleRulesUpdate(t *testing.T) {
 	defer scheduleRuleBCleanup()
 
 	t.Run("with valid options", func(t *testing.T) {
+		schedule := "* * * * *"
+		scheduleMode := ScheduleModeDestroy
 		options := RunScheduleRuleUpdateOptions{
-			Schedule:     "* * * * *",
-			ScheduleMode: ScheduleModeDestroy,
+			Schedule:     &schedule,
+			ScheduleMode: &scheduleMode,
 		}
 
 		rule, err := client.RunScheduleRules.Update(ctx, scheduleRuleA.ID, options)
@@ -163,9 +165,11 @@ func TestRunScheduleRulesUpdate(t *testing.T) {
 	})
 
 	t.Run("with mode collision", func(t *testing.T) {
+		schedule := "* * * * *"
+		scheduleMode := ScheduleModeRefresh
 		rule, err := client.RunScheduleRules.Update(ctx, scheduleRuleA.ID, RunScheduleRuleUpdateOptions{
-			Schedule:     "* * * * *",
-			ScheduleMode: ScheduleModeRefresh,
+			Schedule:     &schedule,
+			ScheduleMode: &scheduleMode,
 		})
 		assert.Nil(t, rule)
 		assert.Error(t, err)
