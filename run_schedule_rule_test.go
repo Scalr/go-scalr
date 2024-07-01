@@ -159,8 +159,8 @@ func TestRunScheduleRulesUpdate(t *testing.T) {
 			rule,
 			refreshed,
 		} {
-			assert.Equal(t, options.Schedule, item.Schedule)
-			assert.Equal(t, options.ScheduleMode, item.ScheduleMode)
+			assert.Equal(t, *options.Schedule, item.Schedule)
+			assert.Equal(t, *options.ScheduleMode, item.ScheduleMode)
 		}
 	})
 
