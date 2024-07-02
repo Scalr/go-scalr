@@ -148,6 +148,7 @@ type Client struct {
 	WebhookIntegrations             WebhookIntegrations
 	WorkspaceTags                   WorkspaceTags
 	Workspaces                      Workspaces
+	RunScheduleRules                RunScheduleRules
 }
 
 // NewClient creates a new Scalr API client.
@@ -247,6 +248,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.WebhookIntegrations = &webhookIntegrations{client: client}
 	client.WorkspaceTags = &workspaceTag{client: client}
 	client.Workspaces = &workspaces{client: client}
+	client.RunScheduleRules = &runScheduleRules{client: client}
 	return client, nil
 }
 
