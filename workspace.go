@@ -108,7 +108,7 @@ type Workspace struct {
 	VarFiles                  []string               `jsonapi:"attr,var-files"`
 
 	// Relations
-	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
+	CurrentRun           *Run                  `jsonapi:"relation,latest-run"`
 	Environment          *Environment          `jsonapi:"relation,environment"`
 	CreatedBy            *User                 `jsonapi:"relation,created-by"`
 	VcsProvider          *VcsProvider          `jsonapi:"relation,vcs-provider"`
