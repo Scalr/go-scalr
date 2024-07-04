@@ -121,6 +121,7 @@ type Client struct {
 	Accounts                        Accounts
 	AgentPoolTokens                 AgentPoolTokens
 	AgentPools                      AgentPools
+	EventBridgeIntegrations         EventBridgeIntegrations
 	ConfigurationVersions           ConfigurationVersions
 	Endpoints                       Endpoints
 	EnvironmentTags                 EnvironmentTags
@@ -249,6 +250,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.WorkspaceTags = &workspaceTag{client: client}
 	client.Workspaces = &workspaces{client: client}
 	client.RunScheduleRules = &runScheduleRules{client: client}
+	client.EventBridgeIntegrations = &eventBridgeIntegrations{client: client}
 	return client, nil
 }
 
