@@ -44,6 +44,8 @@ type EventBridgeIntegration struct {
 
 type EventBridgeIntegrationListOptions struct {
 	ListOptions
+
+	Name *string `url:"filter[name],omitempty"`
 }
 
 type EventBridgeIntegrationCreateOptions struct {
