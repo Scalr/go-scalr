@@ -13,9 +13,9 @@ var _ EventBridgeIntegrations = (*eventBridgeIntegrations)(nil)
 type EventBridgeIntegrations interface {
 	List(ctx context.Context, options EventBridgeIntegrationListOptions) (*EventBridgeIntegrationList, error)
 	Create(ctx context.Context, options EventBridgeIntegrationCreateOptions) (*EventBridgeIntegration, error)
-	Read(ctx context.Context, wi string) (*EventBridgeIntegration, error)
-	Update(ctx context.Context, wi string, options EventBridgeIntegrationUpdateOptions) (*EventBridgeIntegration, error)
-	Delete(ctx context.Context, wi string) error
+	Read(ctx context.Context, id string) (*EventBridgeIntegration, error)
+	Update(ctx context.Context, id string, options EventBridgeIntegrationUpdateOptions) (*EventBridgeIntegration, error)
+	Delete(ctx context.Context, id string) error
 }
 
 // eventBridgeIntegrations implements EventBridgeIntegrations.
@@ -68,13 +68,13 @@ func (s *eventBridgeIntegrations) List(
 		return nil, err
 	}
 
-	wl := &EventBridgeIntegrationList{}
-	err = s.client.do(ctx, req, wl)
+	eil := &EventBridgeIntegrationList{}
+	err = s.client.do(ctx, req, eil)
 	if err != nil {
 		return nil, err
 	}
 
-	return wl, nil
+	return eil, nil
 }
 
 func (s *eventBridgeIntegrations) Create(
@@ -88,66 +88,66 @@ func (s *eventBridgeIntegrations) Create(
 		return nil, err
 	}
 
-	w := &EventBridgeIntegration{}
-	err = s.client.do(ctx, req, w)
+	ei := &EventBridgeIntegration{}
+	err = s.client.do(ctx, req, ei)
 	if err != nil {
 		return nil, err
 	}
 
-	return w, nil
+	return ei, nil
 }
 
-func (s *eventBridgeIntegrations) Read(ctx context.Context, ei string) (*EventBridgeIntegration, error) {
-	if !validStringID(&ei) {
+func (s *eventBridgeIntegrations) Read(ctx context.Context, id string) (*EventBridgeIntegration, error) {
+	if !validStringID(&id) {
 		return nil, errors.New("invalid value for EventBridge integration ID")
 	}
 
-	u := fmt.Sprintf("integrations/aws-event-bridge/%s", url.QueryEscape(ei))
+	u := fmt.Sprintf("integrations/aws-event-bridge/%s", url.QueryEscape(id))
 	req, err := s.client.newRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	w := &EventBridgeIntegration{}
-	err = s.client.do(ctx, req, w)
+	ei := &EventBridgeIntegration{}
+	err = s.client.do(ctx, req, ei)
 	if err != nil {
 		return nil, err
 	}
 
-	return w, nil
+	return ei, nil
 }
 
 func (s *eventBridgeIntegrations) Update(
-	ctx context.Context, si string, options EventBridgeIntegrationUpdateOptions,
+	ctx context.Context, id string, options EventBridgeIntegrationUpdateOptions,
 ) (*EventBridgeIntegration, error) {
-	if !validStringID(&si) {
-		return nil, errors.New("invalid value for slack integration ID")
+	if !validStringID(&id) {
+		return nil, errors.New("invalid value for EventBridge integration ID")
 	}
 
 	// Make sure we don't send a user provided ID.
 	options.ID = ""
 
-	u := fmt.Sprintf("integrations/aws-event-bridge/%s", url.QueryEscape(si))
+	u := fmt.Sprintf("integrations/aws-event-bridge/%s", url.QueryEscape(id))
 	req, err := s.client.newRequest("PATCH", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
-	w := &EventBridgeIntegration{}
-	err = s.client.do(ctx, req, w)
+	ei := &EventBridgeIntegration{}
+	err = s.client.do(ctx, req, ei)
 	if err != nil {
 		return nil, err
 	}
 
-	return w, nil
+	return ei, nil
 }
 
-func (s *eventBridgeIntegrations) Delete(ctx context.Context, si string) error {
-	if !validStringID(&si) {
-		return errors.New("invalid value for slack integration ID")
+func (s *eventBridgeIntegrations) Delete(ctx context.Context, id string) error {
+	if !validStringID(&id) {
+		return errors.New("invalid value for EventBridge integration ID")
 	}
 
-	u := fmt.Sprintf("integrations/aws-event-bridge/%s", url.QueryEscape(si))
+	u := fmt.Sprintf("integrations/aws-event-bridge/%s", url.QueryEscape(id))
 	req, err := s.client.newRequest("DELETE", u, nil)
 	if err != nil {
 		return err
