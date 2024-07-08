@@ -52,6 +52,7 @@ type ModuleVersionListOptions struct {
 	Module  string  `url:"filter[module]"`
 	Status  *string `url:"filter[status],omitempty"`
 	Version *string `url:"filter[version],omitempty"`
+	Sort    *string `url:"sort,omitempty"`
 	Include string  `url:"include,omitempty"`
 }
 
@@ -88,6 +89,11 @@ func (s *moduleVersions) Read(ctx context.Context, moduleVersionID string) (*Mod
 func (s *moduleVersions) List(ctx context.Context, options ModuleVersionListOptions) (*ModuleVersionList, error) {
 	if err := options.validate(); err != nil {
 		return nil, err
+	}
+
+	// Sort module versions by `-version` (latest will be first) by default
+	if options.Sort == nil {
+		options.Sort = String("-version")
 	}
 
 	req, err := s.client.newRequest("GET", "module-versions", &options)
