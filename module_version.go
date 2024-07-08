@@ -91,11 +91,6 @@ func (s *moduleVersions) List(ctx context.Context, options ModuleVersionListOpti
 		return nil, err
 	}
 
-	// Sort module versions by `-version` (latest will be first) by default
-	if options.Sort == nil {
-		options.Sort = String("-version")
-	}
-
 	req, err := s.client.newRequest("GET", "module-versions", &options)
 	if err != nil {
 		return nil, err
