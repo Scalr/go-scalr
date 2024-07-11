@@ -88,6 +88,7 @@ type Workspace struct {
 	DeletionProtectionEnabled bool                   `jsonapi:"attr,deletion-protection-enabled"`
 	CanQueueDestroyPlan       bool                   `jsonapi:"attr,can-queue-destroy-plan"`
 	CreatedAt                 time.Time              `jsonapi:"attr,created-at,iso8601"`
+	UpdatedAt                 time.Time              `jsonapi:"attr,updated-at,iso8601"`
 	FileTriggersEnabled       bool                   `jsonapi:"attr,file-triggers-enabled"`
 	Locked                    bool                   `jsonapi:"attr,locked"`
 	MigrationEnvironment      string                 `jsonapi:"attr,migration-environment"`
