@@ -55,6 +55,10 @@ type WebhookHeader struct {
 	Sensitive bool   `json:"sensitive"`
 }
 
+type EventDefinition struct {
+	ID string `jsonapi:"primary,event-definitions"`
+}
+
 type WebhookIntegrationListOptions struct {
 	ListOptions
 
