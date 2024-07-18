@@ -122,7 +122,6 @@ type Client struct {
 	AgentPoolTokens                 AgentPoolTokens
 	AgentPools                      AgentPools
 	ConfigurationVersions           ConfigurationVersions
-	Endpoints                       Endpoints
 	EnvironmentTags                 EnvironmentTags
 	Environments                    Environments
 	ModuleVersions                  ModuleVersions
@@ -221,7 +220,6 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.AgentPoolTokens = &agentPoolTokens{client: client}
 	client.AgentPools = &agentPools{client: client}
 	client.ConfigurationVersions = &configurationVersions{client: client}
-	client.Endpoints = &endpoints{client: client}
 	client.EnvironmentTags = &environmentTag{client: client}
 	client.Environments = &environments{client: client}
 	client.ModuleVersions = &moduleVersions{client: client}
