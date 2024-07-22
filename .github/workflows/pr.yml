@@ -82,24 +82,24 @@ jobs:
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       - name: Copy secrets
         shell: bash
         run: |
           mkdir ~/.scalr-labs
-          gsutil cp gs://tacobell_development-156220/.secrets.yaml fatmouse/tacobell/.secrets.yaml
-          gsutil cp gs://tacobell_development-156220/github.json ~/.scalr-labs/github.json
+          gsutil cp gs://tacobell-secrets/.secrets.yaml fatmouse/tacobell/.secrets.yaml
+          gsutil cp gs://tacobell-secrets/github.json ~/.scalr-labs/github.json
       - name: Configure docker
         shell: bash
-        run: gcloud auth configure-docker eu.gcr.io
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
       - name: Pull python builder
         shell: bash
         run: |
           echo "::group::Pull python builder image"
-          docker pull eu.gcr.io/development-156220/fatmouse/python-builder:master
-          docker tag eu.gcr.io/development-156220/fatmouse/python-builder:master fatmouse/python-builder:master
+          docker pull us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder:master
+          docker tag us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder:master fatmouse/python-builder:master
           echo "::endgroup::"
       - name: Generate run tag
         shell: bash
