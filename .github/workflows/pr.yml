@@ -98,8 +98,8 @@ jobs:
         shell: bash
         run: |
           echo "::group::Pull python builder image"
-          docker pull eu.gcr.io/development-156220/fatmouse/python-builder:master
-          docker tag eu.gcr.io/development-156220/fatmouse/python-builder:master fatmouse/python-builder:master
+          docker pull us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder:master
+          docker tag us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder:master fatmouse/python-builder:master
           echo "::endgroup::"
       - name: Generate run tag
         shell: bash
