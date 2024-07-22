@@ -93,7 +93,7 @@ jobs:
           gsutil cp gs://tacobell_development-156220/github.json ~/.scalr-labs/github.json
       - name: Configure docker
         shell: bash
-        run: gcloud auth configure-docker eu.gcr.io
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
       - name: Pull python builder
         shell: bash
         run: |
