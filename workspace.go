@@ -109,6 +109,7 @@ type Workspace struct {
 
 	// Relations
 	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
+	LatestRun            *Run                  `jsonapi:"relation,latest-run"`
 	Environment          *Environment          `jsonapi:"relation,environment"`
 	CreatedBy            *User                 `jsonapi:"relation,created-by"`
 	VcsProvider          *VcsProvider          `jsonapi:"relation,vcs-provider"`
