@@ -108,7 +108,7 @@ jobs:
 
       - name: Pull Python Builder
         shell: bash
-        run: |          
+        run: |
           echo "::group::Pull python builder image"
           builder_path=us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder
           exists=$(docker manifest inspect $builder_path:${{ inputs.pr_branch }} > /dev/null ; echo $?)
