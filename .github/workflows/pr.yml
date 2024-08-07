@@ -18,8 +18,8 @@ on:
 
 jobs:
   tests:
+    name: Tests
     runs-on: ubuntu-latest
-    name: tests
     concurrency:
       group: ${{ github.workflow }}-${{ inputs.pr_id }}
       cancel-in-progress: true
@@ -34,17 +34,21 @@ jobs:
           app_id: ${{vars.SUDO_GHA_APP_ID}}
           installation_id: ${{vars.SUDO_GHA_APP_INSTALLATION_ID}}
           private_key: ${{secrets.SUDO_GHA_APP_PRIVATE_KEY}}
+
       - uses: actions/checkout@v4
-      - name: Log pr link
+
+      - name: Log PR Link
         run: |
           echo ":taco: Pull request: https://github.com/Scalr/${{ inputs.repo }}/pull/${{ inputs.pr_id }} " >> $GITHUB_STEP_SUMMARY
-      - name: Get current job log URL
+
+      - name: Get Current Job Log URL
         uses: Tiryoh/gha-jobid-action@v0
         id: get-job-id
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           job_name: ${{ github.job }}
-      - name: Set pending status
+
+      - name: Set Pending Status
         uses: actions/github-script@v7
         with:
           github-token: ${{steps.generate_token.outputs.token}}
@@ -58,17 +62,20 @@ jobs:
               context: 'go-scalr',
               target_url: '${{ steps.get-job-id.outputs.html_url }}',
             })
+
       - uses: actions/setup-go@v5
         with:
           go-version: "1.18"
-      - name: Clone fatmouse repo
+
+      - name: Clone Fatmouse Repository
         uses: actions/checkout@v4
         with:
           repository: Scalr/fatmouse
           path: fatmouse
           ref: ${{ inputs.pr_branch }}
           token: ${{steps.generate_token.outputs.token}}
-      - name: Get pr labels
+
+      - name: Get PR Labels
         id: pr-labels
         uses: ./fatmouse/.github/actions/pr-labels
         with:
@@ -76,13 +83,16 @@ jobs:
           owner: Scalr
           repo: fatmouse
           pr_id: ${{ inputs.pr_id }}
+
       - name: Set DB_BRANCH
         if: ${{ contains(github.event.head_commit.message, '[DB_BRANCH]') }}
         run: echo "DB_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       - name: Copy secrets
@@ -91,17 +101,27 @@ jobs:
           mkdir ~/.scalr-labs
           gsutil cp gs://tacobell-secrets/.secrets.yaml fatmouse/tacobell/.secrets.yaml
           gsutil cp gs://tacobell-secrets/github.json ~/.scalr-labs/github.json
-      - name: Configure docker
+
+      - name: Configure Docker
         shell: bash
         run: gcloud auth configure-docker us-central1-docker.pkg.dev
-      - name: Pull python builder
+
+      - name: Pull Python Builder
         shell: bash
-        run: |
+        run: |          
           echo "::group::Pull python builder image"
-          docker pull us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder:master
-          docker tag us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder:master fatmouse/python-builder:master
+          builder_path=us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder
+          exists=$(docker manifest inspect $builder_path:${{ inputs.pr_branch }} > /dev/null ; echo $?)
+          if [[ $exists == "0" ]]; then
+            docker pull $builder_path:${{ inputs.pr_branch }}
+            docker tag $builder_path:${{ inputs.pr_branch }} fatmouse/python-builder:base
+          else
+            docker pull $builder_path:master
+            docker tag $builder_path:master fatmouse/python-builder:base
+          fi
           echo "::endgroup::"
-      - name: Generate run tag
+
+      - name: Generate Run Tag
         shell: bash
         run: |
           if [ ${{ github.run_attempt }} = 1 ]; then
@@ -110,7 +130,8 @@ jobs:
             RERUN_SUFFIX=$(echo -${{ github.run_attempt }})
           fi
           echo "RUN_TAG=e2e-go-scalr-external-pr-${{ github.run_number }}${RERUN_SUFFIX}" >> $GITHUB_ENV
-      - name: Create container
+
+      - name: Create Container
         id: create
         shell: bash
         run: |
@@ -121,18 +142,20 @@ jobs:
           -v $PWD/fatmouse:/fatmouse \
           -v $GITHUB_OUTPUT:/fatmouse/output \
           -v ~/.scalr-labs:/etc/scalr-labs \
-          fatmouse/python-builder:master python -u clickfile.py te up \
+          fatmouse/python-builder:base python -u clickfile.py te up \
           --branch ${{ inputs.pr_branch }} \
           --run-url ${{ steps.get-job-id.outputs.html_url }} \
           --skip-ui-build \
           --agent-pool-id="${{ !contains(steps.pr-labels.outputs.labels, ' e2e:tev2_on_server ') && vars.TACO_APOOL_ID || '' }}" \
           ${{ env.RUN_TAG }}
-      - name: Get Scalr hostname
+
+      - name: Get Scalr Hostname
         shell: bash
         run: |
           SCALR_HOST=${{ steps.create.outputs.host }}
           echo "SCALR_ADDRESS=https://mainiacp.${SCALR_HOST/https:\/\//}" >> $GITHUB_ENV
-      - name: Run tests
+
+      - name: Run Tests
         id: run-tests
         env:
           SCALR_ADDRESS: ${{ env.SCALR_ADDRESS }}
@@ -146,7 +169,8 @@ jobs:
           TEST_ARM_TENANT_ID: ${{ secrets.TEST_ARM_TENANT_ID }}
           TEST_ARM_SUBSCRIPTION_ID: ${{ secrets.TEST_ARM_SUBSCRIPTION_ID }}
         run: make test
-      - name: Set commit status after tests
+
+      - name: Set Commit Status After Tests
         if: ${{ always() && (steps.run-tests.outcome == 'failure' ||  steps.run-tests.outcome == 'success') }}
         uses: actions/github-script@v7
         with:
@@ -161,7 +185,8 @@ jobs:
               context: 'go-scalr',
               target_url: '${{ steps.get-job-id.outputs.html_url }}',
             })
-      - name: Set commit status on interrupted workflow
+
+      - name: Set Commit Status on Interrupted Workflow
         if: ${{ always() && steps.run-tests.outcome != 'failure' &&  steps.run-tests.outcome != 'success' }}
         uses: actions/github-script@v7
         with:
@@ -176,7 +201,8 @@ jobs:
               context: 'go-scalr',
               target_url: '${{ steps.get-job-id.outputs.html_url }}',
             })
-      - name: Add comment on failed tests
+
+      - name: Add Comment on Failed Tests
         if: ${{ always() && steps.run-tests.outcome == 'failure' }}
         uses: actions/github-script@v7
         with:
@@ -187,7 +213,8 @@ jobs:
             const message = '**go-scalr tests failed**\nJob url ${{ steps.get-job-id.outputs.html_url }}';
             await github.rest.issues.createComment({owner, repo, issue_number, body: message});
           github-token: ${{steps.generate_token.outputs.token}}
-      - name: Delete container
+
+      - name: Delete Container
         id: delete
         if: ${{ always() }}
         shell: bash
@@ -196,6 +223,6 @@ jobs:
           -w /fatmouse \
           -v $PWD/fatmouse:/fatmouse \
           -v ~/.scalr-labs:/etc/scalr-labs \
-          fatmouse/python-builder:master \
+          fatmouse/python-builder:base \
           python -u clickfile.py te rm \
           --no-wait ${{ env.RUN_TAG }}

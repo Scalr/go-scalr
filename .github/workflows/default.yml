@@ -17,8 +17,8 @@ jobs:
         with:
           version: v1.45.2
   tests:
+    name: Tests
     runs-on: ubuntu-latest
-    name: tests
     env:
       SCALR_TOKEN: ${{ secrets.SCALR_TOKEN }}
       UPSTREAM_ID: ${{ github.run_number }}
@@ -30,13 +30,17 @@ jobs:
           app_id: ${{vars.SUDO_GHA_APP_ID}}
           installation_id: ${{vars.SUDO_GHA_APP_INSTALLATION_ID}}
           private_key: ${{secrets.SUDO_GHA_APP_PRIVATE_KEY}}
+
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
           go-version: "1.18"
+
       - name: Set API_BRANCH
         run: echo "API_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-      - name: Check if same branch exists in fatmouse repository
+
+      - name: Check if Same Branch Exists in Fatmouse Repository
         id: check-branch
         uses: actions/github-script@v7
         with:
@@ -65,45 +69,61 @@ jobs:
                 core.setFailed('Unexpected error');
               }
             }
-      - name: Clone fatmouse repo
+
+      - name: Clone Fatmouse Repository
         uses: actions/checkout@v4
         with:
           repository: Scalr/fatmouse
           path: fatmouse
           ref: ${{ steps.check-branch.outputs.branch }}
           token: ${{steps.generate_token.outputs.token}}
+
       - name: Set DB_BRANCH
         if: ${{ contains(github.event.head_commit.message, '[DB_BRANCH]') }}
         run: echo "DB_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-      - name: Copy secrets
+
+      - name: Copy Secrets
         shell: bash
         run: |
           mkdir ~/.scalr-labs
           gsutil cp gs://tacobell-secrets/.secrets.yaml fatmouse/tacobell/.secrets.yaml
           gsutil cp gs://tacobell-secrets/github.json ~/.scalr-labs/github.json
-      - name: Configure docker
+
+      - name: Configure Docker
         shell: bash
         run: gcloud auth configure-docker us-central1-docker.pkg.dev
-      - name: Pull python builder
+
+      - name: Pull Python Builder
         shell: bash
-        run: |
+        run: |          
           echo "::group::Pull python builder image"
-          docker pull us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder:master
-          docker tag us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder:master fatmouse/python-builder:master
+          builder_path=us-central1-docker.pkg.dev/scalr-dev/main-docker/fatmouse/python-builder
+          exists=$(docker manifest inspect $builder_path:${{ github.ref_name }} > /dev/null ; echo $?)
+          if [[ $exists == "0" ]]; then
+            docker pull $builder_path:${{ github.ref_name }}
+            docker tag $builder_path:${{ github.ref_name }} fatmouse/python-builder:base
+          else
+            docker pull $builder_path:master
+            docker tag $builder_path:master fatmouse/python-builder:base
+          fi
           echo "::endgroup::"
+
       - name: Get current job log URL
         uses: Tiryoh/gha-jobid-action@v0
         id: get-job-id
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           job_name: ${{ github.job }}
-      - name: Generate run tag
+
+      - name: Generate Run Tag
         shell: bash
         run: |
           if [ ${{ github.run_attempt }} = 1 ]; then
@@ -112,7 +132,8 @@ jobs:
             RERUN_SUFFIX=$(echo -${{ github.run_attempt }})
           fi
           echo "RUN_TAG=e2e-${{ github.workflow }}-${{ github.job }}-${{ github.run_number }}${RERUN_SUFFIX}" >> $GITHUB_ENV
-      - name: Create container
+
+      - name: Create Container
         id: create
         shell: bash
         run: |
@@ -123,19 +144,21 @@ jobs:
           -v $PWD/fatmouse:/fatmouse \
           -v $GITHUB_OUTPUT:/fatmouse/output \
           -v ~/.scalr-labs:/etc/scalr-labs \
-          fatmouse/python-builder:master python -u clickfile.py te up \
+          fatmouse/python-builder:base python -u clickfile.py te up \
           --branch ${{ env.API_BRANCH }} \
           --run-url ${{ steps.get-job-id.outputs.html_url }} \
           --skip-ui-build \
           --ignore-missing-branches \
           --agent-pool-id="${{vars.TACO_APOOL_ID}}" \
           ${{ env.RUN_TAG }}
-      - name: Get Scalr hostname
+
+      - name: Get Scalr Hostname
         shell: bash
         run: |
           SCALR_HOST=${{ steps.create.outputs.host }}
           echo "SCALR_ADDRESS=https://mainiacp.${SCALR_HOST/https:\/\//}" >> $GITHUB_ENV
-      - name: Run tests
+
+      - name: Run Tests
         env:
           SCALR_ADDRESS: ${{ env.SCALR_ADDRESS }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -148,15 +171,18 @@ jobs:
           TEST_ARM_TENANT_ID: ${{ secrets.TEST_ARM_TENANT_ID }}
           TEST_ARM_SUBSCRIPTION_ID: ${{ secrets.TEST_ARM_SUBSCRIPTION_ID }}
         run: make test
+
       - name: Install goveralls
         env:
           GO111MODULE: off
         run: go get github.com/mattn/goveralls
-      - name: Send coverage
+
+      - name: Send Coverage
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: goveralls -coverprofile=covprofile -service=github
-      - name: Delete container
+
+      - name: Delete Container
         id: delete
         if: ${{ always() }}
         shell: bash
@@ -165,6 +191,6 @@ jobs:
           -w /fatmouse \
           -v $PWD/fatmouse:/fatmouse \
           -v ~/.scalr-labs:/etc/scalr-labs \
-          fatmouse/python-builder:master \
+          fatmouse/python-builder:base \
           python -u clickfile.py te rm \
           --no-wait ${{ env.RUN_TAG }}
