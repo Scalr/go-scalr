@@ -123,7 +123,6 @@ type Client struct {
 	AgentPools                      AgentPools
 	EventBridgeIntegrations         EventBridgeIntegrations
 	ConfigurationVersions           ConfigurationVersions
-	Endpoints                       Endpoints
 	EnvironmentTags                 EnvironmentTags
 	Environments                    Environments
 	ModuleVersions                  ModuleVersions
@@ -145,7 +144,6 @@ type Client struct {
 	Variables                       Variables
 	VcsProviders                    VcsProviders
 	VcsRevisions                    VcsRevisions
-	Webhooks                        Webhooks
 	WebhookIntegrations             WebhookIntegrations
 	WorkspaceTags                   WorkspaceTags
 	Workspaces                      Workspaces
@@ -223,7 +221,6 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.AgentPoolTokens = &agentPoolTokens{client: client}
 	client.AgentPools = &agentPools{client: client}
 	client.ConfigurationVersions = &configurationVersions{client: client}
-	client.Endpoints = &endpoints{client: client}
 	client.EnvironmentTags = &environmentTag{client: client}
 	client.Environments = &environments{client: client}
 	client.ModuleVersions = &moduleVersions{client: client}
@@ -245,7 +242,6 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.Variables = &variables{client: client}
 	client.VcsProviders = &vcsProviders{client: client}
 	client.VcsRevisions = &vcsRevisions{client: client}
-	client.Webhooks = &webhooks{client: client}
 	client.WebhookIntegrations = &webhookIntegrations{client: client}
 	client.WorkspaceTags = &workspaceTag{client: client}
 	client.Workspaces = &workspaces{client: client}
