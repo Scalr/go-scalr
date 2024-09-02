@@ -106,7 +106,7 @@ func TestWorkspacesCreate(t *testing.T) {
 			RunOperationTimeout:       Int(15),
 			AutoQueueRuns:             AutoQueueRunsModePtr(AutoQueueRunsModeNever),
 			IacPlatform:               WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
-			EnvironmentType:           String("testing"),
+			EnvironmentType:           WorkspaceEnvironmentTypePtr("testing"),
 		}
 
 		ws, err := client.Workspaces.Create(ctx, options)
@@ -310,7 +310,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 			RunOperationTimeout:       Int(20),
 			AutoQueueRuns:             AutoQueueRunsModePtr(AutoQueueRunsModeAlways),
 			IacPlatform:               WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
-			EnvironmentType:           String("production"),
+			EnvironmentType:           WorkspaceEnvironmentTypePtr("production"),
 		}
 
 		wsAfter, err := client.Workspaces.Update(ctx, wsTest.ID, options)
