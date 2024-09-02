@@ -326,7 +326,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 		assert.Equal(t, wsTest.WorkingDirectory, wsAfter.WorkingDirectory)
 		assert.Equal(t, int(20), *wsAfter.RunOperationTimeout)
 		assert.Equal(t, wsTest.IaCPlatform, wsAfter.IaCPlatform)
-		assert.Equal(t, wsTest.EnvironmentType, wsAfter.EnvironmentType)
+		assert.Equal(t, *options.EnvironmentType, wsAfter.EnvironmentType)
 	})
 
 	t.Run("when attaching/detaching an agent pool", func(t *testing.T) {

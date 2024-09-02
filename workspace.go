@@ -451,7 +451,7 @@ type WorkspaceUpdateOptions struct {
 	VarFiles []string `jsonapi:"attr,var_files"`
 
 	// The type of the Scalr Workspace environment.
-	EnvironmentType *string `jsonapi:"attr,environment-type"`
+	EnvironmentType *string `jsonapi:"attr,environment-type,omitempty"`
 
 	// Specifies the ModuleVersion based on create workspace
 	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version"`
