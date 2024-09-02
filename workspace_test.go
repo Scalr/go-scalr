@@ -106,6 +106,7 @@ func TestWorkspacesCreate(t *testing.T) {
 			RunOperationTimeout:       Int(15),
 			AutoQueueRuns:             AutoQueueRunsModePtr(AutoQueueRunsModeNever),
 			IacPlatform:               WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
+			EnvironmentType:           String("testing"),
 		}
 
 		ws, err := client.Workspaces.Create(ctx, options)
@@ -131,6 +132,7 @@ func TestWorkspacesCreate(t *testing.T) {
 			assert.Equal(t, options.RunOperationTimeout, item.RunOperationTimeout)
 			assert.Equal(t, *options.AutoQueueRuns, item.AutoQueueRuns)
 			assert.Equal(t, *options.IacPlatform, item.IaCPlatform)
+			assert.Equal(t, *options.EnvironmentType, item.EnvironmentType)
 		}
 	})
 
@@ -308,6 +310,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 			RunOperationTimeout:       Int(20),
 			AutoQueueRuns:             AutoQueueRunsModePtr(AutoQueueRunsModeAlways),
 			IacPlatform:               WorkspaceIaCPlatformPtr(WorkspaceIaCPlatformTerraform),
+			EnvironmentType:           String("production"),
 		}
 
 		wsAfter, err := client.Workspaces.Update(ctx, wsTest.ID, options)
@@ -323,6 +326,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 		assert.Equal(t, wsTest.WorkingDirectory, wsAfter.WorkingDirectory)
 		assert.Equal(t, int(20), *wsAfter.RunOperationTimeout)
 		assert.Equal(t, wsTest.IaCPlatform, wsAfter.IaCPlatform)
+		assert.Equal(t, wsTest.EnvironmentType, wsAfter.EnvironmentType)
 	})
 
 	t.Run("when attaching/detaching an agent pool", func(t *testing.T) {

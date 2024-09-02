@@ -106,6 +106,7 @@ type Workspace struct {
 	Hooks                     *Hooks                 `jsonapi:"attr,hooks"`
 	RunOperationTimeout       *int                   `jsonapi:"attr,run-operation-timeout"`
 	VarFiles                  []string               `jsonapi:"attr,var-files"`
+	EnvironmentType           string                 `jsonapi:"attr,environment-type"`
 
 	// Relations
 	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
@@ -261,6 +262,9 @@ type WorkspaceCreateOptions struct {
 
 	// Specifies the VarFiles for workspace.
 	VarFiles []string `jsonapi:"attr,var-files"`
+
+	// The type of the Scalr Workspace environment.
+	EnvironmentType *string `jsonapi:"attr,environment-type,omitempty"`
 
 	// Specifies the ModuleVersion based on create workspace
 	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
@@ -445,6 +449,9 @@ type WorkspaceUpdateOptions struct {
 
 	//Specifies the VarFiles for workspace.
 	VarFiles []string `jsonapi:"attr,var_files"`
+
+	// The type of the Scalr Workspace environment.
+	EnvironmentType *string `jsonapi:"attr,environment-type"`
 
 	// Specifies the ModuleVersion based on create workspace
 	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version"`
