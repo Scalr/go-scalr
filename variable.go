@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/google/go-querystring/query"
 )
@@ -53,19 +54,22 @@ type VariableList struct {
 
 // Variable represents a Scalr variable.
 type Variable struct {
-	ID          string       `jsonapi:"primary,vars"`
-	Key         string       `jsonapi:"attr,key"`
-	Value       string       `jsonapi:"attr,value"`
-	Category    CategoryType `jsonapi:"attr,category"`
-	Description string       `jsonapi:"attr,description"`
-	HCL         bool         `jsonapi:"attr,hcl"`
-	Sensitive   bool         `jsonapi:"attr,sensitive"`
-	Final       bool         `jsonapi:"attr,final"`
+	ID             string       `jsonapi:"primary,vars"`
+	Key            string       `jsonapi:"attr,key"`
+	Value          string       `jsonapi:"attr,value"`
+	Category       CategoryType `jsonapi:"attr,category"`
+	Description    string       `jsonapi:"attr,description"`
+	HCL            bool         `jsonapi:"attr,hcl"`
+	Sensitive      bool         `jsonapi:"attr,sensitive"`
+	Final          bool         `jsonapi:"attr,final"`
+	UpdatedByEmail string       `jsonapi:"attr,updated-by-email"`
+	UpdatedAt      *time.Time   `jsonapi:"attr,updated-at,iso8601"`
 
 	// Relations
 	Workspace   *Workspace   `jsonapi:"relation,workspace"`
 	Environment *Environment `jsonapi:"relation,environment"`
 	Account     *Account     `jsonapi:"relation,account"`
+	UpdatedBy   *User        `jsonapi:"relation,updated-by"`
 }
 
 // VariableListOptions represents the options for listing variables.
@@ -116,6 +120,9 @@ func (s *variables) List(ctx context.Context, options VariableListOptions) (*Var
 
 type VariableWriteQueryOptions struct {
 	Force *bool `url:"force,omitempty"`
+
+	// The comma-separated list of relationship paths.
+	Include *string `url:"include,omitempty"`
 }
 
 // VariableCreateOptions represents the options for creating a new variable.
@@ -205,7 +212,14 @@ func (s *variables) Read(ctx context.Context, variableID string) (*Variable, err
 	}
 
 	u := fmt.Sprintf("vars/%s", url.QueryEscape(variableID))
-	req, err := s.client.newRequest("GET", u, nil)
+
+	options := struct {
+		Include string `url:"include"`
+	}{
+		Include: "updated-by",
+	}
+
+	req, err := s.client.newRequest("GET", u, &options)
 	if err != nil {
 		return nil, err
 	}

@@ -36,6 +36,38 @@ func TestVariablesCreate(t *testing.T) {
 		assert.Equal(t, *options.Value, v.Value)
 		assert.Equal(t, *options.Category, v.Category)
 		assert.Equal(t, *options.Description, v.Description)
+		assert.NotEmpty(t, v.UpdatedByEmail)
+		assert.NotEmpty(t, v.UpdatedAt)
+		assert.NotEmpty(t, v.UpdatedBy)
+		assert.NotEmpty(t, v.UpdatedBy.ID)
+		assert.Empty(t, v.UpdatedBy.Email)
+	})
+
+	t.Run("with included updated-by", func(t *testing.T) {
+		options := VariableCreateOptions{
+			Key:         String(randomVariableKey(t)),
+			Value:       String(""),
+			Category:    Category(CategoryShell),
+			Description: String("random variable test"),
+			Workspace:   wsTest,
+			QueryOptions: &VariableWriteQueryOptions{
+				Include: String("updated-by"),
+			},
+		}
+
+		v, err := client.Variables.Create(ctx, options)
+		require.NoError(t, err)
+
+		assert.NotEmpty(t, v.ID)
+		assert.Equal(t, *options.Key, v.Key)
+		assert.Equal(t, *options.Value, v.Value)
+		assert.Equal(t, *options.Category, v.Category)
+		assert.Equal(t, *options.Description, v.Description)
+		assert.NotEmpty(t, v.UpdatedByEmail)
+		assert.NotEmpty(t, v.UpdatedAt)
+		assert.NotEmpty(t, v.UpdatedBy)
+		assert.NotEmpty(t, v.UpdatedBy.ID)
+		assert.Equal(t, v.UpdatedBy.Email, v.UpdatedByEmail)
 	})
 
 	t.Run("when options is missing value", func(t *testing.T) {
@@ -164,6 +196,11 @@ func TestVariablesRead(t *testing.T) {
 		assert.Equal(t, vTest.Key, v.Key)
 		assert.Equal(t, vTest.Sensitive, v.Sensitive)
 		assert.Equal(t, vTest.Value, v.Value)
+		assert.NotEmpty(t, v.UpdatedAt)
+		assert.NotEmpty(t, v.UpdatedByEmail)
+		assert.NotEmpty(t, v.UpdatedBy)
+		assert.NotEmpty(t, v.UpdatedBy.Email)
+		assert.Equal(t, v.UpdatedByEmail, v.UpdatedBy.Email)
 	})
 
 	t.Run("when the variable does not exist", func(t *testing.T) {
@@ -205,9 +242,39 @@ func TestVariablesUpdate(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, *options.Key, v.Key)
-		assert.Equal(t, *options.HCL, v.HCL)
+		assert.Equal(t, false, v.HCL)
 		assert.Equal(t, *options.Value, v.Value)
 		assert.Equal(t, *options.Description, v.Description)
+		assert.NotEmpty(t, v.UpdatedByEmail)
+		assert.NotEmpty(t, v.UpdatedAt)
+		assert.NotEmpty(t, v.UpdatedBy)
+		assert.NotEmpty(t, v.UpdatedBy.ID)
+		assert.Empty(t, v.UpdatedBy.Email)
+	})
+
+	t.Run("with valid options and included updated-by", func(t *testing.T) {
+		options := VariableUpdateOptions{
+			Key:         String("newname"),
+			Value:       String("newvalue"),
+			Description: String("newdescription"),
+			HCL:         Bool(true),
+			QueryOptions: &VariableWriteQueryOptions{
+				Include: String("updated-by"),
+			},
+		}
+
+		v, err := client.Variables.Update(ctx, vTest.ID, options)
+		require.NoError(t, err)
+
+		assert.Equal(t, *options.Key, v.Key)
+		assert.Equal(t, false, v.HCL)
+		assert.Equal(t, *options.Value, v.Value)
+		assert.Equal(t, *options.Description, v.Description)
+		assert.NotEmpty(t, v.UpdatedByEmail)
+		assert.NotEmpty(t, v.UpdatedAt)
+		assert.NotEmpty(t, v.UpdatedBy)
+		assert.NotEmpty(t, v.UpdatedBy.ID)
+		assert.Equal(t, v.UpdatedBy.Email, v.UpdatedByEmail)
 	})
 
 	t.Run("when updating a subset of values", func(t *testing.T) {
@@ -242,6 +309,7 @@ func TestVariablesUpdate(t *testing.T) {
 		updated, err := client.Variables.Update(ctx, created.ID, VariableUpdateOptions{})
 		require.NoError(t, err)
 
+		updated.UpdatedAt = created.UpdatedAt
 		assert.Equal(t, created, updated)
 	})
 
@@ -342,6 +410,38 @@ func TestVariablesList(t *testing.T) {
 		}
 
 		assert.ElementsMatch(t, expectedIds, responseIds)
+	})
+
+	t.Run("with included updated-by", func(t *testing.T) {
+		variables, err := client.Variables.List(ctx, VariableListOptions{})
+		if err != nil {
+			log.Fatalf("Cant remove default variables before test: %v", err)
+			return
+		}
+		for _, variable := range variables.Items {
+			err = client.Variables.Delete(ctx, variable.ID)
+			if err != nil {
+				log.Fatalf("Cant remove default variables before test: %v", err)
+				return
+			}
+		}
+
+		_, deleteVar := createVariable(t, client, nil, nil, &Account{ID: defaultAccountID})
+		defer deleteVar()
+
+		responseVariables, err := client.Variables.List(
+			ctx, VariableListOptions{
+				Include: String("updated-by"),
+			})
+		require.NoError(t, err)
+
+		for _, variable := range responseVariables.Items {
+			assert.NotEmpty(t, variable.UpdatedByEmail)
+			assert.NotEmpty(t, variable.UpdatedAt)
+			assert.NotEmpty(t, variable.UpdatedBy)
+			assert.NotEmpty(t, variable.UpdatedBy.ID)
+			assert.Equal(t, variable.UpdatedBy.Email, variable.UpdatedByEmail)
+		}
 	})
 
 	t.Run("category", func(t *testing.T) {
