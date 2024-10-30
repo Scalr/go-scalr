@@ -46,7 +46,7 @@ jobs:
         id: get-job-id
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          job_name: ${{ github.job }}
+          job_name: Tests
 
       - name: Set Pending Status
         uses: actions/github-script@v7
