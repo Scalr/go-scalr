@@ -544,3 +544,35 @@ func createRunScheduleRule(t *testing.T, client *Client, workspace *Workspace, m
 		}
 	}
 }
+
+func createSSHKey(t *testing.T, client *Client, name string, isShared bool, privateKey string) (*SSHKey, func()) {
+	ctx := context.Background()
+
+	// Якщо privateKey порожній, використовуємо дефолтне значення
+	if privateKey == "" {
+		privateKey = `-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEIBvMDyNaYtWK2TmJIfFhmPZeGxK0bWnNDhjlTZ+V6e4x
+-----END PRIVATE KEY-----`
+	}
+
+	opts := SSHKeyCreateOptions{
+		Name:       String(name),
+		PrivateKey: String(privateKey),
+		IsShared:   Bool(isShared),
+		Account:    &Account{ID: defaultAccountID},
+	}
+
+	sshKey, err := client.SSHKeys.Create(ctx, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Функція для видалення SSH ключа після завершення тесту
+	return sshKey, func() {
+		if err := client.SSHKeys.Delete(ctx, sshKey.ID); err != nil {
+			t.Errorf("Error destroying SSH key! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"SSH Key: %s\nError: %s", sshKey.ID, err)
+		}
+	}
+}
