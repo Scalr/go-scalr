@@ -34,7 +34,7 @@ func (s *sshKeysLinks) Create(ctx context.Context, workspaceID string, sshKeyID 
 	linkOptions := SSHKeysLinkCreateOptions{
 		SSHKeyID: sshKeyID,
 	}
-	req, err := s.client.newRequest("POST", urlPath, linkOptions)
+	req, err := s.client.newJsonRequest("POST", urlPath, linkOptions)
 	if err != nil {
 		return nil, err
 	}
