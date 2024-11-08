@@ -10,7 +10,7 @@ import (
 var _ SSHKeysLinks = (*sshKeysLinks)(nil)
 
 type SSHKeysLinks interface {
-	Create(ctx context.Context, workspaceID string, sshKeyID string) (*SSHKeysLink, error)
+	Create(ctx context.Context, workspaceID string, sshKeyID string) (*Workspace, error)
 	Delete(ctx context.Context, workspaceID string) error
 }
 
@@ -29,7 +29,7 @@ type SSHKeysLinkCreateOptions struct {
 }
 
 // Create creates a SSH key workspace link.
-func (s *sshKeysLinks) Create(ctx context.Context, workspaceID string, sshKeyID string) (*SSHKeysLink, error) {
+func (s *sshKeysLinks) Create(ctx context.Context, workspaceID string, sshKeyID string) (*Workspace, error) {
 	urlPath := fmt.Sprintf("workspaces/%s/ssh-key-links", url.QueryEscape(workspaceID))
 	linkOptions := SSHKeysLinkCreateOptions{
 		SSHKeyID: sshKeyID,
@@ -40,12 +40,12 @@ func (s *sshKeysLinks) Create(ctx context.Context, workspaceID string, sshKeyID 
 	}
 	req.Header.Set("Content-Type", "application/vnd.api+json")
 
-	link := &SSHKeysLink{}
-	if err := s.client.do(ctx, req, link); err != nil {
+	workspace := &Workspace{}
+	if err := s.client.do(ctx, req, workspace); err != nil {
 		return nil, err
 	}
 
-	return link, nil
+	return workspace, nil
 }
 
 // Delete deletes a SSH key workspace link.
