@@ -38,7 +38,6 @@ func (s *sshKeysLinks) Create(ctx context.Context, workspaceID string, sshKeyID 
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/vnd.api+json")
 
 	workspace := &Workspace{}
 	if err := s.client.do(ctx, req, workspace); err != nil {
