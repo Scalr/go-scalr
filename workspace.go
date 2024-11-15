@@ -130,6 +130,7 @@ type Workspace struct {
 	ModuleVersion        *ModuleVersion        `jsonapi:"relation,module-version,omitempty"`
 	Tags                 []*Tag                `jsonapi:"relation,tags"`
 	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
+	SSHKey               *SSHKey               `jsonapi:"relation,ssh-key"`
 }
 
 // Hooks contains the custom hooks field.

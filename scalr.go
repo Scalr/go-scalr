@@ -148,6 +148,8 @@ type Client struct {
 	WorkspaceTags                   WorkspaceTags
 	Workspaces                      Workspaces
 	RunScheduleRules                RunScheduleRules
+	SSHKeys                         SSHKeys
+	SSHKeysLinks                    SSHKeysLinks
 }
 
 // NewClient creates a new Scalr API client.
@@ -247,6 +249,8 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.Workspaces = &workspaces{client: client}
 	client.RunScheduleRules = &runScheduleRules{client: client}
 	client.EventBridgeIntegrations = &eventBridgeIntegrations{client: client}
+	client.SSHKeys = &sshKeys{client: client}
+	client.SSHKeysLinks = &sshKeysLinks{client: client}
 	return client, nil
 }
 
