@@ -90,7 +90,7 @@ jobs:
         with:
           ref: ${{ inputs.pr_branch }}
           github_token: ${{ steps.generate_token.outputs.token }}
-          google_cloud_credentials: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          google_cloud_credentials: ${{ secrets.GCP_SA_KEY }}
           run_prefix: e2e-go-scalr-pr
           deployment_type: saas
           prepare_runner: true
