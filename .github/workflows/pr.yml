@@ -87,6 +87,8 @@ jobs:
       - uses: ./fatmouse/.github/actions/preview-env
         name: Create preview environment
         id: create-preview-env
+        env:
+          JOB_NAME: Tests
         with:
           ref: ${{ inputs.pr_branch }}
           github_token: ${{ steps.generate_token.outputs.token }}
