@@ -119,6 +119,8 @@ type Workspace struct {
 	RunOperationTimeout       *int                     `jsonapi:"attr,run-operation-timeout"`
 	VarFiles                  []string                 `jsonapi:"attr,var-files"`
 	EnvironmentType           WorkspaceEnvironmentType `jsonapi:"attr,environment-type"`
+	TerragruntVersion         string                   `jsonapi:"attr,terragrunt-version"`
+	TerragruntUseRunAll       bool                     `jsonapi:"attr,terragrunt-use-run-all"`
 
 	// Relations
 	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
@@ -287,6 +289,9 @@ type WorkspaceCreateOptions struct {
 
 	// Specifies tags assigned to the workspace
 	Tags []*Tag `jsonapi:"relation,tags,omitempty"`
+
+	TerragruntVersion   *string `jsonapi:"attr,terragrunt-version,omitempty"`
+	TerragruntUseRunAll *bool   `jsonapi:"attr,terragrunt-use-run-all,omitempty"`
 }
 
 // WorkspaceVCSRepoOptions represents the configuration options of a VCS integration.
@@ -471,6 +476,9 @@ type WorkspaceUpdateOptions struct {
 
 	// Specifies the number of minutes run operation can be executed before termination.
 	RunOperationTimeout *int `jsonapi:"attr,run-operation-timeout"`
+
+	TerragruntVersion   *string `jsonapi:"attr,terragrunt-version,omitempty"`
+	TerragruntUseRunAll *bool   `jsonapi:"attr,terragrunt-use-run-all,omitempty"`
 }
 
 // Update settings of an existing workspace.
