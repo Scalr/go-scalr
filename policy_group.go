@@ -72,13 +72,14 @@ type PolicyGroupVCSRepoOptions struct {
 
 // PolicyGroup represents a Scalr policy group.
 type PolicyGroup struct {
-	ID           string              `jsonapi:"primary,policy-groups"`
-	Name         string              `jsonapi:"attr,name"`
-	Status       PolicyGroupStatus   `jsonapi:"attr,status"`
-	ErrorMessage string              `jsonapi:"attr,error-message"`
-	OpaVersion   string              `jsonapi:"attr,opa-version"`
-	VCSRepo      *PolicyGroupVCSRepo `jsonapi:"attr,vcs-repo"`
-	IsEnforced   bool                `jsonapi:"attr,is-enforced"`
+	ID                    string              `jsonapi:"primary,policy-groups"`
+	Name                  string              `jsonapi:"attr,name"`
+	Status                PolicyGroupStatus   `jsonapi:"attr,status"`
+	ErrorMessage          string              `jsonapi:"attr,error-message"`
+	OpaVersion            string              `jsonapi:"attr,opa-version"`
+	VCSRepo               *PolicyGroupVCSRepo `jsonapi:"attr,vcs-repo"`
+	IsEnforced            bool                `jsonapi:"attr,is-enforced"`
+	CommonFunctionsFolder string              `jsonapi:"attr,common-functions-folder"`
 
 	// Relations
 	Account      *Account       `jsonapi:"relation,account"`
@@ -109,11 +110,12 @@ type PolicyGroupListOptions struct {
 
 // PolicyGroupCreateOptions represents the options for creating a new PolicyGroup.
 type PolicyGroupCreateOptions struct {
-	ID         string                     `jsonapi:"primary,policy-groups"`
-	Name       *string                    `jsonapi:"attr,name"`
-	OpaVersion *string                    `jsonapi:"attr,opa-version,omitempty"`
-	VCSRepo    *PolicyGroupVCSRepoOptions `jsonapi:"attr,vcs-repo"`
-	IsEnforced *bool                      `jsonapi:"attr,is-enforced,omitempty"`
+	ID                    string                     `jsonapi:"primary,policy-groups"`
+	Name                  *string                    `jsonapi:"attr,name"`
+	OpaVersion            *string                    `jsonapi:"attr,opa-version,omitempty"`
+	VCSRepo               *PolicyGroupVCSRepoOptions `jsonapi:"attr,vcs-repo"`
+	IsEnforced            *bool                      `jsonapi:"attr,is-enforced,omitempty"`
+	CommonFunctionsFolder *string                    `jsonapi:"attr,common-functions-folder"`
 
 	// Relations
 	Account      *Account       `jsonapi:"relation,account"`
@@ -145,11 +147,12 @@ func (o PolicyGroupCreateOptions) valid() error {
 
 // PolicyGroupUpdateOptions represents the options for updating a PolicyGroup.
 type PolicyGroupUpdateOptions struct {
-	ID         string                     `jsonapi:"primary,policy-groups"`
-	Name       *string                    `jsonapi:"attr,name,omitempty"`
-	OpaVersion *string                    `jsonapi:"attr,opa-version,omitempty"`
-	VCSRepo    *PolicyGroupVCSRepoOptions `jsonapi:"attr,vcs-repo,omitempty"`
-	IsEnforced *bool                      `jsonapi:"attr,is-enforced,omitempty"`
+	ID                    string                     `jsonapi:"primary,policy-groups"`
+	Name                  *string                    `jsonapi:"attr,name,omitempty"`
+	OpaVersion            *string                    `jsonapi:"attr,opa-version,omitempty"`
+	VCSRepo               *PolicyGroupVCSRepoOptions `jsonapi:"attr,vcs-repo,omitempty"`
+	IsEnforced            *bool                      `jsonapi:"attr,is-enforced,omitempty"`
+	CommonFunctionsFolder *string                    `jsonapi:"attr,common-functions-folder"`
 
 	// Relations
 	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider,omitempty"`

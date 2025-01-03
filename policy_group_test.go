@@ -88,6 +88,7 @@ func TestPolicyGroupsCreate(t *testing.T) {
 				Identifier: String(policyGroupVcsRepoID),
 				Path:       String(policyGroupVcsRepoPath),
 			},
+			CommonFunctionsFolder: String(policyGroupVcsCommonFunctions),
 		}
 
 		pg, err := client.PolicyGroups.Create(ctx, options)
@@ -111,6 +112,7 @@ func TestPolicyGroupsCreate(t *testing.T) {
 			assert.Equal(t, *options.VCSRepo.Identifier, item.VCSRepo.Identifier)
 			assert.Equal(t, *options.VCSRepo.Path, item.VCSRepo.Path)
 			assert.NotEmpty(t, item.VCSRepo.Branch)
+			assert.Equal(t, *options.CommonFunctionsFolder, item.CommonFunctionsFolder)
 		}
 	})
 
