@@ -152,7 +152,7 @@ type PolicyGroupUpdateOptions struct {
 	OpaVersion            *string                    `jsonapi:"attr,opa-version,omitempty"`
 	VCSRepo               *PolicyGroupVCSRepoOptions `jsonapi:"attr,vcs-repo,omitempty"`
 	IsEnforced            *bool                      `jsonapi:"attr,is-enforced,omitempty"`
-	CommonFunctionsFolder *string                    `jsonapi:"attr,common-functions-folder"`
+	CommonFunctionsFolder *string                    `jsonapi:"attr,common-functions-folder,omitempty"`
 
 	// Relations
 	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider,omitempty"`
