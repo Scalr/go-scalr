@@ -15,6 +15,7 @@ const defaultModuleID = "mod-svsmkkjo8sju4o0"
 const badIdentifier = "! / nope"
 const policyGroupVcsRepoID = "Scalr/tf-revizor-fixtures"
 const policyGroupVcsRepoPath = "policies/clouds"
+const policyGroupVcsCommonFunctions = "policies/instances"
 
 func testClient(t *testing.T) *Client {
 	client, err := NewClient(nil)
