@@ -17,7 +17,7 @@ import (
 
 	"github.com/google/go-querystring/query"
 	"github.com/hashicorp/go-cleanhttp"
-	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/svanharmelen/jsonapi"
 )
 
@@ -150,6 +150,7 @@ type Client struct {
 	RunScheduleRules                RunScheduleRules
 	SSHKeys                         SSHKeys
 	SSHKeysLinks                    SSHKeysLinks
+	RemoteStateConsumers            RemoteStateConsumers
 }
 
 // NewClient creates a new Scalr API client.
@@ -251,6 +252,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.EventBridgeIntegrations = &eventBridgeIntegrations{client: client}
 	client.SSHKeys = &sshKeys{client: client}
 	client.SSHKeysLinks = &sshKeysLinks{client: client}
+	client.RemoteStateConsumers = &remoteStateConsumers{client: client}
 	return client, nil
 }
 

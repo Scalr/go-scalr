@@ -575,3 +575,16 @@ MC4CAQAwBQYDK2VwBCIEIBvMDyNaYtWK2TmJIfFhmPZeGxK0bWnNDhjlTZ+V6e4x
 		}
 	}
 }
+
+func addRemoteStateConsumersToWorkspace(t *testing.T, client *Client, workspace *Workspace, consumers []*Workspace) {
+	ctx := context.Background()
+	wsRels := make([]*WorkspaceRelation, len(consumers))
+	for i, ws := range consumers {
+		wsRels[i] = &WorkspaceRelation{ID: ws.ID}
+	}
+	err := client.RemoteStateConsumers.Add(ctx, workspace.ID, wsRels)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+}
