@@ -121,6 +121,7 @@ type Workspace struct {
 	EnvironmentType           WorkspaceEnvironmentType `jsonapi:"attr,environment-type"`
 	TerragruntVersion         string                   `jsonapi:"attr,terragrunt-version"`
 	TerragruntUseRunAll       bool                     `jsonapi:"attr,terragrunt-use-run-all"`
+	RemoteStateSharing        bool                     `jsonapi:"attr,remote-state-sharing"`
 
 	// Relations
 	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
@@ -133,6 +134,10 @@ type Workspace struct {
 	Tags                 []*Tag                `jsonapi:"relation,tags"`
 	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
 	SSHKey               *SSHKey               `jsonapi:"relation,ssh-key"`
+}
+
+type WorkspaceRelation struct {
+	ID string `jsonapi:"primary,workspaces"`
 }
 
 // Hooks contains the custom hooks field.
@@ -292,6 +297,7 @@ type WorkspaceCreateOptions struct {
 
 	TerragruntVersion   *string `jsonapi:"attr,terragrunt-version,omitempty"`
 	TerragruntUseRunAll *bool   `jsonapi:"attr,terragrunt-use-run-all,omitempty"`
+	RemoteStateSharing  *bool   `jsonapi:"attr,remote-state-sharing,omitempty"`
 }
 
 // WorkspaceVCSRepoOptions represents the configuration options of a VCS integration.
@@ -479,6 +485,7 @@ type WorkspaceUpdateOptions struct {
 
 	TerragruntVersion   *string `jsonapi:"attr,terragrunt-version,omitempty"`
 	TerragruntUseRunAll *bool   `jsonapi:"attr,terragrunt-use-run-all,omitempty"`
+	RemoteStateSharing  *bool   `jsonapi:"attr,remote-state-sharing,omitempty"`
 }
 
 // Update settings of an existing workspace.
