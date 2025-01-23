@@ -30,6 +30,11 @@ func WorkspaceExecutionModePtr(v WorkspaceExecutionMode) *WorkspaceExecutionMode
 	return &v
 }
 
+// WorkspaceEnvironmentType returns a pointer to the given workspace environment type
+func WorkspaceEnvironmentTypePtr(v WorkspaceEnvironmentType) *WorkspaceEnvironmentType {
+	return &v
+}
+
 // AutoQueueRunsModePtr returns a pointer to the given auto queue runs mode
 func AutoQueueRunsModePtr(v WorkspaceAutoQueueRuns) *WorkspaceAutoQueueRuns {
 	return &v

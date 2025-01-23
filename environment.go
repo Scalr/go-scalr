@@ -49,6 +49,7 @@ type Environment struct {
 	CostEstimationEnabled bool              `jsonapi:"attr,cost-estimation-enabled"`
 	CreatedAt             time.Time         `jsonapi:"attr,created-at,iso8601"`
 	Status                EnvironmentStatus `jsonapi:"attr,status"`
+	RemoteBackend         bool              `jsonapi:"attr,remote-backend"`
 
 	// Relations
 	Account                       *Account                 `jsonapi:"relation,account"`
@@ -77,6 +78,7 @@ type EnvironmentCreateOptions struct {
 	ID                    string  `jsonapi:"primary,environments"`
 	Name                  *string `jsonapi:"attr,name"`
 	CostEstimationEnabled *bool   `jsonapi:"attr,cost-estimation-enabled,omitempty"`
+	RemoteBackend         *bool   `jsonapi:"attr,remote-backend,omitempty"`
 
 	// Relations
 	Account                       *Account                 `jsonapi:"relation,account"`

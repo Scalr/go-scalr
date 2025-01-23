@@ -13,7 +13,6 @@ var _ Runs = (*runs)(nil)
 
 // Runs describes all the run related methods that the Scalr API supports.
 type Runs interface {
-
 	// Read a run by its ID.
 	Read(ctx context.Context, runID string) (*Run, error)
 	// Create a new run with the given options.
@@ -28,7 +27,7 @@ type runs struct {
 // RunStatus represents a run state.
 type RunStatus string
 
-//List all available run statuses.
+// List all available run statuses.
 const (
 	RunApplied            RunStatus = "applied"
 	RunApplyQueued        RunStatus = "apply_queued"
@@ -84,10 +83,11 @@ type Run struct {
 // RunCreateOptions represents the options for creating a new run.
 type RunCreateOptions struct {
 	// For internal use only!
-	ID string `jsonapi:"primary,runs"`
+	ID        string `jsonapi:"primary,runs"`
+	IsDestroy *bool  `jsonapi:"attr,is-destroy,omitempty"`
 
 	// Specifies the configuration version to use for this run.
-	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
+	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version,omitempty"`
 	// Specifies the workspace where the run will be executed.
 	Workspace *Workspace `jsonapi:"relation,workspace"`
 }
@@ -99,10 +99,7 @@ func (o RunCreateOptions) valid() error {
 	if !validStringID(&o.Workspace.ID) {
 		return errors.New("invalid value for workspace ID")
 	}
-	if o.ConfigurationVersion == nil {
-		return errors.New("configuration-version is required")
-	}
-	if !validStringID(&o.ConfigurationVersion.ID) {
+	if o.ConfigurationVersion != nil && !validStringID(&o.ConfigurationVersion.ID) {
 		return errors.New("invalid value for configuration-version ID")
 	}
 	return nil

@@ -15,6 +15,7 @@ const defaultModuleID = "mod-svsmkkjo8sju4o0"
 const badIdentifier = "! / nope"
 const policyGroupVcsRepoID = "Scalr/tf-revizor-fixtures"
 const policyGroupVcsRepoPath = "policies/clouds"
+const policyGroupVcsCommonFunctions = "policies/instances"
 
 func testClient(t *testing.T) *Client {
 	client, err := NewClient(nil)
@@ -167,6 +168,7 @@ func createConfigurationVersion(t *testing.T, client *Client, ws *Workspace) (*C
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return cv, func() {
 		if wsCleanup != nil {
 			wsCleanup()
@@ -176,11 +178,14 @@ func createConfigurationVersion(t *testing.T, client *Client, ws *Workspace) (*C
 
 func createRun(t *testing.T, client *Client, ws *Workspace, cv *ConfigurationVersion) (*Run, func()) {
 	var wsCleanup func()
+	var cvCleanup func()
 
 	if ws == nil {
 		ws, wsCleanup = createWorkspace(t, client, nil)
 	}
-	cv, cvCleanup := createConfigurationVersion(t, client, ws)
+	if cv == nil {
+		cv, cvCleanup = createConfigurationVersion(t, client, ws)
+	}
 
 	ctx := context.Background()
 	run, err := client.Runs.Create(ctx, RunCreateOptions{
@@ -393,31 +398,6 @@ func createProviderConfiguration(t *testing.T, client *Client, providerName stri
 	}
 }
 
-func createProviderConfigurationScalr(t *testing.T, client *Client, providerName string, configurationName string, scalrHostname string, scalrToken string) (*ProviderConfiguration, func()) {
-	ctx := context.Background()
-	config, err := client.ProviderConfigurations.Create(
-		ctx,
-		ProviderConfigurationCreateOptions{
-			Account:       &Account{ID: defaultAccountID},
-			Name:          String(configurationName),
-			ProviderName:  String(providerName),
-			ScalrToken:    String(scalrToken),
-			ScalrHostname: String(scalrHostname),
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return config, func() {
-		if err := client.ProviderConfigurations.Delete(ctx, config.ID); err != nil {
-			t.Errorf("Error destroying provider configuration ! WARNING: Dangling resources\n"+
-				"may exist! The full error is shown below.\n\n"+
-				"Provider configuration: %s\nError: %s", config.ID, err)
-		}
-	}
-}
-
 func createServiceAccount(
 	t *testing.T,
 	client *Client,
@@ -541,5 +521,70 @@ func createSlackIntegration(
 				"may exist! The full error is shown below.\n\n"+
 				"Webhook: %s\nError: %s", si.ID, err)
 		}
+	}
+}
+
+func createRunScheduleRule(t *testing.T, client *Client, workspace *Workspace, mode ScheduleMode) (*RunScheduleRule, func()) {
+	ctx := context.Background()
+	options := RunScheduleRuleCreateOptions{
+		Schedule:     "0 0 * * *",
+		ScheduleMode: mode,
+		Workspace:    workspace,
+	}
+	rule, err := client.RunScheduleRules.Create(ctx, options)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return rule, func() {
+		if err := client.RunScheduleRules.Delete(ctx, rule.ID); err != nil {
+			t.Errorf("Error destroying run schedule rule! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"Run schedule rule: %s\nError: %s", rule.ID, err)
+		}
+	}
+}
+
+func createSSHKey(t *testing.T, client *Client, name string, isShared bool, privateKey string) (*SSHKey, func()) {
+	ctx := context.Background()
+
+	if privateKey == "" {
+		privateKey = `-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEIBvMDyNaYtWK2TmJIfFhmPZeGxK0bWnNDhjlTZ+V6e4x
+-----END PRIVATE KEY-----`
+	}
+
+	opts := SSHKeyCreateOptions{
+		Name:       String(name),
+		PrivateKey: String(privateKey),
+		IsShared:   Bool(isShared),
+		Account:    &Account{ID: defaultAccountID},
+	}
+
+	sshKey, err := client.SSHKeys.Create(ctx, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return sshKey, func() {
+		if err := client.SSHKeys.Delete(ctx, sshKey.ID); err != nil {
+			t.Errorf("Error destroying SSH key! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"SSH Key: %s\nError: %s", sshKey.ID, err)
+		}
+	}
+}
+
+func addRemoteStateConsumersToWorkspace(t *testing.T, client *Client, workspace *Workspace, consumers []*Workspace) {
+	ctx := context.Background()
+	wsRels := make([]*WorkspaceRelation, len(consumers))
+	for i, ws := range consumers {
+		wsRels[i] = &WorkspaceRelation{ID: ws.ID}
+	}
+	err := client.RemoteStateConsumers.Add(ctx, workspace.ID, wsRels)
+
+	if err != nil {
+		t.Fatal(err)
 	}
 }
