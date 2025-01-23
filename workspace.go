@@ -208,6 +208,12 @@ type Output struct {
 	Sensitive bool   `json:"sensitive"`
 }
 
+type WorkspaceTerragruntOptions struct {
+	Version                     string `json:"version"`
+	UseRunAll                   bool   `json:"use-run-all"`
+	IncludeExternalDependencies bool   `json:"include-external-dependencies"`
+}
+
 // List all the workspaces within an environment.
 func (s *workspaces) List(ctx context.Context, options WorkspaceListOptions) (*WorkspaceList, error) {
 	req, err := s.client.newRequest("GET", "workspaces", &options)
@@ -250,6 +256,8 @@ type WorkspaceCreateOptions struct {
 	// The version of Terraform to use for this workspace. Upon creating a
 	// workspace, the latest version is selected unless otherwise specified.
 	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+	// Settings for the workspace terragrunt configuration
+	Terragrunt *WorkspaceTerragruntOptions `jsonapi:"attr,terragrunt,omitempty"`
 
 	// The IaC platform to use for this workspace.
 	IacPlatform *WorkspaceIaCPlatform `jsonapi:"attr,iac-platform,omitempty"`
@@ -295,9 +303,7 @@ type WorkspaceCreateOptions struct {
 	// Specifies tags assigned to the workspace
 	Tags []*Tag `jsonapi:"relation,tags,omitempty"`
 
-	TerragruntVersion   *string `jsonapi:"attr,terragrunt-version,omitempty"`
-	TerragruntUseRunAll *bool   `jsonapi:"attr,terragrunt-use-run-all,omitempty"`
-	RemoteStateSharing  *bool   `jsonapi:"attr,remote-state-sharing,omitempty"`
+	RemoteStateSharing *bool `jsonapi:"attr,remote-state-sharing,omitempty"`
 }
 
 // WorkspaceVCSRepoOptions represents the configuration options of a VCS integration.
