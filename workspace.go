@@ -93,35 +93,34 @@ type WorkspaceList struct {
 
 // Workspace represents a Scalr workspace.
 type Workspace struct {
-	ID                        string                   `jsonapi:"primary,workspaces"`
-	Actions                   *WorkspaceActions        `jsonapi:"attr,actions"`
-	AutoApply                 bool                     `jsonapi:"attr,auto-apply"`
-	ForceLatestRun            bool                     `jsonapi:"attr,force-latest-run"`
-	DeletionProtectionEnabled bool                     `jsonapi:"attr,deletion-protection-enabled"`
-	CanQueueDestroyPlan       bool                     `jsonapi:"attr,can-queue-destroy-plan"`
-	CreatedAt                 time.Time                `jsonapi:"attr,created-at,iso8601"`
-	FileTriggersEnabled       bool                     `jsonapi:"attr,file-triggers-enabled"`
-	Locked                    bool                     `jsonapi:"attr,locked"`
-	MigrationEnvironment      string                   `jsonapi:"attr,migration-environment"`
-	Name                      string                   `jsonapi:"attr,name"`
-	Operations                bool                     `jsonapi:"attr,operations"`
-	ExecutionMode             WorkspaceExecutionMode   `jsonapi:"attr,execution-mode"`
-	Permissions               *WorkspacePermissions    `jsonapi:"attr,permissions"`
-	TerraformVersion          string                   `jsonapi:"attr,terraform-version"`
-	IaCPlatform               WorkspaceIaCPlatform     `jsonapi:"attr,iac-platform"`
-	VCSRepo                   *WorkspaceVCSRepo        `jsonapi:"attr,vcs-repo"`
-	WorkingDirectory          string                   `jsonapi:"attr,working-directory"`
-	ApplySchedule             string                   `jsonapi:"attr,apply-schedule"`
-	DestroySchedule           string                   `jsonapi:"attr,destroy-schedule"`
-	HasResources              bool                     `jsonapi:"attr,has-resources"`
-	AutoQueueRuns             WorkspaceAutoQueueRuns   `jsonapi:"attr,auto-queue-runs"`
-	Hooks                     *Hooks                   `jsonapi:"attr,hooks"`
-	RunOperationTimeout       *int                     `jsonapi:"attr,run-operation-timeout"`
-	VarFiles                  []string                 `jsonapi:"attr,var-files"`
-	EnvironmentType           WorkspaceEnvironmentType `jsonapi:"attr,environment-type"`
-	TerragruntVersion         string                   `jsonapi:"attr,terragrunt-version"`
-	TerragruntUseRunAll       bool                     `jsonapi:"attr,terragrunt-use-run-all"`
-	RemoteStateSharing        bool                     `jsonapi:"attr,remote-state-sharing"`
+	ID                        string                      `jsonapi:"primary,workspaces"`
+	Actions                   *WorkspaceActions           `jsonapi:"attr,actions"`
+	AutoApply                 bool                        `jsonapi:"attr,auto-apply"`
+	ForceLatestRun            bool                        `jsonapi:"attr,force-latest-run"`
+	DeletionProtectionEnabled bool                        `jsonapi:"attr,deletion-protection-enabled"`
+	CanQueueDestroyPlan       bool                        `jsonapi:"attr,can-queue-destroy-plan"`
+	CreatedAt                 time.Time                   `jsonapi:"attr,created-at,iso8601"`
+	FileTriggersEnabled       bool                        `jsonapi:"attr,file-triggers-enabled"`
+	Locked                    bool                        `jsonapi:"attr,locked"`
+	MigrationEnvironment      string                      `jsonapi:"attr,migration-environment"`
+	Name                      string                      `jsonapi:"attr,name"`
+	Operations                bool                        `jsonapi:"attr,operations"`
+	ExecutionMode             WorkspaceExecutionMode      `jsonapi:"attr,execution-mode"`
+	Permissions               *WorkspacePermissions       `jsonapi:"attr,permissions"`
+	TerraformVersion          string                      `jsonapi:"attr,terraform-version"`
+	IaCPlatform               WorkspaceIaCPlatform        `jsonapi:"attr,iac-platform"`
+	VCSRepo                   *WorkspaceVCSRepo           `jsonapi:"attr,vcs-repo"`
+	Terragrunt                *WorkspaceTerragruntOptions `jsonapi:"attr,terragrunt"`
+	WorkingDirectory          string                      `jsonapi:"attr,working-directory"`
+	ApplySchedule             string                      `jsonapi:"attr,apply-schedule"`
+	DestroySchedule           string                      `jsonapi:"attr,destroy-schedule"`
+	HasResources              bool                        `jsonapi:"attr,has-resources"`
+	AutoQueueRuns             WorkspaceAutoQueueRuns      `jsonapi:"attr,auto-queue-runs"`
+	Hooks                     *Hooks                      `jsonapi:"attr,hooks"`
+	RunOperationTimeout       *int                        `jsonapi:"attr,run-operation-timeout"`
+	VarFiles                  []string                    `jsonapi:"attr,var-files"`
+	EnvironmentType           WorkspaceEnvironmentType    `jsonapi:"attr,environment-type"`
+	RemoteStateSharing        bool                        `jsonapi:"attr,remote-state-sharing"`
 
 	// Relations
 	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
@@ -447,6 +446,8 @@ type WorkspaceUpdateOptions struct {
 
 	// The version of Terraform to use for this workspace.
 	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+	// Settings for the workspace terragrunt configuration
+	Terragrunt *WorkspaceTerragruntOptions `jsonapi:"attr,terragrunt"`
 
 	// The IaC platform to use for this workspace.
 	IacPlatform *WorkspaceIaCPlatform `jsonapi:"attr,iac-platform,omitempty"`
@@ -489,9 +490,7 @@ type WorkspaceUpdateOptions struct {
 	// Specifies the number of minutes run operation can be executed before termination.
 	RunOperationTimeout *int `jsonapi:"attr,run-operation-timeout"`
 
-	TerragruntVersion   *string `jsonapi:"attr,terragrunt-version,omitempty"`
-	TerragruntUseRunAll *bool   `jsonapi:"attr,terragrunt-use-run-all,omitempty"`
-	RemoteStateSharing  *bool   `jsonapi:"attr,remote-state-sharing,omitempty"`
+	RemoteStateSharing *bool `jsonapi:"attr,remote-state-sharing,omitempty"`
 }
 
 // Update settings of an existing workspace.
