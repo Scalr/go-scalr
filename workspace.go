@@ -93,34 +93,34 @@ type WorkspaceList struct {
 
 // Workspace represents a Scalr workspace.
 type Workspace struct {
-	ID                        string                      `jsonapi:"primary,workspaces"`
-	Actions                   *WorkspaceActions           `jsonapi:"attr,actions"`
-	AutoApply                 bool                        `jsonapi:"attr,auto-apply"`
-	ForceLatestRun            bool                        `jsonapi:"attr,force-latest-run"`
-	DeletionProtectionEnabled bool                        `jsonapi:"attr,deletion-protection-enabled"`
-	CanQueueDestroyPlan       bool                        `jsonapi:"attr,can-queue-destroy-plan"`
-	CreatedAt                 time.Time                   `jsonapi:"attr,created-at,iso8601"`
-	FileTriggersEnabled       bool                        `jsonapi:"attr,file-triggers-enabled"`
-	Locked                    bool                        `jsonapi:"attr,locked"`
-	MigrationEnvironment      string                      `jsonapi:"attr,migration-environment"`
-	Name                      string                      `jsonapi:"attr,name"`
-	Operations                bool                        `jsonapi:"attr,operations"`
-	ExecutionMode             WorkspaceExecutionMode      `jsonapi:"attr,execution-mode"`
-	Permissions               *WorkspacePermissions       `jsonapi:"attr,permissions"`
-	TerraformVersion          string                      `jsonapi:"attr,terraform-version"`
-	IaCPlatform               WorkspaceIaCPlatform        `jsonapi:"attr,iac-platform"`
-	VCSRepo                   *WorkspaceVCSRepo           `jsonapi:"attr,vcs-repo"`
-	Terragrunt                *WorkspaceTerragruntOptions `jsonapi:"attr,terragrunt"`
-	WorkingDirectory          string                      `jsonapi:"attr,working-directory"`
-	ApplySchedule             string                      `jsonapi:"attr,apply-schedule"`
-	DestroySchedule           string                      `jsonapi:"attr,destroy-schedule"`
-	HasResources              bool                        `jsonapi:"attr,has-resources"`
-	AutoQueueRuns             WorkspaceAutoQueueRuns      `jsonapi:"attr,auto-queue-runs"`
-	Hooks                     *Hooks                      `jsonapi:"attr,hooks"`
-	RunOperationTimeout       *int                        `jsonapi:"attr,run-operation-timeout"`
-	VarFiles                  []string                    `jsonapi:"attr,var-files"`
-	EnvironmentType           WorkspaceEnvironmentType    `jsonapi:"attr,environment-type"`
-	RemoteStateSharing        bool                        `jsonapi:"attr,remote-state-sharing"`
+	ID                        string                   `jsonapi:"primary,workspaces"`
+	Actions                   *WorkspaceActions        `jsonapi:"attr,actions"`
+	AutoApply                 bool                     `jsonapi:"attr,auto-apply"`
+	ForceLatestRun            bool                     `jsonapi:"attr,force-latest-run"`
+	DeletionProtectionEnabled bool                     `jsonapi:"attr,deletion-protection-enabled"`
+	CanQueueDestroyPlan       bool                     `jsonapi:"attr,can-queue-destroy-plan"`
+	CreatedAt                 time.Time                `jsonapi:"attr,created-at,iso8601"`
+	FileTriggersEnabled       bool                     `jsonapi:"attr,file-triggers-enabled"`
+	Locked                    bool                     `jsonapi:"attr,locked"`
+	MigrationEnvironment      string                   `jsonapi:"attr,migration-environment"`
+	Name                      string                   `jsonapi:"attr,name"`
+	Operations                bool                     `jsonapi:"attr,operations"`
+	ExecutionMode             WorkspaceExecutionMode   `jsonapi:"attr,execution-mode"`
+	Permissions               *WorkspacePermissions    `jsonapi:"attr,permissions"`
+	TerraformVersion          string                   `jsonapi:"attr,terraform-version"`
+	IaCPlatform               WorkspaceIaCPlatform     `jsonapi:"attr,iac-platform"`
+	VCSRepo                   *WorkspaceVCSRepo        `jsonapi:"attr,vcs-repo"`
+	Terragrunt                *WorkspaceTerragrunt     `jsonapi:"attr,terragrunt"`
+	WorkingDirectory          string                   `jsonapi:"attr,working-directory"`
+	ApplySchedule             string                   `jsonapi:"attr,apply-schedule"`
+	DestroySchedule           string                   `jsonapi:"attr,destroy-schedule"`
+	HasResources              bool                     `jsonapi:"attr,has-resources"`
+	AutoQueueRuns             WorkspaceAutoQueueRuns   `jsonapi:"attr,auto-queue-runs"`
+	Hooks                     *Hooks                   `jsonapi:"attr,hooks"`
+	RunOperationTimeout       *int                     `jsonapi:"attr,run-operation-timeout"`
+	VarFiles                  []string                 `jsonapi:"attr,var-files"`
+	EnvironmentType           WorkspaceEnvironmentType `jsonapi:"attr,environment-type"`
+	RemoteStateSharing        bool                     `jsonapi:"attr,remote-state-sharing"`
 
 	// Relations
 	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
@@ -157,6 +157,12 @@ type WorkspaceVCSRepo struct {
 	TriggerPrefixes   []string `json:"trigger-prefixes,omitempty"`
 	TriggerPatterns   string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    bool     `json:"dry-runs-enabled"`
+}
+
+type WorkspaceTerragrunt struct {
+	Version                     string `json:"version"`
+	UseRunAll                   bool   `json:"use-run-all"`
+	IncludeExternalDependencies bool   `json:"include-external-dependencies"`
 }
 
 // WorkspaceActions represents the workspace actions.
@@ -208,9 +214,9 @@ type Output struct {
 }
 
 type WorkspaceTerragruntOptions struct {
-	Version                     string `json:"version"`
-	UseRunAll                   bool   `json:"use-run-all"`
-	IncludeExternalDependencies bool   `json:"include-external-dependencies"`
+	Version                     *string `json:"version"`
+	UseRunAll                   *bool   `json:"use-run-all"`
+	IncludeExternalDependencies *bool   `json:"include-external-dependencies"`
 }
 
 // List all the workspaces within an environment.
