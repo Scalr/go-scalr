@@ -214,9 +214,9 @@ type Output struct {
 }
 
 type WorkspaceTerragruntOptions struct {
-	Version                     *string `json:"version"`
-	UseRunAll                   *bool   `json:"use-run-all"`
-	IncludeExternalDependencies *bool   `json:"include-external-dependencies"`
+	Version                     string `json:"version"`
+	UseRunAll                   *bool  `json:"use-run-all,omitempty"`
+	IncludeExternalDependencies *bool  `json:"include-external-dependencies,omitempty"`
 }
 
 // List all the workspaces within an environment.
