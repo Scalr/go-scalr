@@ -110,6 +110,7 @@ type Workspace struct {
 	TerraformVersion          string                   `jsonapi:"attr,terraform-version"`
 	IaCPlatform               WorkspaceIaCPlatform     `jsonapi:"attr,iac-platform"`
 	VCSRepo                   *WorkspaceVCSRepo        `jsonapi:"attr,vcs-repo"`
+	Terragrunt                *WorkspaceTerragrunt     `jsonapi:"attr,terragrunt"`
 	WorkingDirectory          string                   `jsonapi:"attr,working-directory"`
 	ApplySchedule             string                   `jsonapi:"attr,apply-schedule"`
 	DestroySchedule           string                   `jsonapi:"attr,destroy-schedule"`
@@ -119,8 +120,6 @@ type Workspace struct {
 	RunOperationTimeout       *int                     `jsonapi:"attr,run-operation-timeout"`
 	VarFiles                  []string                 `jsonapi:"attr,var-files"`
 	EnvironmentType           WorkspaceEnvironmentType `jsonapi:"attr,environment-type"`
-	TerragruntVersion         string                   `jsonapi:"attr,terragrunt-version"`
-	TerragruntUseRunAll       bool                     `jsonapi:"attr,terragrunt-use-run-all"`
 	RemoteStateSharing        bool                     `jsonapi:"attr,remote-state-sharing"`
 
 	// Relations
@@ -158,6 +157,12 @@ type WorkspaceVCSRepo struct {
 	TriggerPrefixes   []string `json:"trigger-prefixes,omitempty"`
 	TriggerPatterns   string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    bool     `json:"dry-runs-enabled"`
+}
+
+type WorkspaceTerragrunt struct {
+	Version                     string `json:"version"`
+	UseRunAll                   bool   `json:"use-run-all"`
+	IncludeExternalDependencies bool   `json:"include-external-dependencies"`
 }
 
 // WorkspaceActions represents the workspace actions.
@@ -208,6 +213,12 @@ type Output struct {
 	Sensitive bool   `json:"sensitive"`
 }
 
+type WorkspaceTerragruntOptions struct {
+	Version                     string `json:"version"`
+	UseRunAll                   *bool  `json:"use-run-all,omitempty"`
+	IncludeExternalDependencies *bool  `json:"include-external-dependencies,omitempty"`
+}
+
 // List all the workspaces within an environment.
 func (s *workspaces) List(ctx context.Context, options WorkspaceListOptions) (*WorkspaceList, error) {
 	req, err := s.client.newRequest("GET", "workspaces", &options)
@@ -250,6 +261,8 @@ type WorkspaceCreateOptions struct {
 	// The version of Terraform to use for this workspace. Upon creating a
 	// workspace, the latest version is selected unless otherwise specified.
 	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+	// Settings for the workspace terragrunt configuration
+	Terragrunt *WorkspaceTerragruntOptions `jsonapi:"attr,terragrunt,omitempty"`
 
 	// The IaC platform to use for this workspace.
 	IacPlatform *WorkspaceIaCPlatform `jsonapi:"attr,iac-platform,omitempty"`
@@ -295,9 +308,7 @@ type WorkspaceCreateOptions struct {
 	// Specifies tags assigned to the workspace
 	Tags []*Tag `jsonapi:"relation,tags,omitempty"`
 
-	TerragruntVersion   *string `jsonapi:"attr,terragrunt-version,omitempty"`
-	TerragruntUseRunAll *bool   `jsonapi:"attr,terragrunt-use-run-all,omitempty"`
-	RemoteStateSharing  *bool   `jsonapi:"attr,remote-state-sharing,omitempty"`
+	RemoteStateSharing *bool `jsonapi:"attr,remote-state-sharing,omitempty"`
 }
 
 // WorkspaceVCSRepoOptions represents the configuration options of a VCS integration.
@@ -441,6 +452,8 @@ type WorkspaceUpdateOptions struct {
 
 	// The version of Terraform to use for this workspace.
 	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+	// Settings for the workspace terragrunt configuration
+	Terragrunt *WorkspaceTerragruntOptions `jsonapi:"attr,terragrunt"`
 
 	// The IaC platform to use for this workspace.
 	IacPlatform *WorkspaceIaCPlatform `jsonapi:"attr,iac-platform,omitempty"`
@@ -483,9 +496,7 @@ type WorkspaceUpdateOptions struct {
 	// Specifies the number of minutes run operation can be executed before termination.
 	RunOperationTimeout *int `jsonapi:"attr,run-operation-timeout"`
 
-	TerragruntVersion   *string `jsonapi:"attr,terragrunt-version,omitempty"`
-	TerragruntUseRunAll *bool   `jsonapi:"attr,terragrunt-use-run-all,omitempty"`
-	RemoteStateSharing  *bool   `jsonapi:"attr,remote-state-sharing,omitempty"`
+	RemoteStateSharing *bool `jsonapi:"attr,remote-state-sharing,omitempty"`
 }
 
 // Update settings of an existing workspace.
