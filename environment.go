@@ -50,6 +50,7 @@ type Environment struct {
 	CreatedAt             time.Time         `jsonapi:"attr,created-at,iso8601"`
 	Status                EnvironmentStatus `jsonapi:"attr,status"`
 	RemoteBackend         bool              `jsonapi:"attr,remote-backend"`
+	MaskSensitiveOutput   bool              `jsonapi:"attr,mask-sensitive-output"`
 
 	// Relations
 	Account                       *Account                 `jsonapi:"relation,account"`
@@ -79,6 +80,7 @@ type EnvironmentCreateOptions struct {
 	Name                  *string `jsonapi:"attr,name"`
 	CostEstimationEnabled *bool   `jsonapi:"attr,cost-estimation-enabled,omitempty"`
 	RemoteBackend         *bool   `jsonapi:"attr,remote-backend,omitempty"`
+	MaskSensitiveOutput   *bool   `jsonapi:"attr,mask-sensitive-output,omitempty"`
 
 	// Relations
 	Account                       *Account                 `jsonapi:"relation,account"`
@@ -186,6 +188,7 @@ type EnvironmentUpdateOptions struct {
 	ID                    string  `jsonapi:"primary,environments"`
 	Name                  *string `jsonapi:"attr,name,omitempty"`
 	CostEstimationEnabled *bool   `jsonapi:"attr,cost-estimation-enabled,omitempty"`
+	MaskSensitiveOutput   *bool   `jsonapi:"attr,mask-sensitive-output,omitempty"`
 
 	// Relations
 	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups"`
