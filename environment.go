@@ -82,7 +82,6 @@ type EnvironmentCreateOptions struct {
 
 	// Relations
 	Account                       *Account                 `jsonapi:"relation,account"`
-	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups,omitempty"`
 	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations,omitempty"`
 
 	// Specifies tags assigned to the environment
@@ -188,7 +187,6 @@ type EnvironmentUpdateOptions struct {
 	CostEstimationEnabled *bool   `jsonapi:"attr,cost-estimation-enabled,omitempty"`
 
 	// Relations
-	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups"`
 	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations"`
 }
 
