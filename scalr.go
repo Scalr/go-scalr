@@ -122,6 +122,7 @@ type Client struct {
 	AgentPoolTokens                 AgentPoolTokens
 	AgentPools                      AgentPools
 	EventBridgeIntegrations         EventBridgeIntegrations
+	InfracostIntegrations           InfracostIntegrations
 	ConfigurationVersions           ConfigurationVersions
 	EnvironmentTags                 EnvironmentTags
 	Environments                    Environments
@@ -253,6 +254,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.SSHKeys = &sshKeys{client: client}
 	client.SSHKeysLinks = &sshKeysLinks{client: client}
 	client.RemoteStateConsumers = &remoteStateConsumers{client: client}
+	client.InfracostIntegrations = &infracostIntegrations{client: client}
 	return client, nil
 }
 
