@@ -59,9 +59,9 @@ func TestInfracostIntegrations_Update(t *testing.T) {
 
 	t.Run("with valid options", func(t *testing.T) {
 		options := InfracostIntegrationUpdateOptions{
-			Name:   createOptions.Name,
+			Name:   String("test-" + randomString(t)),
 			ApiKey: &apiKey,
-			Status: IntegrationStatusDisabled,
+			//Status: IntegrationStatusDisabled,
 		}
 
 		ii, err := client.InfracostIntegrations.Update(ctx, ii.ID, options)
@@ -75,7 +75,7 @@ func TestInfracostIntegrations_Update(t *testing.T) {
 			refreshed,
 		} {
 			assert.NotEmpty(t, item.ID)
-			assert.Equal(t, options.Status, item.Status)
+			assert.Equal(t, *options.Name, item.Name)
 		}
 	})
 }

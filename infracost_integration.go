@@ -34,7 +34,7 @@ type InfracostIntegration struct {
 	Name     string            `jsonapi:"attr,name"`
 	Status   IntegrationStatus `jsonapi:"attr,status"`
 	ApiKey   string            `jsonapi:"attr,api-key"`
-	IsShared bool              `jsonapi:"attr,is-shared"`
+	IsShared bool              `jsonapi:"attr,is-shared,omitempty"`
 
 	// Relations
 	Environments []*Environment `jsonapi:"relation,environments"`
@@ -42,22 +42,26 @@ type InfracostIntegration struct {
 
 type InfracostIntegrationListOptions struct {
 	ListOptions
+
+	InfracostIntegration *string `url:"filter[infracost-integration],omitempty"`
+	Name                 *string `url:"filter[name],omitempty"`
 }
 
 type InfracostIntegrationCreateOptions struct {
-	ID     string  `jsonapi:"primary,infracost-integration"`
-	Name   *string `jsonapi:"attr,name"`
-	ApiKey *string `jsonapi:"attr,api-key"`
+	ID       string  `jsonapi:"primary,infracost-integration"`
+	Name     *string `jsonapi:"attr,name"`
+	ApiKey   *string `jsonapi:"attr,api-key"`
+	IsShared *bool   `jsonapi:"attr,is-shared,omitempty"`
 
 	// Relations
 	Environments []*Environment `jsonapi:"relation,environments"`
 }
 
 type InfracostIntegrationUpdateOptions struct {
-	ID     string            `jsonapi:"primary,infracost-integration"`
-	Name   *string           `jsonapi:"attr,name"`
-	ApiKey *string           `jsonapi:"attr,api-key"`
-	Status IntegrationStatus `jsonapi:"attr,status"`
+	ID       string  `jsonapi:"primary,infracost-integration"`
+	Name     *string `jsonapi:"attr,name,omitempty"`
+	ApiKey   *string `jsonapi:"attr,api-key,omitempty"`
+	IsShared *bool   `jsonapi:"attr,is-shared,omitempty"`
 
 	// Relations
 	Environments []*Environment `jsonapi:"relation,environments"`
