@@ -30,11 +30,12 @@ type InfracostIntegrationList struct {
 
 // InfracostIntegration represents a Scalr IACP Infracost integration.
 type InfracostIntegration struct {
-	ID       string            `jsonapi:"primary,infracost-integration"`
-	Name     string            `jsonapi:"attr,name"`
-	Status   IntegrationStatus `jsonapi:"attr,status"`
-	ApiKey   string            `jsonapi:"attr,api-key"`
-	IsShared bool              `jsonapi:"attr,is-shared,omitempty"`
+	ID         string            `jsonapi:"primary,infracost-integration"`
+	Name       string            `jsonapi:"attr,name"`
+	Status     IntegrationStatus `jsonapi:"attr,status"`
+	ApiKey     string            `jsonapi:"attr,api-key"`
+	IsShared   bool              `jsonapi:"attr,is-shared,omitempty"`
+	ErrMessage string            `jsonapi:"attr,err-message,omitempty"`
 
 	// Relations
 	Environments []*Environment `jsonapi:"relation,environments"`
