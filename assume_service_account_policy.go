@@ -99,8 +99,14 @@ func (s *assumeServiceAccountPolicies) Create(ctx context.Context, serviceAccoun
 }
 
 func (s *assumeServiceAccountPolicies) Read(ctx context.Context, serviceAccountID, policyID string) (*AssumeServiceAccountPolicy, error) {
+	options := struct {
+		Include string `url:"include"`
+	}{
+		Include: "service-account,provider",
+	}
+
 	urlPath := fmt.Sprintf("service-accounts/%s/assume-policies/%s", url.QueryEscape(serviceAccountID), url.QueryEscape(policyID))
-	req, err := s.client.newRequest("GET", urlPath, nil)
+	req, err := s.client.newRequest("GET", urlPath, options)
 	if err != nil {
 		return nil, err
 	}
