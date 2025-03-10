@@ -108,6 +108,9 @@ func (s *hooks) Create(ctx context.Context, options HookCreateOptions) (*Hook, e
 		return nil, err
 	}
 
+	// Make sure we don't send a user provided ID
+	options.ID = ""
+
 	req, err := s.client.newRequest("POST", "hooks", &options)
 	if err != nil {
 		return nil, err
@@ -152,6 +155,9 @@ func (s *hooks) Update(ctx context.Context, id string, options HookUpdateOptions
 	if err := options.valid(); err != nil {
 		return nil, err
 	}
+
+	// Make sure we don't send a user provided ID
+	options.ID = ""
 
 	u := fmt.Sprintf("hooks/%s", url.QueryEscape(id))
 	req, err := s.client.newRequest("PATCH", u, &options)

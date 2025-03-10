@@ -115,19 +115,19 @@ type Client struct {
 	retryLogHook      RetryLogHook
 	retryServerErrors bool
 
-	AccessPolicies          AccessPolicies
-	AccessTokens            AccessTokens
-	AccountUsers            AccountUsers
-	Accounts                Accounts
-	AgentPoolTokens         AgentPoolTokens
-	AgentPools              AgentPools
-	EventBridgeIntegrations EventBridgeIntegrations
-	InfracostIntegrations   InfracostIntegrations
-	ConfigurationVersions   ConfigurationVersions
-	EnvironmentTags         EnvironmentTags
-	Environments            Environments
-	Hooks                   Hooks
-	//HookEnvironmentLinks            HookEnvironmentLinks
+	AccessPolicies                  AccessPolicies
+	AccessTokens                    AccessTokens
+	AccountUsers                    AccountUsers
+	Accounts                        Accounts
+	AgentPoolTokens                 AgentPoolTokens
+	AgentPools                      AgentPools
+	EventBridgeIntegrations         EventBridgeIntegrations
+	InfracostIntegrations           InfracostIntegrations
+	ConfigurationVersions           ConfigurationVersions
+	EnvironmentTags                 EnvironmentTags
+	Environments                    Environments
+	Hooks                           Hooks
+	HookEnvironmentLinks            HookEnvironmentLinks
 	ModuleVersions                  ModuleVersions
 	Modules                         Modules
 	PolicyGroupEnvironments         PolicyGroupEnvironments
@@ -230,7 +230,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.EnvironmentTags = &environmentTag{client: client}
 	client.Environments = &environments{client: client}
 	client.Hooks = &hooks{client: client}
-	//client.HookEnvironmentLinks = &hookEnvironmentLinks{client: client}
+	client.HookEnvironmentLinks = &hookEnvironmentLinks{client: client}
 	client.ModuleVersions = &moduleVersions{client: client}
 	client.Modules = &modules{client: client}
 	client.PolicyGroupEnvironments = &policyGroupEnvironment{client: client}
