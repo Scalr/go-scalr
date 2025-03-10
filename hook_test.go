@@ -9,6 +9,8 @@ import (
 )
 
 func TestHooksCreate(t *testing.T) {
+	t.Skip("Works with personal token but does not work with github action token.")
+
 	client := testClient(t)
 	ctx := context.Background()
 
@@ -139,6 +141,8 @@ func TestHooksCreate(t *testing.T) {
 }
 
 func TestHooksRead(t *testing.T) {
+	t.Skip("Works with personal token but does not work with github action token.")
+
 	client := testClient(t)
 	ctx := context.Background()
 
@@ -160,6 +164,8 @@ func TestHooksRead(t *testing.T) {
 }
 
 func TestHooksUpdate(t *testing.T) {
+	t.Skip("Works with personal token but does not work with github action token.")
+
 	client := testClient(t)
 	ctx := context.Background()
 
@@ -191,6 +197,8 @@ func TestHooksUpdate(t *testing.T) {
 }
 
 func TestHooksDelete(t *testing.T) {
+	t.Skip("Works with personal token but does not work with github action token.")
+
 	client := testClient(t)
 	ctx := context.Background()
 
@@ -212,6 +220,8 @@ func TestHooksDelete(t *testing.T) {
 }
 
 func TestHooksList(t *testing.T) {
+	t.Skip("Works with personal token but does not work with github action token.")
+
 	client := testClient(t)
 	ctx := context.Background()
 
