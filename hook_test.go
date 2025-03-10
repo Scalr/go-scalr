@@ -20,8 +20,8 @@ func TestHooksCreate(t *testing.T) {
 		hookInterpreter := "bash"
 		hookScriptfilePath := "pre-plan.sh"
 		hookVcsRepo := &HookVcsRepo{
-			Identifier: "RomanMytsko/hooks",
-			Branch:     "main",
+			Identifier: "Scalr/tf-revizor-fixtures",
+			Branch:     "master",
 		}
 
 		options := HookCreateOptions{
@@ -68,8 +68,8 @@ func TestHooksCreate(t *testing.T) {
 			Interpreter:    String("bash"),
 			ScriptfilePath: String("pre-plan.sh"),
 			VcsRepo: &HookVcsRepo{
-				Identifier: "RomanMytsko/hooks",
-				Branch:     "main",
+				Identifier: "Scalr/tf-revizor-fixtures",
+				Branch:     "master",
 			},
 			Account: &Account{ID: defaultAccountID},
 		})
@@ -83,8 +83,8 @@ func TestHooksCreate(t *testing.T) {
 			Interpreter:    String("bash"),
 			ScriptfilePath: String("pre-plan.sh"),
 			VcsRepo: &HookVcsRepo{
-				Identifier: "RomanMytsko/hooks",
-				Branch:     "main",
+				Identifier: "Scalr/tf-revizor-fixtures",
+				Branch:     "master",
 			},
 			VcsProvider: vcsProvider,
 		})
@@ -97,8 +97,8 @@ func TestHooksCreate(t *testing.T) {
 			Name:           String("test-hook"),
 			ScriptfilePath: String("pre-plan.sh"),
 			VcsRepo: &HookVcsRepo{
-				Identifier: "RomanMytsko/hooks",
-				Branch:     "main",
+				Identifier: "Scalr/tf-revizor-fixtures",
+				Branch:     "master",
 			},
 			VcsProvider: vcsProvider,
 			Account:     &Account{ID: defaultAccountID},
@@ -112,8 +112,8 @@ func TestHooksCreate(t *testing.T) {
 			Name:        String("test-hook"),
 			Interpreter: String("bash"),
 			VcsRepo: &HookVcsRepo{
-				Identifier: "RomanMytsko/hooks",
-				Branch:     "main",
+				Identifier: "Scalr/tf-revizor-fixtures",
+				Branch:     "master",
 			},
 			VcsProvider: vcsProvider,
 			Account:     &Account{ID: defaultAccountID},
@@ -127,8 +127,8 @@ func TestHooksCreate(t *testing.T) {
 			Interpreter:    String("bash"),
 			ScriptfilePath: String("pre-plan.sh"),
 			VcsRepo: &HookVcsRepo{
-				Identifier: "RomanMytsko/hooks",
-				Branch:     "main",
+				Identifier: "Scalr/tf-revizor-fixtures",
+				Branch:     "master",
 			},
 			VcsProvider: vcsProvider,
 			Account:     &Account{ID: defaultAccountID},
