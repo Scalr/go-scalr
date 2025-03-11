@@ -38,6 +38,7 @@ func TestAssumeServiceAccountPolicyCreate(t *testing.T) {
 
 		policy, err = client.AssumeServiceAccountPolicies.Read(ctx, serviceAccount.ID, policy.ID)
 		require.NoError(t, err)
+		assert.NotEqual(t, policy.ServiceAccount, nil)
 
 		assert.Equal(t, *createOptions.Name, policy.Name)
 		assert.Equal(t, *createOptions.MaximumSessionDuration, policy.MaximumSessionDuration)
