@@ -54,7 +54,7 @@ type HookEnvironmentLinkListOptions struct {
 // HookEnvironmentLinkCreateOptions represents the options for creating a hook environment link
 type HookEnvironmentLinkCreateOptions struct {
 	ID     string    `jsonapi:"primary,hook-environment-links"`
-	Events *[]string `jsonapi:"attr,events,omitempty"`
+	Events []string  `jsonapi:"attr,events"`
 
 	// Relations
 	Environment *Environment `jsonapi:"relation,environment"`
