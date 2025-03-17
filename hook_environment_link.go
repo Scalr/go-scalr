@@ -7,6 +7,9 @@ import (
 	"net/url"
 )
 
+// Compile-time proof of interface implementation.
+var _ HookEnvironmentLinks = (*hookEnvironmentLinks)(nil)
+
 // HookEnvironmentLinks interface for hook environment link related operations
 type HookEnvironmentLinks interface {
 	List(ctx context.Context, options HookEnvironmentLinkListOptions) (*HookEnvironmentLinkList, error)
