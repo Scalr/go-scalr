@@ -65,7 +65,7 @@ type HookListOptions struct {
 // HookCreateOptions represents the options for creating a hook
 type HookCreateOptions struct {
 	ID             string       `jsonapi:"primary,hooks"`
-	Name           *string      `jsonapi:"attr,name"`
+	Name           string       `jsonapi:"attr,name"`
 	Description    *string      `jsonapi:"attr,description,omitempty"`
 	Interpreter    *string      `jsonapi:"attr,interpreter,omitempty"`
 	ScriptfilePath *string      `jsonapi:"attr,scriptfile-path,omitempty"`
