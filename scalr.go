@@ -127,7 +127,7 @@ type Client struct {
 	EnvironmentTags                 EnvironmentTags
 	Environments                    Environments
 	Hooks                           Hooks
-	HookEnvironmentLinks            HookEnvironmentLinks
+	EnvironmentHooks                EnvironmentHooks
 	ModuleVersions                  ModuleVersions
 	Modules                         Modules
 	PolicyGroupEnvironments         PolicyGroupEnvironments
@@ -230,7 +230,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.EnvironmentTags = &environmentTag{client: client}
 	client.Environments = &environments{client: client}
 	client.Hooks = &hooks{client: client}
-	client.HookEnvironmentLinks = &hookEnvironmentLinks{client: client}
+	client.EnvironmentHooks = &environmentHooks{client: client}
 	client.ModuleVersions = &moduleVersions{client: client}
 	client.Modules = &modules{client: client}
 	client.PolicyGroupEnvironments = &policyGroupEnvironment{client: client}

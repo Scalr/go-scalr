@@ -350,12 +350,11 @@ func createHook(t *testing.T, client *Client, vcsProvider *VcsProvider) (*Hook, 
 	}
 
 	options := HookCreateOptions{
-		Name:           String(hookName),
-		Interpreter:    String(hookInterpreter),
-		ScriptfilePath: String(hookScriptfilePath),
+		Name:           hookName,
+		Interpreter:    hookInterpreter,
+		ScriptfilePath: hookScriptfilePath,
 		VcsRepo:        hookVcsRepo,
 		VcsProvider:    vcsProvider,
-		Account:        &Account{ID: defaultAccountID},
 	}
 
 	hook, err := client.Hooks.Create(ctx, options)

@@ -27,12 +27,11 @@ func TestHooksCreate(t *testing.T) {
 		}
 
 		options := HookCreateOptions{
-			Name:           String(hookName),
-			Interpreter:    String(hookInterpreter),
-			ScriptfilePath: String(hookScriptfilePath),
+			Name:           hookName,
+			Interpreter:    hookInterpreter,
+			ScriptfilePath: hookScriptfilePath,
 			VcsRepo:        hookVcsRepo,
 			VcsProvider:    vcsProvider,
-			Account:        &Account{ID: defaultAccountID},
 		}
 
 		hook, err := client.Hooks.Create(ctx, options)
@@ -44,9 +43,9 @@ func TestHooksCreate(t *testing.T) {
 		refreshed, err := client.Hooks.Read(ctx, hook.ID)
 		require.NoError(t, err)
 
-		assert.Equal(t, *options.Name, refreshed.Name)
-		assert.Equal(t, *options.Interpreter, refreshed.Interpreter)
-		assert.Equal(t, *options.ScriptfilePath, refreshed.ScriptfilePath)
+		assert.Equal(t, options.Name, refreshed.Name)
+		assert.Equal(t, options.Interpreter, refreshed.Interpreter)
+		assert.Equal(t, options.ScriptfilePath, refreshed.ScriptfilePath)
 		assert.Equal(t, options.VcsRepo.Identifier, refreshed.VcsRepo.Identifier)
 		assert.Equal(t, options.VcsRepo.Branch, refreshed.VcsRepo.Branch)
 		assert.Equal(t, options.VcsProvider.ID, refreshed.VcsProvider.ID)
@@ -54,11 +53,10 @@ func TestHooksCreate(t *testing.T) {
 
 	t.Run("without vcs repo options", func(t *testing.T) {
 		hook, err := client.Hooks.Create(ctx, HookCreateOptions{
-			Name:           String("test-hook"),
-			Interpreter:    String("bash"),
-			ScriptfilePath: String("pre-plan.sh"),
+			Name:           "test-hook",
+			Interpreter:    "bash",
+			ScriptfilePath: "pre-plan.sh",
 			VcsProvider:    vcsProvider,
-			Account:        &Account{ID: defaultAccountID},
 		})
 		assert.Nil(t, hook)
 		assert.EqualError(t, err, "vcs repo is required")
@@ -66,44 +64,27 @@ func TestHooksCreate(t *testing.T) {
 
 	t.Run("without vcs provider options", func(t *testing.T) {
 		hook, err := client.Hooks.Create(ctx, HookCreateOptions{
-			Name:           String("test-hook"),
-			Interpreter:    String("bash"),
-			ScriptfilePath: String("pre-plan.sh"),
+			Name:           "test-hook",
+			Interpreter:    "bash",
+			ScriptfilePath: "pre-plan.sh",
 			VcsRepo: &HookVcsRepo{
 				Identifier: "Scalr/tf-revizor-fixtures",
 				Branch:     "master",
 			},
-			Account: &Account{ID: defaultAccountID},
 		})
 		assert.Nil(t, hook)
 		assert.EqualError(t, err, "vcs provider is required")
 	})
 
-	t.Run("without account options", func(t *testing.T) {
-		hook, err := client.Hooks.Create(ctx, HookCreateOptions{
-			Name:           String("test-hook"),
-			Interpreter:    String("bash"),
-			ScriptfilePath: String("pre-plan.sh"),
-			VcsRepo: &HookVcsRepo{
-				Identifier: "Scalr/tf-revizor-fixtures",
-				Branch:     "master",
-			},
-			VcsProvider: vcsProvider,
-		})
-		assert.Nil(t, hook)
-		assert.EqualError(t, err, "account is required")
-	})
-
 	t.Run("without interpreter options", func(t *testing.T) {
 		hook, err := client.Hooks.Create(ctx, HookCreateOptions{
-			Name:           String("test-hook"),
-			ScriptfilePath: String("pre-plan.sh"),
+			Name:           "test-hook",
+			ScriptfilePath: "pre-plan.sh",
 			VcsRepo: &HookVcsRepo{
 				Identifier: "Scalr/tf-revizor-fixtures",
 				Branch:     "master",
 			},
 			VcsProvider: vcsProvider,
-			Account:     &Account{ID: defaultAccountID},
 		})
 		assert.Nil(t, hook)
 		assert.EqualError(t, err, "interpreter is required")
@@ -111,14 +92,13 @@ func TestHooksCreate(t *testing.T) {
 
 	t.Run("without scriptfile path options", func(t *testing.T) {
 		hook, err := client.Hooks.Create(ctx, HookCreateOptions{
-			Name:        String("test-hook"),
-			Interpreter: String("bash"),
+			Name:        "test-hook",
+			Interpreter: "bash",
 			VcsRepo: &HookVcsRepo{
 				Identifier: "Scalr/tf-revizor-fixtures",
 				Branch:     "master",
 			},
 			VcsProvider: vcsProvider,
-			Account:     &Account{ID: defaultAccountID},
 		})
 		assert.Nil(t, hook)
 		assert.EqualError(t, err, "scriptfile path is required")
@@ -126,14 +106,13 @@ func TestHooksCreate(t *testing.T) {
 
 	t.Run("without name options", func(t *testing.T) {
 		hook, err := client.Hooks.Create(ctx, HookCreateOptions{
-			Interpreter:    String("bash"),
-			ScriptfilePath: String("pre-plan.sh"),
+			Interpreter:    "bash",
+			ScriptfilePath: "pre-plan.sh",
 			VcsRepo: &HookVcsRepo{
 				Identifier: "Scalr/tf-revizor-fixtures",
 				Branch:     "master",
 			},
 			VcsProvider: vcsProvider,
-			Account:     &Account{ID: defaultAccountID},
 		})
 		assert.Nil(t, hook)
 		assert.EqualError(t, err, "name is required")
@@ -181,9 +160,9 @@ func TestHooksUpdate(t *testing.T) {
 		updatedScriptfilePath := "updated-script.py"
 
 		updateOptions := HookUpdateOptions{
-			Name:           String(updatedName),
-			Interpreter:    String(updatedInterpreter),
-			ScriptfilePath: String(updatedScriptfilePath),
+			Name:           &updatedName,
+			Interpreter:    &updatedInterpreter,
+			ScriptfilePath: &updatedScriptfilePath,
 		}
 
 		updatedHook, err := client.Hooks.Update(ctx, hook.ID, updateOptions)
@@ -248,10 +227,9 @@ func TestHooksList(t *testing.T) {
 		assert.True(t, hookList.TotalCount >= 2)
 	})
 
-	t.Run("with name and account options", func(t *testing.T) {
+	t.Run("with name filter", func(t *testing.T) {
 		hookList, err := client.Hooks.List(ctx, HookListOptions{
-			Account: defaultAccountID,
-			Name:    hook1.Name,
+			Name: hook1.Name,
 		})
 		require.NoError(t, err)
 

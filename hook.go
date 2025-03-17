@@ -28,14 +28,13 @@ type hooks struct {
 type Hook struct {
 	ID             string       `jsonapi:"primary,hooks"`
 	Name           string       `jsonapi:"attr,name"`
-	Description    string       `jsonapi:"attr,description,omitempty"`
-	Interpreter    string       `jsonapi:"attr,interpreter,omitempty"`
-	ScriptfilePath string       `jsonapi:"attr,scriptfile-path,omitempty"`
-	VcsRepo        *HookVcsRepo `jsonapi:"attr,vcs-repo,omitempty"`
+	Description    string       `jsonapi:"attr,description"`
+	Interpreter    string       `jsonapi:"attr,interpreter"`
+	ScriptfilePath string       `jsonapi:"attr,scriptfile-path"`
+	VcsRepo        *HookVcsRepo `jsonapi:"attr,vcs-repo"`
 
 	// Relations
-	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider,omitempty"`
-	Account     *Account     `jsonapi:"relation,account"`
+	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider"`
 }
 
 // HookVcsRepo represents a repository in a VCS provider
@@ -69,8 +68,7 @@ type HookCreateOptions struct {
 	VcsRepo        *HookVcsRepo `jsonapi:"attr,vcs-repo"`
 
 	// Relations
-	Account     *Account     `jsonapi:"relation,account"`
-	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider,omitempty"`
+	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider"`
 }
 
 // HookUpdateOptions represents the options for updating a hook
@@ -190,14 +188,6 @@ func (s *hooks) Delete(ctx context.Context, id string) error {
 }
 
 func (o HookCreateOptions) valid() error {
-	if o.Account == nil {
-		return errors.New("account is required")
-	}
-
-	if !validStringID(&o.Account.ID) {
-		return errors.New("invalid value for account ID")
-	}
-
 	if o.VcsProvider == nil {
 		return errors.New("vcs provider is required")
 	}
@@ -205,19 +195,20 @@ func (o HookCreateOptions) valid() error {
 	if !validStringID(&o.VcsProvider.ID) {
 		return errors.New("invalid value for vcs provider ID")
 	}
+
 	if o.VcsRepo == nil {
 		return errors.New("vcs repo is required")
 	}
 
-	if o.Name == nil {
+	if o.Name == "" {
 		return errors.New("name is required")
 	}
 
-	if o.Interpreter == nil {
+	if o.Interpreter == "" {
 		return errors.New("interpreter is required")
 	}
 
-	if o.ScriptfilePath == nil {
+	if o.ScriptfilePath == "" {
 		return errors.New("scriptfile path is required")
 	}
 
