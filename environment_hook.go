@@ -37,7 +37,7 @@ type EnvironmentHook struct {
 
 	// Relations
 	Environment *Environment `jsonapi:"relation,environment"`
-	Hook        *Hook        `jsonapi:"relation,hook,omitempty"`
+	Hook        *Hook        `jsonapi:"relation,hook"`
 }
 
 // EnvironmentHookListOptions represents the options for listing environment hooks
