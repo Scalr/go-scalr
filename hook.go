@@ -7,6 +7,9 @@ import (
 	"net/url"
 )
 
+// Compile-time proof of interface implementation.
+var _ Hooks = (*hooks)(nil)
+
 // Hooks describes all the hook related methods that the Scalr API supports
 type Hooks interface {
 	List(ctx context.Context, options HookListOptions) (*HookList, error)
