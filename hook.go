@@ -53,10 +53,7 @@ type HookList struct {
 // HookListOptions represents the options for listing hooks
 type HookListOptions struct {
 	ListOptions
-
-	Account string `url:"filter[account],omitempty"`
 	Name    string `url:"filter[name],omitempty"`
-	Events  string `url:"filter[events],omitempty"`
 	Query   string `url:"query,omitempty"`
 	Sort    string `url:"sort,omitempty"`
 	Include string `url:"include,omitempty"`
