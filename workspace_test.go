@@ -317,7 +317,7 @@ func TestWorkspacesUpdate(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, wsTest.Name, wsAfter.Name)
-		assert.Equal(t, AutoQueueRunsModeSkipFirst, wsTest.AutoQueueRuns)
+		assert.Equal(t, AutoQueueRunsModeAlways, wsAfter.AutoQueueRuns)
 		assert.Equal(t, *options.AutoQueueRuns, wsAfter.AutoQueueRuns)
 		assert.NotEqual(t, wsTest.AutoApply, wsAfter.AutoApply)
 		assert.NotEqual(t, wsTest.ForceLatestRun, wsAfter.ForceLatestRun)

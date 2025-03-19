@@ -62,6 +62,7 @@ const (
 	AutoQueueRunsModeSkipFirst WorkspaceAutoQueueRuns = "skip_first"
 	AutoQueueRunsModeAlways    WorkspaceAutoQueueRuns = "always"
 	AutoQueueRunsModeNever     WorkspaceAutoQueueRuns = "never"
+	AutoQueueRunsModeFirstOnly WorkspaceAutoQueueRuns = "first_only"
 )
 
 // WorkspaceIaCPlatform represents an IaC platform used in this workspace.
