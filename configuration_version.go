@@ -29,7 +29,7 @@ type configurationVersions struct {
 // ConfigurationStatus represents a configuration version status.
 type ConfigurationStatus string
 
-//List all available configuration version statuses.
+// List all available configuration version statuses.
 const (
 	ConfigurationErrored  ConfigurationStatus = "errored"
 	ConfigurationPending  ConfigurationStatus = "pending"

@@ -91,6 +91,9 @@ func TestProviderConfigurationCreateScalr(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("success scalr", func(t *testing.T) {
+		ownerTeam, ownerTeamCleanup := createTeam(t, client, nil)
+		defer ownerTeamCleanup()
+
 		options := ProviderConfigurationCreateOptions{
 			Account:              &Account{ID: defaultAccountID},
 			Name:                 String("scalr_dev"),
@@ -98,6 +101,7 @@ func TestProviderConfigurationCreateScalr(t *testing.T) {
 			ExportShellVariables: Bool(false),
 			ScalrHostname:        String(scalrHostname),
 			ScalrToken:           String(scalrToken),
+			Owners:               []*Team{{ID: ownerTeam.ID}},
 		}
 		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
 		if err != nil {
@@ -114,6 +118,7 @@ func TestProviderConfigurationCreateScalr(t *testing.T) {
 		assert.Equal(t, *options.ExportShellVariables, pcfg.ExportShellVariables)
 		assert.Equal(t, *options.ScalrHostname, pcfg.ScalrHostname)
 		assert.Equal(t, "", pcfg.ScalrToken)
+		assert.Equal(t, &options.Owners, &pcfg.Owners)
 	})
 }
 
@@ -556,6 +561,9 @@ func TestProviderConfigurationUpdateScalr(t *testing.T) {
 	environment, deleteEnvironment := createEnvironment(t, client)
 	defer deleteEnvironment()
 
+	ownerTeam, ownerTeamCleanup := createTeam(t, client, nil)
+	defer ownerTeamCleanup()
+
 	t.Run("success scalr", func(t *testing.T) {
 		createOptions := ProviderConfigurationCreateOptions{
 			Account:              &Account{ID: defaultAccountID},
@@ -566,6 +574,7 @@ func TestProviderConfigurationUpdateScalr(t *testing.T) {
 			ScalrToken:           String(scalrToken),
 			IsShared:             Bool(false),
 			Environments:         []*Environment{environment},
+			Owners:               []*Team{{ID: ownerTeam.ID}},
 		}
 		configuration, err := client.ProviderConfigurations.Create(ctx, createOptions)
 		if err != nil {
@@ -580,6 +589,7 @@ func TestProviderConfigurationUpdateScalr(t *testing.T) {
 			ScalrToken:           String(scalrToken),
 			IsShared:             Bool(true),
 			Environments:         []*Environment{},
+			Owners:               []*Team{},
 		}
 		updatedConfiguration, err := client.ProviderConfigurations.Update(
 			ctx, configuration.ID, updateOptions,
@@ -589,6 +599,7 @@ func TestProviderConfigurationUpdateScalr(t *testing.T) {
 		assert.Equal(t, *updateOptions.ExportShellVariables, updatedConfiguration.ExportShellVariables)
 		assert.Equal(t, *updateOptions.ScalrHostname, updatedConfiguration.ScalrHostname)
 		assert.Equal(t, *updateOptions.IsShared, updatedConfiguration.IsShared)
+		assert.Len(t, updatedConfiguration.Owners, 0)
 	})
 }
 

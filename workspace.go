@@ -1,7 +1,9 @@
 package scalr
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -33,6 +35,9 @@ type Workspaces interface {
 
 	// SetSchedule sets run schedules for workspace.
 	SetSchedule(ctx context.Context, workspaceID string, options WorkspaceRunScheduleOptions) (*Workspace, error)
+
+	// Read outputs
+	ReadOutputs(ctx context.Context, workspaceID string) ([]*Output, error)
 }
 
 // workspaces implements Workspaces.
@@ -59,6 +64,27 @@ const (
 	AutoQueueRunsModeNever     WorkspaceAutoQueueRuns = "never"
 )
 
+// WorkspaceIaCPlatform represents an IaC platform used in this workspace.
+type WorkspaceIaCPlatform string
+
+// Available IaC platforms
+const (
+	WorkspaceIaCPlatformTerraform WorkspaceIaCPlatform = "terraform"
+	WorkspaceIaCPlatformOpenTofu  WorkspaceIaCPlatform = "opentofu"
+)
+
+// WorkspaceEnvironmentType represents the type of workspace environment.
+type WorkspaceEnvironmentType string
+
+// Available workspace environment types
+const (
+	WorkspaceEnvironmentTypeProduction  WorkspaceEnvironmentType = "production"
+	WorkspaceEnvironmentTypeStaging     WorkspaceEnvironmentType = "staging"
+	WorkspaceEnvironmentTypeTesting     WorkspaceEnvironmentType = "testing"
+	WorkspaceEnvironmentTypeDevelopment WorkspaceEnvironmentType = "development"
+	WorkspaceEnvironmentTypeUnmapped    WorkspaceEnvironmentType = "unmapped"
+)
+
 // WorkspaceList represents a list of workspaces.
 type WorkspaceList struct {
 	*Pagination
@@ -67,39 +93,50 @@ type WorkspaceList struct {
 
 // Workspace represents a Scalr workspace.
 type Workspace struct {
-	ID                        string                 `jsonapi:"primary,workspaces"`
-	Actions                   *WorkspaceActions      `jsonapi:"attr,actions"`
-	AutoApply                 bool                   `jsonapi:"attr,auto-apply"`
-	ForceLatestRun            bool                   `jsonapi:"attr,force-latest-run"`
-	DeletionProtectionEnabled bool                   `jsonapi:"attr,deletion-protection-enabled"`
-	CanQueueDestroyPlan       bool                   `jsonapi:"attr,can-queue-destroy-plan"`
-	CreatedAt                 time.Time              `jsonapi:"attr,created-at,iso8601"`
-	FileTriggersEnabled       bool                   `jsonapi:"attr,file-triggers-enabled"`
-	Locked                    bool                   `jsonapi:"attr,locked"`
-	MigrationEnvironment      string                 `jsonapi:"attr,migration-environment"`
-	Name                      string                 `jsonapi:"attr,name"`
-	Operations                bool                   `jsonapi:"attr,operations"`
-	ExecutionMode             WorkspaceExecutionMode `jsonapi:"attr,execution-mode"`
-	Permissions               *WorkspacePermissions  `jsonapi:"attr,permissions"`
-	TerraformVersion          string                 `jsonapi:"attr,terraform-version"`
-	VCSRepo                   *WorkspaceVCSRepo      `jsonapi:"attr,vcs-repo"`
-	WorkingDirectory          string                 `jsonapi:"attr,working-directory"`
-	ApplySchedule             string                 `jsonapi:"attr,apply-schedule"`
-	DestroySchedule           string                 `jsonapi:"attr,destroy-schedule"`
-	HasResources              bool                   `jsonapi:"attr,has-resources"`
-	AutoQueueRuns             WorkspaceAutoQueueRuns `jsonapi:"attr,auto-queue-runs"`
-	Hooks                     *Hooks                 `jsonapi:"attr,hooks"`
-	RunOperationTimeout       *int                   `jsonapi:"attr,run-operation-timeout"`
-	VarFiles                  []string               `jsonapi:"attr,var-files"`
+	ID                        string                   `jsonapi:"primary,workspaces"`
+	Actions                   *WorkspaceActions        `jsonapi:"attr,actions"`
+	AutoApply                 bool                     `jsonapi:"attr,auto-apply"`
+	ForceLatestRun            bool                     `jsonapi:"attr,force-latest-run"`
+	DeletionProtectionEnabled bool                     `jsonapi:"attr,deletion-protection-enabled"`
+	CanQueueDestroyPlan       bool                     `jsonapi:"attr,can-queue-destroy-plan"`
+	CreatedAt                 time.Time                `jsonapi:"attr,created-at,iso8601"`
+	FileTriggersEnabled       bool                     `jsonapi:"attr,file-triggers-enabled"`
+	Locked                    bool                     `jsonapi:"attr,locked"`
+	MigrationEnvironment      string                   `jsonapi:"attr,migration-environment"`
+	Name                      string                   `jsonapi:"attr,name"`
+	Operations                bool                     `jsonapi:"attr,operations"`
+	ExecutionMode             WorkspaceExecutionMode   `jsonapi:"attr,execution-mode"`
+	Permissions               *WorkspacePermissions    `jsonapi:"attr,permissions"`
+	TerraformVersion          string                   `jsonapi:"attr,terraform-version"`
+	IaCPlatform               WorkspaceIaCPlatform     `jsonapi:"attr,iac-platform"`
+	VCSRepo                   *WorkspaceVCSRepo        `jsonapi:"attr,vcs-repo"`
+	Terragrunt                *WorkspaceTerragrunt     `jsonapi:"attr,terragrunt"`
+	WorkingDirectory          string                   `jsonapi:"attr,working-directory"`
+	ApplySchedule             string                   `jsonapi:"attr,apply-schedule"`
+	DestroySchedule           string                   `jsonapi:"attr,destroy-schedule"`
+	HasResources              bool                     `jsonapi:"attr,has-resources"`
+	AutoQueueRuns             WorkspaceAutoQueueRuns   `jsonapi:"attr,auto-queue-runs"`
+	Hooks                     *Hooks                   `jsonapi:"attr,hooks"`
+	RunOperationTimeout       *int                     `jsonapi:"attr,run-operation-timeout"`
+	VarFiles                  []string                 `jsonapi:"attr,var-files"`
+	EnvironmentType           WorkspaceEnvironmentType `jsonapi:"attr,environment-type"`
+	RemoteStateSharing        bool                     `jsonapi:"attr,remote-state-sharing"`
 
 	// Relations
-	CurrentRun    *Run           `jsonapi:"relation,current-run"`
-	Environment   *Environment   `jsonapi:"relation,environment"`
-	CreatedBy     *User          `jsonapi:"relation,created-by"`
-	VcsProvider   *VcsProvider   `jsonapi:"relation,vcs-provider"`
-	AgentPool     *AgentPool     `jsonapi:"relation,agent-pool"`
-	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
-	Tags          []*Tag         `jsonapi:"relation,tags"`
+	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
+	LatestRun            *Run                  `jsonapi:"relation,latest-run"`
+	Environment          *Environment          `jsonapi:"relation,environment"`
+	CreatedBy            *User                 `jsonapi:"relation,created-by"`
+	VcsProvider          *VcsProvider          `jsonapi:"relation,vcs-provider"`
+	AgentPool            *AgentPool            `jsonapi:"relation,agent-pool"`
+	ModuleVersion        *ModuleVersion        `jsonapi:"relation,module-version,omitempty"`
+	Tags                 []*Tag                `jsonapi:"relation,tags"`
+	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
+	SSHKey               *SSHKey               `jsonapi:"relation,ssh-key"`
+}
+
+type WorkspaceRelation struct {
+	ID string `jsonapi:"primary,workspaces"`
 }
 
 // Hooks contains the custom hooks field.
@@ -118,7 +155,14 @@ type WorkspaceVCSRepo struct {
 	IngressSubmodules bool     `json:"ingress-submodules"`
 	Path              string   `json:"path"`
 	TriggerPrefixes   []string `json:"trigger-prefixes,omitempty"`
+	TriggerPatterns   string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    bool     `json:"dry-runs-enabled"`
+}
+
+type WorkspaceTerragrunt struct {
+	Version                     string `json:"version"`
+	UseRunAll                   bool   `json:"use-run-all"`
+	IncludeExternalDependencies bool   `json:"include-external-dependencies"`
 }
 
 // WorkspaceActions represents the workspace actions.
@@ -163,6 +207,18 @@ type WorkspaceRunScheduleOptions struct {
 	DestroySchedule *string `json:"destroy-schedule"`
 }
 
+type Output struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Sensitive bool   `json:"sensitive"`
+}
+
+type WorkspaceTerragruntOptions struct {
+	Version                     string `json:"version"`
+	UseRunAll                   *bool  `json:"use-run-all,omitempty"`
+	IncludeExternalDependencies *bool  `json:"include-external-dependencies,omitempty"`
+}
+
 // List all the workspaces within an environment.
 func (s *workspaces) List(ctx context.Context, options WorkspaceListOptions) (*WorkspaceList, error) {
 	req, err := s.client.newRequest("GET", "workspaces", &options)
@@ -205,6 +261,11 @@ type WorkspaceCreateOptions struct {
 	// The version of Terraform to use for this workspace. Upon creating a
 	// workspace, the latest version is selected unless otherwise specified.
 	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+	// Settings for the workspace terragrunt configuration
+	Terragrunt *WorkspaceTerragruntOptions `jsonapi:"attr,terragrunt,omitempty"`
+
+	// The IaC platform to use for this workspace.
+	IacPlatform *WorkspaceIaCPlatform `jsonapi:"attr,iac-platform,omitempty"`
 
 	// Settings for the workspace's VCS repository. If omitted, the workspace is
 	// created without a VCS repo. If included, you must specify at least the
@@ -235,6 +296,9 @@ type WorkspaceCreateOptions struct {
 	// Specifies the VarFiles for workspace.
 	VarFiles []string `jsonapi:"attr,var-files"`
 
+	// The type of the Scalr Workspace environment.
+	EnvironmentType *WorkspaceEnvironmentType `jsonapi:"attr,environment-type,omitempty"`
+
 	// Specifies the ModuleVersion based on create workspace
 	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
 
@@ -243,6 +307,8 @@ type WorkspaceCreateOptions struct {
 
 	// Specifies tags assigned to the workspace
 	Tags []*Tag `jsonapi:"relation,tags,omitempty"`
+
+	RemoteStateSharing *bool `jsonapi:"attr,remote-state-sharing,omitempty"`
 }
 
 // WorkspaceVCSRepoOptions represents the configuration options of a VCS integration.
@@ -252,6 +318,7 @@ type WorkspaceVCSRepoOptions struct {
 	IngressSubmodules *bool     `json:"ingress-submodules,omitempty"`
 	Path              *string   `json:"path,omitempty"`
 	TriggerPrefixes   *[]string `json:"trigger-prefixes,omitempty"`
+	TriggerPatterns   *string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    *bool     `json:"dry-runs-enabled,omitempty"`
 }
 
@@ -385,6 +452,11 @@ type WorkspaceUpdateOptions struct {
 
 	// The version of Terraform to use for this workspace.
 	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+	// Settings for the workspace terragrunt configuration
+	Terragrunt *WorkspaceTerragruntOptions `jsonapi:"attr,terragrunt"`
+
+	// The IaC platform to use for this workspace.
+	IacPlatform *WorkspaceIaCPlatform `jsonapi:"attr,iac-platform,omitempty"`
 
 	// To delete a workspace's existing VCS repo, specify null instead of an
 	// object. To modify a workspace's existing VCS repo, include whichever of
@@ -415,11 +487,16 @@ type WorkspaceUpdateOptions struct {
 	//Specifies the VarFiles for workspace.
 	VarFiles []string `jsonapi:"attr,var_files"`
 
+	// The type of the Scalr Workspace environment.
+	EnvironmentType *WorkspaceEnvironmentType `jsonapi:"attr,environment-type,omitempty"`
+
 	// Specifies the ModuleVersion based on create workspace
 	ModuleVersion *ModuleVersion `jsonapi:"relation,module-version"`
 
 	// Specifies the number of minutes run operation can be executed before termination.
 	RunOperationTimeout *int `jsonapi:"attr,run-operation-timeout"`
+
+	RemoteStateSharing *bool `jsonapi:"attr,remote-state-sharing,omitempty"`
 }
 
 // Update settings of an existing workspace.
@@ -480,4 +557,31 @@ func (s *workspaces) SetSchedule(ctx context.Context, workspaceID string, option
 	}
 
 	return w, nil
+}
+
+func (s *workspaces) ReadOutputs(ctx context.Context, workspaceID string) ([]*Output, error) {
+	if !validStringID(&workspaceID) {
+		return nil, errors.New("invalid value for workspace ID")
+	}
+
+	u := fmt.Sprintf("workspaces/%s/outputs", url.QueryEscape(workspaceID))
+	req, err := s.client.newJsonRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := &bytes.Buffer{}
+	if err = s.client.do(ctx, req, buffer); err != nil {
+		return nil, err
+	}
+
+	outputs := struct {
+		Data []*Output `json:"data"`
+	}{}
+
+	if err = json.Unmarshal(buffer.Bytes(), &outputs); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response body: %v", err)
+	}
+
+	return outputs.Data, nil
 }

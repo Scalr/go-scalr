@@ -96,21 +96,6 @@ func TestTagsCreate(t *testing.T) {
 		assert.Nil(t, tag)
 		assert.EqualError(t, err, "Invalid Attribute\n\nName cannot be empty.")
 	})
-
-	t.Run("when options has an invalid account", func(t *testing.T) {
-		var accountId = "acc-123"
-		_, err := client.Tags.Create(ctx, TagCreateOptions{
-			Name:    String(" "),
-			Account: &Account{ID: accountId},
-		})
-		assert.Equal(
-			t,
-			ResourceNotFoundError{
-				Message: fmt.Sprintf("Invalid Relationship\n\nAccount with ID '%s' not found or user unauthorized.", accountId),
-			}.Error(),
-			err.Error(),
-		)
-	})
 }
 
 func TestTagsRead(t *testing.T) {

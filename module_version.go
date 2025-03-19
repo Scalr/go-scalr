@@ -52,6 +52,7 @@ type ModuleVersionListOptions struct {
 	Module  string  `url:"filter[module]"`
 	Status  *string `url:"filter[status],omitempty"`
 	Version *string `url:"filter[version],omitempty"`
+	Sort    *string `url:"sort,omitempty"`
 	Include string  `url:"include,omitempty"`
 }
 

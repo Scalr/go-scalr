@@ -66,10 +66,11 @@ func TestVcsProvidersCreate(t *testing.T) {
 
 	t.Run("with valid options", func(t *testing.T) {
 		options := VcsProviderCreateOptions{
-			Name:     String("vcs-" + randomString(t)),
-			VcsType:  Github,
-			AuthType: PersonalToken,
-			Token:    os.Getenv("GITHUB_TOKEN"),
+			Name:               String("vcs-" + randomString(t)),
+			VcsType:            Github,
+			AuthType:           PersonalToken,
+			Token:              os.Getenv("GITHUB_TOKEN"),
+			DraftPrRunsEnabled: Bool(true),
 
 			Environments: []*Environment{envTest},
 			Account:      &Account{ID: defaultAccountID},
@@ -91,6 +92,7 @@ func TestVcsProvidersCreate(t *testing.T) {
 			assert.Equal(t, options.VcsType, item.VcsType)
 			assert.Equal(t, options.AuthType, item.AuthType)
 			assert.Equal(t, false, item.IsShared)
+			assert.Equal(t, true, item.DraftPrRunsEnabled)
 		}
 	})
 
@@ -113,6 +115,7 @@ func TestVcsProvidersCreate(t *testing.T) {
 		assert.Equal(t, options.VcsType, vcs.VcsType)
 		assert.Equal(t, options.AuthType, vcs.AuthType)
 		assert.Equal(t, *options.IsShared, vcs.IsShared)
+		assert.Equal(t, false, vcs.DraftPrRunsEnabled)
 
 	})
 

@@ -56,6 +56,7 @@ type ServiceAccount struct {
 	// Relations
 	Account   *Account `jsonapi:"relation,account,omitempty"`
 	CreatedBy *User    `jsonapi:"relation,created-by,omitempty"`
+	Owners    []*Team  `jsonapi:"relation,owners"`
 }
 
 // ServiceAccountListOptions represents the options for listing service accounts.
@@ -79,6 +80,7 @@ type ServiceAccountCreateOptions struct {
 	Description *string               `jsonapi:"attr,description,omitempty"`
 	Status      *ServiceAccountStatus `jsonapi:"attr,status,omitempty"`
 	Account     *Account              `jsonapi:"relation,account"`
+	Owners      []*Team               `jsonapi:"relation,owners"`
 }
 
 func (o ServiceAccountCreateOptions) valid() error {
@@ -101,6 +103,7 @@ type ServiceAccountUpdateOptions struct {
 
 	Description *string               `jsonapi:"attr,description,omitempty"`
 	Status      *ServiceAccountStatus `jsonapi:"attr,status,omitempty"`
+	Owners      []*Team               `jsonapi:"relation,owners"`
 }
 
 // Read a service account by its ID.

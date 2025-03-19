@@ -70,11 +70,15 @@ func TestServiceAccountsCreate(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("with valid options", func(t *testing.T) {
+		ownerTeam, ownerTeamCleanup := createTeam(t, client, nil)
+		defer ownerTeamCleanup()
+
 		options := ServiceAccountCreateOptions{
 			Name:        String("tst-" + randomString(t)),
 			Description: String("tst-description-" + randomString(t)),
 			Status:      ServiceAccountStatusPtr(ServiceAccountStatusActive),
 			Account:     &Account{ID: defaultAccountID},
+			Owners:      []*Team{{ID: ownerTeam.ID}},
 		}
 
 		sa, err := client.ServiceAccounts.Create(ctx, options)
@@ -95,6 +99,7 @@ func TestServiceAccountsCreate(t *testing.T) {
 			assert.Equal(t, options.Description, &item.Description)
 			assert.Equal(t, options.Status, &item.Status)
 			assert.Equal(t, &options.Account, &item.Account)
+			assert.Equal(t, &options.Owners, &item.Owners)
 		}
 	})
 
@@ -181,6 +186,9 @@ func TestServiceAccountsUpdate(t *testing.T) {
 	client := testClient(t)
 	ctx := context.Background()
 
+	ownerTeam, ownerTeamCleanup := createTeam(t, client, nil)
+	defer ownerTeamCleanup()
+
 	saTest, saTestCleanup := createServiceAccount(
 		t, client, &Account{ID: defaultAccountID}, ServiceAccountStatusPtr(ServiceAccountStatusActive),
 	)
@@ -205,6 +213,38 @@ func TestServiceAccountsUpdate(t *testing.T) {
 		} {
 			assert.Equal(t, options.Description, &item.Description)
 			assert.Equal(t, options.Status, &item.Status)
+		}
+	})
+	t.Run("with owners", func(t *testing.T) {
+		options := ServiceAccountUpdateOptions{
+			Owners: []*Team{{ID: ownerTeam.ID}},
+		}
+		sa, err := client.ServiceAccounts.Update(ctx, saTest.ID, options)
+		require.NoError(t, err)
+		refreshed, err := client.ServiceAccounts.Read(ctx, saTest.ID)
+		require.NoError(t, err)
+
+		for _, item := range []*ServiceAccount{
+			sa,
+			refreshed,
+		} {
+			assert.Equal(t, &options.Owners, &item.Owners)
+		}
+
+		// unset the owner
+		options = ServiceAccountUpdateOptions{
+			Owners: []*Team{},
+		}
+		sa, err = client.ServiceAccounts.Update(ctx, saTest.ID, options)
+		require.NoError(t, err)
+		refreshed, err = client.ServiceAccounts.Read(ctx, saTest.ID)
+		require.NoError(t, err)
+
+		for _, item := range []*ServiceAccount{
+			sa,
+			refreshed,
+		} {
+			assert.Empty(t, item.Owners)
 		}
 	})
 }

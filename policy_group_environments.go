@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-
-	"github.com/svanharmelen/jsonapi"
 )
 
 // Compile-time proof of interface implementation.
@@ -16,6 +14,7 @@ var _ PolicyGroupEnvironments = (*policyGroupEnvironment)(nil)
 // Scalr API supports.
 type PolicyGroupEnvironments interface {
 	Create(ctx context.Context, options PolicyGroupEnvironmentsCreateOptions) error
+	Update(ctx context.Context, options PolicyGroupEnvironmentsUpdateOptions) error
 	Delete(ctx context.Context, options PolicyGroupEnvironmentDeleteOptions) error
 }
 
@@ -35,6 +34,12 @@ type PolicyGroupEnvironmentsCreateOptions struct {
 	PolicyGroupEnvironments []*PolicyGroupEnvironment
 }
 
+// PolicyGroupEnvironmentsUpdateOptions represents options for updating policy group environment linkage
+type PolicyGroupEnvironmentsUpdateOptions struct {
+	PolicyGroupID           string
+	PolicyGroupEnvironments []*PolicyGroupEnvironment
+}
+
 type PolicyGroupEnvironmentDeleteOptions struct {
 	PolicyGroupID string
 	EnvironmentID string
@@ -46,6 +51,13 @@ func (o PolicyGroupEnvironmentsCreateOptions) valid() error {
 	}
 	if o.PolicyGroupEnvironments == nil || len(o.PolicyGroupEnvironments) < 1 {
 		return errors.New("list of environments is required")
+	}
+	return nil
+}
+
+func (o PolicyGroupEnvironmentsUpdateOptions) valid() error {
+	if !validStringID(&o.PolicyGroupID) {
+		return errors.New("invalid value for policy group ID")
 	}
 	return nil
 }
@@ -62,17 +74,13 @@ func (o PolicyGroupEnvironmentDeleteOptions) valid() error {
 	return nil
 }
 
-// Create a new policy group.
+// Create a new policy group environments linkage.
 func (s *policyGroupEnvironment) Create(ctx context.Context, options PolicyGroupEnvironmentsCreateOptions) error {
 	if err := options.valid(); err != nil {
 		return err
 	}
 	u := fmt.Sprintf("policy-groups/%s/relationships/environments", url.QueryEscape(options.PolicyGroupID))
-	payload, err := jsonapi.Marshal(options.PolicyGroupEnvironments)
-	if err != nil {
-		return err
-	}
-	req, err := s.client.newJsonRequest("POST", u, payload)
+	req, err := s.client.newRequest("POST", u, options.PolicyGroupEnvironments)
 	if err != nil {
 		return err
 	}
@@ -80,7 +88,21 @@ func (s *policyGroupEnvironment) Create(ctx context.Context, options PolicyGroup
 	return s.client.do(ctx, req, nil)
 }
 
-// Delete policy group by its ID.
+// Update policy group environments linkage
+func (s *policyGroupEnvironment) Update(ctx context.Context, options PolicyGroupEnvironmentsUpdateOptions) error {
+	if err := options.valid(); err != nil {
+		return err
+	}
+	u := fmt.Sprintf("policy-groups/%s/relationships/environments", url.QueryEscape(options.PolicyGroupID))
+	req, err := s.client.newRequest("PATCH", u, options.PolicyGroupEnvironments)
+	if err != nil {
+		return err
+	}
+
+	return s.client.do(ctx, req, nil)
+}
+
+// Delete policy group environments linkage by its ID.
 func (s *policyGroupEnvironment) Delete(ctx context.Context, options PolicyGroupEnvironmentDeleteOptions) error {
 	if err := options.valid(); err != nil {
 		return err
