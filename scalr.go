@@ -121,7 +121,9 @@ type Client struct {
 	Accounts                        Accounts
 	AgentPoolTokens                 AgentPoolTokens
 	AgentPools                      AgentPools
+	AssumeServiceAccountPolicies    AssumeServiceAccountPolicies
 	EventBridgeIntegrations         EventBridgeIntegrations
+	InfracostIntegrations           InfracostIntegrations
 	ConfigurationVersions           ConfigurationVersions
 	EnvironmentTags                 EnvironmentTags
 	Environments                    Environments
@@ -145,6 +147,7 @@ type Client struct {
 	VcsProviders                    VcsProviders
 	VcsRevisions                    VcsRevisions
 	WebhookIntegrations             WebhookIntegrations
+	WorkloadIdentityProviders       WorkloadIdentityProviders
 	WorkspaceTags                   WorkspaceTags
 	Workspaces                      Workspaces
 	RunScheduleRules                RunScheduleRules
@@ -253,6 +256,9 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.SSHKeys = &sshKeys{client: client}
 	client.SSHKeysLinks = &sshKeysLinks{client: client}
 	client.RemoteStateConsumers = &remoteStateConsumers{client: client}
+	client.InfracostIntegrations = &infracostIntegrations{client: client}
+	client.WorkloadIdentityProviders = &workloadIdentityProviders{client: client}
+	client.AssumeServiceAccountPolicies = &assumeServiceAccountPolicies{client: client}
 	return client, nil
 }
 
