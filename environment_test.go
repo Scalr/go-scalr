@@ -175,8 +175,7 @@ func TestEnvironmentsUpdate(t *testing.T) {
 		defer envTestCleanup()
 
 		options := EnvironmentUpdateOptions{
-			Name:                  String("tst-" + randomString(t)),
-			CostEstimationEnabled: Bool(false),
+			Name: String("tst-" + randomString(t)),
 		}
 
 		env, err := client.Environments.Update(ctx, envTest.ID, options)
@@ -192,7 +191,6 @@ func TestEnvironmentsUpdate(t *testing.T) {
 			refreshed,
 		} {
 			assert.Equal(t, *options.Name, item.Name)
-			assert.Equal(t, *options.CostEstimationEnabled, item.CostEstimationEnabled)
 		}
 	})
 
