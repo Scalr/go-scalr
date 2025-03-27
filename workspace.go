@@ -59,10 +59,10 @@ type WorkspaceAutoQueueRuns string
 
 // Available auto queue modes
 const (
-	AutoQueueRunsModeSkipFirst WorkspaceAutoQueueRuns = "skip_first"
-	AutoQueueRunsModeAlways    WorkspaceAutoQueueRuns = "always"
-	AutoQueueRunsModeNever     WorkspaceAutoQueueRuns = "never"
-	AutoQueueRunsModeFirstOnly WorkspaceAutoQueueRuns = "first_only"
+	AutoQueueRunsModeSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
+	AutoQueueRunsModeAlways       WorkspaceAutoQueueRuns = "always"
+	AutoQueueRunsModeNever        WorkspaceAutoQueueRuns = "never"
+	AutoQueueRunsModeOnCreateOnly WorkspaceAutoQueueRuns = "on_create_only"
 )
 
 // WorkspaceIaCPlatform represents an IaC platform used in this workspace.
