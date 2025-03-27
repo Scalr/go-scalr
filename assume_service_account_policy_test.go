@@ -128,3 +128,72 @@ func TestAssumeServiceAccountPolicyDelete(t *testing.T) {
 		)
 	})
 }
+
+func TestAssumeServiceAccountPoliciesList(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+
+	serviceAccount, removeServiceAccount := createServiceAccount(
+		t, client, &Account{ID: defaultAccountID}, ServiceAccountStatusPtr(ServiceAccountStatusActive),
+	)
+	defer removeServiceAccount()
+
+	provider, removeProvider := createWorkloadIdentityProvider(t, client)
+	defer removeProvider()
+
+	// Create test policy
+	policy, err := client.AssumeServiceAccountPolicies.Create(ctx, serviceAccount.ID, AssumeServiceAccountPolicyCreateOptions{
+		Name:                   String("test-policy"),
+		Provider:               provider,
+		MaximumSessionDuration: Int(3600),
+		ClaimConditions: []ClaimCondition{
+			{Claim: "sub", Value: "test@example.com", Operator: String("eq")},
+		},
+	})
+	require.NoError(t, err)
+
+	t.Run("list all policies for service account", func(t *testing.T) {
+		policies, err := client.AssumeServiceAccountPolicies.List(ctx, AssumeServiceAccountPoliciesListOptions{
+			Filter: &AssumeServiceAccountPolicyFilter{
+				ServiceAccount: serviceAccount.ID,
+			},
+		})
+		require.NoError(t, err)
+
+		found := false
+		for _, p := range policies.Items {
+			if p.ID == policy.ID {
+				found = true
+				assert.Equal(t, "test-policy", p.Name)
+				assert.Equal(t, 3600, p.MaximumSessionDuration)
+				assert.Equal(t, policy.ClaimConditions, p.ClaimConditions)
+				break
+			}
+		}
+		assert.True(t, found, "policy not found in list")
+	})
+
+	t.Run("list with name filter", func(t *testing.T) {
+		policies, err := client.AssumeServiceAccountPolicies.List(ctx, AssumeServiceAccountPoliciesListOptions{
+			Filter: &AssumeServiceAccountPolicyFilter{
+				ServiceAccount: serviceAccount.ID,
+				Name:           "test-policy",
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, len(policies.Items))
+		assert.Equal(t, policy.ID, policies.Items[0].ID)
+	})
+
+	t.Run("empty list when no matches", func(t *testing.T) {
+		policies, err := client.AssumeServiceAccountPolicies.List(ctx, AssumeServiceAccountPoliciesListOptions{
+			Filter: &AssumeServiceAccountPolicyFilter{
+				ServiceAccount: serviceAccount.ID,
+				Name:           "non-existent-policy",
+			},
+		})
+		require.NoError(t, err)
+		assert.Empty(t, policies.Items)
+	})
+}

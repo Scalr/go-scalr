@@ -23,6 +23,7 @@ type assumeServiceAccountPolicies struct {
 }
 
 type AssumeServiceAccountPoliciesList struct {
+	*Pagination
 	Items []*AssumeServiceAccountPolicy
 }
 
@@ -61,8 +62,15 @@ type AssumeServiceAccountPolicyUpdateOptions struct {
 
 type AssumeServiceAccountPoliciesListOptions struct {
 	ListOptions
-	FilterWorkloadIdentityProvider string `url:"filter[workload-identity-provider],omitempty"`
-	FilterServiceAccount           string `url:"filter[service-account],omitempty"`
+	Query  *string                           `url:"query,omitempty"`
+	Filter *AssumeServiceAccountPolicyFilter `url:"filter,omitempty"`
+}
+
+type AssumeServiceAccountPolicyFilter struct {
+	AssumeServiceAccountPolicy string `url:"assume-service-account-policy,omitempty"`
+	ServiceAccount             string `url:"service-account,omitempty"`
+	WorkloadIdentityProvider   string `url:"workload-identity-provider,omitempty"`
+	Name                       string `url:"name,omitempty"`
 }
 
 func (s *assumeServiceAccountPolicies) List(ctx context.Context, options AssumeServiceAccountPoliciesListOptions) (*AssumeServiceAccountPoliciesList, error) {
