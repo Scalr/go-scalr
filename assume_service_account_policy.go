@@ -23,6 +23,7 @@ type assumeServiceAccountPolicies struct {
 }
 
 type AssumeServiceAccountPoliciesList struct {
+	*Pagination
 	Items []*AssumeServiceAccountPolicy
 }
 
