@@ -44,13 +44,12 @@ type EnvironmentList struct {
 
 // Environment represents a Scalr environment.
 type Environment struct {
-	ID                    string            `jsonapi:"primary,environments"`
-	Name                  string            `jsonapi:"attr,name"`
-	CostEstimationEnabled bool              `jsonapi:"attr,cost-estimation-enabled"`
-	CreatedAt             time.Time         `jsonapi:"attr,created-at,iso8601"`
-	Status                EnvironmentStatus `jsonapi:"attr,status"`
-	RemoteBackend         bool              `jsonapi:"attr,remote-backend"`
-	MaskSensitiveOutput   bool              `jsonapi:"attr,mask-sensitive-output"`
+	ID                  string            `jsonapi:"primary,environments"`
+	Name                string            `jsonapi:"attr,name"`
+	CreatedAt           time.Time         `jsonapi:"attr,created-at,iso8601"`
+	Status              EnvironmentStatus `jsonapi:"attr,status"`
+	RemoteBackend       bool              `jsonapi:"attr,remote-backend"`
+	MaskSensitiveOutput bool              `jsonapi:"attr,mask-sensitive-output"`
 
 	// Relations
 	Account                       *Account                 `jsonapi:"relation,account"`
@@ -76,15 +75,13 @@ type Organization struct {
 
 // EnvironmentCreateOptions represents the options for creating a new Environment.
 type EnvironmentCreateOptions struct {
-	ID                    string  `jsonapi:"primary,environments"`
-	Name                  *string `jsonapi:"attr,name"`
-	CostEstimationEnabled *bool   `jsonapi:"attr,cost-estimation-enabled,omitempty"`
-	RemoteBackend         *bool   `jsonapi:"attr,remote-backend,omitempty"`
-	MaskSensitiveOutput   *bool   `jsonapi:"attr,mask-sensitive-output,omitempty"`
+	ID                  string  `jsonapi:"primary,environments"`
+	Name                *string `jsonapi:"attr,name"`
+	RemoteBackend       *bool   `jsonapi:"attr,remote-backend,omitempty"`
+	MaskSensitiveOutput *bool   `jsonapi:"attr,mask-sensitive-output,omitempty"`
 
 	// Relations
 	Account                       *Account                 `jsonapi:"relation,account"`
-	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups,omitempty"`
 	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations,omitempty"`
 
 	// Specifies tags assigned to the environment
@@ -185,13 +182,11 @@ func (s *environments) Read(ctx context.Context, environmentID string) (*Environ
 // EnvironmentUpdateOptions represents the options for updating an environment.
 type EnvironmentUpdateOptions struct {
 	// For internal use only!
-	ID                    string  `jsonapi:"primary,environments"`
-	Name                  *string `jsonapi:"attr,name,omitempty"`
-	CostEstimationEnabled *bool   `jsonapi:"attr,cost-estimation-enabled,omitempty"`
-	MaskSensitiveOutput   *bool   `jsonapi:"attr,mask-sensitive-output,omitempty"`
+	ID                  string  `jsonapi:"primary,environments"`
+	Name                *string `jsonapi:"attr,name,omitempty"`
+	MaskSensitiveOutput *bool   `jsonapi:"attr,mask-sensitive-output,omitempty"`
 
 	// Relations
-	PolicyGroups                  []*PolicyGroup           `jsonapi:"relation,policy-groups"`
 	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations"`
 }
 
