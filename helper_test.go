@@ -275,6 +275,27 @@ func createTag(t *testing.T, client *Client) (*Tag, func()) {
 	}
 }
 
+func createWorkloadIdentityProvider(t *testing.T, client *Client) (*WorkloadIdentityProvider, func()) {
+	ctx := context.Background()
+
+	provider, err := client.WorkloadIdentityProviders.Create(ctx, WorkloadIdentityProviderCreateOptions{
+		Name:             String("wip-" + randomString(t)),
+		URL:              String("https://" + strings.ReplaceAll(randomString(t), "-", "")),
+		AllowedAudiences: []string{"audience1", "audience2"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return provider, func() {
+		if err := client.WorkloadIdentityProviders.Delete(ctx, provider.ID); err != nil {
+			t.Errorf("Error destroying provider! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"Provider: %s\nError: %s", provider.ID, err)
+		}
+	}
+}
+
 func createTeam(t *testing.T, client *Client, users []*User) (*Team, func()) {
 	ctx := context.Background()
 	team, err := client.Teams.Create(
