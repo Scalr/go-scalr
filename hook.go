@@ -52,10 +52,11 @@ type HookList struct {
 // HookListOptions represents the options for listing hooks
 type HookListOptions struct {
 	ListOptions
-	Name    string `url:"filter[name],omitempty"`
-	Query   string `url:"query,omitempty"`
-	Sort    string `url:"sort,omitempty"`
-	Include string `url:"include,omitempty"`
+	Hook    *string `url:"filter[hook],omitempty"`
+	Name    string  `url:"filter[name],omitempty"`
+	Query   string  `url:"query,omitempty"`
+	Sort    string  `url:"sort,omitempty"`
+	Include string  `url:"include,omitempty"`
 }
 
 // HookCreateOptions represents the options for creating a hook
