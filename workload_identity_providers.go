@@ -45,8 +45,15 @@ type WorkloadIdentityProvider struct {
 // WorkloadIdentityProvidersListOptions represents the options for listing workload identity providers.
 type WorkloadIdentityProvidersListOptions struct {
 	ListOptions
-	Sort  string  `url:"sort,omitempty"`
-	Query *string `url:"query,omitempty"`
+	Sort   string                          `url:"sort,omitempty"`
+	Query  *string                         `url:"query,omitempty"`
+	Filter *WorkloadIdentityProviderFilter `url:"filter,omitempty"`
+}
+
+type WorkloadIdentityProviderFilter struct {
+	WorkloadIdentityProvider string `url:"workload-identity-provider,omitempty"`
+	Name                     string `url:"name,omitempty"`
+	Url                      string `url:"url,omitempty"`
 }
 
 // List all workload identity providers within a Scalr account.
