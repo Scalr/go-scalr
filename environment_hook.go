@@ -65,10 +65,6 @@ type EnvironmentHookCreateOptions struct {
 type EnvironmentHookUpdateOptions struct {
 	ID     string    `jsonapi:"primary,hook-environment-links"`
 	Events *[]string `jsonapi:"attr,events,omitempty"`
-
-	// Relations
-	Environment *Environment `jsonapi:"relation,environment,omitempty"`
-	Hook        *Hook        `jsonapi:"relation,hook,omitempty"`
 }
 
 // List lists all environment hooks based on the provided options
