@@ -353,6 +353,50 @@ func createPolicyGroup(t *testing.T, client *Client, vcsProvider *VcsProvider) (
 	}
 }
 
+func createHook(t *testing.T, client *Client, vcsProvider *VcsProvider) (*Hook, func()) {
+	var vcsCleanup func()
+
+	if vcsProvider == nil {
+		vcsProvider, vcsCleanup = createVcsProvider(t, client, nil)
+	}
+
+	ctx := context.Background()
+
+	hookName := "test-hook-" + randomString(t)
+	hookInterpreter := "bash"
+	hookScriptfilePath := "pre-plan.sh"
+	hookVcsRepo := &HookVcsRepo{
+		Identifier: "Scalr/tf-revizor-fixtures",
+		Branch:     "master",
+	}
+
+	options := HookCreateOptions{
+		Name:           hookName,
+		Interpreter:    hookInterpreter,
+		ScriptfilePath: hookScriptfilePath,
+		VcsRepo:        hookVcsRepo,
+		VcsProvider:    vcsProvider,
+	}
+
+	hook, err := client.Hooks.Create(ctx, options)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return hook, func() {
+		if err := client.Hooks.Delete(ctx, hook.ID); err != nil {
+			t.Errorf("Error destroying hook! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"Hook: %s\nError: %s", hook.ID, err)
+		}
+
+		if vcsCleanup != nil {
+			vcsCleanup()
+		}
+	}
+}
+
 func linkPolicyGroupToEnvironment(t *testing.T, client *Client, policyGroup *PolicyGroup, environment *Environment) func() {
 	ctx := context.Background()
 	options := PolicyGroupEnvironmentsCreateOptions{
