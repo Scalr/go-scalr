@@ -39,7 +39,7 @@ type Hook struct {
 
 // HookVcsRepo represents a repository in a VCS provider
 type HookVcsRepo struct {
-	Identifier string `json:"identifier,omitempty"`
+	Identifier string `json:"identifier"`
 	Branch     string `json:"branch,omitempty"`
 }
 
