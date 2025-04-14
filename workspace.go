@@ -117,7 +117,7 @@ type Workspace struct {
 	DestroySchedule           string                   `jsonapi:"attr,destroy-schedule"`
 	HasResources              bool                     `jsonapi:"attr,has-resources"`
 	AutoQueueRuns             WorkspaceAutoQueueRuns   `jsonapi:"attr,auto-queue-runs"`
-	Hooks                     *Hooks                   `jsonapi:"attr,hooks"`
+	Hooks                     *WorkspaceHooks          `jsonapi:"attr,hooks"`
 	RunOperationTimeout       *int                     `jsonapi:"attr,run-operation-timeout"`
 	VarFiles                  []string                 `jsonapi:"attr,var-files"`
 	EnvironmentType           WorkspaceEnvironmentType `jsonapi:"attr,environment-type"`
@@ -140,8 +140,8 @@ type WorkspaceRelation struct {
 	ID string `jsonapi:"primary,workspaces"`
 }
 
-// Hooks contains the custom hooks field.
-type Hooks struct {
+// WorkspaceHooks contains the custom hooks field.
+type WorkspaceHooks struct {
 	PreInit   string `json:"pre-init"`
 	PrePlan   string `json:"pre-plan"`
 	PostPlan  string `json:"post-plan"`
