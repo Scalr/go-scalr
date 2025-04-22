@@ -653,3 +653,16 @@ func addRemoteStateConsumersToWorkspace(t *testing.T, client *Client, workspace 
 		t.Fatal(err)
 	}
 }
+
+func addFederatedEnvironments(t *testing.T, client *Client, environment *Environment, federated []*Environment) {
+	ctx := context.Background()
+	envRels := make([]*EnvironmentRelation, len(federated))
+	for i, env := range federated {
+		envRels[i] = &EnvironmentRelation{ID: env.ID}
+	}
+	err := client.FederatedEnvironments.Add(ctx, environment.ID, envRels)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+}
