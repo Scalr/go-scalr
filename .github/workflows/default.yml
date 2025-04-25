@@ -94,7 +94,6 @@ jobs:
           wait_for_env: true
           no_segment: true
           agent_pool_id: ${{ vars.TACO_APOOL_ID }}
-          working_directory: fatmouse
           secrets_bucket: tacobell-secrets
 
       - name: Get Scalr Hostname
