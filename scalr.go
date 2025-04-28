@@ -156,6 +156,7 @@ type Client struct {
 	SSHKeys                         SSHKeys
 	SSHKeysLinks                    SSHKeysLinks
 	RemoteStateConsumers            RemoteStateConsumers
+	FederatedEnvironments           FederatedEnvironments
 }
 
 // NewClient creates a new Scalr API client.
@@ -263,6 +264,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.InfracostIntegrations = &infracostIntegrations{client: client}
 	client.WorkloadIdentityProviders = &workloadIdentityProviders{client: client}
 	client.AssumeServiceAccountPolicies = &assumeServiceAccountPolicies{client: client}
+	client.FederatedEnvironments = &federatedEnvironments{client: client}
 	return client, nil
 }
 
