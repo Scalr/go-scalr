@@ -158,6 +158,7 @@ type WorkspaceVCSRepo struct {
 	TriggerPrefixes   []string `json:"trigger-prefixes,omitempty"`
 	TriggerPatterns   string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    bool     `json:"dry-runs-enabled"`
+	VersionConstraint string   `json:"version-constraint,omitempty"`
 }
 
 type WorkspaceTerragrunt struct {
@@ -314,13 +315,14 @@ type WorkspaceCreateOptions struct {
 
 // WorkspaceVCSRepoOptions represents the configuration options of a VCS integration.
 type WorkspaceVCSRepoOptions struct {
-	Branch            *string   `json:"branch,omitempty"`
+	Branch            *string   `json:"branch"`
 	Identifier        *string   `json:"identifier,omitempty"`
 	IngressSubmodules *bool     `json:"ingress-submodules,omitempty"`
 	Path              *string   `json:"path,omitempty"`
 	TriggerPrefixes   *[]string `json:"trigger-prefixes,omitempty"`
 	TriggerPatterns   *string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    *bool     `json:"dry-runs-enabled,omitempty"`
+	VersionConstraint *string   `json:"version-constraint"`
 }
 
 // HooksOptions represents the WorkspaceHooks configuration.
