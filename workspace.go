@@ -158,7 +158,7 @@ type WorkspaceVCSRepo struct {
 	TriggerPrefixes   []string `json:"trigger-prefixes,omitempty"`
 	TriggerPatterns   string   `json:"trigger-patterns,omitempty"`
 	DryRunsEnabled    bool     `json:"dry-runs-enabled"`
-	VersionConstraint string   `json:"version-constraint,omitempty"`
+	VersionConstraint string   `json:"version-constraint"`
 }
 
 type WorkspaceTerragrunt struct {
