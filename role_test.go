@@ -50,7 +50,6 @@ func TestRolesCreate(t *testing.T) {
 
 	t.Run("with empty permissions", func(t *testing.T) {
 		options := RoleCreateOptions{
-			Account:     &Account{ID: defaultAccountID},
 			Name:        String("foo" + randomString(t)),
 			Description: String("bar"),
 		}
@@ -70,7 +69,7 @@ func TestRolesCreate(t *testing.T) {
 			assert.Equal(t, *options.Name, item.Name)
 			assert.Equal(t, *options.Description, item.Description)
 			assert.Equal(t, item.IsSystem, false)
-			assert.Equal(t, options.Account, item.Account)
+			assert.Equal(t, &Account{ID: defaultAccountID}, item.Account)
 			assert.Equal(t, options.Permissions, item.Permissions)
 		}
 		err = client.Roles.Delete(ctx, role.ID)
@@ -79,7 +78,6 @@ func TestRolesCreate(t *testing.T) {
 
 	t.Run("with permissions", func(t *testing.T) {
 		options := RoleCreateOptions{
-			Account:     &Account{ID: defaultAccountID},
 			Permissions: readPermissions,
 			Name:        String("foo" + randomString(t)),
 			Description: String("bar"),
@@ -100,7 +98,7 @@ func TestRolesCreate(t *testing.T) {
 			assert.Equal(t, *options.Name, item.Name)
 			assert.Equal(t, *options.Description, item.Description)
 			assert.Equal(t, item.IsSystem, false)
-			assert.Equal(t, options.Account, item.Account)
+			assert.Equal(t, &Account{ID: defaultAccountID}, item.Account)
 			assert.Equal(t, options.Permissions, item.Permissions)
 		}
 		err = client.Roles.Delete(ctx, role.ID)
@@ -109,7 +107,6 @@ func TestRolesCreate(t *testing.T) {
 
 	t.Run("when options has name missing", func(t *testing.T) {
 		r, err := client.Roles.Create(ctx, RoleCreateOptions{
-			Account:     &Account{ID: defaultAccountID},
 			Permissions: readPermissions,
 			Description: String("bar"),
 		})
@@ -122,27 +119,9 @@ func TestRolesCreate(t *testing.T) {
 			Name:        String("  "),
 			Permissions: readPermissions,
 			Description: String("bar"),
-			Account:     &Account{ID: defaultAccountID},
 		})
 		assert.Nil(t, w)
 		assert.EqualError(t, err, "invalid value for name")
-	})
-
-	t.Run("when options has an invalid account", func(t *testing.T) {
-		var accountId = "acc-234"
-		_, err := client.Roles.Create(ctx, RoleCreateOptions{
-			Name:        String("foo" + randomString(t)),
-			Permissions: readPermissions,
-			Description: String("bar"),
-			Account:     &Account{ID: accountId},
-		})
-		assert.Equal(
-			t,
-			ResourceNotFoundError{
-				Message: fmt.Sprintf("Invalid Relationship\n\nAccount with ID '%s' not found or user unauthorized.", accountId),
-			}.Error(),
-			err.Error(),
-		)
 	})
 
 	t.Run("bad permissions", func(t *testing.T) {
@@ -150,7 +129,6 @@ func TestRolesCreate(t *testing.T) {
 			Name:        String("foo"),
 			Permissions: []*Permission{{ID: "something:create"}, {ID: "*:read"}},
 			Description: String("bar"),
-			Account:     &Account{ID: defaultAccountID},
 		})
 		assert.Nil(t, role)
 		assert.Error(t, err)

@@ -56,17 +56,10 @@ type RoleCreateOptions struct {
 	Description *string `jsonapi:"attr,description,omitempty"`
 
 	// Relations
-	Account     *Account      `jsonapi:"relation,account"`
 	Permissions []*Permission `jsonapi:"relation,permissions,omitempty"`
 }
 
 func (o RoleCreateOptions) valid() error {
-	if o.Account == nil {
-		return errors.New("account is required")
-	}
-	if !validStringID(&o.Account.ID) {
-		return errors.New("invalid value for account ID")
-	}
 	if o.Name == nil {
 		return errors.New("name is required")
 	}

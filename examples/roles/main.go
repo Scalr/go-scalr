@@ -21,7 +21,6 @@ func main() {
 	r, err := client.Roles.Create(ctx, scalr.RoleCreateOptions{
 		Name:        scalr.String("example-role"),
 		Description: scalr.String("This role is created from go-scalr "),
-		Account:     &scalr.Account{ID: "acc-svrcncgh453bi8g"},
 		Permissions: []*scalr.Permission{{ID: "*:*"}},
 	})
 	if err != nil {
