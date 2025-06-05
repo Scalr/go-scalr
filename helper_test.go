@@ -86,7 +86,6 @@ func createRole(t *testing.T, client *Client, permissions []*Permission) (*Role,
 	role, err := client.Roles.Create(ctx, RoleCreateOptions{
 		Name:        String("tst-role-" + randomString(t)),
 		Permissions: permissions,
-		Account:     &Account{ID: defaultAccountID},
 	})
 	if err != nil {
 		t.Fatal(err)
