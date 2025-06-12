@@ -50,14 +50,14 @@ jobs:
             const repo = "fatmouse";
             const targetBranch = "${{ env.API_BRANCH }}";
             const default_branch = "master";
-  
+
             try {
               const { data: branch } = await github.request('GET /repos/{owner}/{repo}/branches/{branch}', {
                 owner: owner,
                 repo: repo,
                 branch: targetBranch
               });
-  
+
               console.log(`Branch found in the ${repo} repository: ${branch.name}`);
               core.setOutput('branch', branch.name);
             } catch (error) {
