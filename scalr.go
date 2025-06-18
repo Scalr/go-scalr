@@ -122,13 +122,14 @@ type Client struct {
 	AgentPoolTokens                 AgentPoolTokens
 	AgentPools                      AgentPools
 	AssumeServiceAccountPolicies    AssumeServiceAccountPolicies
-	EventBridgeIntegrations         EventBridgeIntegrations
-	InfracostIntegrations           InfracostIntegrations
 	ConfigurationVersions           ConfigurationVersions
+	EnvironmentHooks                EnvironmentHooks
 	EnvironmentTags                 EnvironmentTags
 	Environments                    Environments
+	EventBridgeIntegrations         EventBridgeIntegrations
+	FederatedEnvironments           FederatedEnvironments
 	Hooks                           Hooks
-	EnvironmentHooks                EnvironmentHooks
+	InfracostIntegrations           InfracostIntegrations
 	ModuleVersions                  ModuleVersions
 	Modules                         Modules
 	PolicyGroupEnvironments         PolicyGroupEnvironments
@@ -136,12 +137,17 @@ type Client struct {
 	ProviderConfigurationLinks      ProviderConfigurationLinks
 	ProviderConfigurationParameters ProviderConfigurationParameters
 	ProviderConfigurations          ProviderConfigurations
+	RemoteStateConsumers            RemoteStateConsumers
 	Roles                           Roles
+	RunScheduleRules                RunScheduleRules
 	RunTriggers                     RunTriggers
 	Runs                            Runs
+	SSHKeys                         SSHKeys
+	SSHKeysLinks                    SSHKeysLinks
 	ServiceAccountTokens            ServiceAccountTokens
 	ServiceAccounts                 ServiceAccounts
 	SlackIntegrations               SlackIntegrations
+	StorageProfiles                 StorageProfiles
 	Tags                            Tags
 	Teams                           Teams
 	Users                           Users
@@ -152,11 +158,6 @@ type Client struct {
 	WorkloadIdentityProviders       WorkloadIdentityProviders
 	WorkspaceTags                   WorkspaceTags
 	Workspaces                      Workspaces
-	RunScheduleRules                RunScheduleRules
-	SSHKeys                         SSHKeys
-	SSHKeysLinks                    SSHKeysLinks
-	RemoteStateConsumers            RemoteStateConsumers
-	FederatedEnvironments           FederatedEnvironments
 }
 
 // NewClient creates a new Scalr API client.
@@ -229,11 +230,15 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.Accounts = &accounts{client: client}
 	client.AgentPoolTokens = &agentPoolTokens{client: client}
 	client.AgentPools = &agentPools{client: client}
+	client.AssumeServiceAccountPolicies = &assumeServiceAccountPolicies{client: client}
 	client.ConfigurationVersions = &configurationVersions{client: client}
+	client.EnvironmentHooks = &environmentHooks{client: client}
 	client.EnvironmentTags = &environmentTag{client: client}
 	client.Environments = &environments{client: client}
+	client.EventBridgeIntegrations = &eventBridgeIntegrations{client: client}
+	client.FederatedEnvironments = &federatedEnvironments{client: client}
 	client.Hooks = &hooks{client: client}
-	client.EnvironmentHooks = &environmentHooks{client: client}
+	client.InfracostIntegrations = &infracostIntegrations{client: client}
 	client.ModuleVersions = &moduleVersions{client: client}
 	client.Modules = &modules{client: client}
 	client.PolicyGroupEnvironments = &policyGroupEnvironment{client: client}
@@ -241,12 +246,17 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.ProviderConfigurationLinks = &providerConfigurationLinks{client: client}
 	client.ProviderConfigurationParameters = &providerConfigurationParameters{client: client}
 	client.ProviderConfigurations = &providerConfigurations{client: client}
+	client.RemoteStateConsumers = &remoteStateConsumers{client: client}
 	client.Roles = &roles{client: client}
+	client.RunScheduleRules = &runScheduleRules{client: client}
 	client.RunTriggers = &runTriggers{client: client}
 	client.Runs = &runs{client: client}
+	client.SSHKeys = &sshKeys{client: client}
+	client.SSHKeysLinks = &sshKeysLinks{client: client}
 	client.ServiceAccountTokens = &serviceAccountTokens{client: client}
 	client.ServiceAccounts = &serviceAccounts{client: client}
 	client.SlackIntegrations = &slackIntegrations{client: client}
+	client.StorageProfiles = &storageProfiles{client: client}
 	client.Tags = &tags{client: client}
 	client.Teams = &teams{client: client}
 	client.Users = &users{client: client}
@@ -254,17 +264,10 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.VcsProviders = &vcsProviders{client: client}
 	client.VcsRevisions = &vcsRevisions{client: client}
 	client.WebhookIntegrations = &webhookIntegrations{client: client}
+	client.WorkloadIdentityProviders = &workloadIdentityProviders{client: client}
 	client.WorkspaceTags = &workspaceTag{client: client}
 	client.Workspaces = &workspaces{client: client}
-	client.RunScheduleRules = &runScheduleRules{client: client}
-	client.EventBridgeIntegrations = &eventBridgeIntegrations{client: client}
-	client.SSHKeys = &sshKeys{client: client}
-	client.SSHKeysLinks = &sshKeysLinks{client: client}
-	client.RemoteStateConsumers = &remoteStateConsumers{client: client}
-	client.InfracostIntegrations = &infracostIntegrations{client: client}
-	client.WorkloadIdentityProviders = &workloadIdentityProviders{client: client}
-	client.AssumeServiceAccountPolicies = &assumeServiceAccountPolicies{client: client}
-	client.FederatedEnvironments = &federatedEnvironments{client: client}
+
 	return client, nil
 }
 
