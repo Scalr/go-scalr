@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	defaultUserID                  = "user-suh84u6vuvidtbg"
-	defaultUserEmail               = "test@scalr.com"
+	defaultUserID                  = "user-svrcmmpcrkmit1g"
+	defaultUserEmail               = "tf-admin@scalr.com"
 	defaultIdentityProviderScalrID = "idp-sohkb0o1phrdmr8"
 )
 
