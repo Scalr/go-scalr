@@ -39,7 +39,7 @@ jobs:
 
       - name: Set API_BRANCH
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | base64
+          echo $SCALR_TOKEN | base64
           echo "API_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Check if Same Branch Exists in Fatmouse Repository
