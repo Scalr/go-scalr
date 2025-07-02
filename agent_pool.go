@@ -56,7 +56,6 @@ type AgentPoolCreateOptions struct {
 	VcsEnabled *bool   `jsonapi:"attr,vcs-enabled,omitempty"`
 
 	// The agent pool's scope
-	Account     *Account     `jsonapi:"relation,account"`
 	Environment *Environment `jsonapi:"relation,environment,omitempty"`
 
 	// Workspaces this pool is connected to
@@ -64,12 +63,6 @@ type AgentPoolCreateOptions struct {
 }
 
 func (o AgentPoolCreateOptions) valid() error {
-	if o.Account == nil {
-		return errors.New("account is required")
-	}
-	if !validStringID(&o.Account.ID) {
-		return fmt.Errorf("invalid value for account ID: '%s'", o.Account.ID)
-	}
 	if o.Environment != nil && !validStringID(&o.Environment.ID) {
 		return fmt.Errorf("invalid value for environment ID: '%s'", o.Environment.ID)
 	}
