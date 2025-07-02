@@ -74,7 +74,6 @@ func TestAgentPoolsCreate(t *testing.T) {
 
 	t.Run("when account and name are provided", func(t *testing.T) {
 		options := AgentPoolCreateOptions{
-			Account:    &Account{ID: defaultAccountID},
 			Name:       String("test-provider-pool-" + randomString(t)),
 			VcsEnabled: Bool(true),
 		}
@@ -92,7 +91,7 @@ func TestAgentPoolsCreate(t *testing.T) {
 		} {
 			assert.NotEmpty(t, item.ID)
 			assert.Equal(t, *options.Name, item.Name)
-			assert.Equal(t, options.Account, item.Account)
+			assert.Equal(t, &Account{ID: defaultAccountID}, item.Account)
 			assert.Equal(t, *options.VcsEnabled, item.VcsEnabled)
 		}
 		err = client.AgentPools.Delete(ctx, agentPool.ID)
@@ -101,8 +100,7 @@ func TestAgentPoolsCreate(t *testing.T) {
 
 	t.Run("when create without vcs_enabled", func(t *testing.T) {
 		options := AgentPoolCreateOptions{
-			Account: &Account{ID: defaultAccountID},
-			Name:    String("test-provider-pool-" + randomString(t)),
+			Name: String("test-provider-pool-" + randomString(t)),
 		}
 
 		agentPool, err := client.AgentPools.Create(ctx, options)
@@ -129,7 +127,6 @@ func TestAgentPoolsCreate(t *testing.T) {
 		defer envCleanup()
 
 		options := AgentPoolCreateOptions{
-			Account:     &Account{ID: defaultAccountID},
 			Environment: &Environment{ID: env.ID},
 			Name:        String("test-provider-pool-" + randomString(t)),
 			VcsEnabled:  Bool(false),
@@ -148,7 +145,7 @@ func TestAgentPoolsCreate(t *testing.T) {
 		} {
 			assert.NotEmpty(t, item.ID)
 			assert.Equal(t, *options.Name, item.Name)
-			assert.Equal(t, options.Account.ID, item.Account.ID)
+			assert.Equal(t, &Account{ID: defaultAccountID}, item.Account)
 			assert.Equal(t, options.Environment.ID, item.Environment.ID)
 		}
 		err = client.AgentPools.Delete(ctx, agentPool.ID)
@@ -162,7 +159,6 @@ func TestAgentPoolsCreate(t *testing.T) {
 		ws, wsCleanup := createWorkspace(t, client, env)
 
 		options := AgentPoolCreateOptions{
-			Account:     &Account{ID: defaultAccountID},
 			Environment: &Environment{ID: env.ID},
 			Workspaces:  []*Workspace{{ID: ws.ID}},
 			Name:        String("test-provider-pool-" + randomString(t)),
@@ -182,7 +178,7 @@ func TestAgentPoolsCreate(t *testing.T) {
 		} {
 			assert.NotEmpty(t, item.ID)
 			assert.Equal(t, *options.Name, item.Name)
-			assert.Equal(t, options.Account.ID, item.Account.ID)
+			assert.Equal(t, &Account{ID: defaultAccountID}, item.Account)
 			assert.Equal(t, options.Environment.ID, item.Environment.ID)
 			assert.Equal(t, options.Workspaces[0].ID, item.Workspaces[0].ID)
 		}
@@ -192,42 +188,23 @@ func TestAgentPoolsCreate(t *testing.T) {
 	})
 
 	t.Run("when options has name missing", func(t *testing.T) {
-		r, err := client.AgentPools.Create(ctx, AgentPoolCreateOptions{
-			Account: &Account{ID: defaultAccountID},
-		})
+		r, err := client.AgentPools.Create(ctx, AgentPoolCreateOptions{})
 		assert.Nil(t, r)
 		assert.EqualError(t, err, "name is required")
 	})
 
 	t.Run("when options has an empty name", func(t *testing.T) {
 		ap, err := client.AgentPools.Create(ctx, AgentPoolCreateOptions{
-			Name:    String("  "),
-			Account: &Account{ID: defaultAccountID},
+			Name: String("  "),
 		})
 		assert.Nil(t, ap)
 		assert.EqualError(t, err, "invalid value for agent pool name: '  '")
-	})
-
-	t.Run("when options has an invalid account", func(t *testing.T) {
-		var accountId = "acc-234"
-		_, err := client.AgentPools.Create(ctx, AgentPoolCreateOptions{
-			Name:    String("test-provider-pool-" + randomString(t)),
-			Account: &Account{ID: accountId},
-		})
-		assert.Equal(
-			t,
-			ResourceNotFoundError{
-				Message: fmt.Sprintf("Invalid Relationship\n\nAccount with ID '%s' not found or user unauthorized.", accountId),
-			}.Error(),
-			err.Error(),
-		)
 	})
 
 	t.Run("when options has an nonexistent environment", func(t *testing.T) {
 		envID := "env-1234"
 		_, err := client.AgentPools.Create(ctx, AgentPoolCreateOptions{
 			Name:        String("test-provider-pool-" + randomString(t)),
-			Account:     &Account{ID: defaultAccountID},
 			Environment: &Environment{ID: envID},
 		})
 		assert.Equal(
@@ -243,7 +220,6 @@ func TestAgentPoolsCreate(t *testing.T) {
 		envID := badIdentifier
 		ap, err := client.AgentPools.Create(ctx, AgentPoolCreateOptions{
 			Name:        String("test-provider-pool-" + randomString(t)),
-			Account:     &Account{ID: defaultAccountID},
 			Environment: &Environment{ID: envID},
 		})
 		assert.Nil(t, ap)
@@ -255,7 +231,6 @@ func TestAgentPoolsCreate(t *testing.T) {
 		wsID := badIdentifier
 		ap, err := client.AgentPools.Create(ctx, AgentPoolCreateOptions{
 			Name:       String("test-provider-pool-" + randomString(t)),
-			Account:    &Account{ID: defaultAccountID},
 			Workspaces: []*Workspace{{ID: wsID}},
 		})
 		assert.Nil(t, ap)
@@ -267,7 +242,6 @@ func TestAgentPoolsCreate(t *testing.T) {
 		wsID := "ws-323"
 		ap, err := client.AgentPools.Create(ctx, AgentPoolCreateOptions{
 			Name:       String("test-provider-pool-" + randomString(t)),
-			Account:    &Account{ID: defaultAccountID},
 			Workspaces: []*Workspace{{ID: wsID}},
 		})
 		assert.Nil(t, ap)
