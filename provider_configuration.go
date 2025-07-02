@@ -207,7 +207,7 @@ type ProviderConfigurationUpdateOptions struct {
 	AwsExternalId              *string                 `jsonapi:"attr,aws-external-id"`
 	AwsAudience                *string                 `jsonapi:"attr,aws-audience"`
 	AwsDefaultTags             *map[string]string      `jsonapi:"attr,aws-default-tags"`
-	AwsDefaultTagsStrategy     *AwsDefaultTagsStrategy `jsonapi:"attr,aws-default-tags-strategy,omitempty"`
+	AwsDefaultTagsStrategy     *AwsDefaultTagsStrategy `jsonapi:"attr,aws-default-tags-strategy"`
 	AzurermAuthType            *string                 `jsonapi:"attr,azurerm-auth-type"`
 	AzurermAudience            *string                 `jsonapi:"attr,azurerm-audience"`
 	AzurermClientId            *string                 `jsonapi:"attr,azurerm-client-id"`
