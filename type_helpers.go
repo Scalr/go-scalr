@@ -49,3 +49,8 @@ func ServiceAccountStatusPtr(v ServiceAccountStatus) *ServiceAccountStatus {
 func WorkspaceIaCPlatformPtr(v WorkspaceIaCPlatform) *WorkspaceIaCPlatform {
 	return &v
 }
+
+// AwsDefaultTagsStrategyPtr returns a pointer to the given AwsDefaultTagsStrategy
+func AwsDefaultTagsStrategyPtr(v AwsDefaultTagsStrategy) *AwsDefaultTagsStrategy {
+	return &v
+}
