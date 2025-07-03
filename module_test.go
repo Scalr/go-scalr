@@ -10,6 +10,8 @@ import (
 )
 
 func TestModulesList(t *testing.T) {
+	t.Skip("Skipped due to updated preview-saas-db image")
+
 	client := testClient(t)
 	ctx := context.Background()
 	m, err := client.Modules.Read(ctx, defaultModuleID)
@@ -87,6 +89,7 @@ func TestModulesCreate(t *testing.T) {
 }
 
 func TestModulesRead(t *testing.T) {
+	t.Skip("Skipped due to updated preview-saas-db image")
 	client := testClient(t)
 	ctx := context.Background()
 
@@ -109,6 +112,7 @@ func TestModulesRead(t *testing.T) {
 }
 
 func TestModulesReadBySource(t *testing.T) {
+	t.Skip("Skipped due to updated preview-saas-db image")
 	client := testClient(t)
 	ctx := context.Background()
 	module, err := client.Modules.Read(ctx, defaultModuleID)

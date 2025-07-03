@@ -26,7 +26,7 @@ func TestServiceAccountsList(t *testing.T) {
 	t.Run("without options", func(t *testing.T) {
 		sal, err := client.ServiceAccounts.List(ctx, ServiceAccountListOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, 3, sal.TotalCount) // one Service Account is created by default on test environment
+		assert.Equal(t, 2, sal.TotalCount)
 
 		saIDs := make([]string, len(sal.Items))
 		for i, sa := range sal.Items {
