@@ -228,6 +228,38 @@ func TestProviderConfigurationCreateAws(t *testing.T) {
 	})
 }
 
+func TestProviderConfigurationCreateAwsWithTags(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+
+	accessKeyId, secretAccessKey, _, _ := getAwsTestingCreds(t)
+
+	t.Run("success aws with tags", func(t *testing.T) {
+		options := ProviderConfigurationCreateOptions{
+			Account:                &Account{ID: defaultAccountID},
+			Name:                   String("tst-" + randomString(t)),
+			ProviderName:           String("aws"),
+			AwsAccessKey:           String(accessKeyId),
+			AwsSecretKey:           String(secretAccessKey),
+			AwsAccountType:         String("regular"),
+			AwsCredentialsType:     String("access_keys"),
+			AwsDefaultTagsStrategy: AwsDefaultTagsStrategyPtr(AwsDefaultTagsStrategyUpdate),
+			AwsDefaultTags:         &map[string]string{"Tag1": "Value1", "Tag2": "Value2"},
+		}
+		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.ProviderConfigurations.Delete(ctx, pcfg.ID)
+
+		pcfg, err = client.ProviderConfigurations.Read(ctx, pcfg.ID)
+		require.NoError(t, err)
+
+		assert.Equal(t, *options.AwsDefaultTagsStrategy, pcfg.AwsDefaultTagsStrategy)
+		assert.Equal(t, *options.AwsDefaultTags, *pcfg.AwsDefaultTags)
+	})
+}
+
 func TestProviderConfigurationCreateGoogle(t *testing.T) {
 	client := testClient(t)
 	ctx := context.Background()
@@ -511,6 +543,85 @@ func TestProviderConfigurationUpdateAws(t *testing.T) {
 		assert.Equal(t, *updateOptions.AwsAccessKey, updatedConfiguration.AwsAccessKey)
 		assert.Equal(t, *updateOptions.AwsRoleArn, updatedConfiguration.AwsRoleArn)
 		assert.Equal(t, *updateOptions.AwsExternalId, updatedConfiguration.AwsExternalId)
+	})
+}
+
+func TestProviderConfigurationUpdateAwsWithTags(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+
+	accessKeyId, secretAccessKey, _, _ := getAwsTestingCreds(t)
+	name := String("tst-" + randomString(t))
+
+	t.Run("success aws update tags", func(t *testing.T) {
+		options := ProviderConfigurationCreateOptions{
+			Account:                &Account{ID: defaultAccountID},
+			Name:                   name,
+			ExportShellVariables:   Bool(false),
+			ProviderName:           String("aws"),
+			AwsAccessKey:           String(accessKeyId),
+			AwsSecretKey:           String(secretAccessKey),
+			AwsAccountType:         String("regular"),
+			AwsCredentialsType:     String("access_keys"),
+			AwsDefaultTagsStrategy: AwsDefaultTagsStrategyPtr(AwsDefaultTagsStrategyUpdate),
+			AwsDefaultTags:         &map[string]string{"Tag1": "Value1", "Tag2": "Value2"},
+		}
+		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.ProviderConfigurations.Delete(ctx, pcfg.ID)
+
+		updateOptions := ProviderConfigurationUpdateOptions{
+			Name:                   name,
+			ExportShellVariables:   Bool(false),
+			AwsAccessKey:           String(accessKeyId),
+			AwsSecretKey:           String(secretAccessKey),
+			AwsAccountType:         String("regular"),
+			AwsCredentialsType:     String("access_keys"),
+			AwsDefaultTagsStrategy: AwsDefaultTagsStrategyPtr(AwsDefaultTagsStrategySkip),
+			AwsDefaultTags:         &map[string]string{"Tag1": "NewValue1", "NewTag2": "Value2"},
+		}
+		updatedPcfg, err := client.ProviderConfigurations.Update(
+			ctx, pcfg.ID, updateOptions,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, *updateOptions.AwsDefaultTagsStrategy, updatedPcfg.AwsDefaultTagsStrategy)
+		assert.Equal(t, *updateOptions.AwsDefaultTags, *updatedPcfg.AwsDefaultTags)
+	})
+
+	t.Run("success aws remove tags", func(t *testing.T) {
+		options := ProviderConfigurationCreateOptions{
+			Account:                &Account{ID: defaultAccountID},
+			Name:                   name,
+			ExportShellVariables:   Bool(false),
+			ProviderName:           String("aws"),
+			AwsAccessKey:           String(accessKeyId),
+			AwsSecretKey:           String(secretAccessKey),
+			AwsAccountType:         String("regular"),
+			AwsCredentialsType:     String("access_keys"),
+			AwsDefaultTagsStrategy: AwsDefaultTagsStrategyPtr(AwsDefaultTagsStrategyUpdate),
+			AwsDefaultTags:         &map[string]string{"Tag1": "Value1", "Tag2": "Value2"},
+		}
+		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.ProviderConfigurations.Delete(ctx, pcfg.ID)
+
+		updateOptions := ProviderConfigurationUpdateOptions{
+			Name:                 name,
+			ExportShellVariables: Bool(false),
+			AwsAccessKey:         String(accessKeyId),
+			AwsSecretKey:         String(secretAccessKey),
+			AwsAccountType:       String("regular"),
+			AwsCredentialsType:   String("access_keys"),
+		}
+		updatedPcfg, err := client.ProviderConfigurations.Update(
+			ctx, pcfg.ID, updateOptions,
+		)
+		require.NoError(t, err)
+		assert.Nil(t, updatedPcfg.AwsDefaultTags)
 	})
 }
 

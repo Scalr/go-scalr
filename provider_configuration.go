@@ -19,6 +19,13 @@ type ProviderConfigurations interface {
 	Update(ctx context.Context, configurationID string, options ProviderConfigurationUpdateOptions) (*ProviderConfiguration, error)
 }
 
+type AwsDefaultTagsStrategy string
+
+const (
+	AwsDefaultTagsStrategySkip   AwsDefaultTagsStrategy = "skip"
+	AwsDefaultTagsStrategyUpdate AwsDefaultTagsStrategy = "update"
+)
+
 // providerConfigurations implements ProviderConfigurations.
 type providerConfigurations struct {
 	client *Client
@@ -32,34 +39,36 @@ type ProviderConfigurationsList struct {
 
 // ProviderConfiguration represents a Scalr provider configuration.
 type ProviderConfiguration struct {
-	ID                         string `jsonapi:"primary,provider-configurations"`
-	Name                       string `jsonapi:"attr,name"`
-	ProviderName               string `jsonapi:"attr,provider-name"`
-	ExportShellVariables       bool   `jsonapi:"attr,export-shell-variables"`
-	IsShared                   bool   `jsonapi:"attr,is-shared"`
-	IsCustom                   bool   `jsonapi:"attr,is-custom"`
-	AwsAccessKey               string `jsonapi:"attr,aws-access-key"`
-	AwsSecretKey               string `jsonapi:"attr,aws-secret-key"`
-	AwsAccountType             string `jsonapi:"attr,aws-account-type"`
-	AwsCredentialsType         string `jsonapi:"attr,aws-credentials-type"`
-	AwsTrustedEntityType       string `jsonapi:"attr,aws-trusted-entity-type"`
-	AwsRoleArn                 string `jsonapi:"attr,aws-role-arn"`
-	AwsExternalId              string `jsonapi:"attr,aws-external-id"`
-	AwsAudience                string `jsonapi:"attr,aws-audience"`
-	AzurermClientId            string `jsonapi:"attr,azurerm-client-id"`
-	AzurermClientSecret        string `jsonapi:"attr,azurerm-client-secret"`
-	AzurermSubscriptionId      string `jsonapi:"attr,azurerm-subscription-id"`
-	AzurermTenantId            string `jsonapi:"attr,azurerm-tenant-id"`
-	AzurermAuthType            string `jsonapi:"attr,azurerm-auth-type"`
-	AzurermAudience            string `jsonapi:"attr,azurerm-audience"`
-	GoogleAuthType             string `jsonapi:"attr,google-auth-type"`
-	GoogleServiceAccountEmail  string `jsonapi:"attr,google-service-account-email"`
-	GoogleWorkloadProviderName string `jsonapi:"attr,google-workload-provider-name"`
-	GoogleProject              string `jsonapi:"attr,google-project"`
-	GoogleCredentials          string `jsonapi:"attr,google-credentials"`
-	GoogleUseDefaultProject    bool   `jsonapi:"attr,google-use-default-project"`
-	ScalrHostname              string `jsonapi:"attr,scalr-hostname"`
-	ScalrToken                 string `jsonapi:"attr,scalr-token"`
+	ID                         string                 `jsonapi:"primary,provider-configurations"`
+	Name                       string                 `jsonapi:"attr,name"`
+	ProviderName               string                 `jsonapi:"attr,provider-name"`
+	ExportShellVariables       bool                   `jsonapi:"attr,export-shell-variables"`
+	IsShared                   bool                   `jsonapi:"attr,is-shared"`
+	IsCustom                   bool                   `jsonapi:"attr,is-custom"`
+	AwsAccessKey               string                 `jsonapi:"attr,aws-access-key"`
+	AwsSecretKey               string                 `jsonapi:"attr,aws-secret-key"`
+	AwsAccountType             string                 `jsonapi:"attr,aws-account-type"`
+	AwsCredentialsType         string                 `jsonapi:"attr,aws-credentials-type"`
+	AwsTrustedEntityType       string                 `jsonapi:"attr,aws-trusted-entity-type"`
+	AwsRoleArn                 string                 `jsonapi:"attr,aws-role-arn"`
+	AwsExternalId              string                 `jsonapi:"attr,aws-external-id"`
+	AwsAudience                string                 `jsonapi:"attr,aws-audience"`
+	AwsDefaultTags             *map[string]string     `jsonapi:"attr,aws-default-tags"`
+	AwsDefaultTagsStrategy     AwsDefaultTagsStrategy `jsonapi:"attr,aws-default-tags-strategy"`
+	AzurermClientId            string                 `jsonapi:"attr,azurerm-client-id"`
+	AzurermClientSecret        string                 `jsonapi:"attr,azurerm-client-secret"`
+	AzurermSubscriptionId      string                 `jsonapi:"attr,azurerm-subscription-id"`
+	AzurermTenantId            string                 `jsonapi:"attr,azurerm-tenant-id"`
+	AzurermAuthType            string                 `jsonapi:"attr,azurerm-auth-type"`
+	AzurermAudience            string                 `jsonapi:"attr,azurerm-audience"`
+	GoogleAuthType             string                 `jsonapi:"attr,google-auth-type"`
+	GoogleServiceAccountEmail  string                 `jsonapi:"attr,google-service-account-email"`
+	GoogleWorkloadProviderName string                 `jsonapi:"attr,google-workload-provider-name"`
+	GoogleProject              string                 `jsonapi:"attr,google-project"`
+	GoogleCredentials          string                 `jsonapi:"attr,google-credentials"`
+	GoogleUseDefaultProject    bool                   `jsonapi:"attr,google-use-default-project"`
+	ScalrHostname              string                 `jsonapi:"attr,scalr-hostname"`
+	ScalrToken                 string                 `jsonapi:"attr,scalr-token"`
 
 	Account      *Account                          `jsonapi:"relation,account"`
 	Parameters   []*ProviderConfigurationParameter `jsonapi:"relation,parameters"`
@@ -102,34 +111,36 @@ func (s *providerConfigurations) List(ctx context.Context, options ProviderConfi
 
 // ProviderConfigurationCreateOptions represents the options for creating a new provider configuration.
 type ProviderConfigurationCreateOptions struct {
-	ID                         string  `jsonapi:"primary,provider-configurations"`
-	Name                       *string `jsonapi:"attr,name"`
-	ProviderName               *string `jsonapi:"attr,provider-name"`
-	ExportShellVariables       *bool   `jsonapi:"attr,export-shell-variables,omitempty"`
-	IsShared                   *bool   `jsonapi:"attr,is-shared,omitempty"`
-	IsCustom                   *bool   `jsonapi:"attr,is-custom,omitempty"`
-	AwsAccessKey               *string `jsonapi:"attr,aws-access-key,omitempty"`
-	AwsSecretKey               *string `jsonapi:"attr,aws-secret-key,omitempty"`
-	AwsAccountType             *string `jsonapi:"attr,aws-account-type"`
-	AwsCredentialsType         *string `jsonapi:"attr,aws-credentials-type"`
-	AwsTrustedEntityType       *string `jsonapi:"attr,aws-trusted-entity-type"`
-	AwsAudience                *string `jsonapi:"attr,aws-audience"`
-	AwsRoleArn                 *string `jsonapi:"attr,aws-role-arn"`
-	AwsExternalId              *string `jsonapi:"attr,aws-external-id"`
-	AzurermClientId            *string `jsonapi:"attr,azurerm-client-id,omitempty"`
-	AzurermClientSecret        *string `jsonapi:"attr,azurerm-client-secret,omitempty"`
-	AzurermSubscriptionId      *string `jsonapi:"attr,azurerm-subscription-id,omitempty"`
-	AzurermTenantId            *string `jsonapi:"attr,azurerm-tenant-id,omitempty"`
-	AzurermAuthType            *string `jsonapi:"attr,azurerm-auth-type,omitempty"`
-	AzurermAudience            *string `jsonapi:"attr,azurerm-audience,omitempty"`
-	GoogleAuthType             *string `jsonapi:"attr,google-auth-type,omitempty"`
-	GoogleServiceAccountEmail  *string `jsonapi:"attr,google-service-account-email,omitempty"`
-	GoogleWorkloadProviderName *string `jsonapi:"attr,google-workload-provider-name,omitempty"`
-	GoogleProject              *string `jsonapi:"attr,google-project,omitempty"`
-	GoogleCredentials          *string `jsonapi:"attr,google-credentials,omitempty"`
-	GoogleUseDefaultProject    *bool   `jsonapi:"attr,google-use-default-project,omitempty"`
-	ScalrHostname              *string `jsonapi:"attr,scalr-hostname,omitempty"`
-	ScalrToken                 *string `jsonapi:"attr,scalr-token,omitempty"`
+	ID                         string                  `jsonapi:"primary,provider-configurations"`
+	Name                       *string                 `jsonapi:"attr,name"`
+	ProviderName               *string                 `jsonapi:"attr,provider-name"`
+	ExportShellVariables       *bool                   `jsonapi:"attr,export-shell-variables,omitempty"`
+	IsShared                   *bool                   `jsonapi:"attr,is-shared,omitempty"`
+	IsCustom                   *bool                   `jsonapi:"attr,is-custom,omitempty"`
+	AwsAccessKey               *string                 `jsonapi:"attr,aws-access-key,omitempty"`
+	AwsSecretKey               *string                 `jsonapi:"attr,aws-secret-key,omitempty"`
+	AwsAccountType             *string                 `jsonapi:"attr,aws-account-type"`
+	AwsCredentialsType         *string                 `jsonapi:"attr,aws-credentials-type"`
+	AwsTrustedEntityType       *string                 `jsonapi:"attr,aws-trusted-entity-type"`
+	AwsAudience                *string                 `jsonapi:"attr,aws-audience"`
+	AwsRoleArn                 *string                 `jsonapi:"attr,aws-role-arn"`
+	AwsExternalId              *string                 `jsonapi:"attr,aws-external-id"`
+	AwsDefaultTags             *map[string]string      `jsonapi:"attr,aws-default-tags,omitempty"`
+	AwsDefaultTagsStrategy     *AwsDefaultTagsStrategy `jsonapi:"attr,aws-default-tags-strategy,omitempty"`
+	AzurermClientId            *string                 `jsonapi:"attr,azurerm-client-id,omitempty"`
+	AzurermClientSecret        *string                 `jsonapi:"attr,azurerm-client-secret,omitempty"`
+	AzurermSubscriptionId      *string                 `jsonapi:"attr,azurerm-subscription-id,omitempty"`
+	AzurermTenantId            *string                 `jsonapi:"attr,azurerm-tenant-id,omitempty"`
+	AzurermAuthType            *string                 `jsonapi:"attr,azurerm-auth-type,omitempty"`
+	AzurermAudience            *string                 `jsonapi:"attr,azurerm-audience,omitempty"`
+	GoogleAuthType             *string                 `jsonapi:"attr,google-auth-type,omitempty"`
+	GoogleServiceAccountEmail  *string                 `jsonapi:"attr,google-service-account-email,omitempty"`
+	GoogleWorkloadProviderName *string                 `jsonapi:"attr,google-workload-provider-name,omitempty"`
+	GoogleProject              *string                 `jsonapi:"attr,google-project,omitempty"`
+	GoogleCredentials          *string                 `jsonapi:"attr,google-credentials,omitempty"`
+	GoogleUseDefaultProject    *bool                   `jsonapi:"attr,google-use-default-project,omitempty"`
+	ScalrHostname              *string                 `jsonapi:"attr,scalr-hostname,omitempty"`
+	ScalrToken                 *string                 `jsonapi:"attr,scalr-token,omitempty"`
 
 	Account      *Account       `jsonapi:"relation,account,omitempty"`
 	Environments []*Environment `jsonapi:"relation,environments,omitempty"`
@@ -183,33 +194,35 @@ func (s *providerConfigurations) Read(ctx context.Context, configurationID strin
 type ProviderConfigurationUpdateOptions struct {
 	ID string `jsonapi:"primary,provider-configurations"`
 
-	Name                       *string        `jsonapi:"attr,name"`
-	IsShared                   *bool          `jsonapi:"attr,is-shared,omitempty"`
-	Environments               []*Environment `jsonapi:"relation,environments"`
-	ExportShellVariables       *bool          `jsonapi:"attr,export-shell-variables"`
-	AwsAccessKey               *string        `jsonapi:"attr,aws-access-key"`
-	AwsSecretKey               *string        `jsonapi:"attr,aws-secret-key"`
-	AwsAccountType             *string        `jsonapi:"attr,aws-account-type"`
-	AwsCredentialsType         *string        `jsonapi:"attr,aws-credentials-type"`
-	AwsTrustedEntityType       *string        `jsonapi:"attr,aws-trusted-entity-type"`
-	AwsRoleArn                 *string        `jsonapi:"attr,aws-role-arn"`
-	AwsExternalId              *string        `jsonapi:"attr,aws-external-id"`
-	AwsAudience                *string        `jsonapi:"attr,aws-audience"`
-	AzurermAuthType            *string        `jsonapi:"attr,azurerm-auth-type"`
-	AzurermAudience            *string        `jsonapi:"attr,azurerm-audience"`
-	AzurermClientId            *string        `jsonapi:"attr,azurerm-client-id"`
-	AzurermClientSecret        *string        `jsonapi:"attr,azurerm-client-secret"`
-	AzurermSubscriptionId      *string        `jsonapi:"attr,azurerm-subscription-id"`
-	AzurermTenantId            *string        `jsonapi:"attr,azurerm-tenant-id"`
-	GoogleAuthType             *string        `jsonapi:"attr,google-auth-type"`
-	GoogleServiceAccountEmail  *string        `jsonapi:"attr,google-service-account-email"`
-	GoogleWorkloadProviderName *string        `jsonapi:"attr,google-workload-provider-name"`
-	GoogleProject              *string        `jsonapi:"attr,google-project"`
-	GoogleCredentials          *string        `jsonapi:"attr,google-credentials"`
-	GoogleUseDefaultProject    *bool          `jsonapi:"attr,google-use-default-project,omitempty"`
-	ScalrHostname              *string        `jsonapi:"attr,scalr-hostname"`
-	ScalrToken                 *string        `jsonapi:"attr,scalr-token"`
-	Owners                     []*Team        `jsonapi:"relation,owners"`
+	Name                       *string                 `jsonapi:"attr,name"`
+	IsShared                   *bool                   `jsonapi:"attr,is-shared,omitempty"`
+	Environments               []*Environment          `jsonapi:"relation,environments"`
+	ExportShellVariables       *bool                   `jsonapi:"attr,export-shell-variables"`
+	AwsAccessKey               *string                 `jsonapi:"attr,aws-access-key"`
+	AwsSecretKey               *string                 `jsonapi:"attr,aws-secret-key"`
+	AwsAccountType             *string                 `jsonapi:"attr,aws-account-type"`
+	AwsCredentialsType         *string                 `jsonapi:"attr,aws-credentials-type"`
+	AwsTrustedEntityType       *string                 `jsonapi:"attr,aws-trusted-entity-type"`
+	AwsRoleArn                 *string                 `jsonapi:"attr,aws-role-arn"`
+	AwsExternalId              *string                 `jsonapi:"attr,aws-external-id"`
+	AwsAudience                *string                 `jsonapi:"attr,aws-audience"`
+	AwsDefaultTags             *map[string]string      `jsonapi:"attr,aws-default-tags"`
+	AwsDefaultTagsStrategy     *AwsDefaultTagsStrategy `jsonapi:"attr,aws-default-tags-strategy"`
+	AzurermAuthType            *string                 `jsonapi:"attr,azurerm-auth-type"`
+	AzurermAudience            *string                 `jsonapi:"attr,azurerm-audience"`
+	AzurermClientId            *string                 `jsonapi:"attr,azurerm-client-id"`
+	AzurermClientSecret        *string                 `jsonapi:"attr,azurerm-client-secret"`
+	AzurermSubscriptionId      *string                 `jsonapi:"attr,azurerm-subscription-id"`
+	AzurermTenantId            *string                 `jsonapi:"attr,azurerm-tenant-id"`
+	GoogleAuthType             *string                 `jsonapi:"attr,google-auth-type"`
+	GoogleServiceAccountEmail  *string                 `jsonapi:"attr,google-service-account-email"`
+	GoogleWorkloadProviderName *string                 `jsonapi:"attr,google-workload-provider-name"`
+	GoogleProject              *string                 `jsonapi:"attr,google-project"`
+	GoogleCredentials          *string                 `jsonapi:"attr,google-credentials"`
+	GoogleUseDefaultProject    *bool                   `jsonapi:"attr,google-use-default-project,omitempty"`
+	ScalrHostname              *string                 `jsonapi:"attr,scalr-hostname"`
+	ScalrToken                 *string                 `jsonapi:"attr,scalr-token"`
+	Owners                     []*Team                 `jsonapi:"relation,owners"`
 }
 
 // Update an existing provider configuration.
