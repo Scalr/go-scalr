@@ -60,6 +60,7 @@ type Environment struct {
 	CreatedBy                     *User                    `jsonapi:"relation,created-by"`
 	Tags                          []*Tag                   `jsonapi:"relation,tags"`
 	StorageProfile                *StorageProfile          `jsonapi:"relation,storage-profile"`
+	DefaultWorkspaceAgentPool     *AgentPool               `jsonapi:"relation,default-workspace-agent-pool"`
 }
 
 type EnvironmentRelation struct {
@@ -91,6 +92,7 @@ type EnvironmentCreateOptions struct {
 	Account                       *Account                 `jsonapi:"relation,account"`
 	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations,omitempty"`
 	StorageProfile                *StorageProfile          `jsonapi:"relation,storage-profile,omitempty"`
+	DefaultWorkspaceAgentPool     *AgentPool               `jsonapi:"relation,default-workspace-agent-pool,omitempty"`
 
 	// Specifies tags assigned to the environment
 	Tags []*Tag `jsonapi:"relation,tags,omitempty"`
@@ -198,6 +200,7 @@ type EnvironmentUpdateOptions struct {
 	// Relations
 	DefaultProviderConfigurations []*ProviderConfiguration `jsonapi:"relation,default-provider-configurations"`
 	StorageProfile                *StorageProfile          `jsonapi:"relation,storage-profile"`
+	DefaultWorkspaceAgentPool     *AgentPool               `jsonapi:"relation,default-workspace-agent-pool"`
 }
 
 type EnvironmentUpdateOptionsDefaultProviderConfigurationOnly struct {
