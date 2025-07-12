@@ -52,6 +52,22 @@ func TestWorkspacesList(t *testing.T) {
 		assert.Equal(t, wsTest1.ID, wsl.Items[0].ID)
 	})
 
+	t.Run("with workspace sparse fields", func(t *testing.T) {
+		wl, err := client.Workspaces.List(ctx, WorkspaceListOptions{
+			Filter: &WorkspaceFilter{
+				Environment: &envTest.ID,
+				Id:          &wsTest1.ID,
+			},
+			Fields: &WorkspaceSparseFields{
+				Workspaces: "id,name",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 1, wl.TotalCount)
+		assert.Equal(t, wsTest1.ID, wl.Items[0].ID)
+		assert.Equal(t, wsTest1.Name, wl.Items[0].Name)
+	})
+
 	t.Run("with list options", func(t *testing.T) {
 		// Request a page number which is out of range. The result should
 		// be successful, but return no results if the paging options are
@@ -70,6 +86,7 @@ func TestWorkspacesList(t *testing.T) {
 		assert.Equal(t, 999, wl.CurrentPage)
 		assert.Equal(t, 2, wl.TotalCount)
 	})
+
 	t.Run("without a valid environment", func(t *testing.T) {
 		wl, err := client.Workspaces.List(ctx,
 			WorkspaceListOptions{
