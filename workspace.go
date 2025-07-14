@@ -186,11 +186,18 @@ type WorkspacePermissions struct {
 	CanUpdateVariable bool `json:"can-update-variable"`
 }
 
+// WorkspaceSpareseFields is used to request only specific attributes or relationships from a resource,
+// rather than the entire set of data.
+type WorkspaceSparseFields struct {
+	Workspaces string `url:"workspaces,omitempty"`
+}
+
 // WorkspaceListOptions represents the options for listing workspaces.
 type WorkspaceListOptions struct {
 	ListOptions
-	Include string           `url:"include,omitempty"`
-	Filter  *WorkspaceFilter `url:"filter,omitempty"`
+	Include string                 `url:"include,omitempty"`
+	Filter  *WorkspaceFilter       `url:"filter,omitempty"`
+	Fields  *WorkspaceSparseFields `url:"fields,omitempty"`
 }
 
 // WorkspaceFilter represents the options for filtering workspaces.
