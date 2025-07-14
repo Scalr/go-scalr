@@ -37,6 +37,7 @@ type AgentPool struct {
 	ID         string `jsonapi:"primary,agent-pools"`
 	Name       string `jsonapi:"attr,name"`
 	VcsEnabled bool   `jsonapi:"attr,vcs-enabled"`
+	IsShared   bool   `jsonapi:"attr,is-shared"`
 	// Relations
 
 	// The agent pool's scope
@@ -47,6 +48,8 @@ type AgentPool struct {
 	Workspaces []*Workspace `jsonapi:"relation,workspaces"`
 	// Connected agents
 	Agents []*Agent `jsonapi:"relation,agents"`
+	// Environments this pool is linked to
+	Environments []*Environment `jsonapi:"relation,environments"`
 }
 
 // AgentPoolCreateOptions represents the options for creating a new AgentPool.
@@ -54,12 +57,14 @@ type AgentPoolCreateOptions struct {
 	ID         string  `jsonapi:"primary,agent-pools"`
 	Name       *string `jsonapi:"attr,name"`
 	VcsEnabled *bool   `jsonapi:"attr,vcs-enabled,omitempty"`
+	IsShared   *bool   `jsonapi:"attr,is-shared,omitempty"`
 
 	// The agent pool's scope
 	Environment *Environment `jsonapi:"relation,environment,omitempty"`
 
 	// Workspaces this pool is connected to
-	Workspaces []*Workspace `jsonapi:"relation,workspaces,omitempty"`
+	Workspaces   []*Workspace   `jsonapi:"relation,workspaces,omitempty"`
+	Environments []*Environment `jsonapi:"relation,environments,omitempty"`
 }
 
 func (o AgentPoolCreateOptions) valid() error {
@@ -154,11 +159,13 @@ func (s *agentPools) Read(ctx context.Context, agentPoolID string) (*AgentPool, 
 
 // AgentPoolUpdateOptions represents the options for updating an agent pool.
 type AgentPoolUpdateOptions struct {
-	ID   string  `jsonapi:"primary,agent-pools"`
-	Name *string `jsonapi:"attr,name,omitempty"`
+	ID       string  `jsonapi:"primary,agent-pools"`
+	Name     *string `jsonapi:"attr,name,omitempty"`
+	IsShared *bool   `jsonapi:"attr,is-shared,omitempty"`
 
 	// Workspaces this pool is connected to
-	Workspaces []*Workspace `jsonapi:"relation,workspaces"`
+	Workspaces   []*Workspace   `jsonapi:"relation,workspaces"`
+	Environments []*Environment `jsonapi:"relation,environments"`
 }
 
 // Update settings of an existing agent pool.

@@ -72,6 +72,9 @@ func TestAgentPoolsCreate(t *testing.T) {
 	client := testClient(t)
 	ctx := context.Background()
 
+	envTest, envTestCleanup := createEnvironment(t, client)
+	defer envTestCleanup()
+
 	t.Run("when account and name are provided", func(t *testing.T) {
 		options := AgentPoolCreateOptions{
 			Name:       String("test-provider-pool-" + randomString(t)),
@@ -98,9 +101,37 @@ func TestAgentPoolsCreate(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("when provider is shared", func(t *testing.T) {
+		options := AgentPoolCreateOptions{
+			Name:     String("test-shared-" + randomString(t)),
+			IsShared: Bool(true),
+		}
+
+		agentPool, err := client.AgentPools.Create(ctx, options)
+		require.NoError(t, err)
+
+		// Get a refreshed view from the API.
+		refreshed, err := client.AgentPools.Read(ctx, agentPool.ID)
+		require.NoError(t, err)
+
+		for _, item := range []*AgentPool{
+			agentPool,
+			refreshed,
+		} {
+			assert.NotEmpty(t, item.ID)
+			assert.Equal(t, *options.Name, item.Name)
+			assert.Equal(t, &Account{ID: defaultAccountID}, item.Account)
+			assert.Equal(t, true, item.IsShared)
+		}
+		err = client.AgentPools.Delete(ctx, agentPool.ID)
+		require.NoError(t, err)
+	})
+
 	t.Run("when create without vcs_enabled", func(t *testing.T) {
 		options := AgentPoolCreateOptions{
-			Name: String("test-provider-pool-" + randomString(t)),
+			Name:         String("test-provider-pool-" + randomString(t)),
+			IsShared:     Bool(false),
+			Environments: []*Environment{envTest},
 		}
 
 		agentPool, err := client.AgentPools.Create(ctx, options)
@@ -116,6 +147,8 @@ func TestAgentPoolsCreate(t *testing.T) {
 		} {
 			assert.NotEmpty(t, item.ID)
 			assert.Equal(t, item.VcsEnabled, false)
+			assert.Equal(t, false, item.IsShared)
+			assert.Len(t, item.Environments, 1)
 		}
 		err = client.AgentPools.Delete(ctx, agentPool.ID)
 		require.NoError(t, err)
@@ -123,11 +156,9 @@ func TestAgentPoolsCreate(t *testing.T) {
 
 	t.Run("when environment is provided", func(t *testing.T) {
 		client := testClient(t)
-		env, envCleanup := createEnvironment(t, client)
-		defer envCleanup()
 
 		options := AgentPoolCreateOptions{
-			Environment: &Environment{ID: env.ID},
+			Environment: &Environment{ID: envTest.ID},
 			Name:        String("test-provider-pool-" + randomString(t)),
 			VcsEnabled:  Bool(false),
 		}
@@ -154,12 +185,10 @@ func TestAgentPoolsCreate(t *testing.T) {
 
 	t.Run("when workspace is provided", func(t *testing.T) {
 		client := testClient(t)
-		env, envCleanup := createEnvironment(t, client)
-		defer envCleanup()
-		ws, wsCleanup := createWorkspace(t, client, env)
+		ws, wsCleanup := createWorkspace(t, client, envTest)
 
 		options := AgentPoolCreateOptions{
-			Environment: &Environment{ID: env.ID},
+			Environment: &Environment{ID: envTest.ID},
 			Workspaces:  []*Workspace{{ID: ws.ID}},
 			Name:        String("test-provider-pool-" + randomString(t)),
 			VcsEnabled:  Bool(false),
@@ -298,6 +327,8 @@ func TestAgentPoolsUpdate(t *testing.T) {
 
 	agentPoolTest, agentPoolTestCleanup := createAgentPool(t, client, false)
 	defer agentPoolTestCleanup()
+	env, envCleanup := createEnvironment(t, client)
+	defer envCleanup()
 
 	t.Run("when updating a name", func(t *testing.T) {
 		newName := "updated"
@@ -313,8 +344,6 @@ func TestAgentPoolsUpdate(t *testing.T) {
 
 	t.Run("when updating the workspaces", func(t *testing.T) {
 		client := testClient(t)
-		env, envCleanup := createEnvironment(t, client)
-		defer envCleanup()
 		ws1, ws1Cleanup := createWorkspace(t, client, env)
 		defer ws1Cleanup()
 
@@ -340,6 +369,19 @@ func TestAgentPoolsUpdate(t *testing.T) {
 			assert.Contains(t, wsIds, item.Workspaces[0].ID)
 			assert.Contains(t, wsIds, item.Workspaces[1].ID)
 		}
+	})
+
+	t.Run("when updating sharing", func(t *testing.T) {
+		options := AgentPoolUpdateOptions{
+			IsShared:     Bool(false),
+			Environments: []*Environment{env},
+		}
+
+		agentPoolAfter, err := client.AgentPools.Update(ctx, agentPoolTest.ID, options)
+		require.NoError(t, err)
+
+		assert.Equal(t, false, agentPoolAfter.IsShared)
+		assert.Len(t, agentPoolAfter.Environments, 1)
 	})
 
 	t.Run("when an error is returned from the api", func(t *testing.T) {
