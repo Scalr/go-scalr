@@ -12,7 +12,7 @@ func TestModuleVersionsList(t *testing.T) {
 	t.Skip("Skipped due to updated preview-saas-db image")
 	client := testClient(t)
 	ctx := context.Background()
-	m, err := client.Modules.Read(ctx, defaultModuleID)
+	m, err := client.Modules.Read(ctx, defaultModuleID, ModuleReadOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, m.ID, defaultModuleID)
 

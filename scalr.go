@@ -130,6 +130,7 @@ type Client struct {
 	FederatedEnvironments           FederatedEnvironments
 	Hooks                           Hooks
 	InfracostIntegrations           InfracostIntegrations
+	ModuleNamespaces                ModuleNamespaces
 	ModuleVersions                  ModuleVersions
 	Modules                         Modules
 	PolicyGroupEnvironments         PolicyGroupEnvironments
@@ -239,6 +240,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.FederatedEnvironments = &federatedEnvironments{client: client}
 	client.Hooks = &hooks{client: client}
 	client.InfracostIntegrations = &infracostIntegrations{client: client}
+	client.ModuleNamespaces = &moduleNamespaces{client: client}
 	client.ModuleVersions = &moduleVersions{client: client}
 	client.Modules = &modules{client: client}
 	client.PolicyGroupEnvironments = &policyGroupEnvironment{client: client}
