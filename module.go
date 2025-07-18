@@ -18,7 +18,7 @@ type Modules interface {
 	// Create the module
 	Create(ctx context.Context, options ModuleCreateOptions) (*Module, error)
 	// Read a module by its ID.
-	Read(ctx context.Context, moduleID string) (*Module, error)
+	Read(ctx context.Context, moduleID string, options ModuleReadOptions) (*Module, error)
 	// ReadBySource Read the module by its Source.
 	ReadBySource(ctx context.Context, moduleSource string) (*Module, error)
 	// Delete a module by its ID.
@@ -40,18 +40,19 @@ type Module struct {
 	VCSRepo     *ModuleVCSRepo `jsonapi:"attr,vcs-repo"`
 	Status      ModuleStatus   `jsonapi:"attr,status"`
 	// Relation
-	VcsProvider         *VcsProvider   `jsonapi:"relation,vcs-provider"`
-	Account             *Account       `jsonapi:"relation,account,omitempty"`
-	Environment         *Environment   `jsonapi:"relation,environment,omitempty"`
-	CreatedBy           *User          `jsonapi:"relation,created-by,omitempty"`
-	LatestModuleVersion *ModuleVersion `jsonapi:"relation,latest-module-version,omitempty"`
-	ModuleVersion       *ModuleVersion `jsonapi:"relation,module-version,omitempty"`
+	VcsProvider         *VcsProvider     `jsonapi:"relation,vcs-provider"`
+	Account             *Account         `jsonapi:"relation,account,omitempty"`
+	Environment         *Environment     `jsonapi:"relation,environment,omitempty"`
+	CreatedBy           *User            `jsonapi:"relation,created-by,omitempty"`
+	LatestModuleVersion *ModuleVersion   `jsonapi:"relation,latest-module-version,omitempty"`
+	ModuleVersion       *ModuleVersion   `jsonapi:"relation,module-version,omitempty"`
+	Namespace           *ModuleNamespace `jsonapi:"relation,namespace,omitempty"`
 }
 
 // ModuleStatus represents a module state.
 type ModuleStatus string
 
-//List all available module statuses.
+// List all available module statuses.
 const (
 	ModuleNoVersionTags ModuleStatus = "no_version_tag"
 	ModulePending       ModuleStatus = "pending"
@@ -75,12 +76,20 @@ type ModuleList struct {
 // ModuleListOptions represents the options for listing modules.
 type ModuleListOptions struct {
 	ListOptions
-	Name        *string       `url:"filter[name],omitempty"`
-	Status      *ModuleStatus `url:"filter[status],omitempty"`
-	Source      *string       `url:"filter[source],omitempty"`
-	Provider    *string       `url:"filter[provider],omitempty"`
-	Account     *string       `url:"filter[account],omitempty"`
-	Environment *string       `url:"filter[environment],omitempty"`
+	Name                  *string       `url:"filter[name],omitempty"`
+	Status                *ModuleStatus `url:"filter[status],omitempty"`
+	Source                *string       `url:"filter[source],omitempty"`
+	Provider              *string       `url:"filter[provider],omitempty"`
+	Account               *string       `url:"filter[account],omitempty"`
+	Environment           *string       `url:"filter[environment],omitempty"`
+	ModuleNamespace       *string       `url:"filter[module-namespace],omitempty"`
+	NamespaceEnvironments *string       `url:"filter[namespace][environments],omitempty"`
+	Include               string        `url:"include,omitempty"`
+}
+
+// ModuleReadOptions represents the options for reading a module.
+type ModuleReadOptions struct {
+	Include string `url:"include,omitempty"`
 }
 
 // List all the modules
@@ -114,6 +123,9 @@ type ModuleCreateOptions struct {
 
 	// Specifies the Environment for module
 	Environment *Environment `jsonapi:"relation,environment,omitempty"`
+
+	// Specifies the Namespace for module
+	Namespace *ModuleNamespace `jsonapi:"relation,namespace,omitempty"`
 }
 
 func (o ModuleCreateOptions) valid() error {
@@ -150,13 +162,13 @@ func (s *modules) Create(ctx context.Context, options ModuleCreateOptions) (*Mod
 	return m, nil
 }
 
-func (s *modules) Read(ctx context.Context, moduleID string) (*Module, error) {
+func (s *modules) Read(ctx context.Context, moduleID string, options ModuleReadOptions) (*Module, error) {
 	if !validStringID(&moduleID) {
 		return nil, errors.New("invalid value for module ID")
 	}
 
 	u := fmt.Sprintf("modules/%s", url.QueryEscape(moduleID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.newRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
