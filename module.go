@@ -118,9 +118,6 @@ type ModuleCreateOptions struct {
 	// Specifies the VcsProvider for module vcs-repo.
 	VcsProvider *VcsProvider `jsonapi:"relation,vcs-provider"`
 
-	// Specifies the Account for module
-	Account *Account `jsonapi:"relation,account,omitempty"`
-
 	// Specifies the Environment for module
 	Environment *Environment `jsonapi:"relation,environment,omitempty"`
 
