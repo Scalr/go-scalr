@@ -36,8 +36,8 @@ type AccessToken struct {
 	CreatedAt   time.Time `jsonapi:"attr,created-at,iso8601"`
 	Description string    `jsonapi:"attr,description"`
 	Token       string    `jsonapi:"attr,token"`
-	Name       string    `jsonapi:"attr,name"`
-	ExpiresIn int `jsonapi:"attr,expires-in"`
+	Name        string    `jsonapi:"attr,name"`
+	ExpiresIn   int       `jsonapi:"attr,expires-in"`
 }
 
 // AccessTokenListOptions represents the options for listing access tokens.
@@ -51,8 +51,8 @@ type AccessTokenCreateOptions struct {
 	ID string `jsonapi:"primary,access-tokens"`
 
 	Description *string `jsonapi:"attr,description,omitempty"`
-	Name *string `jsonapi:"attr,name,omitempty"`
-	ExpiresIn *int `jsonapi:"attr,expires-in,omitempty"`
+	Name        *string `jsonapi:"attr,name,omitempty"`
+	ExpiresIn   *int    `jsonapi:"attr,expires-in,omitempty"`
 }
 
 // AccessTokenUpdateOptions represents the options for updating an AccessToken.
@@ -61,7 +61,7 @@ type AccessTokenUpdateOptions struct {
 	ID string `jsonapi:"primary,access-tokens"`
 
 	Description *string `jsonapi:"attr,description,omitempty"`
-	Name *string `jsonapi:"attr,name,omitempty"`
+	Name        *string `jsonapi:"attr,name,omitempty"`
 }
 
 // Read access token by its ID
