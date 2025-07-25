@@ -14,7 +14,7 @@ func TestModulesList(t *testing.T) {
 
 	client := testClient(t)
 	ctx := context.Background()
-	m, err := client.Modules.Read(ctx, defaultModuleID)
+	m, err := client.Modules.Read(ctx, defaultModuleID, ModuleReadOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, m.ID, defaultModuleID)
 
@@ -94,18 +94,18 @@ func TestModulesRead(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("when the module exists", func(t *testing.T) {
-		m, err := client.Modules.Read(ctx, defaultModuleID)
+		m, err := client.Modules.Read(ctx, defaultModuleID, ModuleReadOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, defaultModuleID, m.ID)
 	})
 
 	t.Run("when the module does not exist", func(t *testing.T) {
-		_, err := client.Modules.Read(ctx, "nonexisting")
+		_, err := client.Modules.Read(ctx, "nonexisting", ModuleReadOptions{})
 		assert.Error(t, err)
 	})
 
 	t.Run("without a valid identifier", func(t *testing.T) {
-		_, err := client.Modules.Read(ctx, badIdentifier)
+		_, err := client.Modules.Read(ctx, badIdentifier, ModuleReadOptions{})
 		assert.Error(t, err)
 		assert.EqualError(t, err, "invalid value for module ID")
 	})
@@ -115,7 +115,7 @@ func TestModulesReadBySource(t *testing.T) {
 	t.Skip("Skipped due to updated preview-saas-db image")
 	client := testClient(t)
 	ctx := context.Background()
-	module, err := client.Modules.Read(ctx, defaultModuleID)
+	module, err := client.Modules.Read(ctx, defaultModuleID, ModuleReadOptions{})
 	require.NoError(t, err)
 
 	t.Run("with valid source", func(t *testing.T) {
