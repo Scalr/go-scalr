@@ -57,6 +57,29 @@ func TestProviderConfigurationParameterCreate(t *testing.T) {
 		assert.Equal(t, *options.Sensitive, parameter.Sensitive)
 		assert.Equal(t, "", parameter.Value)
 	})
+
+	t.Run("success with hcl", func(t *testing.T) {
+		options := ProviderConfigurationParameterCreateOptions{
+			Key:         String("variable_map"),
+			Sensitive:   Bool(false),
+			Value:       String(`{"region": "us-west-2", "environment": "prod"}`),
+			Description: String("A map of variables in HCL format."),
+			HCL:         Bool(true),
+		}
+		parameter, err := client.ProviderConfigurationParameters.Create(ctx, configuration.ID, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		parameter, err = client.ProviderConfigurationParameters.Read(ctx, parameter.ID)
+		require.NoError(t, err)
+
+		assert.Equal(t, *options.Key, parameter.Key)
+		assert.Equal(t, *options.Sensitive, parameter.Sensitive)
+		assert.Equal(t, *options.Value, parameter.Value)
+		assert.Equal(t, *options.Description, parameter.Description)
+		assert.Equal(t, *options.HCL, parameter.HCL)
+	})
 }
 
 func TestProviderConfigurationParametersList(t *testing.T) {
@@ -142,6 +165,41 @@ func TestProviderConfigurationParameterUpdate(t *testing.T) {
 		assert.Equal(t, *options.Key, updatedParameter.Key)
 		assert.Equal(t, *options.Sensitive, updatedParameter.Sensitive)
 		assert.Equal(t, *options.Description, updatedParameter.Description)
+	})
+
+	t.Run("success with hcl update", func(t *testing.T) {
+		configuration, removeConfiguration := createProviderConfiguration(
+			t, client, "kubernetes", "kubernetes_dev",
+		)
+		defer removeConfiguration()
+
+		parameter, err := client.ProviderConfigurationParameters.Create(ctx, configuration.ID, ProviderConfigurationParameterCreateOptions{
+			Key:       String("config_context"),
+			Sensitive: Bool(false),
+			Value:     String("my-context"),
+			HCL:       Bool(false),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		options := ProviderConfigurationParameterUpdateOptions{
+			Key:         String("variable_map"),
+			Sensitive:   Bool(false),
+			Value:       String(`{"region": "us-west-2", "environment": "prod"}`),
+			Description: String("A map of variables in HCL format."),
+			HCL:         Bool(true),
+		}
+		updatedParameter, err := client.ProviderConfigurationParameters.Update(
+			ctx, parameter.ID, options,
+		)
+		require.NoError(t, err)
+
+		assert.Equal(t, *options.Key, updatedParameter.Key)
+		assert.Equal(t, *options.Sensitive, updatedParameter.Sensitive)
+		assert.Equal(t, *options.Value, updatedParameter.Value)
+		assert.Equal(t, *options.Description, updatedParameter.Description)
+		assert.Equal(t, *options.HCL, updatedParameter.HCL)
 	})
 }
 
