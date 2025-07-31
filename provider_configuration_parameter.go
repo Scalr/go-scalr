@@ -37,6 +37,7 @@ type ProviderConfigurationParameter struct {
 	Sensitive   bool   `jsonapi:"attr,sensitive"`
 	Value       string `jsonapi:"attr,value"`
 	Description string `jsonapi:"attr,description"`
+	HCL         bool   `jsonapi:"attr,hcl"`
 }
 
 // ProviderConfigurationParametersListOptions represents the options for listing provider configuration parameters.
@@ -75,6 +76,7 @@ type ProviderConfigurationParameterCreateOptions struct {
 	Sensitive   *bool   `jsonapi:"attr,sensitive,omitempty"`
 	Value       *string `jsonapi:"attr,value"`
 	Description *string `jsonapi:"attr,description,omitempty"`
+	HCL         *bool   `jsonapi:"attr,hcl,omitempty"`
 }
 
 // Create is used to create a new provider configuration parameter.
@@ -126,6 +128,7 @@ type ProviderConfigurationParameterUpdateOptions struct {
 	Sensitive   *bool   `jsonapi:"attr,sensitive,omitempty"`
 	Value       *string `jsonapi:"attr,value,omitempty"`
 	Description *string `jsonapi:"attr,description,omitempty"`
+	HCL         *bool   `jsonapi:"attr,hcl,omitempty"`
 }
 
 // Update an existing provider configuration parameter.
