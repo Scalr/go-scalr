@@ -77,8 +77,22 @@ func TestAgentPoolsCreate(t *testing.T) {
 
 	t.Run("when account and name are provided", func(t *testing.T) {
 		options := AgentPoolCreateOptions{
-			Name:       String("test-provider-pool-" + randomString(t)),
-			VcsEnabled: Bool(true),
+			Name:           String("test-provider-pool-" + randomString(t)),
+			VcsEnabled:     Bool(true),
+			WebhookEnabled: Bool(true),
+			WebhookUrl:     String("http://example.com"),
+			WebhookHeaders: []*AgentPoolHeader{
+				{
+					Name:      "Authorization",
+					Value:     "Bearer 1234567890",
+					Sensitive: true,
+				},
+				{
+					Name:      "Prefer",
+					Value:     "something",
+					Sensitive: false,
+				},
+			},
 		}
 
 		agentPool, err := client.AgentPools.Create(ctx, options)
@@ -96,7 +110,22 @@ func TestAgentPoolsCreate(t *testing.T) {
 			assert.Equal(t, *options.Name, item.Name)
 			assert.Equal(t, &Account{ID: defaultAccountID}, item.Account)
 			assert.Equal(t, *options.VcsEnabled, item.VcsEnabled)
+			assert.Equal(t, *options.WebhookEnabled, item.WebhookEnabled)
+			assert.Equal(t, *options.WebhookUrl, item.WebhookUrl)
+			require.Len(t, item.WebhookHeaders, len(options.WebhookHeaders))
+
+			for i, expected := range options.WebhookHeaders {
+				actual := item.WebhookHeaders[i]
+				expectedValue := expected.Value
+				if expected.Sensitive {
+					expectedValue = ""
+				}
+				assert.Equal(t, expected.Name, actual.Name)
+				assert.Equal(t, expectedValue, actual.Value)
+				assert.Equal(t, expected.Sensitive, actual.Sensitive)
+			}
 		}
+
 		err = client.AgentPools.Delete(ctx, agentPool.ID)
 		require.NoError(t, err)
 	})
@@ -391,6 +420,46 @@ func TestAgentPoolsUpdate(t *testing.T) {
 		assert.Nil(t, r)
 		assert.Error(t, err)
 	})
+
+	t.Run("when making serverless", func(t *testing.T) {
+		options := AgentPoolUpdateOptions{
+			IsShared:       Bool(true),
+			WebhookEnabled: Bool(true),
+			WebhookUrl:     String("http://example.com"),
+			WebhookHeaders: []*AgentPoolHeader{
+				{
+					Name:      "Authorization",
+					Value:     "Bearer 1234567890",
+					Sensitive: true,
+				},
+				{
+					Name:      "Prefer",
+					Value:     "something",
+					Sensitive: false,
+				},
+			},
+		}
+
+		agentPoolAfter, err := client.AgentPools.Update(ctx, agentPoolTest.ID, options)
+		require.NoError(t, err)
+
+		assert.Equal(t, true, agentPoolAfter.IsShared)
+		require.Len(t, agentPoolAfter.WebhookHeaders, len(options.WebhookHeaders))
+		assert.Equal(t, *options.WebhookEnabled, agentPoolAfter.WebhookEnabled)
+		assert.Equal(t, *options.WebhookUrl, agentPoolAfter.WebhookUrl)
+
+		for i, expected := range options.WebhookHeaders {
+			actual := agentPoolAfter.WebhookHeaders[i]
+			expectedValue := expected.Value
+			if expected.Sensitive {
+				expectedValue = ""
+			}
+			assert.Equal(t, expected.Name, actual.Name)
+			assert.Equal(t, expectedValue, actual.Value)
+			assert.Equal(t, expected.Sensitive, actual.Sensitive)
+		}
+	})
+
 }
 
 func TestAgentPoolsDelete(t *testing.T) {
