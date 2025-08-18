@@ -29,7 +29,7 @@ type CheckovIntegration struct {
 	Name                  string                     `jsonapi:"attr,name"`
 	Version               string                     `jsonapi:"attr,version"`
 	CliArgs               string                     `jsonapi:"attr,cli-args"`
-	IsShared              bool                       `jsonapi:"attr,is-shared,omitempty"`
+	IsShared              bool                       `jsonapi:"attr,is-shared"`
 	VCSRepo               *CheckovIntegrationVCSRepo `jsonapi:"attr,vcs-repo"`
 	ExternalChecksEnabled bool                       `jsonapi:"attr,external-checks-enabled"`
 
