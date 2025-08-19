@@ -117,6 +117,7 @@ func TestWorkspacesCreate(t *testing.T) {
 			AutoApply:                 Bool(true),
 			ForceLatestRun:            Bool(true),
 			DeletionProtectionEnabled: Bool(false),
+			RemoteBackend:             Bool(false),
 			ExecutionMode:             WorkspaceExecutionModePtr(WorkspaceExecutionModeRemote),
 			TerraformVersion:          String("1.1.9"),
 			WorkingDirectory:          String("bar/"),
@@ -142,6 +143,7 @@ func TestWorkspacesCreate(t *testing.T) {
 			assert.Equal(t, *options.AutoApply, item.AutoApply)
 			assert.Equal(t, *options.ForceLatestRun, item.ForceLatestRun)
 			assert.Equal(t, *options.DeletionProtectionEnabled, item.DeletionProtectionEnabled)
+			assert.Equal(t, *options.RemoteBackend, item.RemoteBackend)
 			assert.Equal(t, false, item.HasResources)
 			assert.Equal(t, *options.ExecutionMode, item.ExecutionMode)
 			assert.Equal(t, *options.TerraformVersion, item.TerraformVersion)

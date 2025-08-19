@@ -122,6 +122,7 @@ type Workspace struct {
 	VarFiles                  []string                 `jsonapi:"attr,var-files"`
 	EnvironmentType           WorkspaceEnvironmentType `jsonapi:"attr,environment-type"`
 	RemoteStateSharing        bool                     `jsonapi:"attr,remote-state-sharing"`
+	RemoteBackend             bool                     `jsonapi:"attr,remote-backend"`
 
 	// Relations
 	CurrentRun           *Run                  `jsonapi:"relation,current-run"`
@@ -318,6 +319,9 @@ type WorkspaceCreateOptions struct {
 	Tags []*Tag `jsonapi:"relation,tags,omitempty"`
 
 	RemoteStateSharing *bool `jsonapi:"attr,remote-state-sharing,omitempty"`
+
+	// Manages if Scalr exports the remote backend configuration and state storage for infrastructure management.
+	RemoteBackend *bool `jsonapi:"attr,remote-backend,omitempty"`
 }
 
 // WorkspaceVCSRepoOptions represents the configuration options of a VCS integration.
