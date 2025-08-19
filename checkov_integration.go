@@ -56,8 +56,8 @@ type CheckovIntegrationListOptions struct {
 
 // CheckovIntegrationVCSRepoOptions represents the configuration options of a VCS integration.
 type CheckovIntegrationVCSRepoOptions struct {
-	Identifier *string `json:"identifier,omitempty"`
-	Branch     *string `json:"branch"`
+	Identifier *string `json:"identifier"`
+	Branch     *string `json:"branch,omitempty"`
 	Path       *string `json:"path,omitempty"`
 }
 
@@ -77,16 +77,16 @@ type CheckovIntegrationCreateOptions struct {
 
 type CheckovIntegrationUpdateOptions struct {
 	ID                    string                            `jsonapi:"primary,checkov-integrations"`
-	Name                  *string                           `jsonapi:"attr,name"`
+	Name                  *string                           `jsonapi:"attr,name,omitempty"`
 	Version               *string                           `jsonapi:"attr,version,omitempty"`
 	CliArgs               *string                           `jsonapi:"attr,cli-args,omitempty"`
 	IsShared              *bool                             `jsonapi:"attr,is-shared,omitempty"`
-	VCSRepo               *CheckovIntegrationVCSRepoOptions `jsonapi:"attr,vcs-repo,omitempty"`
+	VCSRepo               *CheckovIntegrationVCSRepoOptions `jsonapi:"attr,vcs-repo"`
 	ExternalChecksEnabled *bool                             `jsonapi:"attr,external-checks-enabled,omitempty"`
 
 	// Relations
 	Environments []*Environment `jsonapi:"relation,environments"`
-	VcsProvider  *VcsProvider   `jsonapi:"relation,vcs-provider,omitempty"`
+	VcsProvider  *VcsProvider   `jsonapi:"relation,vcs-provider"`
 }
 
 func (s *checkovIntegrations) List(
