@@ -115,6 +115,7 @@ func TestEnvironmentsCreate(t *testing.T) {
 			Account:                       &Account{ID: defaultAccountID},
 			DefaultProviderConfigurations: []*ProviderConfiguration{provider_configuration},
 			RemoteBackend:                 Bool(false),
+			RemoteBackendOverridable:      Bool(false),
 		}
 
 		env, err := client.Environments.Create(ctx, options)
@@ -130,6 +131,7 @@ func TestEnvironmentsCreate(t *testing.T) {
 		assert.Equal(t, *options.Name, env.Name)
 		assert.Equal(t, options.Account.ID, env.Account.ID)
 		assert.Equal(t, false, env.RemoteBackend)
+		assert.Equal(t, false, env.RemoteBackendOverridable)
 		assert.Len(t, env.DefaultProviderConfigurations, 1)
 		assert.Equal(t, provider_configuration.ID, env.DefaultProviderConfigurations[0].ID)
 	})
