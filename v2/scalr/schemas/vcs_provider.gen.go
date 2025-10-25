@@ -47,7 +47,7 @@ type VcsProviderAttributes struct {
 	// Indicates whether the draft pull-request runs are enabled for this VCS provider.
 	DraftPrRunsEnabled bool `json:"draft-pr-runs-enabled"`
 	// Contains error message, if the connection to VCS provider is broken.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// Indicates whether the VCS provider can be used in any account environments or only linked one.
 	IsShared bool `json:"is-shared"`
 	// VCS provider name, which must be unique within the account.
@@ -57,11 +57,11 @@ type VcsProviderAttributes struct {
 	// Indicates whether comment should be posted on PR after merge with results of triggered runs.
 	PrMergeCommentsEnabled bool `json:"pr-merge-comments-enabled"`
 	// Access token for an API client for using to connect to the VCS Provider.
-	Token string `json:"token"`
+	Token *string `json:"token"`
 	// The URL to the VCS provider installation. Required for GitHub Enterprise, GitLab Enterprise and Bitbucket Data Center.
-	Url string `json:"url"`
+	Url *string `json:"url"`
 	// Username for personal_token auth type. This field is required for bitbucket_enterprise provider.
-	Username string `json:"username"`
+	Username *string `json:"username"`
 	// VCS provider type.
 	VcsType string `json:"vcs-type"`
 }

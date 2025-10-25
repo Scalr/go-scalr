@@ -3,6 +3,6 @@
 package schemas
 
 type WorkspaceSchedule struct {
-	ApplySchedule   string `json:"apply-schedule,omitempty"`
-	DestroySchedule string `json:"destroy-schedule,omitempty"`
+	ApplySchedule   *string `json:"apply-schedule,omitempty"`
+	DestroySchedule *string `json:"destroy-schedule,omitempty"`
 }

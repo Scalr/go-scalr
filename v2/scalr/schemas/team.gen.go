@@ -33,7 +33,7 @@ func (r Team) GetResourceType() string {
 // TeamAttributes holds the attributes for Team (response)
 type TeamAttributes struct {
 	// The verbose description of the team.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// The name of the team.
 	Name string `json:"name"`
 }

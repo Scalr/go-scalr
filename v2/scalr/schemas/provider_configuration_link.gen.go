@@ -33,7 +33,7 @@ func (r ProviderConfigurationLink) GetResourceType() string {
 // ProviderConfigurationLinkAttributes holds the attributes for ProviderConfigurationLink (response)
 type ProviderConfigurationLinkAttributes struct {
 	// Is used only for the workspace links. Meta-argument for using the same provider with different configurations for different resources.
-	Alias string `json:"alias"`
+	Alias *string `json:"alias"`
 	// Is used only for the environment links. Indicates whether the provider configuration must be used in every environment workspace during runs without direct linking. This behaviour can be changed in specific workspace by creating direct workspace link without alias.
 	Default bool `json:"default"`
 }

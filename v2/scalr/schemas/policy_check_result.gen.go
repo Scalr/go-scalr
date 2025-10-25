@@ -37,13 +37,13 @@ type PolicyCheckResultAttributes struct {
 	// The name of the policy.
 	Name string `json:"name"`
 	// The number of the pull request that triggered the policy check.
-	PullRequestNumber string `json:"pull-request-number"`
+	PullRequestNumber *string `json:"pull-request-number"`
 	// The title of the pull request that triggered the policy check.
-	PullRequestTitle string `json:"pull-request-title"`
+	PullRequestTitle *string `json:"pull-request-title"`
 	// The result of the policy check.
 	Result string `json:"result"`
 	// The terragrunt unit path relative to the working directory.
-	UnitPath string `json:"unit-path"`
+	UnitPath *string `json:"unit-path"`
 }
 
 // PolicyCheckResultRelationships holds the relationships for PolicyCheckResult (response)

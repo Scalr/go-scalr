@@ -36,19 +36,19 @@ type AccessTokenAttributes struct {
 	// Date/Time the token was created.
 	CreatedAt time.Time `json:"created-at"`
 	// The description of the token.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// Date/Time when the token is set to expire.
-	ExpiresAt time.Time `json:"expires-at"`
+	ExpiresAt *time.Time `json:"expires-at"`
 	// The number of minutes until the token expires.
-	ExpiresIn int `json:"expires-in"`
+	ExpiresIn *int `json:"expires-in"`
 	// Whether the token is expired.
 	IsExpired bool `json:"is-expired"`
 	// Date/Time when the token was last used.
-	LastUsedAt time.Time `json:"last-used-at"`
+	LastUsedAt *time.Time `json:"last-used-at"`
 	// The name of the token.
-	Name string `json:"name"`
+	Name *string `json:"name"`
 	// The JWT token which an API client should pass in the `Authorization: Bearer <token>` header. Available only in the [Create an Access Token](#create-an-access-token) response.
-	Token string `json:"token"`
+	Token *string `json:"token"`
 }
 
 // AccessTokenRelationships holds the relationships for AccessToken (response)

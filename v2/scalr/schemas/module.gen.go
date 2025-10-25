@@ -38,7 +38,7 @@ type ModuleAttributes struct {
 	// The description of the module. By default, this is taken from the VCS repository description. For mono repos you likely want to override this behavior by passing this argument in a [Create Module](modules.html#create-a-module) operation.
 	Description string `json:"description"`
 	// This field contains the error description, when this module's status is `errored`.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// The module name.
 	Name string `json:"name"`
 	// A name of a system, this module was written for. For multi-cloud modules this argument should match terraform provider name (ex: `aws` or `google`), in other cases the convention is to name it `system`

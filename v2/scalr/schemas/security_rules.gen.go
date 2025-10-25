@@ -32,9 +32,9 @@ func (r SecurityRules) GetResourceType() string {
 // SecurityRulesAttributes holds the attributes for SecurityRules (response)
 type SecurityRulesAttributes struct {
 	// The maximum lifetime of a personal user access token in minutes.
-	MaxPersonalTokenLifetime int `json:"max-personal-token-lifetime"`
+	MaxPersonalTokenLifetime *int `json:"max-personal-token-lifetime"`
 	// The maximum lifetime of a service account access token in minutes.
-	MaxServiceAccountTokenLifetime int `json:"max-service-account-token-lifetime"`
+	MaxServiceAccountTokenLifetime *int `json:"max-service-account-token-lifetime"`
 	// Whether to require owners for service accounts.
 	RequireOwnersForServiceAccounts bool `json:"require-owners-for-service-accounts"`
 }

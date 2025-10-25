@@ -34,13 +34,13 @@ func (r DriftReport) GetResourceType() string {
 // DriftReportAttributes holds the attributes for DriftReport (response)
 type DriftReportAttributes struct {
 	// The reason for the drift report action.
-	Reason string `json:"reason"`
+	Reason *string `json:"reason"`
 	// The status of the drift report.
 	Status string `json:"status"`
 	// The resource last update timestamp.
-	UpdatedAt time.Time `json:"updated-at"`
+	UpdatedAt *time.Time `json:"updated-at"`
 	// The email of the last user, that updated this drift report.
-	UpdatedByEmail string `json:"updated-by-email"`
+	UpdatedByEmail *string `json:"updated-by-email"`
 }
 
 // DriftReportRelationships holds the relationships for DriftReport (response)

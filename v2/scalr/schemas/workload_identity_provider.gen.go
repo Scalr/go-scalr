@@ -38,7 +38,7 @@ type WorkloadIdentityProviderAttributes struct {
 	// The UTC datetime at which the workload identity provider was created.
 	CreatedAt time.Time `json:"created-at"`
 	// Email of the user who created workload identity provider.
-	CreatedByEmail string `json:"created-by-email"`
+	CreatedByEmail *string `json:"created-by-email"`
 	// The name of the workload identity provider.
 	Name string `json:"name"`
 	// The status of the workload identity provider.

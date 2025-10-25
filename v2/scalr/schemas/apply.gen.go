@@ -34,11 +34,11 @@ type ApplyAttributes struct {
 	// Apply execution details.
 	ExecutionDetails map[string]interface{} `json:"execution-details"`
 	// The number of resources added.
-	ResourceAdditions int `json:"resource-additions"`
+	ResourceAdditions *int `json:"resource-additions"`
 	// The number of resources updated.
-	ResourceChanges int `json:"resource-changes"`
+	ResourceChanges *int `json:"resource-changes"`
 	// The number of resources destroyed.
-	ResourceDestructions int `json:"resource-destructions"`
+	ResourceDestructions *int `json:"resource-destructions"`
 	// The Apply's current status. Transient states: * `pending` - Apply has been created but not yet `queued`. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Apply canceled in some way. * `errored` - An error occurred during the apply. See `output` for details. * `finished` - Apply completed successfully. * `unreachable` - Apply will not be run.
 	Status string `json:"status"`
 	// Date/Time of transition to each status that has occurred.

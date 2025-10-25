@@ -33,7 +33,7 @@ func (r ProviderConfigurationParameter) GetResourceType() string {
 // ProviderConfigurationParameterAttributes holds the attributes for ProviderConfigurationParameter (response)
 type ProviderConfigurationParameterAttributes struct {
 	// Variable description.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// Indicates whether the value of the variable is a string of HCL code.
 	Hcl bool `json:"hcl"`
 	// Parameter name.
@@ -41,7 +41,7 @@ type ProviderConfigurationParameterAttributes struct {
 	// Indicates whether the value is sensitive. When set to `true` then the parameter is not visible after being written.
 	Sensitive bool `json:"sensitive"`
 	// Parameter value. Not visible if sensitive: true is enabled
-	Value string `json:"value"`
+	Value *string `json:"value"`
 }
 
 // ProviderConfigurationParameterRelationships holds the relationships for ProviderConfigurationParameter (response)

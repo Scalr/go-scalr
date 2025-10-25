@@ -36,7 +36,7 @@ type WebhookIntegrationDeliveryAttributes struct {
 	// The number of attempts made to deliver the webhook.
 	Attempts int `json:"attempts"`
 	// The error message, if any, encountered during delivery.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// The Date/Time of the last attempt to deliver the webhook.
 	LastHandleAttemptAt time.Time `json:"last-handle-attempt-at"`
 	// The data payload (JSON format) sent in the webhook request body.
@@ -44,11 +44,11 @@ type WebhookIntegrationDeliveryAttributes struct {
 	// The HTTP request headers sent with the webhook.
 	RequestHeaders map[string]interface{} `json:"request-headers"`
 	// The data (JSON or plain text) received in the response body from the external system.
-	ResponseBody interface{} `json:"response-body"`
+	ResponseBody *interface{} `json:"response-body"`
 	// The HTTP status code returned by the external system.
-	ResponseCode int `json:"response-code"`
+	ResponseCode *int `json:"response-code"`
 	// The HTTP response headers received from the external system.
-	ResponseHeaders map[string]interface{} `json:"response-headers"`
+	ResponseHeaders *map[string]interface{} `json:"response-headers"`
 	// The delivery status. Can be: `pending`, `completed`, or `failed`.
 	Status string `json:"status"`
 	// The Date/Time when the webhook was triggered.

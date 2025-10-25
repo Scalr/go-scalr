@@ -35,7 +35,7 @@ func (r Environment) GetResourceType() string {
 type EnvironmentAttributes struct {
 	// Date/Time the environment was created.
 	CreatedAt      time.Time `json:"created-at"`
-	CreatedByEmail string    `json:"created-by-email"`
+	CreatedByEmail *string   `json:"created-by-email"`
 	// Allow all current and future environments to have access to this environment.
 	IsFederatedToAccount bool `json:"is-federated-to-account"`
 	// Enable masking of the sensitive console output.

@@ -34,12 +34,12 @@ func (r CreateUser) GetResourceType() string {
 // CreateUserAttributes holds the attributes for CreateUser (response)
 type CreateUserAttributes struct {
 	// If set to `true`, the user will be asked to change the temporary password on the first sign in.
-	ChangePasswordOnSignIn bool      `json:"change-password-on-sign-in"`
-	CreatedAt              time.Time `json:"created-at"`
-	Email                  string    `json:"email"`
-	FullName               string    `json:"full-name"`
+	ChangePasswordOnSignIn bool       `json:"change-password-on-sign-in"`
+	CreatedAt              *time.Time `json:"created-at"`
+	Email                  string     `json:"email"`
+	FullName               *string    `json:"full-name"`
 	// Must be at least 8 characters long and contain at least one digit, one lowercase letter, one uppercase letter, and one special character.
-	Password string `json:"password"`
+	Password *string `json:"password"`
 	// User status. Can be: `Active`, `Inactive`, `Pending`. Pending user will be activated after the first sign in.
 	Status string `json:"status"`
 }

@@ -38,13 +38,13 @@ type ConfigurationVersionAttributes struct {
 	// Date/Time the configuration version was created.
 	CreatedAt time.Time `json:"created-at"`
 	// This field contains the error description, when this configuration version's status is `errored`.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// The input variables definitions. Example: ```js [ { "description": "The name of the CloudSQL database.", "name": "cloudsql_database", "type": "string" }, {"...": ""..."} ] ```
 	Inputs []interface{} `json:"inputs"`
 	// Indicates the configuration version can only be used to perform dry runs that comprise the plan, cost estimation (if enabled) and policy checks. With this set to `true` the configuration cannot be used for an apply and never requires confirmation.
 	IsDry bool `json:"is-dry"`
 	// A blob size in bytes.
-	Size int `json:"size"`
+	Size *int `json:"size"`
 	// The origin for the configuration version.
 	Source string `json:"source"`
 	// The Configuration version's current status. * `pending` - waiting for the configuration files to upload. * `uploaded` - upload successful. At this point if the `auto-queue-runs: true` the new run should be `queued`. * `errored` - uploaded files post processing failed. Attribute `error-message` contains the details.

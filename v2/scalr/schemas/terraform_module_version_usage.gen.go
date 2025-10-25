@@ -34,7 +34,7 @@ func (r TerraformModuleVersionUsage) GetResourceType() string {
 // TerraformModuleVersionUsageAttributes holds the attributes for TerraformModuleVersionUsage (response)
 type TerraformModuleVersionUsageAttributes struct {
 	CreatedAt time.Time `json:"created-at"`
-	Version   string    `json:"version"`
+	Version   *string   `json:"version"`
 }
 
 // TerraformModuleVersionUsageRelationships holds the relationships for TerraformModuleVersionUsage (response)

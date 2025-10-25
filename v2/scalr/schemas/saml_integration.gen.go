@@ -33,55 +33,55 @@ func (r SamlIntegration) GetResourceType() string {
 // SamlIntegrationAttributes holds the attributes for SamlIntegration (response)
 type SamlIntegrationAttributes struct {
 	// If enabled, user will be redirected to IdP's login page.
-	AutoRedirect bool `json:"auto-redirect"`
+	AutoRedirect *bool `json:"auto-redirect"`
 	// Base URL to construct SAML endpoints from. It needs to be a URL with the protocol, server, port and context path.
-	BaseUrl string `json:"base-url"`
+	BaseUrl *string `json:"base-url"`
 	// Enables debug mode.
 	Debug bool `json:"debug"`
 	// A message from an IdP that indicates a nature of the problem
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// Instead of using the whole x509cert you can use a fingerprint in order to validate the SAMLResponse, but we don't recommend to use this method on production since is exploitable by collision attack.
-	IdpCertFingerprint string `json:"idp-cert-fingerprint"`
+	IdpCertFingerprint *string `json:"idp-cert-fingerprint"`
 	// IDP cert fingerprint algorithm
 	IdpCertFingerprintAlgorithm string `json:"idp-cert-fingerprint-algorithm"`
 	// Identifier of the IdP entity (must be a URI).
 	IdpEntityId string `json:"idp-entity-id"`
 	// SAML protocol binding to be used when returning the response message (urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect).
-	IdpSingleLogoutServiceBinding string `json:"idp-single-logout-service-binding"`
+	IdpSingleLogoutServiceBinding *string `json:"idp-single-logout-service-binding"`
 	// URL location of IdP where SLO Response will be sent.
-	IdpSingleLogoutServiceResponseUrl string `json:"idp-single-logout-service-response-url"`
+	IdpSingleLogoutServiceResponseUrl *string `json:"idp-single-logout-service-response-url"`
 	// URL target of IdP where Scalr will send the SLO Request.
-	IdpSingleLogoutServiceUrl string `json:"idp-single-logout-service-url"`
+	IdpSingleLogoutServiceUrl *string `json:"idp-single-logout-service-url"`
 	// SAML protocol binding to be used when returning the response message (urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect).
-	IdpSingleSignOnServiceBinding string `json:"idp-single-sign-on-service-binding"`
+	IdpSingleSignOnServiceBinding *string `json:"idp-single-sign-on-service-binding"`
 	// URL target of IdP where Scalr will send the Authentication Request Message.
 	IdpSingleSignOnServiceUrl string `json:"idp-single-sign-on-service-url"`
 	// Public x509 certificate of the IdP.
-	IdpX509Cert string `json:"idp-x509cert"`
+	IdpX509Cert *string `json:"idp-x509cert"`
 	// IDP x509cert multi encryption
-	IdpX509CertMultiEncryption string `json:"idp-x509cert-multi-encryption"`
+	IdpX509CertMultiEncryption *string `json:"idp-x509cert-multi-encryption"`
 	// In some scenarios IdP uses different certificates for signing/encryption, or is under key rollover phase and more than one certificate is published on IdP metadata. (when used, 'IdP x509cert' and 'IdP Cert Fingerprint' values are ignored)
-	IdpX509CertMultiSigning string `json:"idp-x509cert-multi-signing"`
+	IdpX509CertMultiSigning *string `json:"idp-x509cert-multi-signing"`
 	// Whether this SAML IdP is in use.
 	IsUsed bool `json:"is-used"`
 	// Account type.
-	MappingAzureAadAccountType string `json:"mapping-azure-aad-account-type"`
+	MappingAzureAadAccountType *string `json:"mapping-azure-aad-account-type"`
 	// Client ID.
-	MappingAzureAadClientId string `json:"mapping-azure-aad-client-id"`
+	MappingAzureAadClientId *string `json:"mapping-azure-aad-client-id"`
 	// Use Azure Active Directory.
 	MappingAzureAadEnabled bool `json:"mapping-azure-aad-enabled"`
 	// Secret key.
-	MappingAzureAadSecretKey string `json:"mapping-azure-aad-secret-key"`
+	MappingAzureAadSecretKey *string `json:"mapping-azure-aad-secret-key"`
 	// Tenant ID.
-	MappingAzureAadTenantId string `json:"mapping-azure-aad-tenant-id"`
+	MappingAzureAadTenantId *string `json:"mapping-azure-aad-tenant-id"`
 	// Email attribute, in case usernames and emails are different.
-	MappingEmail string `json:"mapping-email"`
+	MappingEmail *string `json:"mapping-email"`
 	// Display name attribute.
-	MappingFullname string `json:"mapping-fullname"`
+	MappingFullname *string `json:"mapping-fullname"`
 	// The name of the Groups attribute to use in SAML Assertion.
-	MappingGroups string `json:"mapping-groups"`
+	MappingGroups *string `json:"mapping-groups"`
 	// Groups separator
-	MappingSeparator string `json:"mapping-separator"`
+	MappingSeparator *string `json:"mapping-separator"`
 	// Name of SAML integration
 	Name string `json:"name"`
 	// If true, it will not raise an error when the Statement Element contains attribute elements with name duplicated.
@@ -89,7 +89,7 @@ type SamlIntegrationAttributes struct {
 	// Indicates whether the <samlp:AuthnRequest> messages sent by Scalr will be signed.
 	SecurityAuthnRequestsSigned bool `json:"security-authn-requests-signed"`
 	// Algorithm that Scalr will use on digest process.
-	SecurityDigestAlgorithm string `json:"security-digest-algorithm"`
+	SecurityDigestAlgorithm *string `json:"security-digest-algorithm"`
 	// Indicates whether the <samlp:logoutRequest> messages sent by Scalr will be signed.
 	SecurityLogoutRequestSigned bool `json:"security-logout-request-signed"`
 	// Indicates whether the <samlp:logoutResponse> messages sent by Scalr will be signed.
@@ -101,7 +101,7 @@ type SamlIntegrationAttributes struct {
 	// Allows the authn comparison parameter to be set.
 	SecurityRequestedAuthnContextComparison string `json:"security-requested-authn-context-comparison"`
 	// Sign the Metadata. If enabled SP certificate must be provided.
-	SecuritySignMetadata bool `json:"security-sign-metadata"`
+	SecuritySignMetadata *bool `json:"security-sign-metadata"`
 	// Algorithm that Scalr will use on signing process.
 	SecuritySignatureAlgorithm string `json:"security-signature-algorithm"`
 	// Indicates a requirement for the <saml:Assertion> elements received by Scalr to be encrypted.
@@ -122,13 +122,13 @@ type SamlIntegrationAttributes struct {
 	// SP name id format
 	SpNameIdFormat string `json:"sp-name-id-format"`
 	// SP private key
-	SpPrivateKey string `json:"sp-private-key"`
+	SpPrivateKey *string `json:"sp-private-key"`
 	// SP single logout service binding
 	SpSingleLogoutServiceBinding string `json:"sp-single-logout-service-binding"`
 	// SP x509cert
-	SpX509Cert string `json:"sp-x509cert"`
+	SpX509Cert *string `json:"sp-x509cert"`
 	// SP x509cert new
-	SpX509CertNew string `json:"sp-x509cert-new"`
+	SpX509CertNew *string `json:"sp-x509cert-new"`
 	// Status of SAML integration.
 	Status string `json:"status"`
 	// If enabled, Scalr will reject unsigned or unencrypted messages when expects them to be signed or encrypted.

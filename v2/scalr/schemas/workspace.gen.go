@@ -34,25 +34,25 @@ func (r Workspace) GetResourceType() string {
 // WorkspaceAttributes holds the attributes for Workspace (response)
 type WorkspaceAttributes struct {
 	// Cron expression for scheduled runs. Time should be in UTC.
-	ApplySchedule string `json:"apply-schedule"`
+	ApplySchedule *string `json:"apply-schedule"`
 	// Indicates whether `terraform apply` should automatically run when terraform plan ends without error. Default `false`.
 	AutoApply bool `json:"auto-apply"`
 	// How many days should the workspace exist.
-	AutoDestroyDays string `json:"auto-destroy-days"`
+	AutoDestroyDays *string `json:"auto-destroy-days"`
 	// The status of scheduled destruction of the workspace.
-	AutoDestroyStatus string `json:"auto-destroy-status"`
+	AutoDestroyStatus *string `json:"auto-destroy-status"`
 	// When should the destruction of the workspace begin.
-	AutoDestroyTime time.Time `json:"auto-destroy-time"`
+	AutoDestroyTime *time.Time `json:"auto-destroy-time"`
 	// Indicates if runs have to be queued automatically when a new configuration version is uploaded. `skip_first` - after the very first configuration version is uploaded into the workspace the run will not be triggered. But the following configurations will do. This is the default behavior. `on_create_only` - single run will be triggered only when the workspace is created and the first configuration version is uploaded. Subsequent configurations will not trigger runs. `always` - runs will be triggered automatically on every upload of the configuration version. `never` - configuration versions are uploaded into the workspace, but runs will not be triggered.
 	AutoQueueRuns string `json:"auto-queue-runs"`
 	// The resource creation timestamp.
 	CreatedAt time.Time `json:"created-at"`
 	// The email of a user who toggled deletion protection.
-	DeletionProtectionChangedByEmail string `json:"deletion-protection-changed-by-email"`
+	DeletionProtectionChangedByEmail *string `json:"deletion-protection-changed-by-email"`
 	// Designates whether deletion protection is enabled.
 	DeletionProtectionEnabled bool `json:"deletion-protection-enabled"`
 	// Cron expression for scheduled destroy runs. Time should be in UTC.
-	DestroySchedule string `json:"destroy-schedule"`
+	DestroySchedule *string `json:"destroy-schedule"`
 	// The type of the Scalr Workspace environment.
 	EnvironmentType string `json:"environment-type"`
 	// Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
@@ -60,12 +60,12 @@ type WorkspaceAttributes struct {
 	// Indicates whether `force run` should automatically apply to latest run. Default `false`.
 	ForceLatestRun bool `json:"force-latest-run"`
 	// Indicates whether the workspace's current state version contains terraform resources.
-	HasResources bool           `json:"has-resources"`
-	Hooks        WorkspaceHooks `json:"hooks"`
+	HasResources bool            `json:"has-resources"`
+	Hooks        *WorkspaceHooks `json:"hooks"`
 	// The IaC platform of this workspace.
 	IacPlatform string `json:"iac-platform"`
 	// The reason (if any) that the workspace has been locked.
-	LockReason string `json:"lock-reason"`
+	LockReason *string `json:"lock-reason"`
 	// Indicates whether the workspace is locked for operations. The `lock-reason` attribute carries the explanation. This semaphore is acquired and released by terraform apply and can also manage it with Lock/Unlock Workspace. Default: `false`
 	Locked bool `json:"locked"`
 	// Workspace name which must be unique within the environment. Comprises letters, numbers, `-`, and `_` only.
@@ -78,19 +78,19 @@ type WorkspaceAttributes struct {
 	// Specifies if the state is shared within the environment.
 	RemoteStateSharing bool `json:"remote-state-sharing"`
 	// The timeout for the Terraform Run operations (in minutes).
-	RunOperationTimeout int `json:"run-operation-timeout"`
+	RunOperationTimeout *int `json:"run-operation-timeout"`
 	// The version of Terraform the workspace performs runs on. If omitted, the system default version is assigned.
-	TerraformVersion string              `json:"terraform-version"`
-	Terragrunt       WorkspaceTerragrunt `json:"terragrunt"`
+	TerraformVersion string               `json:"terraform-version"`
+	Terragrunt       *WorkspaceTerragrunt `json:"terragrunt"`
 	// The resource last update timestamp.
-	UpdatedAt time.Time `json:"updated-at"`
+	UpdatedAt *time.Time `json:"updated-at"`
 	// The email of the last user, that updated this workspace.
-	UpdatedByEmail string `json:"updated-by-email"`
+	UpdatedByEmail *string `json:"updated-by-email"`
 	// The list of Terraform variables files.
-	VarFiles []string         `json:"var-files"`
-	VcsRepo  WorkspaceVcsRepo `json:"vcs-repo"`
+	VarFiles *[]string         `json:"var-files"`
+	VcsRepo  *WorkspaceVcsRepo `json:"vcs-repo"`
 	// A relative path where Terraform commands will execute in.
-	WorkingDirectory string `json:"working-directory"`
+	WorkingDirectory *string `json:"working-directory"`
 }
 
 // WorkspaceRelationships holds the relationships for Workspace (response)
@@ -757,15 +757,15 @@ type WorkspaceRelationshipsRequest struct {
 
 type WorkspaceHooks struct {
 	// Command that should be run after terraform apply operation executed.
-	PostApply string `json:"post-apply"`
+	PostApply *string `json:"post-apply"`
 	// Command that should be run after terraform plan operation executed.
-	PostPlan string `json:"post-plan"`
+	PostPlan *string `json:"post-plan"`
 	// Command that should be run before terraform apply operation executed.
-	PreApply string `json:"pre-apply"`
+	PreApply *string `json:"pre-apply"`
 	// Command that should be run before terraform init operation executed.
-	PreInit string `json:"pre-init"`
+	PreInit *string `json:"pre-init"`
 	// Command that should be run before terraform plan operation executed.
-	PrePlan string `json:"pre-plan"`
+	PrePlan *string `json:"pre-plan"`
 }
 
 type WorkspaceTerragrunt struct {
@@ -779,7 +779,7 @@ type WorkspaceTerragrunt struct {
 
 type WorkspaceVcsRepo struct {
 	// Branch of a repository the workspace is associated with. If omitted, the repository default branch will be used. This option conflicts with `version_constraint`.
-	Branch string `json:"branch"`
+	Branch *string `json:"branch"`
 	// When true once a pull request into the vcs-repo.branch is opened, every push to a pull request's branch will trigger a dry run in the workspace. Default `true`
 	DryRunsEnabled bool `json:"dry-runs-enabled"`
 	// A reference to your VCS repository. For GitHub, GitHub Enterprise and GitLab the format is `<org>/<repo>`. Azure DevOps Services has the format `<org>/<project>/<repo>`.
@@ -787,13 +787,13 @@ type WorkspaceVcsRepo struct {
 	// Specifies whether git submodules should be fetched when cloning the VCS repository.
 	IngressSubmodules bool `json:"ingress-submodules"`
 	// The attribute `vcs-repo.path` is deprecated. Use working-directory and trigger-prefixes instead.
-	Path string `json:"path"`
+	Path *string `json:"path"`
 	// List of path patterns in gitignore format, whose changes will trigger a run for the workspace using this binding when the CV is created. Conflicts with 'trigger-prefixes'. If 'trigger-patterns' and 'trigger-prefixes' are omitted, any change in the configuration version root will trigger a new run.
-	TriggerPatterns string `json:"trigger-patterns"`
+	TriggerPatterns *string `json:"trigger-patterns"`
 	// List of paths (relative to the configuration version root), whose changes will trigger a run for the workspace using this binding when the CV is created. Conflicts with 'trigger-patterns'. If 'trigger-patterns' and 'trigger-prefixes' are omitted, any change in the configuration version root will trigger a new run.
-	TriggerPrefixes []string `json:"trigger-prefixes"`
+	TriggerPrefixes *[]string `json:"trigger-prefixes"`
 	// Terraform-like version constraint used to trigger a run for matching Git tags. Only stable tags are supported in version ranges. Pre-release tags (e.g. `-rc`, `-beta`) must be specified exactly, e.g. `1.2.0-rc1`, to trigger a run. This option conflicts with `branch`.
-	VersionConstraint string `json:"version-constraint"`
+	VersionConstraint *string `json:"version-constraint"`
 }
 
 type WorkspaceHooksRequest struct {

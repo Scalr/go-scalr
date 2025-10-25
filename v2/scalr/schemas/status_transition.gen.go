@@ -34,7 +34,7 @@ func (r StatusTransition) GetResourceType() string {
 // StatusTransitionAttributes holds the attributes for StatusTransition (response)
 type StatusTransitionAttributes struct {
 	OccurredAt time.Time `json:"occurred-at"`
-	Reason     string    `json:"reason"`
+	Reason     *string   `json:"reason"`
 	Status     string    `json:"status"`
 }
 

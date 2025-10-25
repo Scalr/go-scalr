@@ -34,34 +34,34 @@ func (r Run) GetResourceType() string {
 // RunAttributes holds the attributes for Run (response)
 type RunAttributes struct {
 	// The UTC datetime at which the Apply should be queued.
-	ApplyAt time.Time `json:"apply-at"`
+	ApplyAt *time.Time `json:"apply-at"`
 	// Indicates whether `terraform apply` should automatically run when terraform plan ends without error. Defaults to the current Auto Apply setting in the workspace. Auto-apply will be disallowed as a safety restriction if the workspace's current state version originates from an open Pull Request and the branch of this Pull Request is different from the branch of the run's configuration version. This prevents automatic applies when the current state is potentially based on unmerged code.
 	AutoApply bool `json:"auto-apply"`
 	// The resource creation timestamp.
 	CreatedAt time.Time `json:"created-at"`
 	// Contains error message, when the run has finished in `errored` status.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// Specifies whether the plan has proposed resource changes.
 	HasChanges bool `json:"has-changes"`
 	// The IaC platform for the run.
 	IacPlatform string `json:"iac-platform"`
 	// Terraform input variables that were passed into the workspace.
-	Inputs []map[string]interface{} `json:"inputs"`
+	Inputs *[]map[string]interface{} `json:"inputs"`
 	// Indicates if this run is a destroy that will destroy all provisioned infrastructure in the current state.
 	IsDestroy bool `json:"is-destroy"`
 	IsDry     bool `json:"is-dry"`
 	// Specifies the explanation message to associate with the run.
-	Message     string                 `json:"message"`
+	Message     *string                `json:"message"`
 	Permissions map[string]interface{} `json:"permissions"`
 	// The UTC datetime at which the Plan should be queued.
-	PlanAt          time.Time `json:"plan-at"`
-	PositionInQueue int       `json:"position-in-queue"`
+	PlanAt          *time.Time `json:"plan-at"`
+	PositionInQueue *int       `json:"position-in-queue"`
 	// Specifies whether or not to refresh the state before a plan.
-	Refresh bool `json:"refresh"`
+	Refresh *bool `json:"refresh"`
 	// Specifies whether this run should use the refresh-only plan mode.
-	RefreshOnly bool `json:"refresh-only"`
+	RefreshOnly *bool `json:"refresh-only"`
 	// Specifies an optional list of resource addresses to force replacement of a particular resource. If the plan would've normally produced an update or no-op action for this instance, Terraform will plan to replace it instead.
-	ReplaceAddrs []string `json:"replace-addrs"`
+	ReplaceAddrs *[]string `json:"replace-addrs"`
 	// The origin of the run.
 	Source interface{} `json:"source"`
 	// The Run's current status. Initial status: * `pending` - The initial status of a run once it has been created. Scalr processes each workspace's runs in the order they were queued, and a run remains pending until every run before it has completed. The exception are Runs having `is-dry: true`. Such runs don't modify a workspace's state, and could run in a parallel until the account's runs quota limit. Plan stage: * `plan_queued` - The plan is queued and waiting for capacity/and or quota to be available. * `planning` - Scalr is currently running `terraform plan`. * `planned` - `terraform plan` has finished. If the run's workspace has `auto-apply: false`, Scalr pauses the run in this state, awaiting confirmation. * `confirmed` - Run has been confirmed to apply. Cost estimate stage (optional): * `cost_estimating` - Scalr is currently calculating the cost estimate for the plan. * `cost_estimated` - The cost estimation stage has finished. Policy check stage (optional): * `policy_checking` - Scalr is currently checking the plan against the environment's policies. * `policy_checked` - The policy check succeeded, and Policy Engine will allow an apply to proceed. Scalr sometimes pauses in this state, depending on workspace settings. * `policy_override` - The policy check finished, but at least one `soft-mandatory` policy failed, so an apply cannot proceed without approval from a user having `policy-checks:override` permission. The run pauses in this state. Apply stage: * `apply_queued` - The apply is queued and waiting for capacity/and or quota to be available. * `applying` - Scalr is currently running `terraform apply`. * `applied` - Scalr has successfully finished applying. Ending statuses: * `planned_and_finished` - Dry run's pipeline of Plan -> CostEstimate -> PolicyCheck stages have finished. This is the final state for dry run. * `errored` - The run has finished with an error. The attribute `error-message` has the details. * `discarded` - A user chose not to continue this run from a confirmation state * `canceled` - A user interrupted the run from any active stage.
@@ -69,9 +69,9 @@ type RunAttributes struct {
 	// Timestamps of transition to prior and current statuses.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
 	// If non-empty, requests that Terraform should create a plan including actions only for the given objects (specified using resource address syntax) and the objects they depend on.
-	TargetAddrs []string `json:"target-addrs"`
+	TargetAddrs *[]string `json:"target-addrs"`
 	// Run scope variables.
-	Variables []map[string]interface{} `json:"variables"`
+	Variables *[]map[string]interface{} `json:"variables"`
 }
 
 // RunRelationships holds the relationships for Run (response)

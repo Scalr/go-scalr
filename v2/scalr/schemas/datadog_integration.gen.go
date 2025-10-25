@@ -33,11 +33,11 @@ func (r DatadogIntegration) GetResourceType() string {
 // DatadogIntegrationAttributes holds the attributes for DatadogIntegration (response)
 type DatadogIntegrationAttributes struct {
 	// The API key.
-	ApiKey string `json:"api-key"`
+	ApiKey *string `json:"api-key"`
 	// HTTP(s) URL.
-	DeploymentUrl string `json:"deployment-url"`
+	DeploymentUrl *string `json:"deployment-url"`
 	// Message from service that points to nature of a problem
-	ErrMessage string `json:"err-message"`
+	ErrMessage *string `json:"err-message"`
 	// Name of Datadog integration
 	Name string `json:"name"`
 	// Status of integration.

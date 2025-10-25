@@ -37,13 +37,13 @@ type StateVersionAttributes struct {
 	CreatedAt time.Time `json:"created-at"`
 	Force     bool      `json:"force"`
 	// Lineage of the state version. Should match the lineage extracted from the `terraform.tfstate`.
-	Lineage string `json:"lineage"`
+	Lineage *string `json:"lineage"`
 	// The MD5 hash of the terraform.tfstate.
 	Md5 string `json:"md5"`
 	// The list of modules.
 	Modules map[string]interface{} `json:"modules"`
 	// The list of output values.
-	Outputs []map[string]interface{} `json:"outputs"`
+	Outputs *[]map[string]interface{} `json:"outputs"`
 	// The list of providers.
 	Providers map[string]interface{} `json:"providers"`
 	// The list of resources.
@@ -53,7 +53,7 @@ type StateVersionAttributes struct {
 	// Size of the `terraform.tfstate` in bytes.
 	Size int `json:"size"`
 	// Base64 encoded `terraform.tfstate`
-	State string `json:"state"`
+	State *string `json:"state"`
 }
 
 // StateVersionRelationships holds the relationships for StateVersion (response)

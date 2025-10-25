@@ -32,7 +32,7 @@ func (r EventDefinition) GetResourceType() string {
 // EventDefinitionAttributes holds the attributes for EventDefinition (response)
 type EventDefinitionAttributes struct {
 	// The event details.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// The name of the event.
 	Name string `json:"name"`
 }

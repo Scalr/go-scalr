@@ -35,7 +35,7 @@ type AWSEventBridgeIntegrationAttributes struct {
 	// The AWS account ID, 12 digits.
 	AwsAccountId string `json:"aws-account-id"`
 	// Message from service that points to nature of a problem
-	ErrMessage string `json:"err-message"`
+	ErrMessage *string `json:"err-message"`
 	// The name of the partner event source.
 	EventSource string `json:"event-source"`
 	// The ARN of the partner event source.

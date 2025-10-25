@@ -35,7 +35,7 @@ func (r ServiceAccount) GetResourceType() string {
 type ServiceAccountAttributes struct {
 	CreatedAt time.Time `json:"created-at"`
 	// The service account description.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// A read-only field which is generated when a service account is created. Consists of `<name>@<account-domain>.scalr.io`
 	Email string `json:"email"`
 	// The service account name. The service account email will be created using this name.

@@ -33,12 +33,12 @@ func (r User) GetResourceType() string {
 
 // UserAttributes holds the attributes for User (response)
 type UserAttributes struct {
-	CreatedAt   time.Time `json:"created-at"`
-	Email       string    `json:"email"`
-	FullName    string    `json:"full-name"`
-	LastLoginAt time.Time `json:"last-login-at"`
-	Status      string    `json:"status"`
-	Username    string    `json:"username"`
+	CreatedAt   *time.Time `json:"created-at"`
+	Email       string     `json:"email"`
+	FullName    *string    `json:"full-name"`
+	LastLoginAt *time.Time `json:"last-login-at"`
+	Status      string     `json:"status"`
+	Username    string     `json:"username"`
 }
 
 // UserRelationships holds the relationships for User (response)

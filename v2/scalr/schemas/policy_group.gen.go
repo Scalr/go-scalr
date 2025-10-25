@@ -34,11 +34,11 @@ func (r PolicyGroup) GetResourceType() string {
 // PolicyGroupAttributes holds the attributes for PolicyGroup (response)
 type PolicyGroupAttributes struct {
 	// An absolute path from the repository root to the folder that contains common rego functions.
-	CommonFunctionsFolder string `json:"common-functions-folder"`
+	CommonFunctionsFolder *string `json:"common-functions-folder"`
 	// Date/Time the policy group was created.
 	CreatedAt time.Time `json:"created-at"`
 	// This field contains the error description when the group's status is `errored`.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// The stage of the run to evaluate the policy group.
 	ExecuteAs string `json:"execute-as"`
 	// Indicates whether the policy group is enforced in all environments.
@@ -313,11 +313,11 @@ type PolicyGroupRelationshipsRequest struct {
 
 type PolicyGroupVcsRepo struct {
 	// Branch of a repository the policy group is associated with. If omitted, the repository default branch will be used.
-	Branch string `json:"branch"`
+	Branch *string `json:"branch"`
 	// A reference to your VCS repository. For GitHub, GitHub Enterprise and GitLab the format is `<org>/<repo>`. For Azure DevOps Services the format is `<org>/<project>/<repo>`.
 	Identifier string `json:"identifier"`
 	// The sub-directory of the VCS repository where OPA policies are stored. The `scalr-policy.hcl` file must exist in this directory. Files and directories outside this directory will be ignored during a sync from VCS, and changing them won't trigger a policy group update. If omitted or submitted as an empty string, this defaults to the repository's root.
-	Path string `json:"path"`
+	Path *string `json:"path"`
 }
 
 type PolicyGroupVcsRepoRequest struct {

@@ -35,7 +35,7 @@ type SlackIntegrationAttributes struct {
 	// A Slack channel ID to which to send messages.
 	ChannelId string `json:"channel-id"`
 	// Message from service that points to nature of a problem
-	ErrMessage string `json:"err-message"`
+	ErrMessage *string `json:"err-message"`
 	// Events for which to get notifications.
 	Events []string `json:"events"`
 	// Whether to notify about success or failure from the apply step only

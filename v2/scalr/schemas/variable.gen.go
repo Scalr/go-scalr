@@ -36,7 +36,7 @@ type VariableAttributes struct {
 	// * `terraform` - Values to be passed to terraform input variables of the same name. * `env` - shell environment variables. They will be injected via `export` during a terraform run.
 	Category string `json:"category"`
 	// Variable description.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// Indicates whether the variable can be overridden on a lower down the Scalr organizational model.
 	Final bool `json:"final"`
 	// Indicates whether the value of the variable is a string of HCL code. Not applicable to `env` category variables.
@@ -46,11 +46,11 @@ type VariableAttributes struct {
 	// Indicates whether the value is sensitive. When set to `true` then the variable is not visible after being written.
 	Sensitive bool `json:"sensitive"`
 	// The variable last update timestamp.
-	UpdatedAt time.Time `json:"updated-at"`
+	UpdatedAt *time.Time `json:"updated-at"`
 	// The email of the last user who updated this variable.
-	UpdatedByEmail string `json:"updated-by-email"`
+	UpdatedByEmail *string `json:"updated-by-email"`
 	// Variable value. Not visible if sensitive: true is enabled
-	Value string `json:"value"`
+	Value *string `json:"value"`
 }
 
 // VariableRelationships holds the relationships for Variable (response)

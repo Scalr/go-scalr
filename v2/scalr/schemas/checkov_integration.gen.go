@@ -33,9 +33,9 @@ func (r CheckovIntegration) GetResourceType() string {
 // CheckovIntegrationAttributes holds the attributes for CheckovIntegration (response)
 type CheckovIntegrationAttributes struct {
 	// CLI parameters to be passed to checkov command.
-	CliArgs string `json:"cli-args"`
+	CliArgs *string `json:"cli-args"`
 	// Message from service that points to nature of a problem.
-	ErrMessage string `json:"err-message"`
+	ErrMessage *string `json:"err-message"`
 	// Indicates whether external checks should be enabled.
 	ExternalChecksEnabled bool `json:"external-checks-enabled"`
 	// Indicates whether the integration is available in any existing or future environments of the account without directly linking it.
@@ -43,8 +43,8 @@ type CheckovIntegrationAttributes struct {
 	// Name of the Checkov integration.
 	Name string `json:"name"`
 	// Status of the integration.
-	Status  string                    `json:"status"`
-	VcsRepo CheckovIntegrationVcsRepo `json:"vcs-repo"`
+	Status  string                     `json:"status"`
+	VcsRepo *CheckovIntegrationVcsRepo `json:"vcs-repo"`
 	// Version of Checkov to use.
 	Version string `json:"version"`
 }
@@ -213,7 +213,7 @@ type CheckovIntegrationVcsRepo struct {
 	// A reference to your VCS repository. For GitHub, GitHub Enterprise and GitLab the format is `<org>/<repo>`. For Azure DevOps Services the format is `<org>/<project>/<repo>`.
 	Identifier string `json:"identifier"`
 	// The sub-directory of the VCS repository where Checkov checks are stored. If omitted or submitted as an empty string, this defaults to the repository's root.
-	Path string `json:"path"`
+	Path *string `json:"path"`
 }
 
 type CheckovIntegrationVcsRepoRequest struct {

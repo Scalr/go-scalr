@@ -32,8 +32,8 @@ func (r BillingPlan) GetResourceType() string {
 // BillingPlanAttributes holds the attributes for BillingPlan (response)
 type BillingPlanAttributes struct {
 	Amount              int                      `json:"amount"`
-	IncludedRuns        int                      `json:"included-runs"`
-	IncludedRunsMinutes int                      `json:"included-runs-minutes"`
+	IncludedRuns        *int                     `json:"included-runs"`
+	IncludedRunsMinutes *int                     `json:"included-runs-minutes"`
 	PlanType            string                   `json:"plan-type"`
 	Prices              []map[string]interface{} `json:"prices"`
 }

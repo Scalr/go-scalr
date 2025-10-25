@@ -293,16 +293,32 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 				// Response version (plain types)
 				responseNested := g.buildNestedStruct(baseStructName, attrRef.Value, false)
 				data.NestedStructs = append(data.NestedStructs, responseNested)
-				responseType = baseStructName
+
+				// Add pointer if nullable for response type
+				if attrRef.Value.Nullable {
+					responseType = "*" + baseStructName
+				} else {
+					responseType = baseStructName
+				}
 
 				// Request version (Value types)
 				requestStructName := baseStructName + "Request"
 				requestNested := g.buildNestedStruct(requestStructName, attrRef.Value, true)
 				data.RequestNestedStructs = append(data.RequestNestedStructs, requestNested)
+
+				// Request type: value.Value handles null, so inner type doesn't need pointer
+				// value.Value already provides tri-state: unset/null/set
 				requestType = "*value.Value[" + requestStructName + "]"
 			} else {
-				baseType := g.schemaToGoType(attrRef.Value)
-				responseType = baseType
+				// For non-nested types, use schemaToGoType which handles nullable
+				responseType = g.schemaToGoType(attrRef.Value)
+
+				// For request, get base type without nullable pointer
+				// We need to call schemaToGoType with nullable=false to get base type
+				baseAttrSchema := *attrRef.Value
+				baseAttrSchema.Nullable = false
+				baseType := g.schemaToGoType(&baseAttrSchema)
+
 				requestType = "*value.Value[" + baseType + "]"
 			}
 
@@ -377,12 +393,17 @@ func (g *Generator) buildNestedStruct(name string, schema *openapi3.Schema, useV
 			continue
 		}
 
-		baseType := g.schemaToGoType(fieldRef.Value)
-		fieldType := baseType
+		var fieldType string
 
-		// For request structs, wrap in value.Value
 		if useValue {
+			// For request structs: value.Value handles null, so get base type without nullable pointer
+			baseFieldSchema := *fieldRef.Value
+			baseFieldSchema.Nullable = false
+			baseType := g.schemaToGoType(&baseFieldSchema)
 			fieldType = "*value.Value[" + baseType + "]"
+		} else {
+			// For response structs: include nullable pointer if needed
+			fieldType = g.schemaToGoType(fieldRef.Value)
 		}
 
 		field := NestedField{
@@ -462,10 +483,14 @@ func (g *Generator) parseRelationship(name string, schema *openapi3.Schema) Rela
 func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 	if schema.Title != "" {
 		// Title is set when resolving $refs - use it as the type name
+		// Check if nullable to add pointer
+		if schema.Nullable {
+			return "*" + schema.Title
+		}
 		return schema.Title
 	}
 
-	// TODO: check this flow
+	var baseType string
 
 	if schema.Type.Is("array") {
 		if schema.Items != nil {
@@ -474,45 +499,65 @@ func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 				// Extract schema name from $ref
 				parts := strings.Split(schema.Items.Ref, "/")
 				schemaName := parts[len(parts)-1]
-				return "[]" + schemaName
-			}
-
-			// Otherwise recursively process the items schema
-			if schema.Items.Value != nil {
+				baseType = "[]" + schemaName
+			} else if schema.Items.Value != nil {
+				// Otherwise recursively process the items schema
 				itemType := g.schemaToGoType(schema.Items.Value)
-				return "[]" + itemType
+				baseType = "[]" + itemType
+			} else {
+				baseType = "[]interface{}"
 			}
+		} else {
+			baseType = "[]interface{}"
 		}
-		return "[]interface{}"
+
+		// For slices, nullable means the slice itself can be nil
+		if schema.Nullable {
+			return "*" + baseType
+		}
+		return baseType
 	}
 
 	// Handle enums
 	if len(schema.Enum) > 0 {
-		return "string" // Enums are strings for now
+		baseType = "string" // Enums are strings for now
+		if schema.Nullable {
+			return "*" + baseType
+		}
+		return baseType
 	}
 
 	// Handle basic types
 	switch {
 	case schema.Type.Is("string"):
 		if schema.Format == "date-time" {
-			return "time.Time"
+			baseType = "time.Time"
+		} else {
+			baseType = "string"
 		}
-		return "string"
 	case schema.Type.Is("integer"):
-		return "int"
+		baseType = "int"
 	case schema.Type.Is("number"):
-		return "float64"
+		baseType = "float64"
 	case schema.Type.Is("boolean"):
-		return "bool"
+		baseType = "bool"
 	case schema.Type.Is("object"):
 		// For nested objects, use interface{} or map
 		if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
-			return "map[string]interface{}"
+			baseType = "map[string]interface{}"
+		} else {
+			baseType = "map[string]interface{}"
 		}
-		return "map[string]interface{}"
+	default:
+		baseType = "interface{}"
 	}
 
-	return "interface{}"
+	// Add pointer if nullable
+	if schema.Nullable {
+		return "*" + baseType
+	}
+
+	return baseType
 }
 
 // generateDocumentSchema generates a simple Document schema (e.g., TagRelationshipFieldsetsListingDocument)

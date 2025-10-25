@@ -33,7 +33,7 @@ func (r Role) GetResourceType() string {
 // RoleAttributes holds the attributes for Role (response)
 type RoleAttributes struct {
 	// The description of the role.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// When `true` the role is built-in, and cannot be modified or deleted.
 	IsSystem bool `json:"is-system"`
 	// The name of the role.

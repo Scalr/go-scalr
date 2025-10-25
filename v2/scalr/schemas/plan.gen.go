@@ -36,11 +36,11 @@ type PlanAttributes struct {
 	// Indicates if plan has proposed resource changes.
 	HasChanges bool `json:"has-changes"`
 	// The number of new resources that will be added.
-	ResourceAdditions int `json:"resource-additions"`
+	ResourceAdditions *int `json:"resource-additions"`
 	// The number of resources that will be updated in place.
-	ResourceChanges int `json:"resource-changes"`
+	ResourceChanges *int `json:"resource-changes"`
 	// The number of resources that will be destroyed.
-	ResourceDestructions int `json:"resource-destructions"`
+	ResourceDestructions *int `json:"resource-destructions"`
 	// The Plan's current status. Transient states: * `pending` - Plan has been created but not yet queued. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Plan canceled in some way. * `errored` - An error occurred during the plan. See `output` for details. * `finished` - Plan completed successfully. * `unreachable` - Plan will not be run.
 	Status string `json:"status"`
 	// Date/Time of transition to each status that has occurred.

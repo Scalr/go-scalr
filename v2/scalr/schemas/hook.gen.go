@@ -34,11 +34,11 @@ func (r Hook) GetResourceType() string {
 // HookAttributes holds the attributes for Hook (response)
 type HookAttributes struct {
 	// Brief description of the hook's purpose.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// This field contains the error description, when this hook's status is `errored`.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// ID of the blob where hook source code is stored.
-	HookBlobId string `json:"hook-blob-id"`
+	HookBlobId *string `json:"hook-blob-id"`
 	// The interpreter used to execute the hook script. Examples: - `bash` - for shell scripts - `python` - for Python scripts - `node` - for JavaScript scripts **Important**: The interpreter specified here must be available in the execution environment. Make sure that the necessary dependencies are installed on the system where the hook will run. Scalr does not automatically install any runtime dependencies. This interpreter will be combined with the `scriptfile_path` to form the complete command to run the hook.
 	Interpreter string `json:"interpreter"`
 	// Unique name for the hook.
@@ -337,7 +337,7 @@ type HookRelationshipsRequest struct {
 // A reference to the VCS repository for the hook.
 type HookVcsRepo struct {
 	// Branch of a repository the hook is associated with. If omitted, the repository default branch will be used.
-	Branch string `json:"branch"`
+	Branch *string `json:"branch"`
 	// A reference to the VCS repository. For GitHub, GitHub Enterprise and GitLab the format is `<org>/<repo>`. For Azure DevOps Services the format is `<org>/<project>/<repo>`.
 	Identifier string `json:"identifier"`
 }

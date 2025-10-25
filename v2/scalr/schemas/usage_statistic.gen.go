@@ -33,11 +33,11 @@ func (r UsageStatistic) GetResourceType() string {
 // UsageStatisticAttributes holds the attributes for UsageStatistic (response)
 type UsageStatisticAttributes struct {
 	// The identifier of a resource by which the usage is broken down
-	BreakdownId string `json:"breakdown-id"`
+	BreakdownId *string `json:"breakdown-id"`
 	// The name of a resource by which the usage is broken down
-	BreakdownName string `json:"breakdown-name"`
+	BreakdownName *string `json:"breakdown-name"`
 	// The date when usage has been recorded
-	Date string `json:"date"`
+	Date *string `json:"date"`
 	// The count of runs finished within the date
 	RunsCount int `json:"runs-count"`
 	// The duration of runs in seconds within the date

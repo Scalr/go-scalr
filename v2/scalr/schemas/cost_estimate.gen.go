@@ -34,21 +34,21 @@ type CostEstimateAttributes struct {
 	// The change in the estimated cost ($) from the previous run (if any).
 	DeltaMonthlyCost string `json:"delta-monthly-cost"`
 	// When the cost estimate status is `errored`, this field contains the error description.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// The number of resources in the terraform plan, that were included into the estimation. Cost estimation in Scalr supports a number of terraform resources from major [cloud providers](https://docs.scalr.io/docs/cost-estimation)
-	MatchedResourcesCount int `json:"matched-resources-count"`
+	MatchedResourcesCount *int `json:"matched-resources-count"`
 	// The estimated current monthly cost ($).
 	PriorMonthlyCost string `json:"prior-monthly-cost"`
 	// The estimated monthly cost ($) if the plan is applied.
 	ProposedMonthlyCost string `json:"proposed-monthly-cost"`
 	// The total number of resources in the terraform plan.
-	ResourcesCount int `json:"resources-count"`
+	ResourcesCount *int `json:"resources-count"`
 	// The Cost estimate's current status. Transient states: * `pending` - Cost estimation has been created but not yet `queued`. * `queued` - Queued and waiting for capacity to be available. Final states: * `canceled` - The cost estimate has been canceled. * `errored` - The cost estimate has finished with an error. Attribute `error-message` contains the details. * `finished` - The cost estimate has completed successfully. * `unreachable` - The cost estimate will not run.
 	Status string `json:"status"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
 	// The number of resources in the terraform plan that were excluded from the estimation.
-	UnmatchedResourcesCount int `json:"unmatched-resources-count"`
+	UnmatchedResourcesCount *int `json:"unmatched-resources-count"`
 }
 
 // Request version - used when marshalling for API requests

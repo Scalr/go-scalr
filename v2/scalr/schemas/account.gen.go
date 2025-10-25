@@ -34,10 +34,10 @@ func (r Account) GetResourceType() string {
 // AccountAttributes holds the attributes for Account (response)
 type AccountAttributes struct {
 	// The list of allowed IP networks for IP fencing
-	AllowedIps         []string  `json:"allowed-ips"`
-	CreatedAt          time.Time `json:"created-at"`
-	LastLoginAttemptAt time.Time `json:"last-login-attempt-at"`
-	LoginAttempts      int       `json:"login-attempts"`
+	AllowedIps         []string   `json:"allowed-ips"`
+	CreatedAt          time.Time  `json:"created-at"`
+	LastLoginAttemptAt *time.Time `json:"last-login-attempt-at"`
+	LoginAttempts      *int       `json:"login-attempts"`
 	// The name of the account
 	Name string `json:"name"`
 	// The list of account's quotas

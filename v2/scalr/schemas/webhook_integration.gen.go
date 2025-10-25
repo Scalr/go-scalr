@@ -34,13 +34,13 @@ func (r WebhookIntegration) GetResourceType() string {
 // WebhookIntegrationAttributes holds the attributes for WebhookIntegration (response)
 type WebhookIntegrationAttributes struct {
 	// Webhook can be turned off by setting to `false`.
-	Enabled    bool                     `json:"enabled"`
-	Headers    []map[string]interface{} `json:"headers"`
-	HttpMethod string                   `json:"http-method"`
+	Enabled    bool                      `json:"enabled"`
+	Headers    *[]map[string]interface{} `json:"headers"`
+	HttpMethod string                    `json:"http-method"`
 	// Indicates whether the webhook is available in any environment of the account without directly linking it.
 	IsShared bool `json:"is-shared"`
 	// The Date/Time of the last notification.
-	LastTriggeredAt time.Time `json:"last-triggered-at"`
+	LastTriggeredAt *time.Time `json:"last-triggered-at"`
 	// The number of retry attempts.
 	MaxAttempts int `json:"max-attempts"`
 	// The name of the webhook. Use your target application/component name for better discoverability.
@@ -48,7 +48,7 @@ type WebhookIntegrationAttributes struct {
 	// The secret passphrase for HMAC signature.
 	SecretKey string `json:"secret-key"`
 	// Webhook delivery statistics (delivered, failed and total) by periods: last hour, last day and last week
-	Statistics WebhookIntegrationStatistics `json:"statistics"`
+	Statistics *WebhookIntegrationStatistics `json:"statistics"`
 	// The HTTP transaction timeout.
 	Timeout int `json:"timeout"`
 	// HTTP(s) destination URL.

@@ -6,6 +6,6 @@ import "time"
 
 // A request to confirm a run. Includes optional time when apply should be queued.
 type ConfirmRequest struct {
-	ApplyAt time.Time `json:"apply-at,omitempty"`
-	Comment string    `json:"comment,omitempty"`
+	ApplyAt *time.Time `json:"apply-at,omitempty"`
+	Comment string     `json:"comment,omitempty"`
 }

@@ -34,7 +34,7 @@ type PermissionAttributes struct {
 	// Scope identities, this permission could be applied to in an [access policy](access-policies.html).
 	ApplicableScopes []string `json:"applicable-scopes"`
 	// Permission description.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 }
 
 // Request version - used when marshalling for API requests

@@ -33,57 +33,57 @@ func (r ProviderConfiguration) GetResourceType() string {
 // ProviderConfigurationAttributes holds the attributes for ProviderConfiguration (response)
 type ProviderConfigurationAttributes struct {
 	// AWS access key. This option is required with the `access_keys` credential type.
-	AwsAccessKey string `json:"aws-access-key"`
+	AwsAccessKey *string `json:"aws-access-key"`
 	// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
-	AwsAccountType string `json:"aws-account-type"`
+	AwsAccountType *string `json:"aws-account-type"`
 	// The value of the aud claim for the identity token.
-	AwsAudience string `json:"aws-audience"`
+	AwsAudience *string `json:"aws-audience"`
 	// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
-	AwsCredentialsType string `json:"aws-credentials-type"`
+	AwsCredentialsType *string `json:"aws-credentials-type"`
 	// Default tags to be applied to all resources created by this provider configuration.
-	AwsDefaultTags map[string]interface{} `json:"aws-default-tags"`
+	AwsDefaultTags *map[string]interface{} `json:"aws-default-tags"`
 	// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
-	AwsDefaultTagsStrategy string `json:"aws-default-tags-strategy"`
+	AwsDefaultTagsStrategy *string `json:"aws-default-tags-strategy"`
 	// External identifier to use when assuming the role. This option is required with the `role_delegation` credential type.
-	AwsExternalId string `json:"aws-external-id"`
+	AwsExternalId *string `json:"aws-external-id"`
 	// Amazon Resource Name (ARN) of the IAM Role to assume. This option is required with the `role_delegation` and `oidc` credential type.
-	AwsRoleArn string `json:"aws-role-arn"`
+	AwsRoleArn *string `json:"aws-role-arn"`
 	// AWS secret key. This option is required with the `access_keys` credential type.
-	AwsSecretKey string `json:"aws-secret-key"`
+	AwsSecretKey *string `json:"aws-secret-key"`
 	// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
-	AwsTrustedEntityType string `json:"aws-trusted-entity-type"`
+	AwsTrustedEntityType *string `json:"aws-trusted-entity-type"`
 	// The value of the aud claim for the identity token.
-	AzurermAudience string `json:"azurerm-audience"`
+	AzurermAudience *string `json:"azurerm-audience"`
 	// The type of azurerm credentials, available options: `client-secrets`, `oidc`.
-	AzurermAuthType string `json:"azurerm-auth-type"`
+	AzurermAuthType *string `json:"azurerm-auth-type"`
 	// The Client ID which should be used.
-	AzurermClientId string `json:"azurerm-client-id"`
+	AzurermClientId *string `json:"azurerm-client-id"`
 	// The Client Secret which should be used.
-	AzurermClientSecret string `json:"azurerm-client-secret"`
+	AzurermClientSecret *string `json:"azurerm-client-secret"`
 	// The Subscription ID which should be used.
-	AzurermSubscriptionId string `json:"azurerm-subscription-id"`
+	AzurermSubscriptionId *string `json:"azurerm-subscription-id"`
 	// The Tenant ID should be used.
-	AzurermTenantId string `json:"azurerm-tenant-id"`
+	AzurermTenantId *string `json:"azurerm-tenant-id"`
 	// Contains the error message if the provider configuration is in an `errored` status.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// Export provider variables into the run environment. This option is available only for built in providers.
 	ExportShellVariables bool `json:"export-shell-variables"`
 	// Authentication type to access GCP.
-	GoogleAuthType string `json:"google-auth-type"`
+	GoogleAuthType *string `json:"google-auth-type"`
 	// Service account key file in JSON format.
-	GoogleCredentials string `json:"google-credentials"`
+	GoogleCredentials *string `json:"google-credentials"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.
-	GoogleProject string `json:"google-project"`
+	GoogleProject *string `json:"google-project"`
 	// The service account email Scalr will use when authenticating to GCP.
-	GoogleServiceAccountEmail string `json:"google-service-account-email"`
+	GoogleServiceAccountEmail *string `json:"google-service-account-email"`
 	// Service account name.
-	GoogleServiceAccountName string `json:"google-service-account-name"`
+	GoogleServiceAccountName *string `json:"google-service-account-name"`
 	// If the project will be enforced.
-	GoogleUseDefaultProject bool `json:"google-use-default-project"`
+	GoogleUseDefaultProject *bool `json:"google-use-default-project"`
 	// The canonical name of the workload identity provider.
-	GoogleWorkloadProviderName string `json:"google-workload-provider-name"`
+	GoogleWorkloadProviderName *string `json:"google-workload-provider-name"`
 	// Determines if a provider configuration is custom. Note: custom provider configurations do not support built-in features like exporting as shell variables or on-save validation. Provider configuration will be validated during the run only.
-	IsCustom bool `json:"is-custom"`
+	IsCustom *bool `json:"is-custom"`
 	// Indicates whether the provider configuration can be used in any workspace of the account without directly linking it to the environment.
 	IsShared bool `json:"is-shared"`
 	// The name of a Scalr provider configuration. This field is unique for the account.
@@ -91,9 +91,9 @@ type ProviderConfigurationAttributes struct {
 	// The name of a Terraform provider.
 	ProviderName interface{} `json:"provider-name"`
 	// The Scalr hostname which should be used.
-	ScalrHostname string `json:"scalr-hostname"`
+	ScalrHostname *string `json:"scalr-hostname"`
 	// The Scalr token which should be used.
-	ScalrToken string `json:"scalr-token"`
+	ScalrToken *string `json:"scalr-token"`
 	// Provider configuration status. Can be: `active`, `errored`.
 	Status string `json:"status"`
 }

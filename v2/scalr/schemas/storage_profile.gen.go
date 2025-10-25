@@ -33,23 +33,23 @@ func (r StorageProfile) GetResourceType() string {
 // StorageProfileAttributes holds the attributes for StorageProfile (response)
 type StorageProfileAttributes struct {
 	// The value of the aud claim for the identity token.
-	AwsS3Audience string `json:"aws-s3-audience"`
+	AwsS3Audience *string `json:"aws-s3-audience"`
 	// AWS S3 Storage bucket name. Bucket must already exist.
-	AwsS3BucketName string `json:"aws-s3-bucket-name"`
+	AwsS3BucketName *string `json:"aws-s3-bucket-name"`
 	// AWS S3 bucket region.
-	AwsS3Region string `json:"aws-s3-region"`
+	AwsS3Region *string `json:"aws-s3-region"`
 	// Amazon Resource Name (ARN) of the IAM Role to assume.
-	AwsS3RoleArn string `json:"aws-s3-role-arn"`
+	AwsS3RoleArn *string `json:"aws-s3-role-arn"`
 	// Azure audience for authentication
-	AzurermAudience string `json:"azurerm-audience"`
+	AzurermAudience *string `json:"azurerm-audience"`
 	// Azure client ID for authentication
-	AzurermClientId string `json:"azurerm-client-id"`
+	AzurermClientId *string `json:"azurerm-client-id"`
 	// Azure storage container name
-	AzurermContainerName string `json:"azurerm-container-name"`
+	AzurermContainerName *string `json:"azurerm-container-name"`
 	// Azure storage account name
-	AzurermStorageAccount string `json:"azurerm-storage-account"`
+	AzurermStorageAccount *string `json:"azurerm-storage-account"`
 	// Azure tenant ID for authentication
-	AzurermTenantId string `json:"azurerm-tenant-id"`
+	AzurermTenantId *string `json:"azurerm-tenant-id"`
 	// Type of backend
 	BackendType string `json:"backend-type"`
 	// The resource creation timestamp.
@@ -57,21 +57,21 @@ type StorageProfileAttributes struct {
 	// The default storage profile.
 	Default bool `json:"default"`
 	// This field contains the last error description, when these settings doesn't work properly.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// Service Account JSON key. Required IAM roles: `Storage Admin` assigned on a `google-storage-bucket` bucket. See: [use IAM with bucket](https://cloud.google.com/storage/docs/access-control/using-iam-permissions#bucket-iam).
-	GoogleCredentials map[string]interface{} `json:"google-credentials"`
+	GoogleCredentials *map[string]interface{} `json:"google-credentials"`
 	// Optional [customer supplied encryption key](https://cloud.google.com/storage/docs/encryption/customer-supplied-keys). Must be exactly 32 bytes, encoded into base64: ```sh $ openssl rand 32 | base64 NfsPPHBVNlU8ZLBU9BeBIoL29rqtduyQAEw3vxf6kaY= ```
-	GoogleEncryptionKey string `json:"google-encryption-key"`
+	GoogleEncryptionKey *string `json:"google-encryption-key"`
 	// Google Cloud project ID.
-	GoogleProject string `json:"google-project"`
+	GoogleProject *string `json:"google-project"`
 	// Google Storage bucket name. Bucket must already exist.
-	GoogleStorageBucket string `json:"google-storage-bucket"`
+	GoogleStorageBucket *string `json:"google-storage-bucket"`
 	// Whether the storage profile is a system profile.
 	IsSystem bool `json:"is-system"`
 	// The name of the storage profile.
 	Name string `json:"name"`
 	// The resource last update timestamp.
-	UpdatedAt time.Time `json:"updated-at"`
+	UpdatedAt *time.Time `json:"updated-at"`
 }
 
 // Request version - used when marshalling for API requests

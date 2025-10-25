@@ -42,7 +42,7 @@ type SSHKeyAttributes struct {
 	// The name of the SSH key.
 	Name string `json:"name"`
 	// The private key of the SSH key.
-	PrivateKey string `json:"private-key"`
+	PrivateKey *string `json:"private-key"`
 }
 
 // SSHKeyRelationships holds the relationships for SSHKey (response)

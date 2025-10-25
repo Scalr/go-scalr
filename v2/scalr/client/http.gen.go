@@ -30,7 +30,7 @@ type HTTPClient struct {
 
 type HTTPClientOption func(*HTTPClient)
 
-// WithRetryMax sets the maximum number of retries
+// WithRetryMax sets the maximum number of retries. Default: 5
 func WithRetryMax(max int) HTTPClientOption {
 	return func(c *HTTPClient) {
 		c.retryMax = max
@@ -51,7 +51,7 @@ func WithLogger(logger Logger) HTTPClientOption {
 	}
 }
 
-// WithTimeout sets the request timeout
+// WithTimeout sets the request timeout. Default: 30 seconds
 func WithTimeout(timeout time.Duration) HTTPClientOption {
 	return func(c *HTTPClient) {
 		c.timeout = timeout

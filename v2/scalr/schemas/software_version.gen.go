@@ -39,11 +39,11 @@ type SoftwareVersionAttributes struct {
 	// Indicates that this software-version is deprecated, and thus not available for new workspaces or policy-groups.
 	Deprecated bool `json:"deprecated"`
 	// This field contains the error description, when this software-version's status is `failed`.
-	Error string `json:"error"`
+	Error *string `json:"error"`
 	// Container image SHA256 hash.
-	Hash string `json:"hash"`
+	Hash *string `json:"hash"`
 	// Reference to a container image in OCI registry.
-	Image string `json:"image"`
+	Image *string `json:"image"`
 	// Indicates that this software-version is the latest one for the given software-type.
 	Latest bool `json:"latest"`
 	// The type of the software.

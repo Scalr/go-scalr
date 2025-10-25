@@ -36,21 +36,21 @@ type ModuleVersionAttributes struct {
 	// The resource creation timestamp.
 	CreatedAt time.Time `json:"created-at"`
 	// The list of modules this version depends on.
-	Dependencies map[string]interface{} `json:"dependencies"`
+	Dependencies *map[string]interface{} `json:"dependencies"`
 	// README contents. This file should be named README or README.md. The latter will be processed as [CommonMark](https://commonmark.org/).
-	Details string `json:"details"`
+	Details *string `json:"details"`
 	// This field contains the error description, when this module version's status is `errored`.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// Input Variables.
-	Inputs []interface{} `json:"inputs"`
+	Inputs *[]interface{} `json:"inputs"`
 	// Module version marked as root will allow the [creation of workspaces](../../module.html#deployable-modules) directly from the registry, as well as standard module usage.
 	IsRootModule bool `json:"is-root-module"`
 	// Output Values.
-	Outputs []map[string]interface{} `json:"outputs"`
+	Outputs *[]map[string]interface{} `json:"outputs"`
 	// Declared resources.
-	Resources []map[string]interface{} `json:"resources"`
+	Resources *[]map[string]interface{} `json:"resources"`
 	// A blob size in bytes.
-	Size int `json:"size"`
+	Size *int `json:"size"`
 	// The module version's current status. Initial status: * `not_uploaded` - Module version has been created, however the code has not been uploaded. Transitional statuses: * `pending` - Module version has been created and is currently synchronizing. * `pending_delete` - Module version has been deleted from the repository and pending deletion from the registry. Ending statuses: * `ok` - Module version has been created and the code has been uploaded. * `errored` - Module version has been created, however its synchronization has failed. Attribute `error-message` contains the details.
 	Status string `json:"status"`
 	// Semantic Version.

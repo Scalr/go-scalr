@@ -32,9 +32,9 @@ func (r TerraformModuleUsage) GetResourceType() string {
 
 // TerraformModuleUsageAttributes holds the attributes for TerraformModuleUsage (response)
 type TerraformModuleUsageAttributes struct {
-	Module       string `json:"module"`
-	ParentModule string `json:"parent-module"`
-	Source       string `json:"source"`
+	Module       string  `json:"module"`
+	ParentModule *string `json:"parent-module"`
+	Source       *string `json:"source"`
 	// Number of module versions.
 	VersionsUsedCount int `json:"versions-used-count"`
 	// Number of module workspaces.

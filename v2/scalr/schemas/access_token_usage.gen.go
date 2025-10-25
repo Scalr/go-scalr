@@ -35,17 +35,17 @@ type AccessTokenUsageAttributes struct {
 	// The time when the token was created.
 	CreatedAt time.Time `json:"created-at"`
 	// The description of the token.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// The UTC expiration datetime.
-	ExpiresAt time.Time `json:"expires-at"`
+	ExpiresAt *time.Time `json:"expires-at"`
 	// The last 6 characters of the token
 	LastCharacters string `json:"last-characters"`
 	// The time when the token was last used.
-	LastUsedAt time.Time `json:"last-used-at"`
+	LastUsedAt *time.Time `json:"last-used-at"`
 	// The name of the token.
-	Name       string `json:"name"`
-	OwnerEmail string `json:"owner-email"`
-	OwnerType  string `json:"owner-type"`
+	Name       *string `json:"name"`
+	OwnerEmail string  `json:"owner-email"`
+	OwnerType  string  `json:"owner-type"`
 }
 
 // Request version - used when marshalling for API requests

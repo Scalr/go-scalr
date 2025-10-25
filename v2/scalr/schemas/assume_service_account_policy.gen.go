@@ -38,9 +38,9 @@ type AssumeServiceAccountPolicyAttributes struct {
 	// The UTC datetime at which the assume service account policy was created.
 	CreatedAt time.Time `json:"created-at"`
 	// Email of the user who created assume service account policy.
-	CreatedByEmail string `json:"created-by-email"`
+	CreatedByEmail *string `json:"created-by-email"`
 	// The maximum validity period, in seconds, for the token generated during the impersonation operation. Default: 3600 seconds or 1 hour. Range: 3600-43200 seconds (1-12 hours).
-	MaximumSessionDuration int `json:"maximum-session-duration"`
+	MaximumSessionDuration *int `json:"maximum-session-duration"`
 	// The assume service account policy name.
 	Name string `json:"name"`
 }

@@ -72,14 +72,35 @@ func TestSchemaToGoType(t *testing.T) {
 			expected: "map[string]interface{}", // Objects without properties become maps
 		},
 		{
-			name:     "nullable string (not handled specially)",
+			name:     "nullable string",
 			schema:   &openapi3.Schema{Type: &openapi3.Types{"string"}, Nullable: true},
-			expected: "string", // Generator doesn't currently add pointers for nullable
+			expected: "*string",
 		},
 		{
-			name:     "nullable integer (not handled specially)",
+			name:     "nullable integer",
 			schema:   &openapi3.Schema{Type: &openapi3.Types{"integer"}, Nullable: true},
-			expected: "int", // Generator doesn't currently add pointers for nullable
+			expected: "*int",
+		},
+		{
+			name:     "nullable boolean",
+			schema:   &openapi3.Schema{Type: &openapi3.Types{"boolean"}, Nullable: true},
+			expected: "*bool",
+		},
+		{
+			name:     "nullable time",
+			schema:   &openapi3.Schema{Type: &openapi3.Types{"string"}, Format: "date-time", Nullable: true},
+			expected: "*time.Time",
+		},
+		{
+			name: "nullable array",
+			schema: &openapi3.Schema{
+				Type: &openapi3.Types{"array"},
+				Items: &openapi3.SchemaRef{
+					Value: &openapi3.Schema{Type: &openapi3.Types{"string"}},
+				},
+				Nullable: true,
+			},
+			expected: "*[]string",
 		},
 	}
 

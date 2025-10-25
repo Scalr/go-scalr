@@ -33,9 +33,9 @@ func (r InfracostIntegration) GetResourceType() string {
 // InfracostIntegrationAttributes holds the attributes for InfracostIntegration (response)
 type InfracostIntegrationAttributes struct {
 	// The API key.
-	ApiKey string `json:"api-key"`
+	ApiKey *string `json:"api-key"`
 	// Message from service that points to the nature of a problem
-	ErrMessage string `json:"err-message"`
+	ErrMessage *string `json:"err-message"`
 	// Indicates whether the integration is available in any environment of the account without directly linking it.
 	IsShared bool `json:"is-shared"`
 	// Name of the Infracost integration

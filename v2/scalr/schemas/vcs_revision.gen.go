@@ -31,13 +31,13 @@ func (r VcsRevision) GetResourceType() string {
 
 // VcsRevisionAttributes holds the attributes for VcsRevision (response)
 type VcsRevisionAttributes struct {
-	Branch         string `json:"branch"`
-	CloneUrl       string `json:"clone-url"`
-	CommitMessage  string `json:"commit-message"`
-	CommitSha      string `json:"commit-sha"`
-	CommitUrl      string `json:"commit-url"`
-	RepositoryId   string `json:"repository-id"`
-	SenderUsername string `json:"sender-username"`
+	Branch         *string `json:"branch"`
+	CloneUrl       string  `json:"clone-url"`
+	CommitMessage  *string `json:"commit-message"`
+	CommitSha      *string `json:"commit-sha"`
+	CommitUrl      *string `json:"commit-url"`
+	RepositoryId   string  `json:"repository-id"`
+	SenderUsername *string `json:"sender-username"`
 }
 
 // Request version - used when marshalling for API requests

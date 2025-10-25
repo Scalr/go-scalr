@@ -40,7 +40,7 @@ type AgentAttributes struct {
 	// The agent's driver: docker, kubernetes or local.
 	Driver string `json:"driver"`
 	// Contains the error message if the agent is in an `errored` status.
-	ErrorMessage string `json:"error-message"`
+	ErrorMessage *string `json:"error-message"`
 	// The Kubernetes driver mode (default, controller, or worker). Defines the agent's role within the Kubernetes execution model.
 	KubernetesDriverMode string `json:"kubernetes-driver-mode"`
 	// The timestamp when the agent was last seen online.
@@ -50,7 +50,7 @@ type AgentAttributes struct {
 	// The agent's OS distribution name and version (ex: `centos_8`, `ubuntu_20`)
 	Os string `json:"os"`
 	// The UTC datetime of the last relay connect from the Agent.
-	RelayLastSeenAt time.Time `json:"relay-last-seen-at"`
+	RelayLastSeenAt *time.Time `json:"relay-last-seen-at"`
 	// The agent's runtime (docker, kubernetes, vm, fatgate, etc)
 	Runtime string `json:"runtime"`
 	// The agent's current status * `busy` - The agent is working on a task. * `errored` - The agent has an error and can't operate correctly. The attribute `error-message` has the details. * `idle` - The agent is idle and ready to start working on a task. * `offline` - API server hasn't seen the agent's heartbeat for 30 seconds.

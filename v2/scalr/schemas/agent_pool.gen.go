@@ -49,9 +49,9 @@ type AgentPoolAttributes struct {
 	// Indicates whether the serverless agent support is enabled. If enabled, provided url will be informed about new work available for agent.
 	WebhookEnabled bool `json:"webhook-enabled"`
 	// A list of HTTP headers to be included in the request.
-	WebhookHeaders []map[string]interface{} `json:"webhook-headers"`
+	WebhookHeaders *[]map[string]interface{} `json:"webhook-headers"`
 	// HTTP(s) destination URL.
-	WebhookUrl string `json:"webhook-url"`
+	WebhookUrl *string `json:"webhook-url"`
 }
 
 // AgentPoolRelationships holds the relationships for AgentPool (response)

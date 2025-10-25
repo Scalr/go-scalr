@@ -233,24 +233,49 @@ func TestParseAttribute(t *testing.T) {
 			expectedRequestType: "*value.Value[[]string]",
 		},
 		{
-			name: "nullable string (not handled specially)",
+			name: "nullable string",
 			attrSchema: &openapi3.Schema{
 				Type:     &openapi3.Types{"string"},
 				Nullable: true,
 			},
-			expectedGoType:      "string", // Generator doesn't add pointers for nullable
-			expectedRequestType: "*value.Value[string]",
+			expectedGoType:      "*string",              // Response: pointer to distinguish null from ""
+			expectedRequestType: "*value.Value[string]", // Request: Value handles null, no inner pointer
+		},
+		{
+			name: "nullable integer",
+			attrSchema: &openapi3.Schema{
+				Type:     &openapi3.Types{"integer"},
+				Nullable: true,
+			},
+			expectedGoType:      "*int",
+			expectedRequestType: "*value.Value[int]",
+		},
+		{
+			name: "nullable time",
+			attrSchema: &openapi3.Schema{
+				Type:     &openapi3.Types{"string"},
+				Format:   "date-time",
+				Nullable: true,
+			},
+			expectedGoType:      "*time.Time",
+			expectedRequestType: "*value.Value[time.Time]",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Test response type (with nullable)
 			baseType := g.schemaToGoType(tt.attrSchema)
 			if baseType != tt.expectedGoType {
 				t.Errorf("Go type = %q, want %q", baseType, tt.expectedGoType)
 			}
 
-			requestType := "*value.Value[" + baseType + "]"
+			// Test request type (value.Value handles null, so use base type without pointer)
+			// Simulate what the actual generator does
+			baseAttrSchema := *tt.attrSchema
+			baseAttrSchema.Nullable = false
+			requestBaseType := g.schemaToGoType(&baseAttrSchema)
+			requestType := "*value.Value[" + requestBaseType + "]"
 			if requestType != tt.expectedRequestType {
 				t.Errorf("Request type = %q, want %q", requestType, tt.expectedRequestType)
 			}
