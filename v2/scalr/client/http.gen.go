@@ -25,6 +25,7 @@ type HTTPClient struct {
 	retryServerErrors bool
 	logger            Logger
 	userAgent         string
+	sleepFunc         func(time.Duration) // For testing - allows mocking sleep
 }
 
 type HTTPClientOption func(*HTTPClient)
@@ -99,6 +100,13 @@ func WithAppInfo(appName, appVersion string) HTTPClientOption {
 	}
 }
 
+// withSleepFunc sets a custom sleep function (for testing only - not exported)
+func withSleepFunc(fn func(time.Duration)) HTTPClientOption {
+	return func(c *HTTPClient) {
+		c.sleepFunc = fn
+	}
+}
+
 // NewHTTPClient creates a new HTTP client
 func NewHTTPClient(baseURL, token string, opts ...HTTPClientOption) *HTTPClient {
 	client := &HTTPClient{
@@ -110,6 +118,7 @@ func NewHTTPClient(baseURL, token string, opts ...HTTPClientOption) *HTTPClient 
 		defaultHeaders: make(map[string]string),
 		logger:         NewNoOpLogger(), // Default: no logging
 		userAgent:      UserAgent(),     // Default User-Agent
+		sleepFunc:      time.Sleep,      // Default: real sleep
 	}
 
 	for _, opt := range opts {
@@ -133,6 +142,7 @@ func (c *HTTPClient) WithHeader(key, value string) *HTTPClient {
 		retryServerErrors: c.retryServerErrors,
 		logger:            c.logger,
 		userAgent:         c.userAgent,
+		sleepFunc:         c.sleepFunc,
 	}
 
 	// Copy existing default headers
@@ -228,16 +238,18 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 				"backoff", backoff.String(),
 			)
 
-			select {
-			case <-time.After(backoff):
-			case <-ctx.Done():
-				c.logger.Error("Request cancelled during retry backoff",
+			// Check if context is cancelled before sleeping
+			if ctx.Err() != nil {
+				c.logger.Error("Request cancelled before retry backoff",
 					"method", method,
 					"path", path,
 					"error", ctx.Err(),
 				)
 				return nil, ctx.Err()
 			}
+
+			// Sleep (can be mocked in tests)
+			c.sleepFunc(backoff)
 
 			// Reset body reader for retry
 			if body != nil {
