@@ -23,10 +23,10 @@ type Generator struct {
 }
 
 // New creates a new generator
-func New(projectRoot, profile string) *Generator {
+func New(out, pkg string) *Generator {
 	return &Generator{
-		outputDir:       projectRoot,
-		pkgName:         profile,
+		outputDir:       out,
+		pkgName:         pkg,
 		typeToSchemaMap: make(map[string]string),
 	}
 }
