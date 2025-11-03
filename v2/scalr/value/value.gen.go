@@ -48,10 +48,22 @@ func Set[T any](val T) *Value[T] {
 	}
 }
 
-// SetPtr creates a Value from a pointer
+// SetPtr creates a Value from a pointer. Sets explicit null if the pointer is nil.
 func SetPtr[T any](val *T) *Value[T] {
 	if val == nil {
 		return Null[T]()
+	}
+	return &Value[T]{
+		value: val,
+		isSet: true,
+	}
+}
+
+// SetPtrMaybe creates a Value from a pointer.
+// This is similar to SetPtr but leaves the value unset if the pointer is nil.
+func SetPtrMaybe[T any](val *T) *Value[T] {
+	if val == nil {
+		return Unset[T]()
 	}
 	return &Value[T]{
 		value: val,
@@ -122,7 +134,7 @@ func (t *Value[T]) Set(value T) {
 	t.isSet = true
 }
 
-// SetPtr sets the value from a pointer
+// SetPtr sets the value from a pointer. Sets explicit null if the pointer is nil.
 func (t *Value[T]) SetPtr(value *T) {
 	if value == nil {
 		t.SetNull()
