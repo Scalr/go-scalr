@@ -81,7 +81,7 @@ func (c *Client) DeleteProviderConfigurationWorkspaceLink(ctx context.Context, p
 	return resp, nil
 }
 
-// Show details of a specific Proivider configuration link.
+// Show details of a specific Provider configuration link.
 func (c *Client) GetProviderConfigurationLinkRaw(ctx context.Context, providerConfigurationLink string) (*http.Response, error) {
 	path := "/provider-configuration-links/{provider_configuration_link}"
 	path = strings.ReplaceAll(path, "{provider_configuration_link}", url.PathEscape(providerConfigurationLink))
@@ -89,7 +89,7 @@ func (c *Client) GetProviderConfigurationLinkRaw(ctx context.Context, providerCo
 	return c.httpClient.Get(ctx, path, nil)
 }
 
-// Show details of a specific Proivider configuration link.
+// Show details of a specific Provider configuration link.
 func (c *Client) GetProviderConfigurationLink(ctx context.Context, providerConfigurationLink string) (*schemas.ProviderConfigurationLink, *client.Response, error) {
 	httpResp, err := c.GetProviderConfigurationLinkRaw(ctx, providerConfigurationLink)
 	if err != nil {

@@ -31,6 +31,8 @@ func (r SecurityRules) GetResourceType() string {
 
 // SecurityRulesAttributes holds the attributes for SecurityRules (response)
 type SecurityRulesAttributes struct {
+	// Whether to require a self-hosted agent pool when creating workspaces.
+	EnforceAgentPool bool `json:"enforce-agent-pool"`
 	// The maximum lifetime of a personal user access token in minutes.
 	MaxPersonalTokenLifetime *int `json:"max-personal-token-lifetime"`
 	// The maximum lifetime of a service account access token in minutes.
@@ -68,6 +70,8 @@ func (r SecurityRulesRequest) GetResourceType() string {
 
 // SecurityRulesAttributesRequest holds the attributes for SecurityRules (request)
 type SecurityRulesAttributesRequest struct {
+	// Whether to require a self-hosted agent pool when creating workspaces.
+	EnforceAgentPool *value.Value[bool] `json:"enforce-agent-pool,omitempty"`
 	// The maximum lifetime of a personal user access token in minutes.
 	MaxPersonalTokenLifetime *value.Value[int] `json:"max-personal-token-lifetime,omitempty"`
 	// The maximum lifetime of a service account access token in minutes.

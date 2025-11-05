@@ -12,6 +12,7 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/agent_pool"
 	"github.com/scalr/go-scalr/v2/scalr/ops/apply"
 	"github.com/scalr/go-scalr/v2/scalr/ops/aws_event_bridge_integration"
+	"github.com/scalr/go-scalr/v2/scalr/ops/billing_usage"
 	"github.com/scalr/go-scalr/v2/scalr/ops/checkov_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/configuration_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/cost_estimate"
@@ -81,6 +82,7 @@ type Client struct {
 	Agent                          *agent.Client
 	AgentPool                      *agent_pool.Client
 	Apply                          *apply.Client
+	BillingUsage                   *billing_usage.Client
 	CheckovIntegration             *checkov_integration.Client
 	ConfigurationVersion           *configuration_version.Client
 	CostEstimate                   *cost_estimate.Client
@@ -151,6 +153,7 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		Agent:                          agent.New(httpClient),
 		AgentPool:                      agent_pool.New(httpClient),
 		Apply:                          apply.New(httpClient),
+		BillingUsage:                   billing_usage.New(httpClient),
 		CheckovIntegration:             checkov_integration.New(httpClient),
 		ConfigurationVersion:           configuration_version.New(httpClient),
 		CostEstimate:                   cost_estimate.New(httpClient),

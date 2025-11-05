@@ -60,6 +60,8 @@ type AgentPoolRelationships struct {
 	Account *Account `json:"account"`
 	// The list of agents connected to the pool.
 	Agents []*Agent `json:"agents"`
+	// The list of environments this pool is directly linked as default agent pool.
+	DefaultEnvironments []*Environment `json:"default-environments"`
 	// The environment the agent pool belongs to. This relationship is deprecated.
 	Environment *Environment `json:"environment"`
 	// The list of environments this pool is directly linked to.
@@ -109,6 +111,27 @@ func (r *AgentPoolRelationships) UnmarshalJSON(data []byte) error {
 			r.Agents = make([]*Agent, len(rel.Data))
 			for i, d := range rel.Data {
 				r.Agents[i] = &Agent{
+					ID:   d.ID,
+					Type: d.Type,
+				}
+			}
+		}
+	}
+	if raw, ok := temp["default-environments"]; ok {
+		// To-many relationship
+		var rel struct {
+			Data []struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.DefaultEnvironments = make([]*Environment, len(rel.Data))
+			for i, d := range rel.Data {
+				r.DefaultEnvironments[i] = &Environment{
 					ID:   d.ID,
 					Type: d.Type,
 				}
@@ -218,6 +241,22 @@ func (r *AgentPoolRelationships) PopulateIncludes(included []map[string]interfac
 					var full Agent
 					if err := json.Unmarshal(data, &full); err == nil {
 						r.Agents[i] = &full
+					}
+				}
+			}
+		}
+	}
+	// Populate to-many relationship: DefaultEnvironments
+	if r.DefaultEnvironments != nil {
+		for i, resource := range r.DefaultEnvironments {
+			if resource != nil && resource.ID != "" {
+				key := resource.Type + ":" + resource.ID
+				if fullResource, ok := includedMap[key]; ok {
+					// Unmarshal the full resource
+					data, _ := json.Marshal(fullResource)
+					var full Environment
+					if err := json.Unmarshal(data, &full); err == nil {
+						r.DefaultEnvironments[i] = &full
 					}
 				}
 			}

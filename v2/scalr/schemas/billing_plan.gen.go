@@ -31,11 +31,10 @@ func (r BillingPlan) GetResourceType() string {
 
 // BillingPlanAttributes holds the attributes for BillingPlan (response)
 type BillingPlanAttributes struct {
-	Amount              int                      `json:"amount"`
-	IncludedRuns        *int                     `json:"included-runs"`
-	IncludedRunsMinutes *int                     `json:"included-runs-minutes"`
-	PlanType            string                   `json:"plan-type"`
-	Prices              []map[string]interface{} `json:"prices"`
+	Amount       int                      `json:"amount"`
+	IncludedRuns *int                     `json:"included-runs"`
+	PlanType     string                   `json:"plan-type"`
+	Prices       []map[string]interface{} `json:"prices"`
 }
 
 // Request version - used when marshalling for API requests
@@ -67,9 +66,8 @@ func (r BillingPlanRequest) GetResourceType() string {
 
 // BillingPlanAttributesRequest holds the attributes for BillingPlan (request)
 type BillingPlanAttributesRequest struct {
-	Amount              *value.Value[int]                      `json:"amount,omitempty"`
-	IncludedRuns        *value.Value[int]                      `json:"included-runs,omitempty"`
-	IncludedRunsMinutes *value.Value[int]                      `json:"included-runs-minutes,omitempty"`
-	PlanType            *value.Value[string]                   `json:"plan-type,omitempty"`
-	Prices              *value.Value[[]map[string]interface{}] `json:"prices,omitempty"`
+	Amount       *value.Value[int]                      `json:"amount,omitempty"`
+	IncludedRuns *value.Value[int]                      `json:"included-runs,omitempty"`
+	PlanType     *value.Value[string]                   `json:"plan-type,omitempty"`
+	Prices       *value.Value[[]map[string]interface{}] `json:"prices,omitempty"`
 }
