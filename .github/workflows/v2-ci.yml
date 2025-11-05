@@ -1,0 +1,50 @@
+name: V2 CI
+
+on:
+  push:
+    paths:
+    - 'v2/**'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'v2/.go-version'
+          cache: true
+          cache-dependency-path: v2/go.sum
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          working-directory: v2
+          args: --config=.golangci.yml
+
+  tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'v2/.go-version'
+          cache: true
+          cache-dependency-path: v2/go.sum
+
+      - name: Run Unit Tests
+        run: make test

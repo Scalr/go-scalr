@@ -1,0 +1,24 @@
+.PHONY: build generate test lint fmt
+
+build: ## Build the generator
+	@echo "Building generator..."
+	@go build -o bin/scalr-gen ./cmd/scalr-gen
+	@echo "✓ Built bin/scalr-gen"
+
+generate: ## Generate public API client from OpenAPI spec
+	@go run ./cmd/scalr-gen \
+		--spec=../../fatmouse/taco/openapi/openapi-public.yml \
+		--package=scalr
+
+test: ## Run tests
+	@echo "Running tests..."
+	@go test -v $(TESTARGS) ./internal/...
+
+lint: ## Run linter
+	@echo "Running linter..."
+	@golangci-lint run internal/... || true
+
+fmt: ## Format code
+	@echo "Formatting code..."
+	@gofmt -s -w .
+	@goimports -w .

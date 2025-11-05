@@ -1,4 +1,4 @@
-name: Run go-scalr tests on pr in any other repo
+name: Run go-scalr V1 tests on pr in any other repo
 on:
   workflow_dispatch:
     inputs:
