@@ -1,4 +1,4 @@
-.PHONY: build generate test lint fmt
+.PHONY: build generate test lint
 
 build: ## Build the generator
 	@echo "Building generator..."
@@ -17,8 +17,3 @@ test: ## Run tests
 lint: ## Run linter
 	@echo "Running linter..."
 	@golangci-lint run internal/... || true
-
-fmt: ## Format code
-	@echo "Formatting code..."
-	@gofmt -s -w .
-	@goimports -w .
