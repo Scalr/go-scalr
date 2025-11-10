@@ -2,3 +2,10 @@
 .vscode/
 .idea/
 covprofile
+
+# Go workspace files
+go.work
+go.work.sum
+
+# V2
+v2/bin/

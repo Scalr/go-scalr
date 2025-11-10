@@ -1,0 +1,112 @@
+package client
+
+import (
+	"io"
+	"log/slog"
+	"os"
+)
+
+// Logger is an interface for logging in the client.
+type Logger interface {
+	// Debug logs a debug message
+	Debug(msg string, keysAndValues ...interface{})
+
+	// Info logs an info message
+	Info(msg string, keysAndValues ...interface{})
+
+	// Warn logs a warning message
+	Warn(msg string, keysAndValues ...interface{})
+
+	// Error logs an error message
+	Error(msg string, keysAndValues ...interface{})
+}
+
+// SlogLogger wraps a slog.Logger to implement the Logger interface
+type SlogLogger struct {
+	logger *slog.Logger
+}
+
+// NewSlogLogger creates a new Logger using slog
+func NewSlogLogger(w io.Writer, level slog.Level) *SlogLogger {
+	handler := slog.NewTextHandler(w, &slog.HandlerOptions{
+		Level: level,
+	})
+	return &SlogLogger{
+		logger: slog.New(handler),
+	}
+}
+
+// NewJSONLogger creates a new Logger using slog with JSON output
+func NewJSONLogger(w io.Writer, level slog.Level) *SlogLogger {
+	handler := slog.NewJSONHandler(w, &slog.HandlerOptions{
+		Level: level,
+	})
+	return &SlogLogger{
+		logger: slog.New(handler),
+	}
+}
+
+// Debug logs a debug message
+func (l *SlogLogger) Debug(msg string, keysAndValues ...interface{}) {
+	l.logger.Debug(msg, keysAndValues...)
+}
+
+// Info logs an info message
+func (l *SlogLogger) Info(msg string, keysAndValues ...interface{}) {
+	l.logger.Info(msg, keysAndValues...)
+}
+
+// Warn logs a warning message
+func (l *SlogLogger) Warn(msg string, keysAndValues ...interface{}) {
+	l.logger.Warn(msg, keysAndValues...)
+}
+
+// Error logs an error message
+func (l *SlogLogger) Error(msg string, keysAndValues ...interface{}) {
+	l.logger.Error(msg, keysAndValues...)
+}
+
+// NoOpLogger is a logger that does nothing
+type NoOpLogger struct{}
+
+// NewNoOpLogger creates a logger that discards all log messages
+func NewNoOpLogger() *NoOpLogger {
+	return &NoOpLogger{}
+}
+
+func (l *NoOpLogger) Debug(_ string, _ ...interface{}) {}
+func (l *NoOpLogger) Info(_ string, _ ...interface{})  {}
+func (l *NoOpLogger) Warn(_ string, _ ...interface{})  {}
+func (l *NoOpLogger) Error(_ string, _ ...interface{}) {}
+
+// DefaultLogger returns the default logger (writes to stderr at Info level)
+func DefaultLogger() Logger {
+	return NewSlogLogger(os.Stderr, slog.LevelInfo)
+}
+
+// DebugLogger returns a logger configured for debug output
+func DebugLogger() Logger {
+	return NewSlogLogger(os.Stderr, slog.LevelDebug)
+}
+
+// sanitizeHeaders removes sensitive information from headers
+func sanitizeHeaders(headers map[string][]string) map[string]string {
+	sanitized := make(map[string]string)
+	for k, v := range headers {
+		if len(v) > 0 {
+			// Sanitize authorization header
+			if k == "Authorization" {
+				sanitized[k] = "[REDACTED]"
+			} else {
+				sanitized[k] = v[0]
+			}
+		}
+	}
+	return sanitized
+}
+
+// sanitizeURL removes query parameters that might contain sensitive data
+func sanitizeURL(url string) string {
+	// For now, return as-is. Can be used to add sanitization logic later.
+	return url
+}

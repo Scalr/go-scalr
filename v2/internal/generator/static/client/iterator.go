@@ -1,0 +1,201 @@
+package client
+
+import (
+	"context"
+	"fmt"
+)
+
+// Iterator provides an iterator over paginated API results.
+// It follows the Next() / Value() Go iterator pattern.
+//
+// Example:
+//
+//	iter := client.Workspace.ListWorkspacesIter(ctx, opts)
+//	for iter.Next() {
+//	    ws := iter.Value()
+//	    fmt.Printf("Workspace: %s\n", ws.Attributes.Name)
+//	}
+//	if err := iter.Err(); err != nil {
+//	    log.Fatal(err)
+//	}
+type Iterator[T any] struct {
+	ctx context.Context
+
+	// Current state
+	items   []*T
+	index   int
+	err     error
+	done    bool
+	fetched bool
+
+	// Pagination state
+	currentPage int
+	pageSize    int
+	totalPages  int
+	totalCount  int
+
+	// Function to get the next page
+	fetchPage func(ctx context.Context, pageNum int) ([]*T, *Pagination, error)
+}
+
+// NewIterator creates a new iterator with the given fetch function.
+// The fetch function should call the list API with the appropriate page number.
+func NewIterator[T any](ctx context.Context, pageSize int, fetchPage func(context.Context, int) ([]*T, *Pagination, error)) *Iterator[T] {
+	return &Iterator[T]{
+		ctx:         ctx,
+		pageSize:    pageSize,
+		currentPage: 0,
+		fetchPage:   fetchPage,
+	}
+}
+
+// Next advances the iterator to the next item.
+func (it *Iterator[T]) Next() bool {
+	// Check if context is canceled
+	if err := it.ctx.Err(); err != nil {
+		it.err = err
+		it.index = 0
+		return false
+	}
+
+	// Stop if there is an error from previous operations
+	if it.err != nil {
+		it.index = 0
+		return false
+	}
+
+	// If there are items in the current batch, return the next one
+	if it.index < len(it.items) {
+		it.index++
+		return true
+	}
+
+	// Stop if there are no more pages to fetch
+	if it.done {
+		it.index = 0
+		return false
+	}
+
+	// Need to fetch the next page
+	it.currentPage++
+	items, pagination, err := it.fetchPage(it.ctx, it.currentPage)
+	if err != nil {
+		it.err = err
+		it.index = 0
+		return false
+	}
+
+	// Update state
+	it.items = items
+	it.index = 0
+	it.fetched = true
+
+	// Update pagination info
+	if pagination != nil {
+		it.totalPages = pagination.TotalPages
+		it.totalCount = pagination.TotalCount
+
+		// If there's no next page, we're done after this batch
+		if pagination.NextPage == nil {
+			it.done = true
+		}
+	}
+
+	// If no items were returned, we're done
+	if len(items) == 0 {
+		it.done = true
+		it.index = 0
+		return false
+	}
+
+	// Move to the first item
+	it.index = 1
+	return true
+}
+
+// Value returns the current item.
+// It should only be called after Next() returns true, panics otherwise.
+func (it *Iterator[T]) Value() *T {
+	if it.index <= 0 || it.index > len(it.items) {
+		panic("iterator: Value() called without calling Next() or after Next() returned false")
+	}
+	return it.items[it.index-1]
+}
+
+// Err returns any error that occurred during iteration.
+func (it *Iterator[T]) Err() error {
+	return it.err
+}
+
+// PageInfo returns pagination information about the current iteration state.
+func (it *Iterator[T]) PageInfo() PageInfo {
+	return PageInfo{
+		CurrentPage: it.currentPage,
+		TotalPages:  it.totalPages,
+		PageSize:    it.pageSize,
+		HasStarted:  it.fetched,
+		IsDone:      it.done,
+	}
+}
+
+// Remaining returns the number of items remaining based on pagination metadata.
+// Returns -1 if the count is unknown.
+func (it *Iterator[T]) Remaining() int {
+	if !it.fetched {
+		return -1 // Haven't fetched anything yet
+	}
+
+	// If iteration is complete - no items remaining
+	if it.done && it.index <= 0 {
+		return 0
+	}
+
+	yielded := (it.currentPage-1)*it.pageSize + it.index
+	remaining := it.totalCount - yielded
+
+	return remaining
+}
+
+// Collect consumes the entire iterator and returns all items as a slice.
+//
+// Example:
+//
+//	iter := client.Workspace.ListWorkspacesIter(ctx, opts)
+//	workspaces, err := iter.Collect()
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+func (it *Iterator[T]) Collect() ([]*T, error) {
+	var result []*T
+
+	for it.Next() {
+		result = append(result, it.Value())
+	}
+
+	if err := it.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// PageInfo holds information about the current pagination state
+type PageInfo struct {
+	CurrentPage int
+	TotalPages  int
+	TotalCount  int
+	PageSize    int
+	HasStarted  bool
+	IsDone      bool
+}
+
+// String returns a human-readable representation of the pagination info
+func (p PageInfo) String() string {
+	if !p.HasStarted {
+		return "not started"
+	}
+	if p.IsDone {
+		return fmt.Sprintf("page %d/%d (done)", p.CurrentPage, p.TotalPages)
+	}
+	return fmt.Sprintf("page %d/%d", p.CurrentPage, p.TotalPages)
+}
