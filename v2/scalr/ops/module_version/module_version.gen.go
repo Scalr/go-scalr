@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Show details of a specific terraform module version.
-func (c *Client) GetModuleVersionRaw(ctx context.Context, moduleVersion string, opts *GetModuleVersionOptions) (*http.Response, error) {
+func (c *Client) GetModuleVersionRaw(ctx context.Context, moduleVersion string, opts *GetModuleVersionOptions) (*client.Response, error) {
 	path := "/module-versions/{module_version}"
 	path = strings.ReplaceAll(path, "{module_version}", url.PathEscape(moduleVersion))
 
@@ -44,32 +43,34 @@ func (c *Client) GetModuleVersionRaw(ctx context.Context, moduleVersion string, 
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific terraform module version.
-func (c *Client) GetModuleVersion(ctx context.Context, moduleVersion string, opts *GetModuleVersionOptions) (*schemas.ModuleVersion, *client.Response, error) {
-	httpResp, err := c.GetModuleVersionRaw(ctx, moduleVersion, opts)
+func (c *Client) GetModuleVersion(ctx context.Context, moduleVersion string, opts *GetModuleVersionOptions) (*schemas.ModuleVersion, error) {
+	resp, err := c.GetModuleVersionRaw(ctx, moduleVersion, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ModuleVersion    `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetModuleVersionOptions holds optional parameters for GetModuleVersion
@@ -80,7 +81,7 @@ type GetModuleVersionOptions struct {
 }
 
 // This endpoint lists versions of a particular module. The query parameter `filter[module]` with Module ID is required.
-func (c *Client) ListModuleVersionsRaw(ctx context.Context, opts *ListModuleVersionsOptions) (*http.Response, error) {
+func (c *Client) ListModuleVersionsRaw(ctx context.Context, opts *ListModuleVersionsOptions) (*client.Response, error) {
 	path := "/module-versions"
 
 	params := url.Values{}
@@ -108,18 +109,20 @@ func (c *Client) ListModuleVersionsRaw(ctx context.Context, opts *ListModuleVers
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists versions of a particular module. The query parameter `filter[module]` with Module ID is required.
-func (c *Client) ListModuleVersions(ctx context.Context, opts *ListModuleVersionsOptions) ([]*schemas.ModuleVersion, *client.Response, error) {
-	httpResp, err := c.ListModuleVersionsRaw(ctx, opts)
+func (c *Client) ListModuleVersions(ctx context.Context, opts *ListModuleVersionsOptions) ([]*schemas.ModuleVersion, error) {
+	resp, err := c.ListModuleVersionsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.ModuleVersion `json:"data"`
@@ -128,8 +131,8 @@ func (c *Client) ListModuleVersions(ctx context.Context, opts *ListModuleVersion
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.ModuleVersion, len(result.Data))
@@ -140,8 +143,7 @@ func (c *Client) ListModuleVersions(ctx context.Context, opts *ListModuleVersion
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListModuleVersionsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -182,22 +184,40 @@ func (c *Client) ListModuleVersionsIter(ctx context.Context, opts *ListModuleVer
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListModuleVersions(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListModuleVersionsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.ModuleVersion{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.ModuleVersion `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.ModuleVersion{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -237,13 +257,36 @@ func (c *Client) ListModuleVersionsPaged(ctx context.Context, opts *ListModuleVe
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListModuleVersions(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListModuleVersionsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.ModuleVersion `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.ModuleVersion, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.ModuleVersion](ctx, pageSize, fetchPage)
@@ -265,22 +308,24 @@ type ListModuleVersionsOptions struct {
 }
 
 // Trigger resync of the Module Version associated with the `relationships.vcs-revision`. Only modules associated with a VCS can be resynchronized.
-func (c *Client) ResyncModuleVersionRaw(ctx context.Context, moduleVersion string) (*http.Response, error) {
+func (c *Client) ResyncModuleVersionRaw(ctx context.Context, moduleVersion string) (*client.Response, error) {
 	path := "/module-versions/{module_version}/actions/resync"
 	path = strings.ReplaceAll(path, "{module_version}", url.PathEscape(moduleVersion))
 
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Trigger resync of the Module Version associated with the `relationships.vcs-revision`. Only modules associated with a VCS can be resynchronized.
-func (c *Client) ResyncModuleVersion(ctx context.Context, moduleVersion string) (*client.Response, error) {
-	httpResp, err := c.ResyncModuleVersionRaw(ctx, moduleVersion)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Trigger resync of the Module Version associated with the `relationships.vcs-revision`. Only modules associated with a VCS can be resynchronized.
+func (c *Client) ResyncModuleVersion(ctx context.Context, moduleVersion string) error {
+	resp, err := c.ResyncModuleVersionRaw(ctx, moduleVersion)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }

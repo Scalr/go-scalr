@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint assigns the list of [tags](/docs/tags-1) to the environment.
-func (c *Client) AddEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*http.Response, error) {
+func (c *Client) AddEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -39,23 +38,25 @@ func (c *Client) AddEnvironmentTagsRaw(ctx context.Context, environment string, 
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// This endpoint assigns the list of [tags](/docs/tags-1) to the environment.
-func (c *Client) AddEnvironmentTags(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
-	httpResp, err := c.AddEnvironmentTagsRaw(ctx, environment, req)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) AddFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*http.Response, error) {
+// This endpoint assigns the list of [tags](/docs/tags-1) to the environment.
+func (c *Client) AddEnvironmentTags(ctx context.Context, environment string, req []schemas.Tag) error {
+	resp, err := c.AddEnvironmentTagsRaw(ctx, environment, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (c *Client) AddFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -68,23 +69,25 @@ func (c *Client) AddFederatedEnvironmentsRaw(ctx context.Context, environment st
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-func (c *Client) AddFederatedEnvironments(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
-	httpResp, err := c.AddFederatedEnvironmentsRaw(ctx, environment, req)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) AddFederatedEnvironments(ctx context.Context, environment string, req []schemas.Environment) error {
+	resp, err := c.AddFederatedEnvironmentsRaw(ctx, environment, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Create a new environment in the account.
-func (c *Client) CreateEnvironmentRaw(ctx context.Context, req *schemas.EnvironmentRequest, opts *CreateEnvironmentOptions) (*http.Response, error) {
+func (c *Client) CreateEnvironmentRaw(ctx context.Context, req *schemas.EnvironmentRequest, opts *CreateEnvironmentOptions) (*client.Response, error) {
 	path := "/environments"
 
 	params := url.Values{}
@@ -102,32 +105,34 @@ func (c *Client) CreateEnvironmentRaw(ctx context.Context, req *schemas.Environm
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new environment in the account.
-func (c *Client) CreateEnvironment(ctx context.Context, req *schemas.EnvironmentRequest, opts *CreateEnvironmentOptions) (*schemas.Environment, *client.Response, error) {
-	httpResp, err := c.CreateEnvironmentRaw(ctx, req, opts)
+func (c *Client) CreateEnvironment(ctx context.Context, req *schemas.EnvironmentRequest, opts *CreateEnvironmentOptions) (*schemas.Environment, error) {
+	resp, err := c.CreateEnvironmentRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Environment      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateEnvironmentOptions holds optional parameters for CreateEnvironment
@@ -137,27 +142,29 @@ type CreateEnvironmentOptions struct {
 	Filter map[string]string
 }
 
-func (c *Client) DeleteEnvironmentRaw(ctx context.Context, environment string) (*http.Response, error) {
+func (c *Client) DeleteEnvironmentRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteEnvironment(ctx context.Context, environment string) (*client.Response, error) {
-	httpResp, err := c.DeleteEnvironmentRaw(ctx, environment)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeleteEnvironment(ctx context.Context, environment string) error {
+	resp, err := c.DeleteEnvironmentRaw(ctx, environment)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint removes given [tags](/docs/tags-1) from the environment.
-func (c *Client) DeleteEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*http.Response, error) {
+func (c *Client) DeleteEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -170,24 +177,26 @@ func (c *Client) DeleteEnvironmentTagsRaw(ctx context.Context, environment strin
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Delete(ctx, path, body, nil)
-}
-
-// This endpoint removes given [tags](/docs/tags-1) from the environment.
-func (c *Client) DeleteEnvironmentTags(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
-	httpResp, err := c.DeleteEnvironmentTagsRaw(ctx, environment, req)
+	httpResp, err := c.httpClient.Delete(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint removes given [tags](/docs/tags-1) from the environment.
+func (c *Client) DeleteEnvironmentTags(ctx context.Context, environment string, req []schemas.Tag) error {
+	resp, err := c.DeleteEnvironmentTagsRaw(ctx, environment, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint removes provided environments from a list of federated one for a given environment.
-func (c *Client) DeleteFederatedEnvironmentRaw(ctx context.Context, environment string, req []schemas.Environment) (*http.Response, error) {
+func (c *Client) DeleteFederatedEnvironmentRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -200,24 +209,26 @@ func (c *Client) DeleteFederatedEnvironmentRaw(ctx context.Context, environment 
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Delete(ctx, path, body, nil)
-}
-
-// This endpoint removes provided environments from a list of federated one for a given environment.
-func (c *Client) DeleteFederatedEnvironment(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
-	httpResp, err := c.DeleteFederatedEnvironmentRaw(ctx, environment, req)
+	httpResp, err := c.httpClient.Delete(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint removes provided environments from a list of federated one for a given environment.
+func (c *Client) DeleteFederatedEnvironment(ctx context.Context, environment string, req []schemas.Environment) error {
+	resp, err := c.DeleteFederatedEnvironmentRaw(ctx, environment, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific environment.
-func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts *GetEnvironmentOptions) (*http.Response, error) {
+func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts *GetEnvironmentOptions) (*client.Response, error) {
 	path := "/environments/{environment}"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -237,32 +248,34 @@ func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific environment.
-func (c *Client) GetEnvironment(ctx context.Context, environment string, opts *GetEnvironmentOptions) (*schemas.Environment, *client.Response, error) {
-	httpResp, err := c.GetEnvironmentRaw(ctx, environment, opts)
+func (c *Client) GetEnvironment(ctx context.Context, environment string, opts *GetEnvironmentOptions) (*schemas.Environment, error) {
+	resp, err := c.GetEnvironmentRaw(ctx, environment, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Environment      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetEnvironmentOptions holds optional parameters for GetEnvironment
@@ -275,7 +288,7 @@ type GetEnvironmentOptions struct {
 }
 
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an environment.
-func (c *Client) ListEnvironmentTagsRaw(ctx context.Context, environment string, opts *ListEnvironmentTagsOptions) (*http.Response, error) {
+func (c *Client) ListEnvironmentTagsRaw(ctx context.Context, environment string, opts *ListEnvironmentTagsOptions) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -296,18 +309,20 @@ func (c *Client) ListEnvironmentTagsRaw(ctx context.Context, environment string,
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an environment.
-func (c *Client) ListEnvironmentTags(ctx context.Context, environment string, opts *ListEnvironmentTagsOptions) ([]*schemas.Tag, *client.Response, error) {
-	httpResp, err := c.ListEnvironmentTagsRaw(ctx, environment, opts)
+func (c *Client) ListEnvironmentTags(ctx context.Context, environment string, opts *ListEnvironmentTagsOptions) ([]*schemas.Tag, error) {
+	resp, err := c.ListEnvironmentTagsRaw(ctx, environment, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Tag `json:"data"`
@@ -316,16 +331,15 @@ func (c *Client) ListEnvironmentTags(ctx context.Context, environment string, op
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Tag, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListEnvironmentTagsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -366,22 +380,36 @@ func (c *Client) ListEnvironmentTagsIter(ctx context.Context, environment string
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListEnvironmentTags(ctx, environment, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListEnvironmentTagsRaw(ctx, environment, pageOpts)
 			if err != nil {
 				yield(schemas.Tag{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Tag `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -421,13 +449,32 @@ func (c *Client) ListEnvironmentTagsPaged(ctx context.Context, environment strin
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListEnvironmentTags(ctx, environment, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListEnvironmentTagsRaw(ctx, environment, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Tag `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Tag, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Tag](ctx, pageSize, fetchPage)
@@ -443,7 +490,7 @@ type ListEnvironmentTagsOptions struct {
 }
 
 // This endpoint lists account environments.
-func (c *Client) ListEnvironmentsRaw(ctx context.Context, opts *ListEnvironmentsOptions) (*http.Response, error) {
+func (c *Client) ListEnvironmentsRaw(ctx context.Context, opts *ListEnvironmentsOptions) (*client.Response, error) {
 	path := "/environments"
 
 	params := url.Values{}
@@ -475,18 +522,20 @@ func (c *Client) ListEnvironmentsRaw(ctx context.Context, opts *ListEnvironments
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists account environments.
-func (c *Client) ListEnvironments(ctx context.Context, opts *ListEnvironmentsOptions) ([]*schemas.Environment, *client.Response, error) {
-	httpResp, err := c.ListEnvironmentsRaw(ctx, opts)
+func (c *Client) ListEnvironments(ctx context.Context, opts *ListEnvironmentsOptions) ([]*schemas.Environment, error) {
+	resp, err := c.ListEnvironmentsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Environment `json:"data"`
@@ -495,8 +544,8 @@ func (c *Client) ListEnvironments(ctx context.Context, opts *ListEnvironmentsOpt
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Environment, len(result.Data))
@@ -507,8 +556,7 @@ func (c *Client) ListEnvironments(ctx context.Context, opts *ListEnvironmentsOpt
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListEnvironmentsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -549,22 +597,40 @@ func (c *Client) ListEnvironmentsIter(ctx context.Context, opts *ListEnvironment
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListEnvironments(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListEnvironmentsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Environment{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Environment `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Environment{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -604,13 +670,36 @@ func (c *Client) ListEnvironmentsPaged(ctx context.Context, opts *ListEnvironmen
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListEnvironments(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListEnvironmentsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Environment `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Environment, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Environment](ctx, pageSize, fetchPage)
@@ -633,7 +722,7 @@ type ListEnvironmentsOptions struct {
 	Filter map[string]string
 }
 
-func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment string, opts *ListFederatedEnvironmentsOptions) (*http.Response, error) {
+func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment string, opts *ListFederatedEnvironmentsOptions) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -654,17 +743,19 @@ func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment s
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) ListFederatedEnvironments(ctx context.Context, environment string, opts *ListFederatedEnvironmentsOptions) ([]*schemas.Environment, *client.Response, error) {
-	httpResp, err := c.ListFederatedEnvironmentsRaw(ctx, environment, opts)
+func (c *Client) ListFederatedEnvironments(ctx context.Context, environment string, opts *ListFederatedEnvironmentsOptions) ([]*schemas.Environment, error) {
+	resp, err := c.ListFederatedEnvironmentsRaw(ctx, environment, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Environment `json:"data"`
@@ -673,16 +764,15 @@ func (c *Client) ListFederatedEnvironments(ctx context.Context, environment stri
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Environment, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListFederatedEnvironmentsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -723,22 +813,36 @@ func (c *Client) ListFederatedEnvironmentsIter(ctx context.Context, environment 
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListFederatedEnvironments(ctx, environment, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListFederatedEnvironmentsRaw(ctx, environment, pageOpts)
 			if err != nil {
 				yield(schemas.Environment{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Environment `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Environment{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -778,13 +882,32 @@ func (c *Client) ListFederatedEnvironmentsPaged(ctx context.Context, environment
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListFederatedEnvironments(ctx, environment, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListFederatedEnvironmentsRaw(ctx, environment, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Environment `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Environment, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Environment](ctx, pageSize, fetchPage)
@@ -800,7 +923,7 @@ type ListFederatedEnvironmentsOptions struct {
 }
 
 // This endpoint completely replaces environment's tags with provided list.
-func (c *Client) ReplaceEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*http.Response, error) {
+func (c *Client) ReplaceEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -813,23 +936,25 @@ func (c *Client) ReplaceEnvironmentTagsRaw(ctx context.Context, environment stri
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Patch(ctx, path, body, nil)
-}
-
-// This endpoint completely replaces environment's tags with provided list.
-func (c *Client) ReplaceEnvironmentTags(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
-	httpResp, err := c.ReplaceEnvironmentTagsRaw(ctx, environment, req)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) ReplaceFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*http.Response, error) {
+// This endpoint completely replaces environment's tags with provided list.
+func (c *Client) ReplaceEnvironmentTags(ctx context.Context, environment string, req []schemas.Tag) error {
+	resp, err := c.ReplaceEnvironmentTagsRaw(ctx, environment, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (c *Client) ReplaceFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -842,22 +967,24 @@ func (c *Client) ReplaceFederatedEnvironmentsRaw(ctx context.Context, environmen
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Patch(ctx, path, body, nil)
-}
-
-func (c *Client) ReplaceFederatedEnvironments(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
-	httpResp, err := c.ReplaceFederatedEnvironmentsRaw(ctx, environment, req)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) UpdateEnvironmentRaw(ctx context.Context, environment string, req *schemas.EnvironmentRequest, opts *UpdateEnvironmentOptions) (*http.Response, error) {
+func (c *Client) ReplaceFederatedEnvironments(ctx context.Context, environment string, req []schemas.Environment) error {
+	resp, err := c.ReplaceFederatedEnvironmentsRaw(ctx, environment, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (c *Client) UpdateEnvironmentRaw(ctx context.Context, environment string, req *schemas.EnvironmentRequest, opts *UpdateEnvironmentOptions) (*client.Response, error) {
 	path := "/environments/{environment}"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
@@ -876,31 +1003,33 @@ func (c *Client) UpdateEnvironmentRaw(ctx context.Context, environment string, r
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) UpdateEnvironment(ctx context.Context, environment string, req *schemas.EnvironmentRequest, opts *UpdateEnvironmentOptions) (*schemas.Environment, *client.Response, error) {
-	httpResp, err := c.UpdateEnvironmentRaw(ctx, environment, req, opts)
+func (c *Client) UpdateEnvironment(ctx context.Context, environment string, req *schemas.EnvironmentRequest, opts *UpdateEnvironmentOptions) (*schemas.Environment, error) {
+	resp, err := c.UpdateEnvironmentRaw(ctx, environment, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Environment      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateEnvironmentOptions holds optional parameters for UpdateEnvironment

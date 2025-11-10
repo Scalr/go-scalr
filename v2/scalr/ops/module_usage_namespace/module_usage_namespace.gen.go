@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint lists unique terraform module usage namespaces.
-func (c *Client) ListModuleUsageNamespacesRaw(ctx context.Context, opts *ListModuleUsageNamespacesOptions) (*http.Response, error) {
+func (c *Client) ListModuleUsageNamespacesRaw(ctx context.Context, opts *ListModuleUsageNamespacesOptions) (*client.Response, error) {
 	path := "/reports/module-namespaces"
 
 	params := url.Values{}
@@ -58,18 +57,20 @@ func (c *Client) ListModuleUsageNamespacesRaw(ctx context.Context, opts *ListMod
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists unique terraform module usage namespaces.
-func (c *Client) ListModuleUsageNamespaces(ctx context.Context, opts *ListModuleUsageNamespacesOptions) ([]*schemas.ModuleUsageNamespace, *client.Response, error) {
-	httpResp, err := c.ListModuleUsageNamespacesRaw(ctx, opts)
+func (c *Client) ListModuleUsageNamespaces(ctx context.Context, opts *ListModuleUsageNamespacesOptions) ([]*schemas.ModuleUsageNamespace, error) {
+	resp, err := c.ListModuleUsageNamespacesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.ModuleUsageNamespace `json:"data"`
@@ -78,8 +79,8 @@ func (c *Client) ListModuleUsageNamespaces(ctx context.Context, opts *ListModule
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.ModuleUsageNamespace, len(result.Data))
@@ -90,8 +91,7 @@ func (c *Client) ListModuleUsageNamespaces(ctx context.Context, opts *ListModule
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListModuleUsageNamespacesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -132,22 +132,40 @@ func (c *Client) ListModuleUsageNamespacesIter(ctx context.Context, opts *ListMo
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListModuleUsageNamespaces(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListModuleUsageNamespacesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.ModuleUsageNamespace{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.ModuleUsageNamespace `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.ModuleUsageNamespace{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -187,13 +205,36 @@ func (c *Client) ListModuleUsageNamespacesPaged(ctx context.Context, opts *ListM
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListModuleUsageNamespaces(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListModuleUsageNamespacesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.ModuleUsageNamespace `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.ModuleUsageNamespace, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.ModuleUsageNamespace](ctx, pageSize, fetchPage)

@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -25,50 +24,54 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Show details of a specific Scalr IAM Permission.
-func (c *Client) GetPermissionRaw(ctx context.Context, permission string) (*http.Response, error) {
+func (c *Client) GetPermissionRaw(ctx context.Context, permission string) (*client.Response, error) {
 	path := "/permissions/{permission}"
 	path = strings.ReplaceAll(path, "{permission}", url.PathEscape(permission))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Scalr IAM Permission.
-func (c *Client) GetPermission(ctx context.Context, permission string) (*schemas.Permission, *client.Response, error) {
-	httpResp, err := c.GetPermissionRaw(ctx, permission)
+func (c *Client) GetPermission(ctx context.Context, permission string) (*schemas.Permission, error) {
+	resp, err := c.GetPermissionRaw(ctx, permission)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Permission       `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // This endpoint returns a list of all Scalr [IAM](/docs/identity-and-access-management) permissions, available to use in a [Role](/docs/identity-and-access-management#roles) resource.
-func (c *Client) GetPermissionsRaw(ctx context.Context) (*http.Response, error) {
+func (c *Client) GetPermissionsRaw(ctx context.Context) (*client.Response, error) {
 	path := "/permissions"
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of all Scalr [IAM](/docs/identity-and-access-management) permissions, available to use in a [Role](/docs/identity-and-access-management#roles) resource.
-func (c *Client) GetPermissions(ctx context.Context) ([]*schemas.Permission, *client.Response, error) {
-	httpResp, err := c.GetPermissionsRaw(ctx)
+func (c *Client) GetPermissions(ctx context.Context) ([]*schemas.Permission, error) {
+	resp, err := c.GetPermissionsRaw(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Permission `json:"data"`
@@ -77,14 +80,13 @@ func (c *Client) GetPermissions(ctx context.Context) ([]*schemas.Permission, *cl
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Permission, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,95 +25,101 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new module namespace.
-func (c *Client) CreateModuleNamespaceRaw(ctx context.Context, req *schemas.ModuleNamespaceRequest) (*http.Response, error) {
+func (c *Client) CreateModuleNamespaceRaw(ctx context.Context, req *schemas.ModuleNamespaceRequest) (*client.Response, error) {
 	path := "/module-namespaces"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// Create a new module namespace.
-func (c *Client) CreateModuleNamespace(ctx context.Context, req *schemas.ModuleNamespaceRequest) (*schemas.ModuleNamespace, *client.Response, error) {
-	httpResp, err := c.CreateModuleNamespaceRaw(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.ModuleNamespace  `json:"data"`
-		Included []map[string]interface{} `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Populate included resources into relationships
-	if len(result.Included) > 0 {
-		result.Data.Relationships.PopulateIncludes(result.Included)
-	}
-	return &result.Data, resp, nil
-}
-
-// Delete a module namespace.
-func (c *Client) DeleteModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*http.Response, error) {
-	path := "/module-namespaces/{module_namespace}"
-	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// Delete a module namespace.
-func (c *Client) DeleteModuleNamespace(ctx context.Context, moduleNamespace string) (*client.Response, error) {
-	httpResp, err := c.DeleteModuleNamespaceRaw(ctx, moduleNamespace)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// Show details of a specific module namespace.
-func (c *Client) GetModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*http.Response, error) {
-	path := "/module-namespaces/{module_namespace}"
-	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Show details of a specific module namespace.
-func (c *Client) GetModuleNamespace(ctx context.Context, moduleNamespace string) (*schemas.ModuleNamespace, *client.Response, error) {
-	httpResp, err := c.GetModuleNamespaceRaw(ctx, moduleNamespace)
+// Create a new module namespace.
+func (c *Client) CreateModuleNamespace(ctx context.Context, req *schemas.ModuleNamespaceRequest) (*schemas.ModuleNamespace, error) {
+	resp, err := c.CreateModuleNamespaceRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ModuleNamespace  `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+// Delete a module namespace.
+func (c *Client) DeleteModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*client.Response, error) {
+	path := "/module-namespaces/{module_namespace}"
+	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Delete a module namespace.
+func (c *Client) DeleteModuleNamespace(ctx context.Context, moduleNamespace string) error {
+	resp, err := c.DeleteModuleNamespaceRaw(ctx, moduleNamespace)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Show details of a specific module namespace.
+func (c *Client) GetModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*client.Response, error) {
+	path := "/module-namespaces/{module_namespace}"
+	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Show details of a specific module namespace.
+func (c *Client) GetModuleNamespace(ctx context.Context, moduleNamespace string) (*schemas.ModuleNamespace, error) {
+	resp, err := c.GetModuleNamespaceRaw(ctx, moduleNamespace)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.ModuleNamespace  `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // This endpoint lists module namespaces by various filters. To list module namespaces accessible from a certain environment, `filter[environment]` has to be specified. Module namespaces from the account which this environment belongs to will be listed as well. To list module namespaces accessible from a certain account, `filter[account]` has to be specified. If no filters were specified, all module namespaces which the user has read access to will be listed.
-func (c *Client) ListModuleNamespacesRaw(ctx context.Context, opts *ListModuleNamespacesOptions) (*http.Response, error) {
+func (c *Client) ListModuleNamespacesRaw(ctx context.Context, opts *ListModuleNamespacesOptions) (*client.Response, error) {
 	path := "/module-namespaces"
 
 	params := url.Values{}
@@ -137,18 +142,20 @@ func (c *Client) ListModuleNamespacesRaw(ctx context.Context, opts *ListModuleNa
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists module namespaces by various filters. To list module namespaces accessible from a certain environment, `filter[environment]` has to be specified. Module namespaces from the account which this environment belongs to will be listed as well. To list module namespaces accessible from a certain account, `filter[account]` has to be specified. If no filters were specified, all module namespaces which the user has read access to will be listed.
-func (c *Client) ListModuleNamespaces(ctx context.Context, opts *ListModuleNamespacesOptions) ([]*schemas.ModuleNamespace, *client.Response, error) {
-	httpResp, err := c.ListModuleNamespacesRaw(ctx, opts)
+func (c *Client) ListModuleNamespaces(ctx context.Context, opts *ListModuleNamespacesOptions) ([]*schemas.ModuleNamespace, error) {
+	resp, err := c.ListModuleNamespacesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.ModuleNamespace `json:"data"`
@@ -157,8 +164,8 @@ func (c *Client) ListModuleNamespaces(ctx context.Context, opts *ListModuleNames
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.ModuleNamespace, len(result.Data))
@@ -169,8 +176,7 @@ func (c *Client) ListModuleNamespaces(ctx context.Context, opts *ListModuleNames
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListModuleNamespacesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -211,22 +217,40 @@ func (c *Client) ListModuleNamespacesIter(ctx context.Context, opts *ListModuleN
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListModuleNamespaces(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListModuleNamespacesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.ModuleNamespace{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.ModuleNamespace `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.ModuleNamespace{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -266,13 +290,36 @@ func (c *Client) ListModuleNamespacesPaged(ctx context.Context, opts *ListModule
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListModuleNamespaces(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListModuleNamespacesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.ModuleNamespace `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.ModuleNamespace, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.ModuleNamespace](ctx, pageSize, fetchPage)
@@ -290,36 +337,38 @@ type ListModuleNamespacesOptions struct {
 }
 
 // Update an existing module namespace.
-func (c *Client) UpdateModuleNamespaceRaw(ctx context.Context, moduleNamespace string, req *schemas.ModuleNamespaceRequest) (*http.Response, error) {
+func (c *Client) UpdateModuleNamespaceRaw(ctx context.Context, moduleNamespace string, req *schemas.ModuleNamespaceRequest) (*client.Response, error) {
 	path := "/module-namespaces/{module_namespace}"
 	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Update an existing module namespace.
-func (c *Client) UpdateModuleNamespace(ctx context.Context, moduleNamespace string, req *schemas.ModuleNamespaceRequest) (*schemas.ModuleNamespace, *client.Response, error) {
-	httpResp, err := c.UpdateModuleNamespaceRaw(ctx, moduleNamespace, req)
+func (c *Client) UpdateModuleNamespace(ctx context.Context, moduleNamespace string, req *schemas.ModuleNamespaceRequest) (*schemas.ModuleNamespace, error) {
+	resp, err := c.UpdateModuleNamespaceRaw(ctx, moduleNamespace, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ModuleNamespace  `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

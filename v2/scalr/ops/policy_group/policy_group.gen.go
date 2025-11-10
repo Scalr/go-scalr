@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new [policy group](/docs/policy-governance#open-policy-agent) in the account.
-func (c *Client) CreatePolicyGroupRaw(ctx context.Context, req *schemas.PolicyGroupRequest, opts *CreatePolicyGroupOptions) (*http.Response, error) {
+func (c *Client) CreatePolicyGroupRaw(ctx context.Context, req *schemas.PolicyGroupRequest, opts *CreatePolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups"
 
 	params := url.Values{}
@@ -45,32 +44,34 @@ func (c *Client) CreatePolicyGroupRaw(ctx context.Context, req *schemas.PolicyGr
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new [policy group](/docs/policy-governance#open-policy-agent) in the account.
-func (c *Client) CreatePolicyGroup(ctx context.Context, req *schemas.PolicyGroupRequest, opts *CreatePolicyGroupOptions) (*schemas.PolicyGroup, *client.Response, error) {
-	httpResp, err := c.CreatePolicyGroupRaw(ctx, req, opts)
+func (c *Client) CreatePolicyGroup(ctx context.Context, req *schemas.PolicyGroupRequest, opts *CreatePolicyGroupOptions) (*schemas.PolicyGroup, error) {
+	resp, err := c.CreatePolicyGroupRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.PolicyGroup      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreatePolicyGroupOptions holds optional parameters for CreatePolicyGroup
@@ -80,7 +81,7 @@ type CreatePolicyGroupOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) CreatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*http.Response, error) {
+func (c *Client) CreatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments"
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
@@ -93,64 +94,70 @@ func (c *Client) CreatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGro
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-func (c *Client) CreatePolicyGroupEnvironments(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
-	httpResp, err := c.CreatePolicyGroupEnvironmentsRaw(ctx, policyGroup, req)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) CreatePolicyGroupEnvironments(ctx context.Context, policyGroup string, req []schemas.Environment) error {
+	resp, err := c.CreatePolicyGroupEnvironmentsRaw(ctx, policyGroup, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint deletes a [policy group](/docs/policy-governance#open-policy-agent) by ID. Only an unused policy group (that is not linked to any environment) can be removed.
-func (c *Client) DeletePolicyGroupRaw(ctx context.Context, policyGroup string) (*http.Response, error) {
+func (c *Client) DeletePolicyGroupRaw(ctx context.Context, policyGroup string) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// This endpoint deletes a [policy group](/docs/policy-governance#open-policy-agent) by ID. Only an unused policy group (that is not linked to any environment) can be removed.
-func (c *Client) DeletePolicyGroup(ctx context.Context, policyGroup string) (*client.Response, error) {
-	httpResp, err := c.DeletePolicyGroupRaw(ctx, policyGroup)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) DeletePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, environment string) (*http.Response, error) {
+// This endpoint deletes a [policy group](/docs/policy-governance#open-policy-agent) by ID. Only an unused policy group (that is not linked to any environment) can be removed.
+func (c *Client) DeletePolicyGroup(ctx context.Context, policyGroup string) error {
+	resp, err := c.DeletePolicyGroupRaw(ctx, policyGroup)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (c *Client) DeletePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, environment string) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments/{environment}"
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeletePolicyGroupEnvironments(ctx context.Context, policyGroup string, environment string) (*client.Response, error) {
-	httpResp, err := c.DeletePolicyGroupEnvironmentsRaw(ctx, policyGroup, environment)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeletePolicyGroupEnvironments(ctx context.Context, policyGroup string, environment string) error {
+	resp, err := c.DeletePolicyGroupEnvironmentsRaw(ctx, policyGroup, environment)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific [policy group](/docs/policy-governance#open-policy-agent).
-func (c *Client) GetPolicyGroupRaw(ctx context.Context, policyGroup string, opts *GetPolicyGroupOptions) (*http.Response, error) {
+func (c *Client) GetPolicyGroupRaw(ctx context.Context, policyGroup string, opts *GetPolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
@@ -168,32 +175,34 @@ func (c *Client) GetPolicyGroupRaw(ctx context.Context, policyGroup string, opts
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific [policy group](/docs/policy-governance#open-policy-agent).
-func (c *Client) GetPolicyGroup(ctx context.Context, policyGroup string, opts *GetPolicyGroupOptions) (*schemas.PolicyGroup, *client.Response, error) {
-	httpResp, err := c.GetPolicyGroupRaw(ctx, policyGroup, opts)
+func (c *Client) GetPolicyGroup(ctx context.Context, policyGroup string, opts *GetPolicyGroupOptions) (*schemas.PolicyGroup, error) {
+	resp, err := c.GetPolicyGroupRaw(ctx, policyGroup, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.PolicyGroup      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetPolicyGroupOptions holds optional parameters for GetPolicyGroup
@@ -204,7 +213,7 @@ type GetPolicyGroupOptions struct {
 }
 
 // This endpoint returns a list of [policy groups](/docs/policy-governance#open-policy-agent).
-func (c *Client) ListPolicyGroupsRaw(ctx context.Context, opts *ListPolicyGroupsOptions) (*http.Response, error) {
+func (c *Client) ListPolicyGroupsRaw(ctx context.Context, opts *ListPolicyGroupsOptions) (*client.Response, error) {
 	path := "/policy-groups"
 
 	params := url.Values{}
@@ -236,18 +245,20 @@ func (c *Client) ListPolicyGroupsRaw(ctx context.Context, opts *ListPolicyGroups
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [policy groups](/docs/policy-governance#open-policy-agent).
-func (c *Client) ListPolicyGroups(ctx context.Context, opts *ListPolicyGroupsOptions) ([]*schemas.PolicyGroup, *client.Response, error) {
-	httpResp, err := c.ListPolicyGroupsRaw(ctx, opts)
+func (c *Client) ListPolicyGroups(ctx context.Context, opts *ListPolicyGroupsOptions) ([]*schemas.PolicyGroup, error) {
+	resp, err := c.ListPolicyGroupsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.PolicyGroup `json:"data"`
@@ -256,8 +267,8 @@ func (c *Client) ListPolicyGroups(ctx context.Context, opts *ListPolicyGroupsOpt
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.PolicyGroup, len(result.Data))
@@ -268,8 +279,7 @@ func (c *Client) ListPolicyGroups(ctx context.Context, opts *ListPolicyGroupsOpt
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListPolicyGroupsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -310,22 +320,40 @@ func (c *Client) ListPolicyGroupsIter(ctx context.Context, opts *ListPolicyGroup
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListPolicyGroups(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListPolicyGroupsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.PolicyGroup{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.PolicyGroup `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.PolicyGroup{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -365,13 +393,36 @@ func (c *Client) ListPolicyGroupsPaged(ctx context.Context, opts *ListPolicyGrou
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListPolicyGroups(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListPolicyGroupsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.PolicyGroup `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.PolicyGroup, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.PolicyGroup](ctx, pageSize, fetchPage)
@@ -394,7 +445,7 @@ type ListPolicyGroupsOptions struct {
 	Filter map[string]string
 }
 
-func (c *Client) ListPullRequestPolicyCheckResultsRaw(ctx context.Context, policyGroup string, opts *ListPullRequestPolicyCheckResultsOptions) (*http.Response, error) {
+func (c *Client) ListPullRequestPolicyCheckResultsRaw(ctx context.Context, policyGroup string, opts *ListPullRequestPolicyCheckResultsOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/pull-request-policy-check-results"
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
@@ -435,17 +486,19 @@ func (c *Client) ListPullRequestPolicyCheckResultsRaw(ctx context.Context, polic
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) ListPullRequestPolicyCheckResults(ctx context.Context, policyGroup string, opts *ListPullRequestPolicyCheckResultsOptions) ([]*schemas.PolicyCheckResult, *client.Response, error) {
-	httpResp, err := c.ListPullRequestPolicyCheckResultsRaw(ctx, policyGroup, opts)
+func (c *Client) ListPullRequestPolicyCheckResults(ctx context.Context, policyGroup string, opts *ListPullRequestPolicyCheckResultsOptions) ([]*schemas.PolicyCheckResult, error) {
+	resp, err := c.ListPullRequestPolicyCheckResultsRaw(ctx, policyGroup, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.PolicyCheckResult `json:"data"`
@@ -454,8 +507,8 @@ func (c *Client) ListPullRequestPolicyCheckResults(ctx context.Context, policyGr
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.PolicyCheckResult, len(result.Data))
@@ -466,8 +519,7 @@ func (c *Client) ListPullRequestPolicyCheckResults(ctx context.Context, policyGr
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListPullRequestPolicyCheckResultsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -508,22 +560,40 @@ func (c *Client) ListPullRequestPolicyCheckResultsIter(ctx context.Context, poli
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListPullRequestPolicyCheckResults(ctx, policyGroup, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListPullRequestPolicyCheckResultsRaw(ctx, policyGroup, pageOpts)
 			if err != nil {
 				yield(schemas.PolicyCheckResult{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.PolicyCheckResult `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.PolicyCheckResult{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -563,13 +633,36 @@ func (c *Client) ListPullRequestPolicyCheckResultsPaged(ctx context.Context, pol
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListPullRequestPolicyCheckResults(ctx, policyGroup, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListPullRequestPolicyCheckResultsRaw(ctx, policyGroup, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.PolicyCheckResult `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.PolicyCheckResult, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.PolicyCheckResult](ctx, pageSize, fetchPage)
@@ -597,7 +690,7 @@ type ListPullRequestPolicyCheckResultsOptions struct {
 }
 
 // This endpoint updates a [policy group](/docs/policy-governance#open-policy-agent) by ID.
-func (c *Client) UpdatePolicyGroupRaw(ctx context.Context, policyGroup string, req *schemas.PolicyGroupRequest, opts *UpdatePolicyGroupOptions) (*http.Response, error) {
+func (c *Client) UpdatePolicyGroupRaw(ctx context.Context, policyGroup string, req *schemas.PolicyGroupRequest, opts *UpdatePolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
@@ -617,32 +710,34 @@ func (c *Client) UpdatePolicyGroupRaw(ctx context.Context, policyGroup string, r
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates a [policy group](/docs/policy-governance#open-policy-agent) by ID.
-func (c *Client) UpdatePolicyGroup(ctx context.Context, policyGroup string, req *schemas.PolicyGroupRequest, opts *UpdatePolicyGroupOptions) (*schemas.PolicyGroup, *client.Response, error) {
-	httpResp, err := c.UpdatePolicyGroupRaw(ctx, policyGroup, req, opts)
+func (c *Client) UpdatePolicyGroup(ctx context.Context, policyGroup string, req *schemas.PolicyGroupRequest, opts *UpdatePolicyGroupOptions) (*schemas.PolicyGroup, error) {
+	resp, err := c.UpdatePolicyGroupRaw(ctx, policyGroup, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.PolicyGroup      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdatePolicyGroupOptions holds optional parameters for UpdatePolicyGroup
@@ -652,7 +747,7 @@ type UpdatePolicyGroupOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) UpdatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*http.Response, error) {
+func (c *Client) UpdatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments"
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
@@ -665,17 +760,19 @@ func (c *Client) UpdatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGro
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Patch(ctx, path, body, nil)
-}
-
-func (c *Client) UpdatePolicyGroupEnvironments(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
-	httpResp, err := c.UpdatePolicyGroupEnvironmentsRaw(ctx, policyGroup, req)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) UpdatePolicyGroupEnvironments(ctx context.Context, policyGroup string, req []schemas.Environment) error {
+	resp, err := c.UpdatePolicyGroupEnvironmentsRaw(ctx, policyGroup, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }

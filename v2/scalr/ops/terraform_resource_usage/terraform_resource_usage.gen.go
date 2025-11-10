@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,7 +26,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint returns instance of resource usage.
-func (c *Client) GetResourceUsageRaw(ctx context.Context, resourceUsage string, opts *GetResourceUsageOptions) (*http.Response, error) {
+func (c *Client) GetResourceUsageRaw(ctx context.Context, resourceUsage string, opts *GetResourceUsageOptions) (*client.Response, error) {
 	path := "/reports/resources/{resource_usage}"
 	path = strings.ReplaceAll(path, "{resource_usage}", url.PathEscape(resourceUsage))
 
@@ -44,32 +43,34 @@ func (c *Client) GetResourceUsageRaw(ctx context.Context, resourceUsage string, 
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns instance of resource usage.
-func (c *Client) GetResourceUsage(ctx context.Context, resourceUsage string, opts *GetResourceUsageOptions) (*schemas.TerraformResourceUsage, *client.Response, error) {
-	httpResp, err := c.GetResourceUsageRaw(ctx, resourceUsage, opts)
+func (c *Client) GetResourceUsage(ctx context.Context, resourceUsage string, opts *GetResourceUsageOptions) (*schemas.TerraformResourceUsage, error) {
+	resp, err := c.GetResourceUsageRaw(ctx, resourceUsage, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.TerraformResourceUsage `json:"data"`
 		Included []map[string]interface{}       `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetResourceUsageOptions holds optional parameters for GetResourceUsage
@@ -80,7 +81,7 @@ type GetResourceUsageOptions struct {
 }
 
 // This endpoint lists unique terraform resource provider types.
-func (c *Client) ListTerraformResourceProvidersRaw(ctx context.Context, opts *ListTerraformResourceProvidersOptions) (*http.Response, error) {
+func (c *Client) ListTerraformResourceProvidersRaw(ctx context.Context, opts *ListTerraformResourceProvidersOptions) (*client.Response, error) {
 	path := "/reports/resource-providers"
 
 	params := url.Values{}
@@ -98,24 +99,26 @@ func (c *Client) ListTerraformResourceProvidersRaw(ctx context.Context, opts *Li
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists unique terraform resource provider types.
-func (c *Client) ListTerraformResourceProviders(ctx context.Context, opts *ListTerraformResourceProvidersOptions) (string, *client.Response, error) {
-	httpResp, err := c.ListTerraformResourceProvidersRaw(ctx, opts)
+func (c *Client) ListTerraformResourceProviders(ctx context.Context, opts *ListTerraformResourceProvidersOptions) (string, error) {
+	resp, err := c.ListTerraformResourceProvidersRaw(ctx, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // ListTerraformResourceProvidersOptions holds optional parameters for ListTerraformResourceProviders
@@ -126,7 +129,7 @@ type ListTerraformResourceProvidersOptions struct {
 }
 
 // This endpoint lists terraform resource usages.
-func (c *Client) ListTerraformResourceUsagesRaw(ctx context.Context, opts *ListTerraformResourceUsagesOptions) (*http.Response, error) {
+func (c *Client) ListTerraformResourceUsagesRaw(ctx context.Context, opts *ListTerraformResourceUsagesOptions) (*client.Response, error) {
 	path := "/reports/resources"
 
 	params := url.Values{}
@@ -159,18 +162,20 @@ func (c *Client) ListTerraformResourceUsagesRaw(ctx context.Context, opts *ListT
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists terraform resource usages.
-func (c *Client) ListTerraformResourceUsages(ctx context.Context, opts *ListTerraformResourceUsagesOptions) ([]*schemas.TerraformResourceUsage, *client.Response, error) {
-	httpResp, err := c.ListTerraformResourceUsagesRaw(ctx, opts)
+func (c *Client) ListTerraformResourceUsages(ctx context.Context, opts *ListTerraformResourceUsagesOptions) ([]*schemas.TerraformResourceUsage, error) {
+	resp, err := c.ListTerraformResourceUsagesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.TerraformResourceUsage `json:"data"`
@@ -179,8 +184,8 @@ func (c *Client) ListTerraformResourceUsages(ctx context.Context, opts *ListTerr
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.TerraformResourceUsage, len(result.Data))
@@ -191,8 +196,7 @@ func (c *Client) ListTerraformResourceUsages(ctx context.Context, opts *ListTerr
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListTerraformResourceUsagesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -233,22 +237,40 @@ func (c *Client) ListTerraformResourceUsagesIter(ctx context.Context, opts *List
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListTerraformResourceUsages(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListTerraformResourceUsagesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.TerraformResourceUsage{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.TerraformResourceUsage `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.TerraformResourceUsage{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -288,13 +310,36 @@ func (c *Client) ListTerraformResourceUsagesPaged(ctx context.Context, opts *Lis
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListTerraformResourceUsages(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListTerraformResourceUsagesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.TerraformResourceUsage `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.TerraformResourceUsage, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.TerraformResourceUsage](ctx, pageSize, fetchPage)

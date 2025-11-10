@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,76 +25,82 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Show details of a specific Cost Estimate phase.
-func (c *Client) GetCostEstimateRaw(ctx context.Context, costEstimate string) (*http.Response, error) {
+func (c *Client) GetCostEstimateRaw(ctx context.Context, costEstimate string) (*client.Response, error) {
 	path := "/cost-estimates/{cost_estimate}"
 	path = strings.ReplaceAll(path, "{cost_estimate}", url.PathEscape(costEstimate))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Cost Estimate phase.
-func (c *Client) GetCostEstimate(ctx context.Context, costEstimate string) (*schemas.CostEstimate, *client.Response, error) {
-	httpResp, err := c.GetCostEstimateRaw(ctx, costEstimate)
+func (c *Client) GetCostEstimate(ctx context.Context, costEstimate string) (*schemas.CostEstimate, error) {
+	resp, err := c.GetCostEstimateRaw(ctx, costEstimate)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.CostEstimate     `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // This endpoint generates a temporary public URL, that can be used to download a [JSON formatted cost breakdown](https://www.infracost.io/docs/multi_project/report/#examples).
-func (c *Client) GetCostEstimateBreakdownRaw(ctx context.Context, costEstimate string) (*http.Response, error) {
+func (c *Client) GetCostEstimateBreakdownRaw(ctx context.Context, costEstimate string) (*client.Response, error) {
 	path := "/cost-estimates/{cost_estimate}/breakdown"
 	path = strings.ReplaceAll(path, "{cost_estimate}", url.PathEscape(costEstimate))
 
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// This endpoint generates a temporary public URL, that can be used to download a [JSON formatted cost breakdown](https://www.infracost.io/docs/multi_project/report/#examples).
-func (c *Client) GetCostEstimateBreakdown(ctx context.Context, costEstimate string) (*client.Response, error) {
-	httpResp, err := c.GetCostEstimateBreakdownRaw(ctx, costEstimate)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint generates a temporary public URL, that can be used to download a [JSON formatted cost breakdown](https://www.infracost.io/docs/multi_project/report/#examples).
+func (c *Client) GetCostEstimateBreakdown(ctx context.Context, costEstimate string) error {
+	resp, err := c.GetCostEstimateBreakdownRaw(ctx, costEstimate)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint generates a temporary public URL, that can be used to download a raw `text/plan` output of the cost estimation.
-func (c *Client) GetCostEstimateLogRaw(ctx context.Context, costEstimate string) (*http.Response, error) {
+func (c *Client) GetCostEstimateLogRaw(ctx context.Context, costEstimate string) (*client.Response, error) {
 	path := "/cost-estimates/{cost_estimate}/output"
 	path = strings.ReplaceAll(path, "{cost_estimate}", url.PathEscape(costEstimate))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint generates a temporary public URL, that can be used to download a raw `text/plan` output of the cost estimation.
-func (c *Client) GetCostEstimateLog(ctx context.Context, costEstimate string) (string, *client.Response, error) {
-	httpResp, err := c.GetCostEstimateLogRaw(ctx, costEstimate)
+func (c *Client) GetCostEstimateLog(ctx context.Context, costEstimate string) (string, error) {
+	resp, err := c.GetCostEstimateLogRaw(ctx, costEstimate)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }

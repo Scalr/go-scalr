@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/scalr/go-scalr/v2/scalr/client"
 	"github.com/scalr/go-scalr/v2/scalr/schemas"
@@ -23,59 +22,63 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint returns the security rules for the current account. If no security rules exist for the account, they will be automatically created with default values.
-func (c *Client) GetSecurityRulesRaw(ctx context.Context) (*http.Response, error) {
+func (c *Client) GetSecurityRulesRaw(ctx context.Context) (*client.Response, error) {
 	path := "/security-rules"
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns the security rules for the current account. If no security rules exist for the account, they will be automatically created with default values.
-func (c *Client) GetSecurityRules(ctx context.Context) (*schemas.SecurityRules, *client.Response, error) {
-	httpResp, err := c.GetSecurityRulesRaw(ctx)
+func (c *Client) GetSecurityRules(ctx context.Context) (*schemas.SecurityRules, error) {
+	resp, err := c.GetSecurityRulesRaw(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SecurityRules    `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // This endpoint updates the security rules for the current account. If no security rules exist for the account, they will be automatically created.
-func (c *Client) UpdateSecurityRulesRaw(ctx context.Context, req *schemas.SecurityRulesRequest) (*http.Response, error) {
+func (c *Client) UpdateSecurityRulesRaw(ctx context.Context, req *schemas.SecurityRulesRequest) (*client.Response, error) {
 	path := "/security-rules"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates the security rules for the current account. If no security rules exist for the account, they will be automatically created.
-func (c *Client) UpdateSecurityRules(ctx context.Context, req *schemas.SecurityRulesRequest) (*schemas.SecurityRules, *client.Response, error) {
-	httpResp, err := c.UpdateSecurityRulesRaw(ctx, req)
+func (c *Client) UpdateSecurityRules(ctx context.Context, req *schemas.SecurityRulesRequest) (*schemas.SecurityRules, error) {
+	resp, err := c.UpdateSecurityRulesRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SecurityRules    `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) user without access to any account. To invite user to the account /accounts/:id/actions/invite should be used.
-func (c *Client) CreateUserRaw(ctx context.Context, req *schemas.CreateUserRequest, opts *CreateUserOptions) (*http.Response, error) {
+func (c *Client) CreateUserRaw(ctx context.Context, req *schemas.CreateUserRequest, opts *CreateUserOptions) (*client.Response, error) {
 	path := "/users"
 
 	params := url.Values{}
@@ -45,32 +44,34 @@ func (c *Client) CreateUserRaw(ctx context.Context, req *schemas.CreateUserReque
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) user without access to any account. To invite user to the account /accounts/:id/actions/invite should be used.
-func (c *Client) CreateUser(ctx context.Context, req *schemas.CreateUserRequest, opts *CreateUserOptions) (*schemas.CreateUser, *client.Response, error) {
-	httpResp, err := c.CreateUserRaw(ctx, req, opts)
+func (c *Client) CreateUser(ctx context.Context, req *schemas.CreateUserRequest, opts *CreateUserOptions) (*schemas.CreateUser, error) {
+	resp, err := c.CreateUserRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.CreateUser       `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateUserOptions holds optional parameters for CreateUser
@@ -81,28 +82,30 @@ type CreateUserOptions struct {
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
-func (c *Client) DeleteUserRaw(ctx context.Context, user string) (*http.Response, error) {
+func (c *Client) DeleteUserRaw(ctx context.Context, user string) (*client.Response, error) {
 	path := "/users/{user}"
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
-func (c *Client) DeleteUser(ctx context.Context, user string) (*client.Response, error) {
-	httpResp, err := c.DeleteUserRaw(ctx, user)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
+func (c *Client) DeleteUser(ctx context.Context, user string) error {
+	resp, err := c.DeleteUserRaw(ctx, user)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint returns a list of `AccountUser` resources. To get the list of accounts the user has access to, the `filter[user]` has to be specified. To get the list of users that have access to an account the `filter[account]` has to be specified.
-func (c *Client) GetAccountUsersRaw(ctx context.Context, opts *GetAccountUsersOptions) (*http.Response, error) {
+func (c *Client) GetAccountUsersRaw(ctx context.Context, opts *GetAccountUsersOptions) (*client.Response, error) {
 	path := "/account-users"
 
 	params := url.Values{}
@@ -132,18 +135,20 @@ func (c *Client) GetAccountUsersRaw(ctx context.Context, opts *GetAccountUsersOp
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of `AccountUser` resources. To get the list of accounts the user has access to, the `filter[user]` has to be specified. To get the list of users that have access to an account the `filter[account]` has to be specified.
-func (c *Client) GetAccountUsers(ctx context.Context, opts *GetAccountUsersOptions) ([]*schemas.AccountUser, *client.Response, error) {
-	httpResp, err := c.GetAccountUsersRaw(ctx, opts)
+func (c *Client) GetAccountUsers(ctx context.Context, opts *GetAccountUsersOptions) ([]*schemas.AccountUser, error) {
+	resp, err := c.GetAccountUsersRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AccountUser `json:"data"`
@@ -152,8 +157,8 @@ func (c *Client) GetAccountUsers(ctx context.Context, opts *GetAccountUsersOptio
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AccountUser, len(result.Data))
@@ -164,8 +169,7 @@ func (c *Client) GetAccountUsers(ctx context.Context, opts *GetAccountUsersOptio
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetAccountUsersIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -206,22 +210,40 @@ func (c *Client) GetAccountUsersIter(ctx context.Context, opts *GetAccountUsersO
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetAccountUsers(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetAccountUsersRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.AccountUser{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AccountUser `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AccountUser{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -261,13 +283,36 @@ func (c *Client) GetAccountUsersPaged(ctx context.Context, opts *GetAccountUsers
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetAccountUsers(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetAccountUsersRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AccountUser `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AccountUser, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AccountUser](ctx, pageSize, fetchPage)
@@ -289,7 +334,7 @@ type GetAccountUsersOptions struct {
 }
 
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
-func (c *Client) GetUserRaw(ctx context.Context, user string, opts *GetUserOptions) (*http.Response, error) {
+func (c *Client) GetUserRaw(ctx context.Context, user string, opts *GetUserOptions) (*client.Response, error) {
 	path := "/users/{user}"
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
@@ -307,32 +352,34 @@ func (c *Client) GetUserRaw(ctx context.Context, user string, opts *GetUserOptio
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
-func (c *Client) GetUser(ctx context.Context, user string, opts *GetUserOptions) (*schemas.User, *client.Response, error) {
-	httpResp, err := c.GetUserRaw(ctx, user, opts)
+func (c *Client) GetUser(ctx context.Context, user string, opts *GetUserOptions) (*schemas.User, error) {
+	resp, err := c.GetUserRaw(ctx, user, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.User             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetUserOptions holds optional parameters for GetUser
@@ -343,7 +390,7 @@ type GetUserOptions struct {
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) users. The response can be filtered by IdP: `filter[identity-provider]` or user ID: `filter[user]`.
-func (c *Client) GetUsersRaw(ctx context.Context, opts *GetUsersOptions) (*http.Response, error) {
+func (c *Client) GetUsersRaw(ctx context.Context, opts *GetUsersOptions) (*client.Response, error) {
 	path := "/users"
 
 	params := url.Values{}
@@ -377,18 +424,20 @@ func (c *Client) GetUsersRaw(ctx context.Context, opts *GetUsersOptions) (*http.
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) users. The response can be filtered by IdP: `filter[identity-provider]` or user ID: `filter[user]`.
-func (c *Client) GetUsers(ctx context.Context, opts *GetUsersOptions) ([]*schemas.User, *client.Response, error) {
-	httpResp, err := c.GetUsersRaw(ctx, opts)
+func (c *Client) GetUsers(ctx context.Context, opts *GetUsersOptions) ([]*schemas.User, error) {
+	resp, err := c.GetUsersRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.User `json:"data"`
@@ -397,8 +446,8 @@ func (c *Client) GetUsers(ctx context.Context, opts *GetUsersOptions) ([]*schema
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.User, len(result.Data))
@@ -409,8 +458,7 @@ func (c *Client) GetUsers(ctx context.Context, opts *GetUsersOptions) ([]*schema
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetUsersIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -451,22 +499,40 @@ func (c *Client) GetUsersIter(ctx context.Context, opts *GetUsersOptions) iter.S
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetUsers(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetUsersRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.User{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.User `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -506,13 +572,36 @@ func (c *Client) GetUsersPaged(ctx context.Context, opts *GetUsersOptions) *clie
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetUsers(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetUsersRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.User `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.User, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.User](ctx, pageSize, fetchPage)
@@ -536,7 +625,7 @@ type GetUsersOptions struct {
 }
 
 // Invite the user to the account by adding it to the account teams and/or creating access policies within the account. If the user with a specified email does not exist - a new one will be created. The new user will be in the 'pending' status until the first login to the account. This is the preferred way to create users.
-func (c *Client) InviteUserToAccountRaw(ctx context.Context, account string, req *schemas.UserInviteRequest, opts *InviteUserToAccountOptions) (*http.Response, error) {
+func (c *Client) InviteUserToAccountRaw(ctx context.Context, account string, req *schemas.UserInviteRequest, opts *InviteUserToAccountOptions) (*client.Response, error) {
 	path := "/accounts/{account}/actions/invite"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
@@ -556,32 +645,34 @@ func (c *Client) InviteUserToAccountRaw(ctx context.Context, account string, req
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Invite the user to the account by adding it to the account teams and/or creating access policies within the account. If the user with a specified email does not exist - a new one will be created. The new user will be in the 'pending' status until the first login to the account. This is the preferred way to create users.
-func (c *Client) InviteUserToAccount(ctx context.Context, account string, req *schemas.UserInviteRequest, opts *InviteUserToAccountOptions) (*schemas.AccountUser, *client.Response, error) {
-	httpResp, err := c.InviteUserToAccountRaw(ctx, account, req, opts)
+func (c *Client) InviteUserToAccount(ctx context.Context, account string, req *schemas.UserInviteRequest, opts *InviteUserToAccountOptions) (*schemas.AccountUser, error) {
+	resp, err := c.InviteUserToAccountRaw(ctx, account, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccountUser      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // InviteUserToAccountOptions holds optional parameters for InviteUserToAccount
@@ -592,29 +683,31 @@ type InviteUserToAccountOptions struct {
 }
 
 // The endpoint removes all user access policies and team bindings associated with the account.
-func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, user string) (*http.Response, error) {
+func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, user string) (*client.Response, error) {
 	path := "/accounts/{account}/actions/remove/{user}"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint removes all user access policies and team bindings associated with the account.
-func (c *Client) RemoveUserFromAccount(ctx context.Context, account string, user string) (*client.Response, error) {
-	httpResp, err := c.RemoveUserFromAccountRaw(ctx, account, user)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// The endpoint removes all user access policies and team bindings associated with the account.
+func (c *Client) RemoveUserFromAccount(ctx context.Context, account string, user string) error {
+	resp, err := c.RemoveUserFromAccountRaw(ctx, account, user)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
-func (c *Client) UpdateUserRaw(ctx context.Context, user string, req *schemas.UserRequest, opts *UpdateUserOptions) (*http.Response, error) {
+func (c *Client) UpdateUserRaw(ctx context.Context, user string, req *schemas.UserRequest, opts *UpdateUserOptions) (*client.Response, error) {
 	path := "/users/{user}"
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
@@ -634,32 +727,34 @@ func (c *Client) UpdateUserRaw(ctx context.Context, user string, req *schemas.Us
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
-func (c *Client) UpdateUser(ctx context.Context, user string, req *schemas.UserRequest, opts *UpdateUserOptions) (*schemas.User, *client.Response, error) {
-	httpResp, err := c.UpdateUserRaw(ctx, user, req, opts)
+func (c *Client) UpdateUser(ctx context.Context, user string, req *schemas.UserRequest, opts *UpdateUserOptions) (*schemas.User, error) {
+	resp, err := c.UpdateUserRaw(ctx, user, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.User             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateUserOptions holds optional parameters for UpdateUser

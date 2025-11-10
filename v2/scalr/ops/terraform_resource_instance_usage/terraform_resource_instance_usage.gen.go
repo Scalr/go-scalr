@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint lists terraform resource instances usage.
-func (c *Client) ListTerraformResourceInstancesUsageRaw(ctx context.Context, opts *ListTerraformResourceInstancesUsageOptions) (*http.Response, error) {
+func (c *Client) ListTerraformResourceInstancesUsageRaw(ctx context.Context, opts *ListTerraformResourceInstancesUsageOptions) (*client.Response, error) {
 	path := "/reports/resource-usage"
 
 	params := url.Values{}
@@ -62,18 +61,20 @@ func (c *Client) ListTerraformResourceInstancesUsageRaw(ctx context.Context, opt
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists terraform resource instances usage.
-func (c *Client) ListTerraformResourceInstancesUsage(ctx context.Context, opts *ListTerraformResourceInstancesUsageOptions) ([]*schemas.TerraformResourceInstanceUsage, *client.Response, error) {
-	httpResp, err := c.ListTerraformResourceInstancesUsageRaw(ctx, opts)
+func (c *Client) ListTerraformResourceInstancesUsage(ctx context.Context, opts *ListTerraformResourceInstancesUsageOptions) ([]*schemas.TerraformResourceInstanceUsage, error) {
+	resp, err := c.ListTerraformResourceInstancesUsageRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.TerraformResourceInstanceUsage `json:"data"`
@@ -82,8 +83,8 @@ func (c *Client) ListTerraformResourceInstancesUsage(ctx context.Context, opts *
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.TerraformResourceInstanceUsage, len(result.Data))
@@ -94,8 +95,7 @@ func (c *Client) ListTerraformResourceInstancesUsage(ctx context.Context, opts *
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListTerraformResourceInstancesUsageIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -136,22 +136,40 @@ func (c *Client) ListTerraformResourceInstancesUsageIter(ctx context.Context, op
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListTerraformResourceInstancesUsage(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListTerraformResourceInstancesUsageRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.TerraformResourceInstanceUsage{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.TerraformResourceInstanceUsage `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.TerraformResourceInstanceUsage{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -191,13 +209,36 @@ func (c *Client) ListTerraformResourceInstancesUsagePaged(ctx context.Context, o
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListTerraformResourceInstancesUsage(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListTerraformResourceInstancesUsageRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.TerraformResourceInstanceUsage `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.TerraformResourceInstanceUsage, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.TerraformResourceInstanceUsage](ctx, pageSize, fetchPage)

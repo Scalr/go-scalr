@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // List policy check results for a specific policy group check. Required permission: policy_groups:read
-func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupCheck string, opts *GetPolicyGroupCheckResultsOptions) (*http.Response, error) {
+func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupCheck string, opts *GetPolicyGroupCheckResultsOptions) (*client.Response, error) {
 	path := "/policy-group-checks/{policy_group_check}/policy-check-results"
 	path = strings.ReplaceAll(path, "{policy_group_check}", url.PathEscape(policyGroupCheck))
 
@@ -63,18 +62,20 @@ func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupC
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // List policy check results for a specific policy group check. Required permission: policy_groups:read
-func (c *Client) GetPolicyGroupCheckResults(ctx context.Context, policyGroupCheck string, opts *GetPolicyGroupCheckResultsOptions) ([]*schemas.PolicyCheckResult, *client.Response, error) {
-	httpResp, err := c.GetPolicyGroupCheckResultsRaw(ctx, policyGroupCheck, opts)
+func (c *Client) GetPolicyGroupCheckResults(ctx context.Context, policyGroupCheck string, opts *GetPolicyGroupCheckResultsOptions) ([]*schemas.PolicyCheckResult, error) {
+	resp, err := c.GetPolicyGroupCheckResultsRaw(ctx, policyGroupCheck, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.PolicyCheckResult `json:"data"`
@@ -83,8 +84,8 @@ func (c *Client) GetPolicyGroupCheckResults(ctx context.Context, policyGroupChec
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.PolicyCheckResult, len(result.Data))
@@ -95,8 +96,7 @@ func (c *Client) GetPolicyGroupCheckResults(ctx context.Context, policyGroupChec
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetPolicyGroupCheckResultsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -137,22 +137,40 @@ func (c *Client) GetPolicyGroupCheckResultsIter(ctx context.Context, policyGroup
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetPolicyGroupCheckResults(ctx, policyGroupCheck, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetPolicyGroupCheckResultsRaw(ctx, policyGroupCheck, pageOpts)
 			if err != nil {
 				yield(schemas.PolicyCheckResult{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.PolicyCheckResult `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.PolicyCheckResult{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -192,13 +210,36 @@ func (c *Client) GetPolicyGroupCheckResultsPaged(ctx context.Context, policyGrou
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetPolicyGroupCheckResults(ctx, policyGroupCheck, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetPolicyGroupCheckResultsRaw(ctx, policyGroupCheck, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.PolicyCheckResult `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.PolicyCheckResult, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.PolicyCheckResult](ctx, pageSize, fetchPage)

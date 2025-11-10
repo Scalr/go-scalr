@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,62 +25,66 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint creates Slack integration.
-func (c *Client) CreateSlackIntegrationRaw(ctx context.Context, req *schemas.SlackIntegrationRequest) (*http.Response, error) {
+func (c *Client) CreateSlackIntegrationRaw(ctx context.Context, req *schemas.SlackIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/slack"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint creates Slack integration.
-func (c *Client) CreateSlackIntegration(ctx context.Context, req *schemas.SlackIntegrationRequest) (*schemas.SlackIntegration, *client.Response, error) {
-	httpResp, err := c.CreateSlackIntegrationRaw(ctx, req)
+func (c *Client) CreateSlackIntegration(ctx context.Context, req *schemas.SlackIntegrationRequest) (*schemas.SlackIntegration, error) {
+	resp, err := c.CreateSlackIntegrationRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SlackIntegration `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // This endpoint deletes Slack integration.
-func (c *Client) DeleteSlackIntegrationRaw(ctx context.Context, slackIntegration string) (*http.Response, error) {
+func (c *Client) DeleteSlackIntegrationRaw(ctx context.Context, slackIntegration string) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// This endpoint deletes Slack integration.
-func (c *Client) DeleteSlackIntegration(ctx context.Context, slackIntegration string) (*client.Response, error) {
-	httpResp, err := c.DeleteSlackIntegrationRaw(ctx, slackIntegration)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint deletes Slack integration.
+func (c *Client) DeleteSlackIntegration(ctx context.Context, slackIntegration string) error {
+	resp, err := c.DeleteSlackIntegrationRaw(ctx, slackIntegration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific Slack integration.
-func (c *Client) GetSlackIntegrationRaw(ctx context.Context, slackIntegration string, opts *GetSlackIntegrationOptions) (*http.Response, error) {
+func (c *Client) GetSlackIntegrationRaw(ctx context.Context, slackIntegration string, opts *GetSlackIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
@@ -99,32 +102,34 @@ func (c *Client) GetSlackIntegrationRaw(ctx context.Context, slackIntegration st
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Slack integration.
-func (c *Client) GetSlackIntegration(ctx context.Context, slackIntegration string, opts *GetSlackIntegrationOptions) (*schemas.SlackIntegration, *client.Response, error) {
-	httpResp, err := c.GetSlackIntegrationRaw(ctx, slackIntegration, opts)
+func (c *Client) GetSlackIntegration(ctx context.Context, slackIntegration string, opts *GetSlackIntegrationOptions) (*schemas.SlackIntegration, error) {
+	resp, err := c.GetSlackIntegrationRaw(ctx, slackIntegration, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SlackIntegration `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetSlackIntegrationOptions holds optional parameters for GetSlackIntegration
@@ -135,7 +140,7 @@ type GetSlackIntegrationOptions struct {
 }
 
 // This endpoint returns a list of Slack integrations.
-func (c *Client) ListSlackIntegrationsRaw(ctx context.Context, opts *ListSlackIntegrationsOptions) (*http.Response, error) {
+func (c *Client) ListSlackIntegrationsRaw(ctx context.Context, opts *ListSlackIntegrationsOptions) (*client.Response, error) {
 	path := "/integrations/slack"
 
 	params := url.Values{}
@@ -161,18 +166,20 @@ func (c *Client) ListSlackIntegrationsRaw(ctx context.Context, opts *ListSlackIn
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of Slack integrations.
-func (c *Client) ListSlackIntegrations(ctx context.Context, opts *ListSlackIntegrationsOptions) ([]*schemas.SlackIntegration, *client.Response, error) {
-	httpResp, err := c.ListSlackIntegrationsRaw(ctx, opts)
+func (c *Client) ListSlackIntegrations(ctx context.Context, opts *ListSlackIntegrationsOptions) ([]*schemas.SlackIntegration, error) {
+	resp, err := c.ListSlackIntegrationsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.SlackIntegration `json:"data"`
@@ -181,8 +188,8 @@ func (c *Client) ListSlackIntegrations(ctx context.Context, opts *ListSlackInteg
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.SlackIntegration, len(result.Data))
@@ -193,8 +200,7 @@ func (c *Client) ListSlackIntegrations(ctx context.Context, opts *ListSlackInteg
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListSlackIntegrationsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -235,22 +241,40 @@ func (c *Client) ListSlackIntegrationsIter(ctx context.Context, opts *ListSlackI
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListSlackIntegrations(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListSlackIntegrationsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.SlackIntegration{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.SlackIntegration `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.SlackIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -290,13 +314,36 @@ func (c *Client) ListSlackIntegrationsPaged(ctx context.Context, opts *ListSlack
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListSlackIntegrations(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListSlackIntegrationsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.SlackIntegration `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.SlackIntegration, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.SlackIntegration](ctx, pageSize, fetchPage)
@@ -316,36 +363,38 @@ type ListSlackIntegrationsOptions struct {
 }
 
 // This endpoint updates Slack integration.
-func (c *Client) UpdateSlackIntegrationRaw(ctx context.Context, slackIntegration string, req *schemas.SlackIntegrationRequest) (*http.Response, error) {
+func (c *Client) UpdateSlackIntegrationRaw(ctx context.Context, slackIntegration string, req *schemas.SlackIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates Slack integration.
-func (c *Client) UpdateSlackIntegration(ctx context.Context, slackIntegration string, req *schemas.SlackIntegrationRequest) (*schemas.SlackIntegration, *client.Response, error) {
-	httpResp, err := c.UpdateSlackIntegrationRaw(ctx, slackIntegration, req)
+func (c *Client) UpdateSlackIntegration(ctx context.Context, slackIntegration string, req *schemas.SlackIntegrationRequest) (*schemas.SlackIntegration, error) {
+	resp, err := c.UpdateSlackIntegrationRaw(ctx, slackIntegration, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SlackIntegration `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

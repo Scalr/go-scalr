@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,62 +25,66 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint creates a Module from a VCS repository. The module's source code directory should follow the [standard module structure](https://www.terraform.io/docs/language/modules/develop/structure.html). Scalr extracts various meta information from the module's source: * It's important to provide each `variable` and `output` blocks with a meaningful descriptions, as they will be displayed in a Module and Workspace Variables pages for your internal users. * README or README.md file will be displayed on a Module page. * Nested modules from `modules/` directory will be searchable and available though the Registry just like top-level modules. Modules can be published on both `account` and `environment` scopes. If neither scope is specified in the request body, the module will be published in the same scope that the related `vcs-provider` is published.
-func (c *Client) CreateModuleRaw(ctx context.Context, req *schemas.ModuleRequest) (*http.Response, error) {
+func (c *Client) CreateModuleRaw(ctx context.Context, req *schemas.ModuleRequest) (*client.Response, error) {
 	path := "/modules"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint creates a Module from a VCS repository. The module's source code directory should follow the [standard module structure](https://www.terraform.io/docs/language/modules/develop/structure.html). Scalr extracts various meta information from the module's source: * It's important to provide each `variable` and `output` blocks with a meaningful descriptions, as they will be displayed in a Module and Workspace Variables pages for your internal users. * README or README.md file will be displayed on a Module page. * Nested modules from `modules/` directory will be searchable and available though the Registry just like top-level modules. Modules can be published on both `account` and `environment` scopes. If neither scope is specified in the request body, the module will be published in the same scope that the related `vcs-provider` is published.
-func (c *Client) CreateModule(ctx context.Context, req *schemas.ModuleRequest) (*schemas.Module, *client.Response, error) {
-	httpResp, err := c.CreateModuleRaw(ctx, req)
+func (c *Client) CreateModule(ctx context.Context, req *schemas.ModuleRequest) (*schemas.Module, error) {
+	resp, err := c.CreateModuleRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Module           `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // This endpoint removes the module from the registry.
-func (c *Client) DeleteModuleRaw(ctx context.Context, module string) (*http.Response, error) {
+func (c *Client) DeleteModuleRaw(ctx context.Context, module string) (*client.Response, error) {
 	path := "/modules/{module}"
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// This endpoint removes the module from the registry.
-func (c *Client) DeleteModule(ctx context.Context, module string) (*client.Response, error) {
-	httpResp, err := c.DeleteModuleRaw(ctx, module)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint removes the module from the registry.
+func (c *Client) DeleteModule(ctx context.Context, module string) error {
+	resp, err := c.DeleteModuleRaw(ctx, module)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific terraform module.
-func (c *Client) GetModuleRaw(ctx context.Context, module string, opts *GetModuleOptions) (*http.Response, error) {
+func (c *Client) GetModuleRaw(ctx context.Context, module string, opts *GetModuleOptions) (*client.Response, error) {
 	path := "/modules/{module}"
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
@@ -99,32 +102,34 @@ func (c *Client) GetModuleRaw(ctx context.Context, module string, opts *GetModul
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific terraform module.
-func (c *Client) GetModule(ctx context.Context, module string, opts *GetModuleOptions) (*schemas.Module, *client.Response, error) {
-	httpResp, err := c.GetModuleRaw(ctx, module, opts)
+func (c *Client) GetModule(ctx context.Context, module string, opts *GetModuleOptions) (*schemas.Module, error) {
+	resp, err := c.GetModuleRaw(ctx, module, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Module           `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetModuleOptions holds optional parameters for GetModule
@@ -135,7 +140,7 @@ type GetModuleOptions struct {
 }
 
 // This endpoint lists modules by various filters. To list modules accessible from a certain environment, `filter[environment]` has to be specified. Modules from the account which this environment belongs as well as globally published modules will be listed as well. To list modules accessible from a certain account, `filter[account]` has to be specified. Modules published globally will be listed as well. To list modules accessible globally, both `filter[account]=null` and `filter[environment]=null` have to be specified. If no filters were specified, all modules which the user has read access to will be listed.
-func (c *Client) ListModulesRaw(ctx context.Context, opts *ListModulesOptions) (*http.Response, error) {
+func (c *Client) ListModulesRaw(ctx context.Context, opts *ListModulesOptions) (*client.Response, error) {
 	path := "/modules"
 
 	params := url.Values{}
@@ -167,18 +172,20 @@ func (c *Client) ListModulesRaw(ctx context.Context, opts *ListModulesOptions) (
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists modules by various filters. To list modules accessible from a certain environment, `filter[environment]` has to be specified. Modules from the account which this environment belongs as well as globally published modules will be listed as well. To list modules accessible from a certain account, `filter[account]` has to be specified. Modules published globally will be listed as well. To list modules accessible globally, both `filter[account]=null` and `filter[environment]=null` have to be specified. If no filters were specified, all modules which the user has read access to will be listed.
-func (c *Client) ListModules(ctx context.Context, opts *ListModulesOptions) ([]*schemas.Module, *client.Response, error) {
-	httpResp, err := c.ListModulesRaw(ctx, opts)
+func (c *Client) ListModules(ctx context.Context, opts *ListModulesOptions) ([]*schemas.Module, error) {
+	resp, err := c.ListModulesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Module `json:"data"`
@@ -187,8 +194,8 @@ func (c *Client) ListModules(ctx context.Context, opts *ListModulesOptions) ([]*
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Module, len(result.Data))
@@ -199,8 +206,7 @@ func (c *Client) ListModules(ctx context.Context, opts *ListModulesOptions) ([]*
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListModulesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -241,22 +247,40 @@ func (c *Client) ListModulesIter(ctx context.Context, opts *ListModulesOptions) 
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListModules(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListModulesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Module{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Module `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Module{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -296,13 +320,36 @@ func (c *Client) ListModulesPaged(ctx context.Context, opts *ListModulesOptions)
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListModules(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListModulesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Module `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Module, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Module](ctx, pageSize, fetchPage)
@@ -326,24 +373,26 @@ type ListModulesOptions struct {
 }
 
 // Trigger resync of the Module associated with the VCS repository.
-func (c *Client) ResyncModuleRaw(ctx context.Context, module string, req *schemas.ModuleResyncRequest) (*http.Response, error) {
+func (c *Client) ResyncModuleRaw(ctx context.Context, module string, req *schemas.ModuleResyncRequest) (*client.Response, error) {
 	path := "/modules/{module}/actions/resync"
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
-}
-
-// Trigger resync of the Module associated with the VCS repository.
-func (c *Client) ResyncModule(ctx context.Context, module string, req *schemas.ModuleResyncRequest) (*client.Response, error) {
-	httpResp, err := c.ResyncModuleRaw(ctx, module, req)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Trigger resync of the Module associated with the VCS repository.
+func (c *Client) ResyncModule(ctx context.Context, module string, req *schemas.ModuleResyncRequest) error {
+	resp, err := c.ResyncModuleRaw(ctx, module, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }

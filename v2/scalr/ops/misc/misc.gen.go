@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -25,182 +24,198 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
-func (c *Client) CreateVcsTaskRaw(ctx context.Context, req *schemas.VcsTaskRequest) (*http.Response, error) {
+func (c *Client) CreateVcsTaskRaw(ctx context.Context, req *schemas.VcsTaskRequest) (*client.Response, error) {
 	path := "/vcs-tasks"
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
-}
-
-func (c *Client) CreateVcsTask(ctx context.Context, req *schemas.VcsTaskRequest) (*client.Response, error) {
-	httpResp, err := c.CreateVcsTaskRaw(ctx, req)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) CreateVcsTask(ctx context.Context, req *schemas.VcsTaskRequest) error {
+	resp, err := c.CreateVcsTaskRaw(ctx, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Creates a link between a workspace and an SSH key.
-func (c *Client) CreateWorkspaceSshKeyLinkRaw(ctx context.Context, workspace string, req *schemas.WorkspaceSSHKeyLinkRequest) (*http.Response, error) {
+func (c *Client) CreateWorkspaceSshKeyLinkRaw(ctx context.Context, workspace string, req *schemas.WorkspaceSSHKeyLinkRequest) (*client.Response, error) {
 	path := "/workspaces/{workspace}/ssh-key-links"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Creates a link between a workspace and an SSH key.
-func (c *Client) CreateWorkspaceSshKeyLink(ctx context.Context, workspace string, req *schemas.WorkspaceSSHKeyLinkRequest) (*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.CreateWorkspaceSshKeyLinkRaw(ctx, workspace, req)
+func (c *Client) CreateWorkspaceSshKeyLink(ctx context.Context, workspace string, req *schemas.WorkspaceSSHKeyLinkRequest) (*schemas.Workspace, error) {
+	resp, err := c.CreateWorkspaceSshKeyLinkRaw(ctx, workspace, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Workspace        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Deletes a link between a workspace and an SSH key.
-func (c *Client) DeleteWorkspaceSshKeyLinkRaw(ctx context.Context, workspace string) (*http.Response, error) {
+func (c *Client) DeleteWorkspaceSshKeyLinkRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/ssh-key-links"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Deletes a link between a workspace and an SSH key.
-func (c *Client) DeleteWorkspaceSshKeyLink(ctx context.Context, workspace string) (*client.Response, error) {
-	httpResp, err := c.DeleteWorkspaceSshKeyLinkRaw(ctx, workspace)
+func (c *Client) DeleteWorkspaceSshKeyLink(ctx context.Context, workspace string) error {
+	resp, err := c.DeleteWorkspaceSshKeyLinkRaw(ctx, workspace)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return nil
 }
 
-func (c *Client) GetOpenMetricsRaw(ctx context.Context) (*http.Response, error) {
+func (c *Client) GetOpenMetricsRaw(ctx context.Context) (*client.Response, error) {
 	path := "/metrics"
 
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-func (c *Client) GetOpenMetrics(ctx context.Context) (string, *client.Response, error) {
-	httpResp, err := c.GetOpenMetricsRaw(ctx)
-	if err != nil {
-		return "", nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
-	}
-	return string(bodyBytes), resp, nil
-}
-
-// Destroys user's session. In case of the SAML additionally performs SAML logout action.
-func (c *Client) LogoutRaw(ctx context.Context) (*http.Response, error) {
-	path := "/logout"
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Destroys user's session. In case of the SAML additionally performs SAML logout action.
-func (c *Client) Logout(ctx context.Context) (*client.Response, error) {
-	httpResp, err := c.LogoutRaw(ctx)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) OauthSigninRaw(ctx context.Context, provider string) (*http.Response, error) {
+func (c *Client) GetOpenMetrics(ctx context.Context) (string, error) {
+	resp, err := c.GetOpenMetricsRaw(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+	return string(bodyBytes), nil
+}
+
+// Destroys user's session. In case of the SAML additionally performs SAML logout action.
+func (c *Client) LogoutRaw(ctx context.Context) (*client.Response, error) {
+	path := "/logout"
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Destroys user's session. In case of the SAML additionally performs SAML logout action.
+func (c *Client) Logout(ctx context.Context) error {
+	resp, err := c.LogoutRaw(ctx)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (c *Client) OauthSigninRaw(ctx context.Context, provider string) (*client.Response, error) {
 	path := "/iam/signin/{provider}"
 	path = strings.ReplaceAll(path, "{provider}", url.PathEscape(provider))
 
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-func (c *Client) OauthSignin(ctx context.Context, provider string) (*client.Response, error) {
-	httpResp, err := c.OauthSigninRaw(ctx, provider)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) OauthSignupRaw(ctx context.Context, provider string) (*http.Response, error) {
+func (c *Client) OauthSignin(ctx context.Context, provider string) error {
+	resp, err := c.OauthSigninRaw(ctx, provider)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (c *Client) OauthSignupRaw(ctx context.Context, provider string) (*client.Response, error) {
 	path := "/iam/signup/{provider}"
 	path = strings.ReplaceAll(path, "{provider}", url.PathEscape(provider))
 
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-func (c *Client) OauthSignup(ctx context.Context, provider string) (*client.Response, error) {
-	httpResp, err := c.OauthSignupRaw(ctx, provider)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) OauthSignup(ctx context.Context, provider string) error {
+	resp, err := c.OauthSignupRaw(ctx, provider)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Checks the connection to the API server
-func (c *Client) PingRaw(ctx context.Context) (*http.Response, error) {
+func (c *Client) PingRaw(ctx context.Context) (*client.Response, error) {
 	path := "/ping"
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Checks the connection to the API server
-func (c *Client) Ping(ctx context.Context) (string, *client.Response, error) {
-	httpResp, err := c.PingRaw(ctx)
+func (c *Client) Ping(ctx context.Context) (string, error) {
+	resp, err := c.PingRaw(ctx)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }

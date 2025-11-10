@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint creates Infracost integration.
-func (c *Client) CreateInfracostIntegrationRaw(ctx context.Context, req *schemas.InfracostIntegrationRequest, opts *CreateInfracostIntegrationOptions) (*http.Response, error) {
+func (c *Client) CreateInfracostIntegrationRaw(ctx context.Context, req *schemas.InfracostIntegrationRequest, opts *CreateInfracostIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/infracost"
 
 	params := url.Values{}
@@ -45,32 +44,34 @@ func (c *Client) CreateInfracostIntegrationRaw(ctx context.Context, req *schemas
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint creates Infracost integration.
-func (c *Client) CreateInfracostIntegration(ctx context.Context, req *schemas.InfracostIntegrationRequest, opts *CreateInfracostIntegrationOptions) (*schemas.InfracostIntegration, *client.Response, error) {
-	httpResp, err := c.CreateInfracostIntegrationRaw(ctx, req, opts)
+func (c *Client) CreateInfracostIntegration(ctx context.Context, req *schemas.InfracostIntegrationRequest, opts *CreateInfracostIntegrationOptions) (*schemas.InfracostIntegration, error) {
+	resp, err := c.CreateInfracostIntegrationRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.InfracostIntegration `json:"data"`
 		Included []map[string]interface{}     `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateInfracostIntegrationOptions holds optional parameters for CreateInfracostIntegration
@@ -80,27 +81,29 @@ type CreateInfracostIntegrationOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) DeleteInfracostIntegrationRaw(ctx context.Context, infracostIntegration string) (*http.Response, error) {
+func (c *Client) DeleteInfracostIntegrationRaw(ctx context.Context, infracostIntegration string) (*client.Response, error) {
 	path := "/integrations/infracost/{infracost_integration}"
 	path = strings.ReplaceAll(path, "{infracost_integration}", url.PathEscape(infracostIntegration))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteInfracostIntegration(ctx context.Context, infracostIntegration string) (*client.Response, error) {
-	httpResp, err := c.DeleteInfracostIntegrationRaw(ctx, infracostIntegration)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeleteInfracostIntegration(ctx context.Context, infracostIntegration string) error {
+	resp, err := c.DeleteInfracostIntegrationRaw(ctx, infracostIntegration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific Infracost Integration.
-func (c *Client) GetInfracostIntegrationRaw(ctx context.Context, infracostIntegration string, opts *GetInfracostIntegrationOptions) (*http.Response, error) {
+func (c *Client) GetInfracostIntegrationRaw(ctx context.Context, infracostIntegration string, opts *GetInfracostIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/infracost/{infracost_integration}"
 	path = strings.ReplaceAll(path, "{infracost_integration}", url.PathEscape(infracostIntegration))
 
@@ -118,32 +121,34 @@ func (c *Client) GetInfracostIntegrationRaw(ctx context.Context, infracostIntegr
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Infracost Integration.
-func (c *Client) GetInfracostIntegration(ctx context.Context, infracostIntegration string, opts *GetInfracostIntegrationOptions) (*schemas.InfracostIntegration, *client.Response, error) {
-	httpResp, err := c.GetInfracostIntegrationRaw(ctx, infracostIntegration, opts)
+func (c *Client) GetInfracostIntegration(ctx context.Context, infracostIntegration string, opts *GetInfracostIntegrationOptions) (*schemas.InfracostIntegration, error) {
+	resp, err := c.GetInfracostIntegrationRaw(ctx, infracostIntegration, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.InfracostIntegration `json:"data"`
 		Included []map[string]interface{}     `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetInfracostIntegrationOptions holds optional parameters for GetInfracostIntegration
@@ -154,7 +159,7 @@ type GetInfracostIntegrationOptions struct {
 }
 
 // This endpoint returns a list of Infracost integrations.
-func (c *Client) ListInfracostIntegrationsRaw(ctx context.Context, opts *ListInfracostIntegrationsOptions) (*http.Response, error) {
+func (c *Client) ListInfracostIntegrationsRaw(ctx context.Context, opts *ListInfracostIntegrationsOptions) (*client.Response, error) {
 	path := "/integrations/infracost"
 
 	params := url.Values{}
@@ -180,18 +185,20 @@ func (c *Client) ListInfracostIntegrationsRaw(ctx context.Context, opts *ListInf
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of Infracost integrations.
-func (c *Client) ListInfracostIntegrations(ctx context.Context, opts *ListInfracostIntegrationsOptions) ([]*schemas.InfracostIntegration, *client.Response, error) {
-	httpResp, err := c.ListInfracostIntegrationsRaw(ctx, opts)
+func (c *Client) ListInfracostIntegrations(ctx context.Context, opts *ListInfracostIntegrationsOptions) ([]*schemas.InfracostIntegration, error) {
+	resp, err := c.ListInfracostIntegrationsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.InfracostIntegration `json:"data"`
@@ -200,8 +207,8 @@ func (c *Client) ListInfracostIntegrations(ctx context.Context, opts *ListInfrac
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.InfracostIntegration, len(result.Data))
@@ -212,8 +219,7 @@ func (c *Client) ListInfracostIntegrations(ctx context.Context, opts *ListInfrac
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListInfracostIntegrationsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -254,22 +260,40 @@ func (c *Client) ListInfracostIntegrationsIter(ctx context.Context, opts *ListIn
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListInfracostIntegrations(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListInfracostIntegrationsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.InfracostIntegration{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.InfracostIntegration `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.InfracostIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -309,13 +333,36 @@ func (c *Client) ListInfracostIntegrationsPaged(ctx context.Context, opts *ListI
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListInfracostIntegrations(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListInfracostIntegrationsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.InfracostIntegration `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.InfracostIntegration, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.InfracostIntegration](ctx, pageSize, fetchPage)
@@ -335,7 +382,7 @@ type ListInfracostIntegrationsOptions struct {
 }
 
 // This endpoint updates Infracost integration.
-func (c *Client) UpdateInfracostIntegrationRaw(ctx context.Context, infracostIntegration string, req *schemas.InfracostIntegrationRequest, opts *UpdateInfracostIntegrationOptions) (*http.Response, error) {
+func (c *Client) UpdateInfracostIntegrationRaw(ctx context.Context, infracostIntegration string, req *schemas.InfracostIntegrationRequest, opts *UpdateInfracostIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/infracost/{infracost_integration}"
 	path = strings.ReplaceAll(path, "{infracost_integration}", url.PathEscape(infracostIntegration))
 
@@ -355,32 +402,34 @@ func (c *Client) UpdateInfracostIntegrationRaw(ctx context.Context, infracostInt
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates Infracost integration.
-func (c *Client) UpdateInfracostIntegration(ctx context.Context, infracostIntegration string, req *schemas.InfracostIntegrationRequest, opts *UpdateInfracostIntegrationOptions) (*schemas.InfracostIntegration, *client.Response, error) {
-	httpResp, err := c.UpdateInfracostIntegrationRaw(ctx, infracostIntegration, req, opts)
+func (c *Client) UpdateInfracostIntegration(ctx context.Context, infracostIntegration string, req *schemas.InfracostIntegrationRequest, opts *UpdateInfracostIntegrationOptions) (*schemas.InfracostIntegration, error) {
+	resp, err := c.UpdateInfracostIntegrationRaw(ctx, infracostIntegration, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.InfracostIntegration `json:"data"`
 		Included []map[string]interface{}     `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateInfracostIntegrationOptions holds optional parameters for UpdateInfracostIntegration

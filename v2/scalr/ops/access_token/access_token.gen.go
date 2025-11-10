@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,33 +26,35 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint creates service account's access token.
-func (c *Client) AssumeServiceAccountRaw(ctx context.Context, req *schemas.AssumeServiceAccountRequest) (*http.Response, error) {
+func (c *Client) AssumeServiceAccountRaw(ctx context.Context, req *schemas.AssumeServiceAccountRequest) (*client.Response, error) {
 	path := "/service-accounts/assume"
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint creates service account's access token.
-func (c *Client) AssumeServiceAccount(ctx context.Context, req *schemas.AssumeServiceAccountRequest) (string, *client.Response, error) {
-	httpResp, err := c.AssumeServiceAccountRaw(ctx, req)
+func (c *Client) AssumeServiceAccount(ctx context.Context, req *schemas.AssumeServiceAccountRequest) (string, error) {
+	resp, err := c.AssumeServiceAccountRaw(ctx, req)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // This endpoint creates access token.
-func (c *Client) CreateAccessTokenRaw(ctx context.Context, req *schemas.AccessTokenRequest, opts *CreateAccessTokenOptions) (*http.Response, error) {
+func (c *Client) CreateAccessTokenRaw(ctx context.Context, req *schemas.AccessTokenRequest, opts *CreateAccessTokenOptions) (*client.Response, error) {
 	path := "/access-tokens"
 
 	params := url.Values{}
@@ -72,32 +73,34 @@ func (c *Client) CreateAccessTokenRaw(ctx context.Context, req *schemas.AccessTo
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint creates access token.
-func (c *Client) CreateAccessToken(ctx context.Context, req *schemas.AccessTokenRequest, opts *CreateAccessTokenOptions) (*schemas.AccessToken, *client.Response, error) {
-	httpResp, err := c.CreateAccessTokenRaw(ctx, req, opts)
+func (c *Client) CreateAccessToken(ctx context.Context, req *schemas.AccessTokenRequest, opts *CreateAccessTokenOptions) (*schemas.AccessToken, error) {
+	resp, err := c.CreateAccessTokenRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccessToken      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateAccessTokenOptions holds optional parameters for CreateAccessToken
@@ -108,7 +111,7 @@ type CreateAccessTokenOptions struct {
 }
 
 // This endpoint creates agent pool's access token.
-func (c *Client) CreateAgentPoolTokenRaw(ctx context.Context, agentPool string, req *schemas.AccessTokenRequest, opts *CreateAgentPoolTokenOptions) (*http.Response, error) {
+func (c *Client) CreateAgentPoolTokenRaw(ctx context.Context, agentPool string, req *schemas.AccessTokenRequest, opts *CreateAgentPoolTokenOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}/access-tokens"
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
@@ -128,32 +131,34 @@ func (c *Client) CreateAgentPoolTokenRaw(ctx context.Context, agentPool string, 
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint creates agent pool's access token.
-func (c *Client) CreateAgentPoolToken(ctx context.Context, agentPool string, req *schemas.AccessTokenRequest, opts *CreateAgentPoolTokenOptions) (*schemas.AccessToken, *client.Response, error) {
-	httpResp, err := c.CreateAgentPoolTokenRaw(ctx, agentPool, req, opts)
+func (c *Client) CreateAgentPoolToken(ctx context.Context, agentPool string, req *schemas.AccessTokenRequest, opts *CreateAgentPoolTokenOptions) (*schemas.AccessToken, error) {
+	resp, err := c.CreateAgentPoolTokenRaw(ctx, agentPool, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccessToken      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateAgentPoolTokenOptions holds optional parameters for CreateAgentPoolToken
@@ -164,7 +169,7 @@ type CreateAgentPoolTokenOptions struct {
 }
 
 // This endpoint creates service account's access token.
-func (c *Client) CreateServiceAccountTokenRaw(ctx context.Context, serviceAccount string, req *schemas.AccessTokenRequest, opts *CreateServiceAccountTokenOptions) (*http.Response, error) {
+func (c *Client) CreateServiceAccountTokenRaw(ctx context.Context, serviceAccount string, req *schemas.AccessTokenRequest, opts *CreateServiceAccountTokenOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/access-tokens"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
@@ -184,32 +189,34 @@ func (c *Client) CreateServiceAccountTokenRaw(ctx context.Context, serviceAccoun
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint creates service account's access token.
-func (c *Client) CreateServiceAccountToken(ctx context.Context, serviceAccount string, req *schemas.AccessTokenRequest, opts *CreateServiceAccountTokenOptions) (*schemas.AccessToken, *client.Response, error) {
-	httpResp, err := c.CreateServiceAccountTokenRaw(ctx, serviceAccount, req, opts)
+func (c *Client) CreateServiceAccountToken(ctx context.Context, serviceAccount string, req *schemas.AccessTokenRequest, opts *CreateServiceAccountTokenOptions) (*schemas.AccessToken, error) {
+	resp, err := c.CreateServiceAccountTokenRaw(ctx, serviceAccount, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccessToken      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateServiceAccountTokenOptions holds optional parameters for CreateServiceAccountToken
@@ -220,28 +227,30 @@ type CreateServiceAccountTokenOptions struct {
 }
 
 // Delete an access token by ID.
-func (c *Client) DeleteAccessTokenRaw(ctx context.Context, accessToken string) (*http.Response, error) {
+func (c *Client) DeleteAccessTokenRaw(ctx context.Context, accessToken string) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// Delete an access token by ID.
-func (c *Client) DeleteAccessToken(ctx context.Context, accessToken string) (*client.Response, error) {
-	httpResp, err := c.DeleteAccessTokenRaw(ctx, accessToken)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Delete an access token by ID.
+func (c *Client) DeleteAccessToken(ctx context.Context, accessToken string) error {
+	resp, err := c.DeleteAccessTokenRaw(ctx, accessToken)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Get an access token by ID.
-func (c *Client) GetAccessTokenRaw(ctx context.Context, accessToken string, opts *GetAccessTokenOptions) (*http.Response, error) {
+func (c *Client) GetAccessTokenRaw(ctx context.Context, accessToken string, opts *GetAccessTokenOptions) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
@@ -259,32 +268,34 @@ func (c *Client) GetAccessTokenRaw(ctx context.Context, accessToken string, opts
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Get an access token by ID.
-func (c *Client) GetAccessToken(ctx context.Context, accessToken string, opts *GetAccessTokenOptions) (*schemas.AccessToken, *client.Response, error) {
-	httpResp, err := c.GetAccessTokenRaw(ctx, accessToken, opts)
+func (c *Client) GetAccessToken(ctx context.Context, accessToken string, opts *GetAccessTokenOptions) (*schemas.AccessToken, error) {
+	resp, err := c.GetAccessTokenRaw(ctx, accessToken, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccessToken      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetAccessTokenOptions holds optional parameters for GetAccessToken
@@ -295,7 +306,7 @@ type GetAccessTokenOptions struct {
 }
 
 // This endpoint lists user access tokens.
-func (c *Client) ListAccessTokensRaw(ctx context.Context, opts *ListAccessTokensOptions) (*http.Response, error) {
+func (c *Client) ListAccessTokensRaw(ctx context.Context, opts *ListAccessTokensOptions) (*client.Response, error) {
 	path := "/access-tokens"
 
 	params := url.Values{}
@@ -325,18 +336,20 @@ func (c *Client) ListAccessTokensRaw(ctx context.Context, opts *ListAccessTokens
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists user access tokens.
-func (c *Client) ListAccessTokens(ctx context.Context, opts *ListAccessTokensOptions) ([]*schemas.AccessToken, *client.Response, error) {
-	httpResp, err := c.ListAccessTokensRaw(ctx, opts)
+func (c *Client) ListAccessTokens(ctx context.Context, opts *ListAccessTokensOptions) ([]*schemas.AccessToken, error) {
+	resp, err := c.ListAccessTokensRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AccessToken `json:"data"`
@@ -345,8 +358,8 @@ func (c *Client) ListAccessTokens(ctx context.Context, opts *ListAccessTokensOpt
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AccessToken, len(result.Data))
@@ -357,8 +370,7 @@ func (c *Client) ListAccessTokens(ctx context.Context, opts *ListAccessTokensOpt
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListAccessTokensIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -399,22 +411,40 @@ func (c *Client) ListAccessTokensIter(ctx context.Context, opts *ListAccessToken
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListAccessTokens(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListAccessTokensRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.AccessToken{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AccessToken `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -454,13 +484,36 @@ func (c *Client) ListAccessTokensPaged(ctx context.Context, opts *ListAccessToke
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListAccessTokens(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListAccessTokensRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AccessToken `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AccessToken, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AccessToken](ctx, pageSize, fetchPage)
@@ -481,7 +534,7 @@ type ListAccessTokensOptions struct {
 	Filter map[string]string
 }
 
-func (c *Client) ListAgentPoolAccessTokensRaw(ctx context.Context, agentPool string, opts *ListAgentPoolAccessTokensOptions) (*http.Response, error) {
+func (c *Client) ListAgentPoolAccessTokensRaw(ctx context.Context, agentPool string, opts *ListAgentPoolAccessTokensOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}/access-tokens"
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
@@ -512,17 +565,19 @@ func (c *Client) ListAgentPoolAccessTokensRaw(ctx context.Context, agentPool str
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) ListAgentPoolAccessTokens(ctx context.Context, agentPool string, opts *ListAgentPoolAccessTokensOptions) ([]*schemas.AccessToken, *client.Response, error) {
-	httpResp, err := c.ListAgentPoolAccessTokensRaw(ctx, agentPool, opts)
+func (c *Client) ListAgentPoolAccessTokens(ctx context.Context, agentPool string, opts *ListAgentPoolAccessTokensOptions) ([]*schemas.AccessToken, error) {
+	resp, err := c.ListAgentPoolAccessTokensRaw(ctx, agentPool, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AccessToken `json:"data"`
@@ -531,8 +586,8 @@ func (c *Client) ListAgentPoolAccessTokens(ctx context.Context, agentPool string
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AccessToken, len(result.Data))
@@ -543,8 +598,7 @@ func (c *Client) ListAgentPoolAccessTokens(ctx context.Context, agentPool string
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListAgentPoolAccessTokensIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -585,22 +639,40 @@ func (c *Client) ListAgentPoolAccessTokensIter(ctx context.Context, agentPool st
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListAgentPoolAccessTokens(ctx, agentPool, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListAgentPoolAccessTokensRaw(ctx, agentPool, pageOpts)
 			if err != nil {
 				yield(schemas.AccessToken{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AccessToken `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -640,13 +712,36 @@ func (c *Client) ListAgentPoolAccessTokensPaged(ctx context.Context, agentPool s
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListAgentPoolAccessTokens(ctx, agentPool, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListAgentPoolAccessTokensRaw(ctx, agentPool, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AccessToken `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AccessToken, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AccessToken](ctx, pageSize, fetchPage)
@@ -668,7 +763,7 @@ type ListAgentPoolAccessTokensOptions struct {
 }
 
 // This endpoint lists service account's access tokens.
-func (c *Client) ListServiceAccountAccessTokensRaw(ctx context.Context, serviceAccount string, opts *ListServiceAccountAccessTokensOptions) (*http.Response, error) {
+func (c *Client) ListServiceAccountAccessTokensRaw(ctx context.Context, serviceAccount string, opts *ListServiceAccountAccessTokensOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/access-tokens"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
@@ -699,18 +794,20 @@ func (c *Client) ListServiceAccountAccessTokensRaw(ctx context.Context, serviceA
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists service account's access tokens.
-func (c *Client) ListServiceAccountAccessTokens(ctx context.Context, serviceAccount string, opts *ListServiceAccountAccessTokensOptions) ([]*schemas.AccessToken, *client.Response, error) {
-	httpResp, err := c.ListServiceAccountAccessTokensRaw(ctx, serviceAccount, opts)
+func (c *Client) ListServiceAccountAccessTokens(ctx context.Context, serviceAccount string, opts *ListServiceAccountAccessTokensOptions) ([]*schemas.AccessToken, error) {
+	resp, err := c.ListServiceAccountAccessTokensRaw(ctx, serviceAccount, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AccessToken `json:"data"`
@@ -719,8 +816,8 @@ func (c *Client) ListServiceAccountAccessTokens(ctx context.Context, serviceAcco
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AccessToken, len(result.Data))
@@ -731,8 +828,7 @@ func (c *Client) ListServiceAccountAccessTokens(ctx context.Context, serviceAcco
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListServiceAccountAccessTokensIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -773,22 +869,40 @@ func (c *Client) ListServiceAccountAccessTokensIter(ctx context.Context, service
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListServiceAccountAccessTokens(ctx, serviceAccount, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListServiceAccountAccessTokensRaw(ctx, serviceAccount, pageOpts)
 			if err != nil {
 				yield(schemas.AccessToken{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AccessToken `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -828,13 +942,36 @@ func (c *Client) ListServiceAccountAccessTokensPaged(ctx context.Context, servic
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListServiceAccountAccessTokens(ctx, serviceAccount, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListServiceAccountAccessTokensRaw(ctx, serviceAccount, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AccessToken `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AccessToken, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AccessToken](ctx, pageSize, fetchPage)
@@ -856,7 +993,7 @@ type ListServiceAccountAccessTokensOptions struct {
 }
 
 // Update an access token by ID.
-func (c *Client) UpdateAccessTokenRaw(ctx context.Context, accessToken string, req *schemas.AccessTokenRequest, opts *UpdateAccessTokenOptions) (*http.Response, error) {
+func (c *Client) UpdateAccessTokenRaw(ctx context.Context, accessToken string, req *schemas.AccessTokenRequest, opts *UpdateAccessTokenOptions) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
@@ -876,32 +1013,34 @@ func (c *Client) UpdateAccessTokenRaw(ctx context.Context, accessToken string, r
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Update an access token by ID.
-func (c *Client) UpdateAccessToken(ctx context.Context, accessToken string, req *schemas.AccessTokenRequest, opts *UpdateAccessTokenOptions) (*schemas.AccessToken, *client.Response, error) {
-	httpResp, err := c.UpdateAccessTokenRaw(ctx, accessToken, req, opts)
+func (c *Client) UpdateAccessToken(ctx context.Context, accessToken string, req *schemas.AccessTokenRequest, opts *UpdateAccessTokenOptions) (*schemas.AccessToken, error) {
+	resp, err := c.UpdateAccessTokenRaw(ctx, accessToken, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccessToken      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateAccessTokenOptions holds optional parameters for UpdateAccessToken

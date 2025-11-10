@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint returns a single webhook integration delivery.
-func (c *Client) GetWebhookIntegrationDeliveryRaw(ctx context.Context, webhookDelivery string, opts *GetWebhookIntegrationDeliveryOptions) (*http.Response, error) {
+func (c *Client) GetWebhookIntegrationDeliveryRaw(ctx context.Context, webhookDelivery string, opts *GetWebhookIntegrationDeliveryOptions) (*client.Response, error) {
 	path := "/integrations/webhook-deliveries/{webhook_delivery}"
 	path = strings.ReplaceAll(path, "{webhook_delivery}", url.PathEscape(webhookDelivery))
 
@@ -46,32 +45,34 @@ func (c *Client) GetWebhookIntegrationDeliveryRaw(ctx context.Context, webhookDe
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a single webhook integration delivery.
-func (c *Client) GetWebhookIntegrationDelivery(ctx context.Context, webhookDelivery string, opts *GetWebhookIntegrationDeliveryOptions) (*schemas.WebhookIntegrationDelivery, *client.Response, error) {
-	httpResp, err := c.GetWebhookIntegrationDeliveryRaw(ctx, webhookDelivery, opts)
+func (c *Client) GetWebhookIntegrationDelivery(ctx context.Context, webhookDelivery string, opts *GetWebhookIntegrationDeliveryOptions) (*schemas.WebhookIntegrationDelivery, error) {
+	resp, err := c.GetWebhookIntegrationDeliveryRaw(ctx, webhookDelivery, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.WebhookIntegrationDelivery `json:"data"`
 		Included []map[string]interface{}           `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetWebhookIntegrationDeliveryOptions holds optional parameters for GetWebhookIntegrationDelivery
@@ -84,7 +85,7 @@ type GetWebhookIntegrationDeliveryOptions struct {
 }
 
 // This endpoint returns a list of webhook integration deliveries filtered according to various criteria.
-func (c *Client) ListWebhookIntegrationDeliveriesRaw(ctx context.Context, opts *ListWebhookIntegrationDeliveriesOptions) (*http.Response, error) {
+func (c *Client) ListWebhookIntegrationDeliveriesRaw(ctx context.Context, opts *ListWebhookIntegrationDeliveriesOptions) (*client.Response, error) {
 	path := "/integrations/webhook-deliveries"
 
 	params := url.Values{}
@@ -116,18 +117,20 @@ func (c *Client) ListWebhookIntegrationDeliveriesRaw(ctx context.Context, opts *
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of webhook integration deliveries filtered according to various criteria.
-func (c *Client) ListWebhookIntegrationDeliveries(ctx context.Context, opts *ListWebhookIntegrationDeliveriesOptions) ([]*schemas.WebhookIntegrationDelivery, *client.Response, error) {
-	httpResp, err := c.ListWebhookIntegrationDeliveriesRaw(ctx, opts)
+func (c *Client) ListWebhookIntegrationDeliveries(ctx context.Context, opts *ListWebhookIntegrationDeliveriesOptions) ([]*schemas.WebhookIntegrationDelivery, error) {
+	resp, err := c.ListWebhookIntegrationDeliveriesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.WebhookIntegrationDelivery `json:"data"`
@@ -136,8 +139,8 @@ func (c *Client) ListWebhookIntegrationDeliveries(ctx context.Context, opts *Lis
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.WebhookIntegrationDelivery, len(result.Data))
@@ -148,8 +151,7 @@ func (c *Client) ListWebhookIntegrationDeliveries(ctx context.Context, opts *Lis
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListWebhookIntegrationDeliveriesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -190,22 +192,40 @@ func (c *Client) ListWebhookIntegrationDeliveriesIter(ctx context.Context, opts 
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListWebhookIntegrationDeliveries(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListWebhookIntegrationDeliveriesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.WebhookIntegrationDelivery{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.WebhookIntegrationDelivery `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.WebhookIntegrationDelivery{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -245,13 +265,36 @@ func (c *Client) ListWebhookIntegrationDeliveriesPaged(ctx context.Context, opts
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListWebhookIntegrationDeliveries(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListWebhookIntegrationDeliveriesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.WebhookIntegrationDelivery `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.WebhookIntegrationDelivery, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.WebhookIntegrationDelivery](ctx, pageSize, fetchPage)

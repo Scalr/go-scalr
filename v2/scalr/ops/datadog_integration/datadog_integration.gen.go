@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,93 +25,99 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint creates Datadog integrations.
-func (c *Client) CreateDatadogIntegrationRaw(ctx context.Context, req *schemas.DatadogIntegrationRequest) (*http.Response, error) {
+func (c *Client) CreateDatadogIntegrationRaw(ctx context.Context, req *schemas.DatadogIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/datadog"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// This endpoint creates Datadog integrations.
-func (c *Client) CreateDatadogIntegration(ctx context.Context, req *schemas.DatadogIntegrationRequest) (*schemas.DatadogIntegration, *client.Response, error) {
-	httpResp, err := c.CreateDatadogIntegrationRaw(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.DatadogIntegration `json:"data"`
-		Included []map[string]interface{}   `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Populate included resources into relationships
-	if len(result.Included) > 0 {
-		result.Data.Relationships.PopulateIncludes(result.Included)
-	}
-	return &result.Data, resp, nil
-}
-
-func (c *Client) DeleteDatadogIntegrationRaw(ctx context.Context, datadogIntegration string) (*http.Response, error) {
-	path := "/integrations/datadog/{datadog_integration}"
-	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteDatadogIntegration(ctx context.Context, datadogIntegration string) (*client.Response, error) {
-	httpResp, err := c.DeleteDatadogIntegrationRaw(ctx, datadogIntegration)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// Show details of a specific Datadog Integration.
-func (c *Client) GetDatadogIntegrationRaw(ctx context.Context, datadogIntegration string) (*http.Response, error) {
-	path := "/integrations/datadog/{datadog_integration}"
-	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Show details of a specific Datadog Integration.
-func (c *Client) GetDatadogIntegration(ctx context.Context, datadogIntegration string) (*schemas.DatadogIntegration, *client.Response, error) {
-	httpResp, err := c.GetDatadogIntegrationRaw(ctx, datadogIntegration)
+// This endpoint creates Datadog integrations.
+func (c *Client) CreateDatadogIntegration(ctx context.Context, req *schemas.DatadogIntegrationRequest) (*schemas.DatadogIntegration, error) {
+	resp, err := c.CreateDatadogIntegrationRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.DatadogIntegration `json:"data"`
 		Included []map[string]interface{}   `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+func (c *Client) DeleteDatadogIntegrationRaw(ctx context.Context, datadogIntegration string) (*client.Response, error) {
+	path := "/integrations/datadog/{datadog_integration}"
+	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+func (c *Client) DeleteDatadogIntegration(ctx context.Context, datadogIntegration string) error {
+	resp, err := c.DeleteDatadogIntegrationRaw(ctx, datadogIntegration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Show details of a specific Datadog Integration.
+func (c *Client) GetDatadogIntegrationRaw(ctx context.Context, datadogIntegration string) (*client.Response, error) {
+	path := "/integrations/datadog/{datadog_integration}"
+	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Show details of a specific Datadog Integration.
+func (c *Client) GetDatadogIntegration(ctx context.Context, datadogIntegration string) (*schemas.DatadogIntegration, error) {
+	resp, err := c.GetDatadogIntegrationRaw(ctx, datadogIntegration)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.DatadogIntegration `json:"data"`
+		Included []map[string]interface{}   `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // This endpoint lists Datadog integrations.
-func (c *Client) ListDatadogIntegrationsRaw(ctx context.Context, opts *ListDatadogIntegrationsOptions) (*http.Response, error) {
+func (c *Client) ListDatadogIntegrationsRaw(ctx context.Context, opts *ListDatadogIntegrationsOptions) (*client.Response, error) {
 	path := "/integrations/datadog"
 
 	params := url.Values{}
@@ -135,18 +140,20 @@ func (c *Client) ListDatadogIntegrationsRaw(ctx context.Context, opts *ListDatad
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists Datadog integrations.
-func (c *Client) ListDatadogIntegrations(ctx context.Context, opts *ListDatadogIntegrationsOptions) ([]*schemas.DatadogIntegration, *client.Response, error) {
-	httpResp, err := c.ListDatadogIntegrationsRaw(ctx, opts)
+func (c *Client) ListDatadogIntegrations(ctx context.Context, opts *ListDatadogIntegrationsOptions) ([]*schemas.DatadogIntegration, error) {
+	resp, err := c.ListDatadogIntegrationsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.DatadogIntegration `json:"data"`
@@ -155,8 +162,8 @@ func (c *Client) ListDatadogIntegrations(ctx context.Context, opts *ListDatadogI
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.DatadogIntegration, len(result.Data))
@@ -167,8 +174,7 @@ func (c *Client) ListDatadogIntegrations(ctx context.Context, opts *ListDatadogI
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListDatadogIntegrationsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -209,22 +215,40 @@ func (c *Client) ListDatadogIntegrationsIter(ctx context.Context, opts *ListData
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListDatadogIntegrations(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListDatadogIntegrationsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.DatadogIntegration{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.DatadogIntegration `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.DatadogIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -264,13 +288,36 @@ func (c *Client) ListDatadogIntegrationsPaged(ctx context.Context, opts *ListDat
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListDatadogIntegrations(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListDatadogIntegrationsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.DatadogIntegration `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.DatadogIntegration, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.DatadogIntegration](ctx, pageSize, fetchPage)
@@ -288,36 +335,38 @@ type ListDatadogIntegrationsOptions struct {
 }
 
 // This endpoint updates Datadog integrations.
-func (c *Client) UpdateDatadogIntegrationsRaw(ctx context.Context, datadogIntegration string, req *schemas.DatadogIntegrationRequest) (*http.Response, error) {
+func (c *Client) UpdateDatadogIntegrationsRaw(ctx context.Context, datadogIntegration string, req *schemas.DatadogIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/datadog/{datadog_integration}"
 	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates Datadog integrations.
-func (c *Client) UpdateDatadogIntegrations(ctx context.Context, datadogIntegration string, req *schemas.DatadogIntegrationRequest) (*schemas.DatadogIntegration, *client.Response, error) {
-	httpResp, err := c.UpdateDatadogIntegrationsRaw(ctx, datadogIntegration, req)
+func (c *Client) UpdateDatadogIntegrations(ctx context.Context, datadogIntegration string, req *schemas.DatadogIntegrationRequest) (*schemas.DatadogIntegration, error) {
+	resp, err := c.UpdateDatadogIntegrationsRaw(ctx, datadogIntegration, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.DatadogIntegration `json:"data"`
 		Included []map[string]interface{}   `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

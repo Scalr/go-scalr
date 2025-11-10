@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,7 +26,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint lists terraform versions usage.
-func (c *Client) ListTerraformVersionsUsageRaw(ctx context.Context, opts *ListTerraformVersionsUsageOptions) (*http.Response, error) {
+func (c *Client) ListTerraformVersionsUsageRaw(ctx context.Context, opts *ListTerraformVersionsUsageOptions) (*client.Response, error) {
 	path := "/reports/tf-versions-usage"
 
 	params := url.Values{}
@@ -63,18 +62,20 @@ func (c *Client) ListTerraformVersionsUsageRaw(ctx context.Context, opts *ListTe
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists terraform versions usage.
-func (c *Client) ListTerraformVersionsUsage(ctx context.Context, opts *ListTerraformVersionsUsageOptions) ([]*schemas.TerraformVersionUsage, *client.Response, error) {
-	httpResp, err := c.ListTerraformVersionsUsageRaw(ctx, opts)
+func (c *Client) ListTerraformVersionsUsage(ctx context.Context, opts *ListTerraformVersionsUsageOptions) ([]*schemas.TerraformVersionUsage, error) {
+	resp, err := c.ListTerraformVersionsUsageRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.TerraformVersionUsage `json:"data"`
@@ -83,8 +84,8 @@ func (c *Client) ListTerraformVersionsUsage(ctx context.Context, opts *ListTerra
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.TerraformVersionUsage, len(result.Data))
@@ -95,8 +96,7 @@ func (c *Client) ListTerraformVersionsUsage(ctx context.Context, opts *ListTerra
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListTerraformVersionsUsageIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -137,22 +137,40 @@ func (c *Client) ListTerraformVersionsUsageIter(ctx context.Context, opts *ListT
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListTerraformVersionsUsage(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListTerraformVersionsUsageRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.TerraformVersionUsage{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.TerraformVersionUsage `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.TerraformVersionUsage{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -192,13 +210,36 @@ func (c *Client) ListTerraformVersionsUsagePaged(ctx context.Context, opts *List
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListTerraformVersionsUsage(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListTerraformVersionsUsageRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.TerraformVersionUsage `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.TerraformVersionUsage, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.TerraformVersionUsage](ctx, pageSize, fetchPage)
@@ -224,7 +265,7 @@ type ListTerraformVersionsUsageOptions struct {
 }
 
 // This endpoint lists unique terraform versions in use.
-func (c *Client) ListTerraformVersionsUsageVersionsRaw(ctx context.Context, opts *ListTerraformVersionsUsageVersionsOptions) (*http.Response, error) {
+func (c *Client) ListTerraformVersionsUsageVersionsRaw(ctx context.Context, opts *ListTerraformVersionsUsageVersionsOptions) (*client.Response, error) {
 	path := "/reports/tf-versions-usage-versions"
 
 	params := url.Values{}
@@ -248,24 +289,26 @@ func (c *Client) ListTerraformVersionsUsageVersionsRaw(ctx context.Context, opts
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists unique terraform versions in use.
-func (c *Client) ListTerraformVersionsUsageVersions(ctx context.Context, opts *ListTerraformVersionsUsageVersionsOptions) (string, *client.Response, error) {
-	httpResp, err := c.ListTerraformVersionsUsageVersionsRaw(ctx, opts)
+func (c *Client) ListTerraformVersionsUsageVersions(ctx context.Context, opts *ListTerraformVersionsUsageVersionsOptions) (string, error) {
+	resp, err := c.ListTerraformVersionsUsageVersionsRaw(ctx, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // ListTerraformVersionsUsageVersionsOptions holds optional parameters for ListTerraformVersionsUsageVersions

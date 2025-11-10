@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,96 +25,102 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new Provider configuration parameter.
-func (c *Client) CreateProviderConfigurationParameterRaw(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationParameterRequest) (*http.Response, error) {
+func (c *Client) CreateProviderConfigurationParameterRaw(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationParameterRequest) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/parameters"
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// Create a new Provider configuration parameter.
-func (c *Client) CreateProviderConfigurationParameter(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationParameterRequest) (*schemas.ProviderConfigurationParameter, *client.Response, error) {
-	httpResp, err := c.CreateProviderConfigurationParameterRaw(ctx, providerConfiguration, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.ProviderConfigurationParameter `json:"data"`
-		Included []map[string]interface{}               `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Populate included resources into relationships
-	if len(result.Included) > 0 {
-		result.Data.Relationships.PopulateIncludes(result.Included)
-	}
-	return &result.Data, resp, nil
-}
-
-// The endpoint deletes a Provider configuration parameter by ID.
-func (c *Client) DeleteProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*http.Response, error) {
-	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
-	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes a Provider configuration parameter by ID.
-func (c *Client) DeleteProviderConfigurationParameter(ctx context.Context, providerConfigurationParameter string) (*client.Response, error) {
-	httpResp, err := c.DeleteProviderConfigurationParameterRaw(ctx, providerConfigurationParameter)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// Show details of a specific Proivider configuration parameter.
-func (c *Client) GetProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*http.Response, error) {
-	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
-	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Show details of a specific Proivider configuration parameter.
-func (c *Client) GetProviderConfigurationParameter(ctx context.Context, providerConfigurationParameter string) (*schemas.ProviderConfigurationParameter, *client.Response, error) {
-	httpResp, err := c.GetProviderConfigurationParameterRaw(ctx, providerConfigurationParameter)
+// Create a new Provider configuration parameter.
+func (c *Client) CreateProviderConfigurationParameter(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationParameterRequest) (*schemas.ProviderConfigurationParameter, error) {
+	resp, err := c.CreateProviderConfigurationParameterRaw(ctx, providerConfiguration, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ProviderConfigurationParameter `json:"data"`
 		Included []map[string]interface{}               `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+// The endpoint deletes a Provider configuration parameter by ID.
+func (c *Client) DeleteProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*client.Response, error) {
+	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
+	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// The endpoint deletes a Provider configuration parameter by ID.
+func (c *Client) DeleteProviderConfigurationParameter(ctx context.Context, providerConfigurationParameter string) error {
+	resp, err := c.DeleteProviderConfigurationParameterRaw(ctx, providerConfigurationParameter)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Show details of a specific Proivider configuration parameter.
+func (c *Client) GetProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*client.Response, error) {
+	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
+	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Show details of a specific Proivider configuration parameter.
+func (c *Client) GetProviderConfigurationParameter(ctx context.Context, providerConfigurationParameter string) (*schemas.ProviderConfigurationParameter, error) {
+	resp, err := c.GetProviderConfigurationParameterRaw(ctx, providerConfigurationParameter)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.ProviderConfigurationParameter `json:"data"`
+		Included []map[string]interface{}               `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // This endpoint returns a list of Provider configuration parameters for specific provider configuration.
-func (c *Client) ListProviderConfigurationParametersRaw(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationParametersOptions) (*http.Response, error) {
+func (c *Client) ListProviderConfigurationParametersRaw(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationParametersOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/parameters"
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
@@ -136,18 +141,20 @@ func (c *Client) ListProviderConfigurationParametersRaw(ctx context.Context, pro
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of Provider configuration parameters for specific provider configuration.
-func (c *Client) ListProviderConfigurationParameters(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationParametersOptions) ([]*schemas.ProviderConfigurationParameter, *client.Response, error) {
-	httpResp, err := c.ListProviderConfigurationParametersRaw(ctx, providerConfiguration, opts)
+func (c *Client) ListProviderConfigurationParameters(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationParametersOptions) ([]*schemas.ProviderConfigurationParameter, error) {
+	resp, err := c.ListProviderConfigurationParametersRaw(ctx, providerConfiguration, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.ProviderConfigurationParameter `json:"data"`
@@ -156,8 +163,8 @@ func (c *Client) ListProviderConfigurationParameters(ctx context.Context, provid
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.ProviderConfigurationParameter, len(result.Data))
@@ -168,8 +175,7 @@ func (c *Client) ListProviderConfigurationParameters(ctx context.Context, provid
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListProviderConfigurationParametersIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -210,22 +216,40 @@ func (c *Client) ListProviderConfigurationParametersIter(ctx context.Context, pr
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListProviderConfigurationParameters(ctx, providerConfiguration, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListProviderConfigurationParametersRaw(ctx, providerConfiguration, pageOpts)
 			if err != nil {
 				yield(schemas.ProviderConfigurationParameter{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.ProviderConfigurationParameter `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.ProviderConfigurationParameter{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -265,13 +289,36 @@ func (c *Client) ListProviderConfigurationParametersPaged(ctx context.Context, p
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListProviderConfigurationParameters(ctx, providerConfiguration, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListProviderConfigurationParametersRaw(ctx, providerConfiguration, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.ProviderConfigurationParameter `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.ProviderConfigurationParameter, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.ProviderConfigurationParameter](ctx, pageSize, fetchPage)
@@ -287,36 +334,38 @@ type ListProviderConfigurationParametersOptions struct {
 }
 
 // This endpoint allows updates to attributes of an existing Provider configuration parameters.
-func (c *Client) UpdateProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string, req *schemas.ProviderConfigurationParameterRequest) (*http.Response, error) {
+func (c *Client) UpdateProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string, req *schemas.ProviderConfigurationParameterRequest) (*client.Response, error) {
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint allows updates to attributes of an existing Provider configuration parameters.
-func (c *Client) UpdateProviderConfigurationParameter(ctx context.Context, providerConfigurationParameter string, req *schemas.ProviderConfigurationParameterRequest) (*schemas.ProviderConfigurationParameter, *client.Response, error) {
-	httpResp, err := c.UpdateProviderConfigurationParameterRaw(ctx, providerConfigurationParameter, req)
+func (c *Client) UpdateProviderConfigurationParameter(ctx context.Context, providerConfigurationParameter string, req *schemas.ProviderConfigurationParameterRequest) (*schemas.ProviderConfigurationParameter, error) {
+	resp, err := c.UpdateProviderConfigurationParameterRaw(ctx, providerConfigurationParameter, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ProviderConfigurationParameter `json:"data"`
 		Included []map[string]interface{}               `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

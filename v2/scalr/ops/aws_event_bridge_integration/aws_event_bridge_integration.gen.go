@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,93 +25,99 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint creates AWS EventBridge integration.
-func (c *Client) CreateAwsEventBridgeIntegrationRaw(ctx context.Context, req *schemas.AWSEventBridgeIntegrationRequest) (*http.Response, error) {
+func (c *Client) CreateAwsEventBridgeIntegrationRaw(ctx context.Context, req *schemas.AWSEventBridgeIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// This endpoint creates AWS EventBridge integration.
-func (c *Client) CreateAwsEventBridgeIntegration(ctx context.Context, req *schemas.AWSEventBridgeIntegrationRequest) (*schemas.AWSEventBridgeIntegration, *client.Response, error) {
-	httpResp, err := c.CreateAwsEventBridgeIntegrationRaw(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.AWSEventBridgeIntegration `json:"data"`
-		Included []map[string]interface{}          `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Populate included resources into relationships
-	if len(result.Included) > 0 {
-		result.Data.Relationships.PopulateIncludes(result.Included)
-	}
-	return &result.Data, resp, nil
-}
-
-func (c *Client) DeleteAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string) (*http.Response, error) {
-	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
-	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteAwsEventBridgeIntegration(ctx context.Context, awsEventBridgeIntegration string) (*client.Response, error) {
-	httpResp, err := c.DeleteAwsEventBridgeIntegrationRaw(ctx, awsEventBridgeIntegration)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// Show details of a specific AWS EventBridge integration.
-func (c *Client) GetAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string) (*http.Response, error) {
-	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
-	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Show details of a specific AWS EventBridge integration.
-func (c *Client) GetAwsEventBridgeIntegration(ctx context.Context, awsEventBridgeIntegration string) (*schemas.AWSEventBridgeIntegration, *client.Response, error) {
-	httpResp, err := c.GetAwsEventBridgeIntegrationRaw(ctx, awsEventBridgeIntegration)
+// This endpoint creates AWS EventBridge integration.
+func (c *Client) CreateAwsEventBridgeIntegration(ctx context.Context, req *schemas.AWSEventBridgeIntegrationRequest) (*schemas.AWSEventBridgeIntegration, error) {
+	resp, err := c.CreateAwsEventBridgeIntegrationRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AWSEventBridgeIntegration `json:"data"`
 		Included []map[string]interface{}          `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+func (c *Client) DeleteAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string) (*client.Response, error) {
+	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
+	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+func (c *Client) DeleteAwsEventBridgeIntegration(ctx context.Context, awsEventBridgeIntegration string) error {
+	resp, err := c.DeleteAwsEventBridgeIntegrationRaw(ctx, awsEventBridgeIntegration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Show details of a specific AWS EventBridge integration.
+func (c *Client) GetAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string) (*client.Response, error) {
+	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
+	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Show details of a specific AWS EventBridge integration.
+func (c *Client) GetAwsEventBridgeIntegration(ctx context.Context, awsEventBridgeIntegration string) (*schemas.AWSEventBridgeIntegration, error) {
+	resp, err := c.GetAwsEventBridgeIntegrationRaw(ctx, awsEventBridgeIntegration)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.AWSEventBridgeIntegration `json:"data"`
+		Included []map[string]interface{}          `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // This endpoint returns a list of AWS EventBridge integrations.
-func (c *Client) ListAwsEventBridgeIntegrationsRaw(ctx context.Context, opts *ListAwsEventBridgeIntegrationsOptions) (*http.Response, error) {
+func (c *Client) ListAwsEventBridgeIntegrationsRaw(ctx context.Context, opts *ListAwsEventBridgeIntegrationsOptions) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge"
 
 	params := url.Values{}
@@ -135,18 +140,20 @@ func (c *Client) ListAwsEventBridgeIntegrationsRaw(ctx context.Context, opts *Li
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of AWS EventBridge integrations.
-func (c *Client) ListAwsEventBridgeIntegrations(ctx context.Context, opts *ListAwsEventBridgeIntegrationsOptions) ([]*schemas.AWSEventBridgeIntegration, *client.Response, error) {
-	httpResp, err := c.ListAwsEventBridgeIntegrationsRaw(ctx, opts)
+func (c *Client) ListAwsEventBridgeIntegrations(ctx context.Context, opts *ListAwsEventBridgeIntegrationsOptions) ([]*schemas.AWSEventBridgeIntegration, error) {
+	resp, err := c.ListAwsEventBridgeIntegrationsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AWSEventBridgeIntegration `json:"data"`
@@ -155,8 +162,8 @@ func (c *Client) ListAwsEventBridgeIntegrations(ctx context.Context, opts *ListA
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AWSEventBridgeIntegration, len(result.Data))
@@ -167,8 +174,7 @@ func (c *Client) ListAwsEventBridgeIntegrations(ctx context.Context, opts *ListA
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListAwsEventBridgeIntegrationsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -209,22 +215,40 @@ func (c *Client) ListAwsEventBridgeIntegrationsIter(ctx context.Context, opts *L
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListAwsEventBridgeIntegrations(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListAwsEventBridgeIntegrationsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.AWSEventBridgeIntegration{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AWSEventBridgeIntegration `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AWSEventBridgeIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -264,13 +288,36 @@ func (c *Client) ListAwsEventBridgeIntegrationsPaged(ctx context.Context, opts *
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListAwsEventBridgeIntegrations(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListAwsEventBridgeIntegrationsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AWSEventBridgeIntegration `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AWSEventBridgeIntegration, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AWSEventBridgeIntegration](ctx, pageSize, fetchPage)
@@ -288,36 +335,38 @@ type ListAwsEventBridgeIntegrationsOptions struct {
 }
 
 // This endpoint updates AWS EventBridge integrations.
-func (c *Client) UpdateAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string, req *schemas.AWSEventBridgeIntegrationRequest) (*http.Response, error) {
+func (c *Client) UpdateAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string, req *schemas.AWSEventBridgeIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
 	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates AWS EventBridge integrations.
-func (c *Client) UpdateAwsEventBridgeIntegration(ctx context.Context, awsEventBridgeIntegration string, req *schemas.AWSEventBridgeIntegrationRequest) (*schemas.AWSEventBridgeIntegration, *client.Response, error) {
-	httpResp, err := c.UpdateAwsEventBridgeIntegrationRaw(ctx, awsEventBridgeIntegration, req)
+func (c *Client) UpdateAwsEventBridgeIntegration(ctx context.Context, awsEventBridgeIntegration string, req *schemas.AWSEventBridgeIntegrationRequest) (*schemas.AWSEventBridgeIntegration, error) {
+	resp, err := c.UpdateAwsEventBridgeIntegrationRaw(ctx, awsEventBridgeIntegration, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AWSEventBridgeIntegration `json:"data"`
 		Included []map[string]interface{}          `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

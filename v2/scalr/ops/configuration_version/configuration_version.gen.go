@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,66 +26,70 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create the new configuration version for specific workspace
-func (c *Client) CreateConfigurationVersionRaw(ctx context.Context, req *schemas.ConfigurationVersionRequest) (*http.Response, error) {
+func (c *Client) CreateConfigurationVersionRaw(ctx context.Context, req *schemas.ConfigurationVersionRequest) (*client.Response, error) {
 	path := "/configuration-versions"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create the new configuration version for specific workspace
-func (c *Client) CreateConfigurationVersion(ctx context.Context, req *schemas.ConfigurationVersionRequest) (*schemas.ConfigurationVersion, *client.Response, error) {
-	httpResp, err := c.CreateConfigurationVersionRaw(ctx, req)
+func (c *Client) CreateConfigurationVersion(ctx context.Context, req *schemas.ConfigurationVersionRequest) (*schemas.ConfigurationVersion, error) {
+	resp, err := c.CreateConfigurationVersionRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ConfigurationVersion `json:"data"`
 		Included []map[string]interface{}     `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Download tar.gz archive with terraform configuration templates.
-func (c *Client) DownloadConfigurationVersionRaw(ctx context.Context, configurationVersion string) (*http.Response, error) {
+func (c *Client) DownloadConfigurationVersionRaw(ctx context.Context, configurationVersion string) (*client.Response, error) {
 	path := "/configuration-versions/{configuration_version}/download"
 	path = strings.ReplaceAll(path, "{configuration_version}", url.PathEscape(configurationVersion))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Download tar.gz archive with terraform configuration templates.
-func (c *Client) DownloadConfigurationVersion(ctx context.Context, configurationVersion string) (string, *client.Response, error) {
-	httpResp, err := c.DownloadConfigurationVersionRaw(ctx, configurationVersion)
+func (c *Client) DownloadConfigurationVersion(ctx context.Context, configurationVersion string) (string, error) {
+	resp, err := c.DownloadConfigurationVersionRaw(ctx, configurationVersion)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // Show details of a specific Configuration Version.
-func (c *Client) GetConfigurationVersionRaw(ctx context.Context, configurationVersion string, opts *GetConfigurationVersionOptions) (*http.Response, error) {
+func (c *Client) GetConfigurationVersionRaw(ctx context.Context, configurationVersion string, opts *GetConfigurationVersionOptions) (*client.Response, error) {
 	path := "/configuration-versions/{configuration_version}"
 	path = strings.ReplaceAll(path, "{configuration_version}", url.PathEscape(configurationVersion))
 
@@ -104,32 +107,34 @@ func (c *Client) GetConfigurationVersionRaw(ctx context.Context, configurationVe
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Configuration Version.
-func (c *Client) GetConfigurationVersion(ctx context.Context, configurationVersion string, opts *GetConfigurationVersionOptions) (*schemas.ConfigurationVersion, *client.Response, error) {
-	httpResp, err := c.GetConfigurationVersionRaw(ctx, configurationVersion, opts)
+func (c *Client) GetConfigurationVersion(ctx context.Context, configurationVersion string, opts *GetConfigurationVersionOptions) (*schemas.ConfigurationVersion, error) {
+	resp, err := c.GetConfigurationVersionRaw(ctx, configurationVersion, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ConfigurationVersion `json:"data"`
 		Included []map[string]interface{}     `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetConfigurationVersionOptions holds optional parameters for GetConfigurationVersion
@@ -139,7 +144,7 @@ type GetConfigurationVersionOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) GetConfigurationVersionsRaw(ctx context.Context, opts *GetConfigurationVersionsOptions) (*http.Response, error) {
+func (c *Client) GetConfigurationVersionsRaw(ctx context.Context, opts *GetConfigurationVersionsOptions) (*client.Response, error) {
 	path := "/configuration-versions"
 
 	params := url.Values{}
@@ -162,17 +167,19 @@ func (c *Client) GetConfigurationVersionsRaw(ctx context.Context, opts *GetConfi
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) GetConfigurationVersions(ctx context.Context, opts *GetConfigurationVersionsOptions) ([]*schemas.ConfigurationVersion, *client.Response, error) {
-	httpResp, err := c.GetConfigurationVersionsRaw(ctx, opts)
+func (c *Client) GetConfigurationVersions(ctx context.Context, opts *GetConfigurationVersionsOptions) ([]*schemas.ConfigurationVersion, error) {
+	resp, err := c.GetConfigurationVersionsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.ConfigurationVersion `json:"data"`
@@ -181,8 +188,8 @@ func (c *Client) GetConfigurationVersions(ctx context.Context, opts *GetConfigur
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.ConfigurationVersion, len(result.Data))
@@ -193,8 +200,7 @@ func (c *Client) GetConfigurationVersions(ctx context.Context, opts *GetConfigur
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetConfigurationVersionsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -235,22 +241,40 @@ func (c *Client) GetConfigurationVersionsIter(ctx context.Context, opts *GetConf
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetConfigurationVersions(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetConfigurationVersionsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.ConfigurationVersion{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.ConfigurationVersion `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.ConfigurationVersion{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -290,13 +314,36 @@ func (c *Client) GetConfigurationVersionsPaged(ctx context.Context, opts *GetCon
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetConfigurationVersions(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetConfigurationVersionsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.ConfigurationVersion `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.ConfigurationVersion, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.ConfigurationVersion](ctx, pageSize, fetchPage)

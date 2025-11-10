@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,95 +25,101 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create SAML Integration.
-func (c *Client) CreateSamlIntegrationRaw(ctx context.Context, req *schemas.SamlIntegrationRequest) (*http.Response, error) {
+func (c *Client) CreateSamlIntegrationRaw(ctx context.Context, req *schemas.SamlIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/saml"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// Create SAML Integration.
-func (c *Client) CreateSamlIntegration(ctx context.Context, req *schemas.SamlIntegrationRequest) (*schemas.SamlIntegration, *client.Response, error) {
-	httpResp, err := c.CreateSamlIntegrationRaw(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.SamlIntegration  `json:"data"`
-		Included []map[string]interface{} `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Populate included resources into relationships
-	if len(result.Included) > 0 {
-		result.Data.Relationships.PopulateIncludes(result.Included)
-	}
-	return &result.Data, resp, nil
-}
-
-// Delete SAML Integration.
-func (c *Client) DeleteSamlIntegrationRaw(ctx context.Context, samlIntegration string) (*http.Response, error) {
-	path := "/integrations/saml/{saml_integration}"
-	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// Delete SAML Integration.
-func (c *Client) DeleteSamlIntegration(ctx context.Context, samlIntegration string) (*client.Response, error) {
-	httpResp, err := c.DeleteSamlIntegrationRaw(ctx, samlIntegration)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// Show details of a specific SAML Integration.
-func (c *Client) GetSamlIntegrationRaw(ctx context.Context, samlIntegration string) (*http.Response, error) {
-	path := "/integrations/saml/{saml_integration}"
-	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Show details of a specific SAML Integration.
-func (c *Client) GetSamlIntegration(ctx context.Context, samlIntegration string) (*schemas.SamlIntegration, *client.Response, error) {
-	httpResp, err := c.GetSamlIntegrationRaw(ctx, samlIntegration)
+// Create SAML Integration.
+func (c *Client) CreateSamlIntegration(ctx context.Context, req *schemas.SamlIntegrationRequest) (*schemas.SamlIntegration, error) {
+	resp, err := c.CreateSamlIntegrationRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SamlIntegration  `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+// Delete SAML Integration.
+func (c *Client) DeleteSamlIntegrationRaw(ctx context.Context, samlIntegration string) (*client.Response, error) {
+	path := "/integrations/saml/{saml_integration}"
+	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Delete SAML Integration.
+func (c *Client) DeleteSamlIntegration(ctx context.Context, samlIntegration string) error {
+	resp, err := c.DeleteSamlIntegrationRaw(ctx, samlIntegration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Show details of a specific SAML Integration.
+func (c *Client) GetSamlIntegrationRaw(ctx context.Context, samlIntegration string) (*client.Response, error) {
+	path := "/integrations/saml/{saml_integration}"
+	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Show details of a specific SAML Integration.
+func (c *Client) GetSamlIntegration(ctx context.Context, samlIntegration string) (*schemas.SamlIntegration, error) {
+	resp, err := c.GetSamlIntegrationRaw(ctx, samlIntegration)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.SamlIntegration  `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // This endpoint lists SAML integrations.
-func (c *Client) ListSamlIntegrationsRaw(ctx context.Context, opts *ListSamlIntegrationsOptions) (*http.Response, error) {
+func (c *Client) ListSamlIntegrationsRaw(ctx context.Context, opts *ListSamlIntegrationsOptions) (*client.Response, error) {
 	path := "/integrations/saml"
 
 	params := url.Values{}
@@ -137,18 +142,20 @@ func (c *Client) ListSamlIntegrationsRaw(ctx context.Context, opts *ListSamlInte
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists SAML integrations.
-func (c *Client) ListSamlIntegrations(ctx context.Context, opts *ListSamlIntegrationsOptions) ([]*schemas.SamlIntegration, *client.Response, error) {
-	httpResp, err := c.ListSamlIntegrationsRaw(ctx, opts)
+func (c *Client) ListSamlIntegrations(ctx context.Context, opts *ListSamlIntegrationsOptions) ([]*schemas.SamlIntegration, error) {
+	resp, err := c.ListSamlIntegrationsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.SamlIntegration `json:"data"`
@@ -157,8 +164,8 @@ func (c *Client) ListSamlIntegrations(ctx context.Context, opts *ListSamlIntegra
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.SamlIntegration, len(result.Data))
@@ -169,8 +176,7 @@ func (c *Client) ListSamlIntegrations(ctx context.Context, opts *ListSamlIntegra
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListSamlIntegrationsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -211,22 +217,40 @@ func (c *Client) ListSamlIntegrationsIter(ctx context.Context, opts *ListSamlInt
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListSamlIntegrations(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListSamlIntegrationsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.SamlIntegration{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.SamlIntegration `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.SamlIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -266,13 +290,36 @@ func (c *Client) ListSamlIntegrationsPaged(ctx context.Context, opts *ListSamlIn
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListSamlIntegrations(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListSamlIntegrationsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.SamlIntegration `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.SamlIntegration, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.SamlIntegration](ctx, pageSize, fetchPage)
@@ -290,36 +337,38 @@ type ListSamlIntegrationsOptions struct {
 }
 
 // Update SAML Integration.
-func (c *Client) UpdateSamlIntegrationRaw(ctx context.Context, samlIntegration string, req *schemas.SamlIntegrationRequest) (*http.Response, error) {
+func (c *Client) UpdateSamlIntegrationRaw(ctx context.Context, samlIntegration string, req *schemas.SamlIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/saml/{saml_integration}"
 	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Update SAML Integration.
-func (c *Client) UpdateSamlIntegration(ctx context.Context, samlIntegration string, req *schemas.SamlIntegrationRequest) (*schemas.SamlIntegration, *client.Response, error) {
-	httpResp, err := c.UpdateSamlIntegrationRaw(ctx, samlIntegration, req)
+func (c *Client) UpdateSamlIntegration(ctx context.Context, samlIntegration string, req *schemas.SamlIntegrationRequest) (*schemas.SamlIntegration, error) {
+	resp, err := c.UpdateSamlIntegrationRaw(ctx, samlIntegration, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SamlIntegration  `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

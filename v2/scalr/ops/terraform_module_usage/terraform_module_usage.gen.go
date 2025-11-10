@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,7 +26,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint returns instance of module usage.
-func (c *Client) GetModuleUsageRaw(ctx context.Context, moduleUsage string, opts *GetModuleUsageOptions) (*http.Response, error) {
+func (c *Client) GetModuleUsageRaw(ctx context.Context, moduleUsage string, opts *GetModuleUsageOptions) (*client.Response, error) {
 	path := "/reports/modules/{module_usage}"
 	path = strings.ReplaceAll(path, "{module_usage}", url.PathEscape(moduleUsage))
 
@@ -47,32 +46,34 @@ func (c *Client) GetModuleUsageRaw(ctx context.Context, moduleUsage string, opts
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns instance of module usage.
-func (c *Client) GetModuleUsage(ctx context.Context, moduleUsage string, opts *GetModuleUsageOptions) (*schemas.TerraformModuleUsage, *client.Response, error) {
-	httpResp, err := c.GetModuleUsageRaw(ctx, moduleUsage, opts)
+func (c *Client) GetModuleUsage(ctx context.Context, moduleUsage string, opts *GetModuleUsageOptions) (*schemas.TerraformModuleUsage, error) {
+	resp, err := c.GetModuleUsageRaw(ctx, moduleUsage, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.TerraformModuleUsage `json:"data"`
 		Included []map[string]interface{}     `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetModuleUsageOptions holds optional parameters for GetModuleUsage
@@ -85,7 +86,7 @@ type GetModuleUsageOptions struct {
 }
 
 // This endpoint lists unique terraform module sources.
-func (c *Client) ListTerraformModuleSourcesRaw(ctx context.Context, opts *ListTerraformModuleSourcesOptions) (*http.Response, error) {
+func (c *Client) ListTerraformModuleSourcesRaw(ctx context.Context, opts *ListTerraformModuleSourcesOptions) (*client.Response, error) {
 	path := "/reports/module-sources"
 
 	params := url.Values{}
@@ -109,24 +110,26 @@ func (c *Client) ListTerraformModuleSourcesRaw(ctx context.Context, opts *ListTe
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists unique terraform module sources.
-func (c *Client) ListTerraformModuleSources(ctx context.Context, opts *ListTerraformModuleSourcesOptions) (string, *client.Response, error) {
-	httpResp, err := c.ListTerraformModuleSourcesRaw(ctx, opts)
+func (c *Client) ListTerraformModuleSources(ctx context.Context, opts *ListTerraformModuleSourcesOptions) (string, error) {
+	resp, err := c.ListTerraformModuleSourcesRaw(ctx, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // ListTerraformModuleSourcesOptions holds optional parameters for ListTerraformModuleSources
@@ -141,7 +144,7 @@ type ListTerraformModuleSourcesOptions struct {
 }
 
 // This endpoint lists terraform module usages.
-func (c *Client) ListTerraformModuleUsagesRaw(ctx context.Context, opts *ListTerraformModuleUsagesOptions) (*http.Response, error) {
+func (c *Client) ListTerraformModuleUsagesRaw(ctx context.Context, opts *ListTerraformModuleUsagesOptions) (*client.Response, error) {
 	path := "/reports/modules"
 
 	params := url.Values{}
@@ -177,18 +180,20 @@ func (c *Client) ListTerraformModuleUsagesRaw(ctx context.Context, opts *ListTer
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists terraform module usages.
-func (c *Client) ListTerraformModuleUsages(ctx context.Context, opts *ListTerraformModuleUsagesOptions) ([]*schemas.TerraformModuleUsage, *client.Response, error) {
-	httpResp, err := c.ListTerraformModuleUsagesRaw(ctx, opts)
+func (c *Client) ListTerraformModuleUsages(ctx context.Context, opts *ListTerraformModuleUsagesOptions) ([]*schemas.TerraformModuleUsage, error) {
+	resp, err := c.ListTerraformModuleUsagesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.TerraformModuleUsage `json:"data"`
@@ -197,8 +202,8 @@ func (c *Client) ListTerraformModuleUsages(ctx context.Context, opts *ListTerraf
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.TerraformModuleUsage, len(result.Data))
@@ -209,8 +214,7 @@ func (c *Client) ListTerraformModuleUsages(ctx context.Context, opts *ListTerraf
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListTerraformModuleUsagesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -251,22 +255,40 @@ func (c *Client) ListTerraformModuleUsagesIter(ctx context.Context, opts *ListTe
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListTerraformModuleUsages(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListTerraformModuleUsagesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.TerraformModuleUsage{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.TerraformModuleUsage `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.TerraformModuleUsage{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -306,13 +328,36 @@ func (c *Client) ListTerraformModuleUsagesPaged(ctx context.Context, opts *ListT
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListTerraformModuleUsages(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListTerraformModuleUsagesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.TerraformModuleUsage `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.TerraformModuleUsage, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.TerraformModuleUsage](ctx, pageSize, fetchPage)

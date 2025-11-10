@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new [agent pool](/docs/agent-pools) resource. Agent pools can be created at the `account` or `environment` scope. The scope must be defined as part of the agent pool creation. If a pool is created at the account scope, all environments and workspaces within those environments will have access to use the pool. If a pool is created at the environment scope, then only the workspaces in that environment can use that pool. The typical flow for configuring a new agent pool involves the following operations: * Create an agent pool * [Create an access token](create_agent_pool_token) for the pool. The pool token is needed by an agent in order to join the agent pool. During the agent<->server handshake phase, the API server will generate a unique session token for each agent which will be used for all communication with the API server. * Install/Configure an agent on the customer's network.
-func (c *Client) CreateAgentPoolRaw(ctx context.Context, req *schemas.AgentPoolRequest, opts *CreateAgentPoolOptions) (*http.Response, error) {
+func (c *Client) CreateAgentPoolRaw(ctx context.Context, req *schemas.AgentPoolRequest, opts *CreateAgentPoolOptions) (*client.Response, error) {
 	path := "/agent-pools"
 
 	params := url.Values{}
@@ -45,32 +44,34 @@ func (c *Client) CreateAgentPoolRaw(ctx context.Context, req *schemas.AgentPoolR
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new [agent pool](/docs/agent-pools) resource. Agent pools can be created at the `account` or `environment` scope. The scope must be defined as part of the agent pool creation. If a pool is created at the account scope, all environments and workspaces within those environments will have access to use the pool. If a pool is created at the environment scope, then only the workspaces in that environment can use that pool. The typical flow for configuring a new agent pool involves the following operations: * Create an agent pool * [Create an access token](create_agent_pool_token) for the pool. The pool token is needed by an agent in order to join the agent pool. During the agent<->server handshake phase, the API server will generate a unique session token for each agent which will be used for all communication with the API server. * Install/Configure an agent on the customer's network.
-func (c *Client) CreateAgentPool(ctx context.Context, req *schemas.AgentPoolRequest, opts *CreateAgentPoolOptions) (*schemas.AgentPool, *client.Response, error) {
-	httpResp, err := c.CreateAgentPoolRaw(ctx, req, opts)
+func (c *Client) CreateAgentPool(ctx context.Context, req *schemas.AgentPoolRequest, opts *CreateAgentPoolOptions) (*schemas.AgentPool, error) {
+	resp, err := c.CreateAgentPoolRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AgentPool        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateAgentPoolOptions holds optional parameters for CreateAgentPool
@@ -81,28 +82,30 @@ type CreateAgentPoolOptions struct {
 }
 
 // This endpoint deletes an [agent pool](/docs/agent-pools) by ID.
-func (c *Client) DeleteAgentPoolRaw(ctx context.Context, agentPool string) (*http.Response, error) {
+func (c *Client) DeleteAgentPoolRaw(ctx context.Context, agentPool string) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// This endpoint deletes an [agent pool](/docs/agent-pools) by ID.
-func (c *Client) DeleteAgentPool(ctx context.Context, agentPool string) (*client.Response, error) {
-	httpResp, err := c.DeleteAgentPoolRaw(ctx, agentPool)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint deletes an [agent pool](/docs/agent-pools) by ID.
+func (c *Client) DeleteAgentPool(ctx context.Context, agentPool string) error {
+	resp, err := c.DeleteAgentPoolRaw(ctx, agentPool)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific [agent pool](/docs/agent-pools).
-func (c *Client) GetAgentPoolRaw(ctx context.Context, agentPool string, opts *GetAgentPoolOptions) (*http.Response, error) {
+func (c *Client) GetAgentPoolRaw(ctx context.Context, agentPool string, opts *GetAgentPoolOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
@@ -120,32 +123,34 @@ func (c *Client) GetAgentPoolRaw(ctx context.Context, agentPool string, opts *Ge
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific [agent pool](/docs/agent-pools).
-func (c *Client) GetAgentPool(ctx context.Context, agentPool string, opts *GetAgentPoolOptions) (*schemas.AgentPool, *client.Response, error) {
-	httpResp, err := c.GetAgentPoolRaw(ctx, agentPool, opts)
+func (c *Client) GetAgentPool(ctx context.Context, agentPool string, opts *GetAgentPoolOptions) (*schemas.AgentPool, error) {
+	resp, err := c.GetAgentPoolRaw(ctx, agentPool, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AgentPool        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetAgentPoolOptions holds optional parameters for GetAgentPool
@@ -156,7 +161,7 @@ type GetAgentPoolOptions struct {
 }
 
 // This endpoint returns a list of [agent pools](/docs/agent-pools) by various filters.
-func (c *Client) GetAgentPoolsRaw(ctx context.Context, opts *GetAgentPoolsOptions) (*http.Response, error) {
+func (c *Client) GetAgentPoolsRaw(ctx context.Context, opts *GetAgentPoolsOptions) (*client.Response, error) {
 	path := "/agent-pools"
 
 	params := url.Values{}
@@ -182,18 +187,20 @@ func (c *Client) GetAgentPoolsRaw(ctx context.Context, opts *GetAgentPoolsOption
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [agent pools](/docs/agent-pools) by various filters.
-func (c *Client) GetAgentPools(ctx context.Context, opts *GetAgentPoolsOptions) ([]*schemas.AgentPool, *client.Response, error) {
-	httpResp, err := c.GetAgentPoolsRaw(ctx, opts)
+func (c *Client) GetAgentPools(ctx context.Context, opts *GetAgentPoolsOptions) ([]*schemas.AgentPool, error) {
+	resp, err := c.GetAgentPoolsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AgentPool `json:"data"`
@@ -202,8 +209,8 @@ func (c *Client) GetAgentPools(ctx context.Context, opts *GetAgentPoolsOptions) 
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AgentPool, len(result.Data))
@@ -214,8 +221,7 @@ func (c *Client) GetAgentPools(ctx context.Context, opts *GetAgentPoolsOptions) 
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetAgentPoolsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -256,22 +262,40 @@ func (c *Client) GetAgentPoolsIter(ctx context.Context, opts *GetAgentPoolsOptio
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetAgentPools(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetAgentPoolsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.AgentPool{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AgentPool `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AgentPool{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -311,13 +335,36 @@ func (c *Client) GetAgentPoolsPaged(ctx context.Context, opts *GetAgentPoolsOpti
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetAgentPools(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetAgentPoolsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AgentPool `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AgentPool, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AgentPool](ctx, pageSize, fetchPage)
@@ -337,7 +384,7 @@ type GetAgentPoolsOptions struct {
 }
 
 // This endpoint updates an [agent pool](/docs/agent-pools) by ID.
-func (c *Client) UpdateAgentPoolRaw(ctx context.Context, agentPool string, req *schemas.AgentPoolRequest, opts *UpdateAgentPoolOptions) (*http.Response, error) {
+func (c *Client) UpdateAgentPoolRaw(ctx context.Context, agentPool string, req *schemas.AgentPoolRequest, opts *UpdateAgentPoolOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
@@ -357,32 +404,34 @@ func (c *Client) UpdateAgentPoolRaw(ctx context.Context, agentPool string, req *
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates an [agent pool](/docs/agent-pools) by ID.
-func (c *Client) UpdateAgentPool(ctx context.Context, agentPool string, req *schemas.AgentPoolRequest, opts *UpdateAgentPoolOptions) (*schemas.AgentPool, *client.Response, error) {
-	httpResp, err := c.UpdateAgentPoolRaw(ctx, agentPool, req, opts)
+func (c *Client) UpdateAgentPool(ctx context.Context, agentPool string, req *schemas.AgentPoolRequest, opts *UpdateAgentPoolOptions) (*schemas.AgentPool, error) {
+	resp, err := c.UpdateAgentPoolRaw(ctx, agentPool, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AgentPool        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateAgentPoolOptions holds optional parameters for UpdateAgentPool

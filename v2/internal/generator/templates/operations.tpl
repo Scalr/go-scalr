@@ -29,7 +29,7 @@ func New(httpClient *client.HTTPClient) *Client {
 {{range .Operations -}}
 {{if .Description}}// {{ .Description }}
 {{end -}}
-func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{.GoName}} {{.Type}}{{end}}{{if .HasBody}}, req {{.RequestType}}{{end}}{{if .QueryParams}}, opts *{{ .Name }}Options{{end}}) (*http.Response, error) {
+func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{.GoName}} {{.Type}}{{end}}{{if .HasBody}}, req {{.RequestType}}{{end}}{{if .QueryParams}}, opts *{{ .Name }}Options{{end}}) (*client.Response, error) {
 	path := "{{ .Path }}"
 	{{range .PathParameters -}}
 	path = strings.ReplaceAll(path, "{{`{`}}{{.Name}}{{`}`}}", url.PathEscape({{.GoName}}))
@@ -79,7 +79,7 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 	{{if .UsesPlainJSON -}}
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, req, headers)
+	httpResp, err := c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, req, headers)
 	{{else if .IsRelationshipOp -}}
 	// This is a relationship operation - convert resources to relationship identifiers
 	relationshipData := make([]map[string]interface{}, len(req))
@@ -90,39 +90,41 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, body, nil)
+	httpResp, err := c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, body, nil)
 	{{else -}}
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, body, nil)
+	httpResp, err := c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, body, nil)
 	{{end -}}
 	{{else -}}
 	{{if eq .Method "DELETE" -}}
-	return c.httpClient.Delete(ctx, path, nil, nil)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	{{else -}}
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	{{end -}}
 	{{end -}}
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 {{if .Description}}// {{ .Description }}
 {{end -}}
-func (c *Client) {{ .Name }}(ctx context.Context{{range .PathParameters}}, {{.GoName}} {{.Type}}{{end}}{{if .HasBody}}, req {{.RequestType}}{{end}}{{if .QueryParams}}, opts *{{ .Name }}Options{{end}}) ({{if .ReturnsData}}{{.Returns}}, {{end}}*client.Response, error) {
-	httpResp, err := c.{{ .Name }}Raw(ctx{{range .PathParameters}}, {{.GoName}}{{end}}{{if .HasBody}}, req{{end}}{{if .QueryParams}}, opts{{end}})
+func (c *Client) {{ .Name }}(ctx context.Context{{range .PathParameters}}, {{.GoName}} {{.Type}}{{end}}{{if .HasBody}}, req {{.RequestType}}{{end}}{{if .QueryParams}}, opts *{{ .Name }}Options{{end}}) ({{if .ReturnsData}}{{.Returns}}, {{end}}error) {
+	resp, err := c.{{ .Name }}Raw(ctx{{range .PathParameters}}, {{.GoName}}{{end}}{{if .HasBody}}, req{{end}}{{if .QueryParams}}, opts{{end}})
 	if err != nil {
-		return {{if .ReturnsData}}{{if .ReturnsText}}"", {{else}}nil, {{end}}{{end}}nil, err
+		return {{if .ReturnsData}}{{if .ReturnsText}}"", {{else}}nil, {{end}}{{end}}err
 	}
-	defer httpResp.Body.Close()
-	
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 	
 	{{if .ReturnsData -}}
 	{{if .ReturnsText -}}
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 	{{else -}}
 
 	{{if .IsList -}}
@@ -140,8 +142,8 @@ func (c *Client) {{ .Name }}(ctx context.Context{{range .PathParameters}}, {{.Go
 	}
 	{{end -}}
 	
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 	
 	{{if .IsList -}}
@@ -155,8 +157,7 @@ func (c *Client) {{ .Name }}(ctx context.Context{{range .PathParameters}}, {{.Go
 		}
 		{{end -}}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 	{{else -}}
 	{{if .ReturnsRelationships -}}
 	// Populate included resources into relationships
@@ -164,11 +165,11 @@ func (c *Client) {{ .Name }}(ctx context.Context{{range .PathParameters}}, {{.Go
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
 	{{end -}}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 	{{end -}}
 	{{end -}}
 	{{else -}}
-	return resp, nil
+	return nil
 	{{end -}}
 }
 
@@ -217,22 +218,42 @@ func (c *Client) {{ .Name }}Iter(ctx context.Context{{range .PathParameters}}, {
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.{{ .Name }}(ctx{{range .PathParameters}}, {{.GoName}}{{end}}, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.{{ .Name }}Raw(ctx{{range .PathParameters}}, {{.GoName}}{{end}}, pageOpts)
 			if err != nil {
 				yield({{trimPrefix .Returns "[]*"}}{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []{{trimPrefix .Returns "[]*"}} `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield({{trimPrefix .Returns "[]*"}}{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				{{if .ReturnsRelationships -}}
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				{{end -}}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -272,13 +293,38 @@ func (c *Client) {{ .Name }}Paged(ctx context.Context{{range .PathParameters}}, 
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.{{ .Name }}(ctx{{range .PathParameters}}, {{.GoName}}{{end}}, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.{{ .Name }}Raw(ctx{{range .PathParameters}}, {{.GoName}}{{end}}, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []{{trimPrefix .Returns "[]*"}} `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make({{.Returns}}, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			{{if .ReturnsRelationships -}}
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+			{{end -}}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[{{trimPrefix .Returns "[]*"}}](ctx, pageSize, fetchPage)

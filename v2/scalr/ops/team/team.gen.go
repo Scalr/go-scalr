@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // The endpoint creates an [IAM](https://docs.scalr.io/docs/identity-and-access-management) team. If an external IdP used, the team name must exist in that IdP.
-func (c *Client) CreateTeamRaw(ctx context.Context, req *schemas.TeamRequest, opts *CreateTeamOptions) (*http.Response, error) {
+func (c *Client) CreateTeamRaw(ctx context.Context, req *schemas.TeamRequest, opts *CreateTeamOptions) (*client.Response, error) {
 	path := "/teams"
 
 	params := url.Values{}
@@ -45,32 +44,34 @@ func (c *Client) CreateTeamRaw(ctx context.Context, req *schemas.TeamRequest, op
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // The endpoint creates an [IAM](https://docs.scalr.io/docs/identity-and-access-management) team. If an external IdP used, the team name must exist in that IdP.
-func (c *Client) CreateTeam(ctx context.Context, req *schemas.TeamRequest, opts *CreateTeamOptions) (*schemas.Team, *client.Response, error) {
-	httpResp, err := c.CreateTeamRaw(ctx, req, opts)
+func (c *Client) CreateTeam(ctx context.Context, req *schemas.TeamRequest, opts *CreateTeamOptions) (*schemas.Team, error) {
+	resp, err := c.CreateTeamRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Team             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateTeamOptions holds optional parameters for CreateTeam
@@ -81,28 +82,30 @@ type CreateTeamOptions struct {
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
-func (c *Client) DeleteTeamRaw(ctx context.Context, team string) (*http.Response, error) {
+func (c *Client) DeleteTeamRaw(ctx context.Context, team string) (*client.Response, error) {
 	path := "/teams/{team}"
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
-func (c *Client) DeleteTeam(ctx context.Context, team string) (*client.Response, error) {
-	httpResp, err := c.DeleteTeamRaw(ctx, team)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
+func (c *Client) DeleteTeam(ctx context.Context, team string) error {
+	resp, err := c.DeleteTeamRaw(ctx, team)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
-func (c *Client) GetTeamRaw(ctx context.Context, team string, opts *GetTeamOptions) (*http.Response, error) {
+func (c *Client) GetTeamRaw(ctx context.Context, team string, opts *GetTeamOptions) (*client.Response, error) {
 	path := "/teams/{team}"
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
@@ -120,32 +123,34 @@ func (c *Client) GetTeamRaw(ctx context.Context, team string, opts *GetTeamOptio
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
-func (c *Client) GetTeam(ctx context.Context, team string, opts *GetTeamOptions) (*schemas.Team, *client.Response, error) {
-	httpResp, err := c.GetTeamRaw(ctx, team, opts)
+func (c *Client) GetTeam(ctx context.Context, team string, opts *GetTeamOptions) (*schemas.Team, error) {
+	resp, err := c.GetTeamRaw(ctx, team, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Team             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetTeamOptions holds optional parameters for GetTeam
@@ -156,7 +161,7 @@ type GetTeamOptions struct {
 }
 
 // The endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) teams. The endpoint supports filtering by team name (`filter[name]`), IdP (`filter[identity-provider]`) and team ID (`filter[team]=in:team-123,team-331`).
-func (c *Client) GetTeamsRaw(ctx context.Context, opts *GetTeamsOptions) (*http.Response, error) {
+func (c *Client) GetTeamsRaw(ctx context.Context, opts *GetTeamsOptions) (*client.Response, error) {
 	path := "/teams"
 
 	params := url.Values{}
@@ -186,18 +191,20 @@ func (c *Client) GetTeamsRaw(ctx context.Context, opts *GetTeamsOptions) (*http.
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // The endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) teams. The endpoint supports filtering by team name (`filter[name]`), IdP (`filter[identity-provider]`) and team ID (`filter[team]=in:team-123,team-331`).
-func (c *Client) GetTeams(ctx context.Context, opts *GetTeamsOptions) ([]*schemas.Team, *client.Response, error) {
-	httpResp, err := c.GetTeamsRaw(ctx, opts)
+func (c *Client) GetTeams(ctx context.Context, opts *GetTeamsOptions) ([]*schemas.Team, error) {
+	resp, err := c.GetTeamsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Team `json:"data"`
@@ -206,8 +213,8 @@ func (c *Client) GetTeams(ctx context.Context, opts *GetTeamsOptions) ([]*schema
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Team, len(result.Data))
@@ -218,8 +225,7 @@ func (c *Client) GetTeams(ctx context.Context, opts *GetTeamsOptions) ([]*schema
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetTeamsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -260,22 +266,40 @@ func (c *Client) GetTeamsIter(ctx context.Context, opts *GetTeamsOptions) iter.S
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetTeams(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetTeamsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Team{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Team `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Team{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -315,13 +339,36 @@ func (c *Client) GetTeamsPaged(ctx context.Context, opts *GetTeamsOptions) *clie
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetTeams(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetTeamsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Team `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Team, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Team](ctx, pageSize, fetchPage)
@@ -343,7 +390,7 @@ type GetTeamsOptions struct {
 }
 
 // Update a team's attributes or users. The endpoint can be used to add or remove users from a team.
-func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*http.Response, error) {
+func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*client.Response, error) {
 	path := "/teams/{team}"
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
@@ -363,32 +410,34 @@ func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.Te
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Update a team's attributes or users. The endpoint can be used to add or remove users from a team.
-func (c *Client) UpdateTeam(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*schemas.Team, *client.Response, error) {
-	httpResp, err := c.UpdateTeamRaw(ctx, team, req, opts)
+func (c *Client) UpdateTeam(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*schemas.Team, error) {
+	resp, err := c.UpdateTeamRaw(ctx, team, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Team             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateTeamOptions holds optional parameters for UpdateTeam

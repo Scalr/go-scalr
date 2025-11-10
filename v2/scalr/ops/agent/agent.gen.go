@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,28 +25,30 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint deletes an agent by ID. Only `offline` or `errored` agents can be removed from the pool. Offline or errored agents will be removed automatically after 4 hours of inactivity.
-func (c *Client) DeleteAgentRaw(ctx context.Context, agent string) (*http.Response, error) {
+func (c *Client) DeleteAgentRaw(ctx context.Context, agent string) (*client.Response, error) {
 	path := "/agents/{agent}"
 	path = strings.ReplaceAll(path, "{agent}", url.PathEscape(agent))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// This endpoint deletes an agent by ID. Only `offline` or `errored` agents can be removed from the pool. Offline or errored agents will be removed automatically after 4 hours of inactivity.
-func (c *Client) DeleteAgent(ctx context.Context, agent string) (*client.Response, error) {
-	httpResp, err := c.DeleteAgentRaw(ctx, agent)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint deletes an agent by ID. Only `offline` or `errored` agents can be removed from the pool. Offline or errored agents will be removed automatically after 4 hours of inactivity.
+func (c *Client) DeleteAgent(ctx context.Context, agent string) error {
+	resp, err := c.DeleteAgentRaw(ctx, agent)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific agent.
-func (c *Client) GetAgentRaw(ctx context.Context, agent string, opts *GetAgentOptions) (*http.Response, error) {
+func (c *Client) GetAgentRaw(ctx context.Context, agent string, opts *GetAgentOptions) (*client.Response, error) {
 	path := "/agents/{agent}"
 	path = strings.ReplaceAll(path, "{agent}", url.PathEscape(agent))
 
@@ -65,32 +66,34 @@ func (c *Client) GetAgentRaw(ctx context.Context, agent string, opts *GetAgentOp
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific agent.
-func (c *Client) GetAgent(ctx context.Context, agent string, opts *GetAgentOptions) (*schemas.Agent, *client.Response, error) {
-	httpResp, err := c.GetAgentRaw(ctx, agent, opts)
+func (c *Client) GetAgent(ctx context.Context, agent string, opts *GetAgentOptions) (*schemas.Agent, error) {
+	resp, err := c.GetAgentRaw(ctx, agent, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Agent            `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetAgentOptions holds optional parameters for GetAgent
@@ -101,7 +104,7 @@ type GetAgentOptions struct {
 }
 
 // The endpoint returns a list of agents by various filters.
-func (c *Client) GetAgentsRaw(ctx context.Context, opts *GetAgentsOptions) (*http.Response, error) {
+func (c *Client) GetAgentsRaw(ctx context.Context, opts *GetAgentsOptions) (*client.Response, error) {
 	path := "/agents"
 
 	params := url.Values{}
@@ -127,18 +130,20 @@ func (c *Client) GetAgentsRaw(ctx context.Context, opts *GetAgentsOptions) (*htt
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // The endpoint returns a list of agents by various filters.
-func (c *Client) GetAgents(ctx context.Context, opts *GetAgentsOptions) ([]*schemas.Agent, *client.Response, error) {
-	httpResp, err := c.GetAgentsRaw(ctx, opts)
+func (c *Client) GetAgents(ctx context.Context, opts *GetAgentsOptions) ([]*schemas.Agent, error) {
+	resp, err := c.GetAgentsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Agent `json:"data"`
@@ -147,8 +152,8 @@ func (c *Client) GetAgents(ctx context.Context, opts *GetAgentsOptions) ([]*sche
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Agent, len(result.Data))
@@ -159,8 +164,7 @@ func (c *Client) GetAgents(ctx context.Context, opts *GetAgentsOptions) ([]*sche
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetAgentsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -201,22 +205,40 @@ func (c *Client) GetAgentsIter(ctx context.Context, opts *GetAgentsOptions) iter
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetAgents(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetAgentsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Agent{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Agent `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Agent{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -256,13 +278,36 @@ func (c *Client) GetAgentsPaged(ctx context.Context, opts *GetAgentsOptions) *cl
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetAgents(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetAgentsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Agent `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Agent, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Agent](ctx, pageSize, fetchPage)

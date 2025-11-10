@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,62 +25,66 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new Provider configuration.
-func (c *Client) CreateProviderConfigurationRaw(ctx context.Context, req *schemas.ProviderConfigurationRequest) (*http.Response, error) {
+func (c *Client) CreateProviderConfigurationRaw(ctx context.Context, req *schemas.ProviderConfigurationRequest) (*client.Response, error) {
 	path := "/provider-configurations"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new Provider configuration.
-func (c *Client) CreateProviderConfiguration(ctx context.Context, req *schemas.ProviderConfigurationRequest) (*schemas.ProviderConfiguration, *client.Response, error) {
-	httpResp, err := c.CreateProviderConfigurationRaw(ctx, req)
+func (c *Client) CreateProviderConfiguration(ctx context.Context, req *schemas.ProviderConfigurationRequest) (*schemas.ProviderConfiguration, error) {
+	resp, err := c.CreateProviderConfigurationRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ProviderConfiguration `json:"data"`
 		Included []map[string]interface{}      `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // The endpoint deletes a Provider configuration by ID.
-func (c *Client) DeleteProviderConfigurationRaw(ctx context.Context, providerConfiguration string) (*http.Response, error) {
+func (c *Client) DeleteProviderConfigurationRaw(ctx context.Context, providerConfiguration string) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes a Provider configuration by ID.
-func (c *Client) DeleteProviderConfiguration(ctx context.Context, providerConfiguration string) (*client.Response, error) {
-	httpResp, err := c.DeleteProviderConfigurationRaw(ctx, providerConfiguration)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// The endpoint deletes a Provider configuration by ID.
+func (c *Client) DeleteProviderConfiguration(ctx context.Context, providerConfiguration string) error {
+	resp, err := c.DeleteProviderConfigurationRaw(ctx, providerConfiguration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific Provider configuration.
-func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationOptions) (*http.Response, error) {
+func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
@@ -99,32 +102,34 @@ func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfig
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Provider configuration.
-func (c *Client) GetProviderConfiguration(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationOptions) (*schemas.ProviderConfiguration, *client.Response, error) {
-	httpResp, err := c.GetProviderConfigurationRaw(ctx, providerConfiguration, opts)
+func (c *Client) GetProviderConfiguration(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationOptions) (*schemas.ProviderConfiguration, error) {
+	resp, err := c.GetProviderConfigurationRaw(ctx, providerConfiguration, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ProviderConfiguration `json:"data"`
 		Included []map[string]interface{}      `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetProviderConfigurationOptions holds optional parameters for GetProviderConfiguration
@@ -135,7 +140,7 @@ type GetProviderConfigurationOptions struct {
 }
 
 // This endpoint returns a list of Provider configurations by various filters.
-func (c *Client) ListProviderConfigurationsRaw(ctx context.Context, opts *ListProviderConfigurationsOptions) (*http.Response, error) {
+func (c *Client) ListProviderConfigurationsRaw(ctx context.Context, opts *ListProviderConfigurationsOptions) (*client.Response, error) {
 	path := "/provider-configurations"
 
 	params := url.Values{}
@@ -163,18 +168,20 @@ func (c *Client) ListProviderConfigurationsRaw(ctx context.Context, opts *ListPr
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of Provider configurations by various filters.
-func (c *Client) ListProviderConfigurations(ctx context.Context, opts *ListProviderConfigurationsOptions) ([]*schemas.ProviderConfiguration, *client.Response, error) {
-	httpResp, err := c.ListProviderConfigurationsRaw(ctx, opts)
+func (c *Client) ListProviderConfigurations(ctx context.Context, opts *ListProviderConfigurationsOptions) ([]*schemas.ProviderConfiguration, error) {
+	resp, err := c.ListProviderConfigurationsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.ProviderConfiguration `json:"data"`
@@ -183,8 +190,8 @@ func (c *Client) ListProviderConfigurations(ctx context.Context, opts *ListProvi
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.ProviderConfiguration, len(result.Data))
@@ -195,8 +202,7 @@ func (c *Client) ListProviderConfigurations(ctx context.Context, opts *ListProvi
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListProviderConfigurationsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -237,22 +243,40 @@ func (c *Client) ListProviderConfigurationsIter(ctx context.Context, opts *ListP
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListProviderConfigurations(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListProviderConfigurationsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.ProviderConfiguration{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.ProviderConfiguration `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.ProviderConfiguration{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -292,13 +316,36 @@ func (c *Client) ListProviderConfigurationsPaged(ctx context.Context, opts *List
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListProviderConfigurations(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListProviderConfigurationsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.ProviderConfiguration `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.ProviderConfiguration, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.ProviderConfiguration](ctx, pageSize, fetchPage)
@@ -320,36 +367,38 @@ type ListProviderConfigurationsOptions struct {
 }
 
 // This endpoint updates attributes of an existing Provider configuration.
-func (c *Client) UpdateProviderConfigurationRaw(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationRequest) (*http.Response, error) {
+func (c *Client) UpdateProviderConfigurationRaw(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationRequest) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates attributes of an existing Provider configuration.
-func (c *Client) UpdateProviderConfiguration(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationRequest) (*schemas.ProviderConfiguration, *client.Response, error) {
-	httpResp, err := c.UpdateProviderConfigurationRaw(ctx, providerConfiguration, req)
+func (c *Client) UpdateProviderConfiguration(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationRequest) (*schemas.ProviderConfiguration, error) {
+	resp, err := c.UpdateProviderConfigurationRaw(ctx, providerConfiguration, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ProviderConfiguration `json:"data"`
 		Included []map[string]interface{}      `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

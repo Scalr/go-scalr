@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -25,34 +24,36 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Show details of a specific OPA policy.
-func (c *Client) GetPolicyRaw(ctx context.Context, policy string) (*http.Response, error) {
+func (c *Client) GetPolicyRaw(ctx context.Context, policy string) (*client.Response, error) {
 	path := "/policies/{policy}"
 	path = strings.ReplaceAll(path, "{policy}", url.PathEscape(policy))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific OPA policy.
-func (c *Client) GetPolicy(ctx context.Context, policy string) (*schemas.Policy, *client.Response, error) {
-	httpResp, err := c.GetPolicyRaw(ctx, policy)
+func (c *Client) GetPolicy(ctx context.Context, policy string) (*schemas.Policy, error) {
+	resp, err := c.GetPolicyRaw(ctx, policy)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Policy           `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

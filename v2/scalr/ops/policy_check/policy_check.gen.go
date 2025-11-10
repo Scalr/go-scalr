@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -25,36 +24,38 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Show details of a specific Terraform policy check stage.
-func (c *Client) GetPolicyCheckRaw(ctx context.Context, policyCheck string) (*http.Response, error) {
+func (c *Client) GetPolicyCheckRaw(ctx context.Context, policyCheck string) (*client.Response, error) {
 	path := "/policy-checks/{policy_check}"
 	path = strings.ReplaceAll(path, "{policy_check}", url.PathEscape(policyCheck))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Terraform policy check stage.
-func (c *Client) GetPolicyCheck(ctx context.Context, policyCheck string) (*schemas.PolicyCheck, *client.Response, error) {
-	httpResp, err := c.GetPolicyCheckRaw(ctx, policyCheck)
+func (c *Client) GetPolicyCheck(ctx context.Context, policyCheck string) (*schemas.PolicyCheck, error) {
+	resp, err := c.GetPolicyCheckRaw(ctx, policyCheck)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.PolicyCheck      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Download the raw output of the OPA policy check stage.
-func (c *Client) GetPolicyChecksLogRaw(ctx context.Context, policyCheck string, opts *GetPolicyChecksLogOptions) (*http.Response, error) {
+func (c *Client) GetPolicyChecksLogRaw(ctx context.Context, policyCheck string, opts *GetPolicyChecksLogOptions) (*client.Response, error) {
 	path := "/policy-checks/{policy_check}/output"
 	path = strings.ReplaceAll(path, "{policy_check}", url.PathEscape(policyCheck))
 
@@ -71,20 +72,22 @@ func (c *Client) GetPolicyChecksLogRaw(ctx context.Context, policyCheck string, 
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Download the raw output of the OPA policy check stage.
-func (c *Client) GetPolicyChecksLog(ctx context.Context, policyCheck string, opts *GetPolicyChecksLogOptions) (*client.Response, error) {
-	httpResp, err := c.GetPolicyChecksLogRaw(ctx, policyCheck, opts)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Download the raw output of the OPA policy check stage.
+func (c *Client) GetPolicyChecksLog(ctx context.Context, policyCheck string, opts *GetPolicyChecksLogOptions) error {
+	resp, err := c.GetPolicyChecksLogRaw(ctx, policyCheck, opts)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // GetPolicyChecksLogOptions holds optional parameters for GetPolicyChecksLog
@@ -95,22 +98,24 @@ type GetPolicyChecksLogOptions struct {
 }
 
 // List policy checks for a specific run.
-func (c *Client) ListPolicyChecksRaw(ctx context.Context, run string) (*http.Response, error) {
+func (c *Client) ListPolicyChecksRaw(ctx context.Context, run string) (*client.Response, error) {
 	path := "/runs/{run}/policy-checks"
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // List policy checks for a specific run.
-func (c *Client) ListPolicyChecks(ctx context.Context, run string) ([]*schemas.PolicyCheck, *client.Response, error) {
-	httpResp, err := c.ListPolicyChecksRaw(ctx, run)
+func (c *Client) ListPolicyChecks(ctx context.Context, run string) ([]*schemas.PolicyCheck, error) {
+	resp, err := c.ListPolicyChecksRaw(ctx, run)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.PolicyCheck `json:"data"`
@@ -119,43 +124,44 @@ func (c *Client) ListPolicyChecks(ctx context.Context, run string) ([]*schemas.P
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.PolicyCheck, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // This endpoint overrides a soft-mandatory policy.
-func (c *Client) OverridePolicyRaw(ctx context.Context, policyCheck string) (*http.Response, error) {
+func (c *Client) OverridePolicyRaw(ctx context.Context, policyCheck string) (*client.Response, error) {
 	path := "/policy-checks/{policy_check}/actions/override"
 	path = strings.ReplaceAll(path, "{policy_check}", url.PathEscape(policyCheck))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint overrides a soft-mandatory policy.
-func (c *Client) OverridePolicy(ctx context.Context, policyCheck string) (*schemas.PolicyCheck, *client.Response, error) {
-	httpResp, err := c.OverridePolicyRaw(ctx, policyCheck)
+func (c *Client) OverridePolicy(ctx context.Context, policyCheck string) (*schemas.PolicyCheck, error) {
+	resp, err := c.OverridePolicyRaw(ctx, policyCheck)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.PolicyCheck      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

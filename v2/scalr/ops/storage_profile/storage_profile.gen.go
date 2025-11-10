@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,87 +25,93 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new storage profile for storing blobs (source code, terraform state, logs, etc).
-func (c *Client) CreateStorageProfileRaw(ctx context.Context, req *schemas.StorageProfileRequest) (*http.Response, error) {
+func (c *Client) CreateStorageProfileRaw(ctx context.Context, req *schemas.StorageProfileRequest) (*client.Response, error) {
 	path := "/storage-profiles"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// Create a new storage profile for storing blobs (source code, terraform state, logs, etc).
-func (c *Client) CreateStorageProfile(ctx context.Context, req *schemas.StorageProfileRequest) (*schemas.StorageProfile, *client.Response, error) {
-	httpResp, err := c.CreateStorageProfileRaw(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.StorageProfile   `json:"data"`
-		Included []map[string]interface{} `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return &result.Data, resp, nil
-}
-
-// Delete a storage profile. The operation is only allowed if the storage profile is not being used by any blobs and is not set as default.
-func (c *Client) DeleteStorageProfileRaw(ctx context.Context, storageProfile string) (*http.Response, error) {
-	path := "/storage-profiles/{storage_profile}"
-	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// Delete a storage profile. The operation is only allowed if the storage profile is not being used by any blobs and is not set as default.
-func (c *Client) DeleteStorageProfile(ctx context.Context, storageProfile string) (*client.Response, error) {
-	httpResp, err := c.DeleteStorageProfileRaw(ctx, storageProfile)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// List all storage profiles.
-func (c *Client) GetStorageProfileRaw(ctx context.Context, storageProfile string) (*http.Response, error) {
-	path := "/storage-profiles/{storage_profile}"
-	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// List all storage profiles.
-func (c *Client) GetStorageProfile(ctx context.Context, storageProfile string) (*schemas.StorageProfile, *client.Response, error) {
-	httpResp, err := c.GetStorageProfileRaw(ctx, storageProfile)
+// Create a new storage profile for storing blobs (source code, terraform state, logs, etc).
+func (c *Client) CreateStorageProfile(ctx context.Context, req *schemas.StorageProfileRequest) (*schemas.StorageProfile, error) {
+	resp, err := c.CreateStorageProfileRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.StorageProfile   `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+// Delete a storage profile. The operation is only allowed if the storage profile is not being used by any blobs and is not set as default.
+func (c *Client) DeleteStorageProfileRaw(ctx context.Context, storageProfile string) (*client.Response, error) {
+	path := "/storage-profiles/{storage_profile}"
+	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Delete a storage profile. The operation is only allowed if the storage profile is not being used by any blobs and is not set as default.
+func (c *Client) DeleteStorageProfile(ctx context.Context, storageProfile string) error {
+	resp, err := c.DeleteStorageProfileRaw(ctx, storageProfile)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// List all storage profiles.
+func (c *Client) GetStorageProfileRaw(ctx context.Context, storageProfile string) (*client.Response, error) {
+	path := "/storage-profiles/{storage_profile}"
+	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// List all storage profiles.
+func (c *Client) GetStorageProfile(ctx context.Context, storageProfile string) (*schemas.StorageProfile, error) {
+	resp, err := c.GetStorageProfileRaw(ctx, storageProfile)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.StorageProfile   `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &result.Data, nil
 }
 
 // Get storage profile by id.
-func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStorageProfilesOptions) (*http.Response, error) {
+func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStorageProfilesOptions) (*client.Response, error) {
 	path := "/storage-profiles"
 
 	params := url.Values{}
@@ -133,18 +138,20 @@ func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStoragePr
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Get storage profile by id.
-func (c *Client) ListStorageProfiles(ctx context.Context, opts *ListStorageProfilesOptions) ([]*schemas.StorageProfile, *client.Response, error) {
-	httpResp, err := c.ListStorageProfilesRaw(ctx, opts)
+func (c *Client) ListStorageProfiles(ctx context.Context, opts *ListStorageProfilesOptions) ([]*schemas.StorageProfile, error) {
+	resp, err := c.ListStorageProfilesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.StorageProfile `json:"data"`
@@ -153,16 +160,15 @@ func (c *Client) ListStorageProfiles(ctx context.Context, opts *ListStorageProfi
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.StorageProfile, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListStorageProfilesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -203,22 +209,36 @@ func (c *Client) ListStorageProfilesIter(ctx context.Context, opts *ListStorageP
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListStorageProfiles(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListStorageProfilesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.StorageProfile{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.StorageProfile `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.StorageProfile{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -258,13 +278,32 @@ func (c *Client) ListStorageProfilesPaged(ctx context.Context, opts *ListStorage
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListStorageProfiles(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListStorageProfilesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.StorageProfile `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.StorageProfile, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.StorageProfile](ctx, pageSize, fetchPage)
@@ -284,32 +323,34 @@ type ListStorageProfilesOptions struct {
 }
 
 // Update an existing storage profile. The operation is only allowed if the storage profile is not being used by any blobs.
-func (c *Client) UpdateStorageProfileRaw(ctx context.Context, storageProfile string, req *schemas.StorageProfileRequest) (*http.Response, error) {
+func (c *Client) UpdateStorageProfileRaw(ctx context.Context, storageProfile string, req *schemas.StorageProfileRequest) (*client.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Update an existing storage profile. The operation is only allowed if the storage profile is not being used by any blobs.
-func (c *Client) UpdateStorageProfile(ctx context.Context, storageProfile string, req *schemas.StorageProfileRequest) (*schemas.StorageProfile, *client.Response, error) {
-	httpResp, err := c.UpdateStorageProfileRaw(ctx, storageProfile, req)
+func (c *Client) UpdateStorageProfile(ctx context.Context, storageProfile string, req *schemas.StorageProfileRequest) (*schemas.StorageProfile, error) {
+	resp, err := c.UpdateStorageProfileRaw(ctx, storageProfile, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.StorageProfile   `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint creates Checkov integration.
-func (c *Client) CreateCheckovIntegrationRaw(ctx context.Context, req *schemas.CheckovIntegrationRequest, opts *CreateCheckovIntegrationOptions) (*http.Response, error) {
+func (c *Client) CreateCheckovIntegrationRaw(ctx context.Context, req *schemas.CheckovIntegrationRequest, opts *CreateCheckovIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/checkov"
 
 	params := url.Values{}
@@ -45,32 +44,34 @@ func (c *Client) CreateCheckovIntegrationRaw(ctx context.Context, req *schemas.C
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint creates Checkov integration.
-func (c *Client) CreateCheckovIntegration(ctx context.Context, req *schemas.CheckovIntegrationRequest, opts *CreateCheckovIntegrationOptions) (*schemas.CheckovIntegration, *client.Response, error) {
-	httpResp, err := c.CreateCheckovIntegrationRaw(ctx, req, opts)
+func (c *Client) CreateCheckovIntegration(ctx context.Context, req *schemas.CheckovIntegrationRequest, opts *CreateCheckovIntegrationOptions) (*schemas.CheckovIntegration, error) {
+	resp, err := c.CreateCheckovIntegrationRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.CheckovIntegration `json:"data"`
 		Included []map[string]interface{}   `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateCheckovIntegrationOptions holds optional parameters for CreateCheckovIntegration
@@ -80,27 +81,29 @@ type CreateCheckovIntegrationOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) DeleteCheckovIntegrationRaw(ctx context.Context, integration string) (*http.Response, error) {
+func (c *Client) DeleteCheckovIntegrationRaw(ctx context.Context, integration string) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteCheckovIntegration(ctx context.Context, integration string) (*client.Response, error) {
-	httpResp, err := c.DeleteCheckovIntegrationRaw(ctx, integration)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeleteCheckovIntegration(ctx context.Context, integration string) error {
+	resp, err := c.DeleteCheckovIntegrationRaw(ctx, integration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific Checkov Integration.
-func (c *Client) GetCheckovIntegrationRaw(ctx context.Context, integration string, opts *GetCheckovIntegrationOptions) (*http.Response, error) {
+func (c *Client) GetCheckovIntegrationRaw(ctx context.Context, integration string, opts *GetCheckovIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
@@ -118,32 +121,34 @@ func (c *Client) GetCheckovIntegrationRaw(ctx context.Context, integration strin
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Checkov Integration.
-func (c *Client) GetCheckovIntegration(ctx context.Context, integration string, opts *GetCheckovIntegrationOptions) (*schemas.CheckovIntegration, *client.Response, error) {
-	httpResp, err := c.GetCheckovIntegrationRaw(ctx, integration, opts)
+func (c *Client) GetCheckovIntegration(ctx context.Context, integration string, opts *GetCheckovIntegrationOptions) (*schemas.CheckovIntegration, error) {
+	resp, err := c.GetCheckovIntegrationRaw(ctx, integration, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.CheckovIntegration `json:"data"`
 		Included []map[string]interface{}   `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetCheckovIntegrationOptions holds optional parameters for GetCheckovIntegration
@@ -154,7 +159,7 @@ type GetCheckovIntegrationOptions struct {
 }
 
 // This endpoint returns a list of Checkov integrations.
-func (c *Client) ListCheckovIntegrationsRaw(ctx context.Context, opts *ListCheckovIntegrationsOptions) (*http.Response, error) {
+func (c *Client) ListCheckovIntegrationsRaw(ctx context.Context, opts *ListCheckovIntegrationsOptions) (*client.Response, error) {
 	path := "/integrations/checkov"
 
 	params := url.Values{}
@@ -180,18 +185,20 @@ func (c *Client) ListCheckovIntegrationsRaw(ctx context.Context, opts *ListCheck
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of Checkov integrations.
-func (c *Client) ListCheckovIntegrations(ctx context.Context, opts *ListCheckovIntegrationsOptions) ([]*schemas.CheckovIntegration, *client.Response, error) {
-	httpResp, err := c.ListCheckovIntegrationsRaw(ctx, opts)
+func (c *Client) ListCheckovIntegrations(ctx context.Context, opts *ListCheckovIntegrationsOptions) ([]*schemas.CheckovIntegration, error) {
+	resp, err := c.ListCheckovIntegrationsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.CheckovIntegration `json:"data"`
@@ -200,8 +207,8 @@ func (c *Client) ListCheckovIntegrations(ctx context.Context, opts *ListCheckovI
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.CheckovIntegration, len(result.Data))
@@ -212,8 +219,7 @@ func (c *Client) ListCheckovIntegrations(ctx context.Context, opts *ListCheckovI
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListCheckovIntegrationsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -254,22 +260,40 @@ func (c *Client) ListCheckovIntegrationsIter(ctx context.Context, opts *ListChec
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListCheckovIntegrations(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListCheckovIntegrationsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.CheckovIntegration{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.CheckovIntegration `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.CheckovIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -309,13 +333,36 @@ func (c *Client) ListCheckovIntegrationsPaged(ctx context.Context, opts *ListChe
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListCheckovIntegrations(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListCheckovIntegrationsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.CheckovIntegration `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.CheckovIntegration, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.CheckovIntegration](ctx, pageSize, fetchPage)
@@ -334,27 +381,29 @@ type ListCheckovIntegrationsOptions struct {
 	Filter map[string]string
 }
 
-func (c *Client) ResyncCheckovIntegrationRaw(ctx context.Context, integration string) (*http.Response, error) {
+func (c *Client) ResyncCheckovIntegrationRaw(ctx context.Context, integration string) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}/actions/resync"
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-func (c *Client) ResyncCheckovIntegration(ctx context.Context, integration string) (*client.Response, error) {
-	httpResp, err := c.ResyncCheckovIntegrationRaw(ctx, integration)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) ResyncCheckovIntegration(ctx context.Context, integration string) error {
+	resp, err := c.ResyncCheckovIntegrationRaw(ctx, integration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint updates Checkov integration.
-func (c *Client) UpdateCheckovIntegrationRaw(ctx context.Context, integration string, req *schemas.CheckovIntegrationRequest, opts *UpdateCheckovIntegrationOptions) (*http.Response, error) {
+func (c *Client) UpdateCheckovIntegrationRaw(ctx context.Context, integration string, req *schemas.CheckovIntegrationRequest, opts *UpdateCheckovIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
@@ -374,32 +423,34 @@ func (c *Client) UpdateCheckovIntegrationRaw(ctx context.Context, integration st
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates Checkov integration.
-func (c *Client) UpdateCheckovIntegration(ctx context.Context, integration string, req *schemas.CheckovIntegrationRequest, opts *UpdateCheckovIntegrationOptions) (*schemas.CheckovIntegration, *client.Response, error) {
-	httpResp, err := c.UpdateCheckovIntegrationRaw(ctx, integration, req, opts)
+func (c *Client) UpdateCheckovIntegration(ctx context.Context, integration string, req *schemas.CheckovIntegrationRequest, opts *UpdateCheckovIntegrationOptions) (*schemas.CheckovIntegration, error) {
+	resp, err := c.UpdateCheckovIntegrationRaw(ctx, integration, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.CheckovIntegration `json:"data"`
 		Included []map[string]interface{}   `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateCheckovIntegrationOptions holds optional parameters for UpdateCheckovIntegration

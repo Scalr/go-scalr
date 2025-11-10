@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,95 +25,101 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new tag in the account.
-func (c *Client) CreateTagRaw(ctx context.Context, req *schemas.TagRequest) (*http.Response, error) {
+func (c *Client) CreateTagRaw(ctx context.Context, req *schemas.TagRequest) (*client.Response, error) {
 	path := "/tags"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// Create a new tag in the account.
-func (c *Client) CreateTag(ctx context.Context, req *schemas.TagRequest) (*schemas.Tag, *client.Response, error) {
-	httpResp, err := c.CreateTagRaw(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.Tag              `json:"data"`
-		Included []map[string]interface{} `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Populate included resources into relationships
-	if len(result.Included) > 0 {
-		result.Data.Relationships.PopulateIncludes(result.Included)
-	}
-	return &result.Data, resp, nil
-}
-
-// The endpoint deletes tag by ID.
-func (c *Client) DeleteTagRaw(ctx context.Context, tag string) (*http.Response, error) {
-	path := "/tags/{tag}"
-	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes tag by ID.
-func (c *Client) DeleteTag(ctx context.Context, tag string) (*client.Response, error) {
-	httpResp, err := c.DeleteTagRaw(ctx, tag)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// Show details of a specific tag.
-func (c *Client) GetTagRaw(ctx context.Context, tag string) (*http.Response, error) {
-	path := "/tags/{tag}"
-	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Show details of a specific tag.
-func (c *Client) GetTag(ctx context.Context, tag string) (*schemas.Tag, *client.Response, error) {
-	httpResp, err := c.GetTagRaw(ctx, tag)
+// Create a new tag in the account.
+func (c *Client) CreateTag(ctx context.Context, req *schemas.TagRequest) (*schemas.Tag, error) {
+	resp, err := c.CreateTagRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Tag              `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+// The endpoint deletes tag by ID.
+func (c *Client) DeleteTagRaw(ctx context.Context, tag string) (*client.Response, error) {
+	path := "/tags/{tag}"
+	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// The endpoint deletes tag by ID.
+func (c *Client) DeleteTag(ctx context.Context, tag string) error {
+	resp, err := c.DeleteTagRaw(ctx, tag)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Show details of a specific tag.
+func (c *Client) GetTagRaw(ctx context.Context, tag string) (*client.Response, error) {
+	path := "/tags/{tag}"
+	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Show details of a specific tag.
+func (c *Client) GetTag(ctx context.Context, tag string) (*schemas.Tag, error) {
+	resp, err := c.GetTagRaw(ctx, tag)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.Tag              `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // This endpoint returns a list of tags.
-func (c *Client) ListTagsRaw(ctx context.Context, opts *ListTagsOptions) (*http.Response, error) {
+func (c *Client) ListTagsRaw(ctx context.Context, opts *ListTagsOptions) (*client.Response, error) {
 	path := "/tags"
 
 	params := url.Values{}
@@ -141,18 +146,20 @@ func (c *Client) ListTagsRaw(ctx context.Context, opts *ListTagsOptions) (*http.
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of tags.
-func (c *Client) ListTags(ctx context.Context, opts *ListTagsOptions) ([]*schemas.Tag, *client.Response, error) {
-	httpResp, err := c.ListTagsRaw(ctx, opts)
+func (c *Client) ListTags(ctx context.Context, opts *ListTagsOptions) ([]*schemas.Tag, error) {
+	resp, err := c.ListTagsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Tag `json:"data"`
@@ -161,8 +168,8 @@ func (c *Client) ListTags(ctx context.Context, opts *ListTagsOptions) ([]*schema
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Tag, len(result.Data))
@@ -173,8 +180,7 @@ func (c *Client) ListTags(ctx context.Context, opts *ListTagsOptions) ([]*schema
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListTagsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -215,22 +221,40 @@ func (c *Client) ListTagsIter(ctx context.Context, opts *ListTagsOptions) iter.S
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListTags(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListTagsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Tag{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Tag `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -270,13 +294,36 @@ func (c *Client) ListTagsPaged(ctx context.Context, opts *ListTagsOptions) *clie
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListTags(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListTagsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Tag `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Tag, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Tag](ctx, pageSize, fetchPage)
@@ -296,36 +343,38 @@ type ListTagsOptions struct {
 }
 
 // This endpoint updates tag by ID.
-func (c *Client) UpdateTagRaw(ctx context.Context, tag string, req *schemas.TagRequest) (*http.Response, error) {
+func (c *Client) UpdateTagRaw(ctx context.Context, tag string, req *schemas.TagRequest) (*client.Response, error) {
 	path := "/tags/{tag}"
 	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates tag by ID.
-func (c *Client) UpdateTag(ctx context.Context, tag string, req *schemas.TagRequest) (*schemas.Tag, *client.Response, error) {
-	httpResp, err := c.UpdateTagRaw(ctx, tag, req)
+func (c *Client) UpdateTag(ctx context.Context, tag string, req *schemas.TagRequest) (*schemas.Tag, error) {
+	resp, err := c.UpdateTagRaw(ctx, tag, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Tag              `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create an assume service account policy.
-func (c *Client) CreateAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, req *schemas.AssumeServiceAccountPolicyRequest, opts *CreateAssumeServiceAccountPolicyOptions) (*http.Response, error) {
+func (c *Client) CreateAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, req *schemas.AssumeServiceAccountPolicyRequest, opts *CreateAssumeServiceAccountPolicyOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
@@ -46,32 +45,34 @@ func (c *Client) CreateAssumeServiceAccountPolicyRaw(ctx context.Context, servic
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create an assume service account policy.
-func (c *Client) CreateAssumeServiceAccountPolicy(ctx context.Context, serviceAccount string, req *schemas.AssumeServiceAccountPolicyRequest, opts *CreateAssumeServiceAccountPolicyOptions) (*schemas.AssumeServiceAccountPolicy, *client.Response, error) {
-	httpResp, err := c.CreateAssumeServiceAccountPolicyRaw(ctx, serviceAccount, req, opts)
+func (c *Client) CreateAssumeServiceAccountPolicy(ctx context.Context, serviceAccount string, req *schemas.AssumeServiceAccountPolicyRequest, opts *CreateAssumeServiceAccountPolicyOptions) (*schemas.AssumeServiceAccountPolicy, error) {
+	resp, err := c.CreateAssumeServiceAccountPolicyRaw(ctx, serviceAccount, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AssumeServiceAccountPolicy `json:"data"`
 		Included []map[string]interface{}           `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateAssumeServiceAccountPolicyOptions holds optional parameters for CreateAssumeServiceAccountPolicy
@@ -82,7 +83,7 @@ type CreateAssumeServiceAccountPolicyOptions struct {
 }
 
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account.
-func (c *Client) CreateServiceAccountRaw(ctx context.Context, req *schemas.ServiceAccountRequest, opts *CreateServiceAccountOptions) (*http.Response, error) {
+func (c *Client) CreateServiceAccountRaw(ctx context.Context, req *schemas.ServiceAccountRequest, opts *CreateServiceAccountOptions) (*client.Response, error) {
 	path := "/service-accounts"
 
 	params := url.Values{}
@@ -101,32 +102,34 @@ func (c *Client) CreateServiceAccountRaw(ctx context.Context, req *schemas.Servi
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account.
-func (c *Client) CreateServiceAccount(ctx context.Context, req *schemas.ServiceAccountRequest, opts *CreateServiceAccountOptions) (*schemas.ServiceAccount, *client.Response, error) {
-	httpResp, err := c.CreateServiceAccountRaw(ctx, req, opts)
+func (c *Client) CreateServiceAccount(ctx context.Context, req *schemas.ServiceAccountRequest, opts *CreateServiceAccountOptions) (*schemas.ServiceAccount, error) {
+	resp, err := c.CreateServiceAccountRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ServiceAccount   `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateServiceAccountOptions holds optional parameters for CreateServiceAccount
@@ -137,50 +140,54 @@ type CreateServiceAccountOptions struct {
 }
 
 // The endpoint deletes an assume service account policy by ID.
-func (c *Client) DeleteAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string) (*http.Response, error) {
+func (c *Client) DeleteAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies/{assume_service_account_policy}"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 	path = strings.ReplaceAll(path, "{assume_service_account_policy}", url.PathEscape(assumeServiceAccountPolicy))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // The endpoint deletes an assume service account policy by ID.
-func (c *Client) DeleteAssumeServiceAccountPolicy(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string) (*client.Response, error) {
-	httpResp, err := c.DeleteAssumeServiceAccountPolicyRaw(ctx, serviceAccount, assumeServiceAccountPolicy)
+func (c *Client) DeleteAssumeServiceAccountPolicy(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string) error {
+	resp, err := c.DeleteAssumeServiceAccountPolicyRaw(ctx, serviceAccount, assumeServiceAccountPolicy)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return nil
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
-func (c *Client) DeleteServiceAccountRaw(ctx context.Context, serviceAccount string) (*http.Response, error) {
+func (c *Client) DeleteServiceAccountRaw(ctx context.Context, serviceAccount string) (*client.Response, error) {
 	path := "/service-accounts/{service_account}"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
-func (c *Client) DeleteServiceAccount(ctx context.Context, serviceAccount string) (*client.Response, error) {
-	httpResp, err := c.DeleteServiceAccountRaw(ctx, serviceAccount)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
+func (c *Client) DeleteServiceAccount(ctx context.Context, serviceAccount string) error {
+	resp, err := c.DeleteServiceAccountRaw(ctx, serviceAccount)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Get an assume service account policy.
-func (c *Client) GetAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, opts *GetAssumeServiceAccountPolicyOptions) (*http.Response, error) {
+func (c *Client) GetAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, opts *GetAssumeServiceAccountPolicyOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies/{assume_service_account_policy}"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 	path = strings.ReplaceAll(path, "{assume_service_account_policy}", url.PathEscape(assumeServiceAccountPolicy))
@@ -199,32 +206,34 @@ func (c *Client) GetAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAc
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Get an assume service account policy.
-func (c *Client) GetAssumeServiceAccountPolicy(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, opts *GetAssumeServiceAccountPolicyOptions) (*schemas.AssumeServiceAccountPolicy, *client.Response, error) {
-	httpResp, err := c.GetAssumeServiceAccountPolicyRaw(ctx, serviceAccount, assumeServiceAccountPolicy, opts)
+func (c *Client) GetAssumeServiceAccountPolicy(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, opts *GetAssumeServiceAccountPolicyOptions) (*schemas.AssumeServiceAccountPolicy, error) {
+	resp, err := c.GetAssumeServiceAccountPolicyRaw(ctx, serviceAccount, assumeServiceAccountPolicy, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AssumeServiceAccountPolicy `json:"data"`
 		Included []map[string]interface{}           `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetAssumeServiceAccountPolicyOptions holds optional parameters for GetAssumeServiceAccountPolicy
@@ -235,7 +244,7 @@ type GetAssumeServiceAccountPolicyOptions struct {
 }
 
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
-func (c *Client) GetServiceAccountRaw(ctx context.Context, serviceAccount string, opts *GetServiceAccountOptions) (*http.Response, error) {
+func (c *Client) GetServiceAccountRaw(ctx context.Context, serviceAccount string, opts *GetServiceAccountOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
@@ -253,32 +262,34 @@ func (c *Client) GetServiceAccountRaw(ctx context.Context, serviceAccount string
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
-func (c *Client) GetServiceAccount(ctx context.Context, serviceAccount string, opts *GetServiceAccountOptions) (*schemas.ServiceAccount, *client.Response, error) {
-	httpResp, err := c.GetServiceAccountRaw(ctx, serviceAccount, opts)
+func (c *Client) GetServiceAccount(ctx context.Context, serviceAccount string, opts *GetServiceAccountOptions) (*schemas.ServiceAccount, error) {
+	resp, err := c.GetServiceAccountRaw(ctx, serviceAccount, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ServiceAccount   `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetServiceAccountOptions holds optional parameters for GetServiceAccount
@@ -289,7 +300,7 @@ type GetServiceAccountOptions struct {
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) service accounts.
-func (c *Client) GetServiceAccountsRaw(ctx context.Context, opts *GetServiceAccountsOptions) (*http.Response, error) {
+func (c *Client) GetServiceAccountsRaw(ctx context.Context, opts *GetServiceAccountsOptions) (*client.Response, error) {
 	path := "/service-accounts"
 
 	params := url.Values{}
@@ -319,18 +330,20 @@ func (c *Client) GetServiceAccountsRaw(ctx context.Context, opts *GetServiceAcco
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) service accounts.
-func (c *Client) GetServiceAccounts(ctx context.Context, opts *GetServiceAccountsOptions) ([]*schemas.ServiceAccount, *client.Response, error) {
-	httpResp, err := c.GetServiceAccountsRaw(ctx, opts)
+func (c *Client) GetServiceAccounts(ctx context.Context, opts *GetServiceAccountsOptions) ([]*schemas.ServiceAccount, error) {
+	resp, err := c.GetServiceAccountsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.ServiceAccount `json:"data"`
@@ -339,8 +352,8 @@ func (c *Client) GetServiceAccounts(ctx context.Context, opts *GetServiceAccount
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.ServiceAccount, len(result.Data))
@@ -351,8 +364,7 @@ func (c *Client) GetServiceAccounts(ctx context.Context, opts *GetServiceAccount
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetServiceAccountsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -393,22 +405,40 @@ func (c *Client) GetServiceAccountsIter(ctx context.Context, opts *GetServiceAcc
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetServiceAccounts(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetServiceAccountsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.ServiceAccount{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.ServiceAccount `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.ServiceAccount{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -448,13 +478,36 @@ func (c *Client) GetServiceAccountsPaged(ctx context.Context, opts *GetServiceAc
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetServiceAccounts(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetServiceAccountsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.ServiceAccount `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.ServiceAccount, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.ServiceAccount](ctx, pageSize, fetchPage)
@@ -476,7 +529,7 @@ type GetServiceAccountsOptions struct {
 }
 
 // List service account assume policies.
-func (c *Client) ListAssumeServiceAccountPoliciesRaw(ctx context.Context, opts *ListAssumeServiceAccountPoliciesOptions) (*http.Response, error) {
+func (c *Client) ListAssumeServiceAccountPoliciesRaw(ctx context.Context, opts *ListAssumeServiceAccountPoliciesOptions) (*client.Response, error) {
 	path := "/assume-service-account-policies"
 
 	params := url.Values{}
@@ -506,18 +559,20 @@ func (c *Client) ListAssumeServiceAccountPoliciesRaw(ctx context.Context, opts *
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // List service account assume policies.
-func (c *Client) ListAssumeServiceAccountPolicies(ctx context.Context, opts *ListAssumeServiceAccountPoliciesOptions) ([]*schemas.AssumeServiceAccountPolicy, *client.Response, error) {
-	httpResp, err := c.ListAssumeServiceAccountPoliciesRaw(ctx, opts)
+func (c *Client) ListAssumeServiceAccountPolicies(ctx context.Context, opts *ListAssumeServiceAccountPoliciesOptions) ([]*schemas.AssumeServiceAccountPolicy, error) {
+	resp, err := c.ListAssumeServiceAccountPoliciesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AssumeServiceAccountPolicy `json:"data"`
@@ -526,8 +581,8 @@ func (c *Client) ListAssumeServiceAccountPolicies(ctx context.Context, opts *Lis
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AssumeServiceAccountPolicy, len(result.Data))
@@ -538,8 +593,7 @@ func (c *Client) ListAssumeServiceAccountPolicies(ctx context.Context, opts *Lis
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListAssumeServiceAccountPoliciesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -580,22 +634,40 @@ func (c *Client) ListAssumeServiceAccountPoliciesIter(ctx context.Context, opts 
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListAssumeServiceAccountPolicies(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListAssumeServiceAccountPoliciesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.AssumeServiceAccountPolicy{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AssumeServiceAccountPolicy `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AssumeServiceAccountPolicy{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -635,13 +707,36 @@ func (c *Client) ListAssumeServiceAccountPoliciesPaged(ctx context.Context, opts
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListAssumeServiceAccountPolicies(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListAssumeServiceAccountPoliciesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AssumeServiceAccountPolicy `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AssumeServiceAccountPolicy, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AssumeServiceAccountPolicy](ctx, pageSize, fetchPage)
@@ -663,7 +758,7 @@ type ListAssumeServiceAccountPoliciesOptions struct {
 }
 
 // Update an assume service account policy.
-func (c *Client) UpdateAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, req *schemas.AssumeServiceAccountPolicyRequest, opts *UpdateAssumeServiceAccountPolicyOptions) (*http.Response, error) {
+func (c *Client) UpdateAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, req *schemas.AssumeServiceAccountPolicyRequest, opts *UpdateAssumeServiceAccountPolicyOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies/{assume_service_account_policy}"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 	path = strings.ReplaceAll(path, "{assume_service_account_policy}", url.PathEscape(assumeServiceAccountPolicy))
@@ -684,32 +779,34 @@ func (c *Client) UpdateAssumeServiceAccountPolicyRaw(ctx context.Context, servic
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Update an assume service account policy.
-func (c *Client) UpdateAssumeServiceAccountPolicy(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, req *schemas.AssumeServiceAccountPolicyRequest, opts *UpdateAssumeServiceAccountPolicyOptions) (*schemas.AssumeServiceAccountPolicy, *client.Response, error) {
-	httpResp, err := c.UpdateAssumeServiceAccountPolicyRaw(ctx, serviceAccount, assumeServiceAccountPolicy, req, opts)
+func (c *Client) UpdateAssumeServiceAccountPolicy(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, req *schemas.AssumeServiceAccountPolicyRequest, opts *UpdateAssumeServiceAccountPolicyOptions) (*schemas.AssumeServiceAccountPolicy, error) {
+	resp, err := c.UpdateAssumeServiceAccountPolicyRaw(ctx, serviceAccount, assumeServiceAccountPolicy, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AssumeServiceAccountPolicy `json:"data"`
 		Included []map[string]interface{}           `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateAssumeServiceAccountPolicyOptions holds optional parameters for UpdateAssumeServiceAccountPolicy
@@ -720,7 +817,7 @@ type UpdateAssumeServiceAccountPolicyOptions struct {
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
-func (c *Client) UpdateServiceAccountRaw(ctx context.Context, serviceAccount string, req *schemas.ServiceAccountRequest, opts *UpdateServiceAccountOptions) (*http.Response, error) {
+func (c *Client) UpdateServiceAccountRaw(ctx context.Context, serviceAccount string, req *schemas.ServiceAccountRequest, opts *UpdateServiceAccountOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
@@ -740,32 +837,34 @@ func (c *Client) UpdateServiceAccountRaw(ctx context.Context, serviceAccount str
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
-func (c *Client) UpdateServiceAccount(ctx context.Context, serviceAccount string, req *schemas.ServiceAccountRequest, opts *UpdateServiceAccountOptions) (*schemas.ServiceAccount, *client.Response, error) {
-	httpResp, err := c.UpdateServiceAccountRaw(ctx, serviceAccount, req, opts)
+func (c *Client) UpdateServiceAccount(ctx context.Context, serviceAccount string, req *schemas.ServiceAccountRequest, opts *UpdateServiceAccountOptions) (*schemas.ServiceAccount, error) {
+	resp, err := c.UpdateServiceAccountRaw(ctx, serviceAccount, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ServiceAccount   `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateServiceAccountOptions holds optional parameters for UpdateServiceAccount

@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 
 	"github.com/scalr/go-scalr/v2/scalr/client"
@@ -24,7 +23,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint returns billing usage statistics for an account within a period of time. Required permission: accounts:billing
-func (c *Client) ListUsageStatisticsRaw(ctx context.Context, opts *ListUsageStatisticsOptions) (*http.Response, error) {
+func (c *Client) ListUsageStatisticsRaw(ctx context.Context, opts *ListUsageStatisticsOptions) (*client.Response, error) {
 	path := "/usage-statistics"
 
 	params := url.Values{}
@@ -46,18 +45,20 @@ func (c *Client) ListUsageStatisticsRaw(ctx context.Context, opts *ListUsageStat
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns billing usage statistics for an account within a period of time. Required permission: accounts:billing
-func (c *Client) ListUsageStatistics(ctx context.Context, opts *ListUsageStatisticsOptions) ([]*schemas.UsageStatistic, *client.Response, error) {
-	httpResp, err := c.ListUsageStatisticsRaw(ctx, opts)
+func (c *Client) ListUsageStatistics(ctx context.Context, opts *ListUsageStatisticsOptions) ([]*schemas.UsageStatistic, error) {
+	resp, err := c.ListUsageStatisticsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.UsageStatistic `json:"data"`
@@ -66,8 +67,8 @@ func (c *Client) ListUsageStatistics(ctx context.Context, opts *ListUsageStatist
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.UsageStatistic, len(result.Data))
@@ -78,8 +79,7 @@ func (c *Client) ListUsageStatistics(ctx context.Context, opts *ListUsageStatist
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListUsageStatisticsOptions holds optional parameters for ListUsageStatistics

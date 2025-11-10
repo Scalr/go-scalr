@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) role.
-func (c *Client) CreateRoleRaw(ctx context.Context, req *schemas.RoleRequest, opts *CreateRoleOptions) (*http.Response, error) {
+func (c *Client) CreateRoleRaw(ctx context.Context, req *schemas.RoleRequest, opts *CreateRoleOptions) (*client.Response, error) {
 	path := "/roles"
 
 	params := url.Values{}
@@ -45,32 +44,34 @@ func (c *Client) CreateRoleRaw(ctx context.Context, req *schemas.RoleRequest, op
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) role.
-func (c *Client) CreateRole(ctx context.Context, req *schemas.RoleRequest, opts *CreateRoleOptions) (*schemas.Role, *client.Response, error) {
-	httpResp, err := c.CreateRoleRaw(ctx, req, opts)
+func (c *Client) CreateRole(ctx context.Context, req *schemas.RoleRequest, opts *CreateRoleOptions) (*schemas.Role, error) {
+	resp, err := c.CreateRoleRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Role             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateRoleOptions holds optional parameters for CreateRole
@@ -81,28 +82,30 @@ type CreateRoleOptions struct {
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
-func (c *Client) DeleteRoleRaw(ctx context.Context, role string) (*http.Response, error) {
+func (c *Client) DeleteRoleRaw(ctx context.Context, role string) (*client.Response, error) {
 	path := "/roles/{role}"
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
-func (c *Client) DeleteRole(ctx context.Context, role string) (*client.Response, error) {
-	httpResp, err := c.DeleteRoleRaw(ctx, role)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
+func (c *Client) DeleteRole(ctx context.Context, role string) error {
+	resp, err := c.DeleteRoleRaw(ctx, role)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // The endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
-func (c *Client) GetRoleRaw(ctx context.Context, role string, opts *GetRoleOptions) (*http.Response, error) {
+func (c *Client) GetRoleRaw(ctx context.Context, role string, opts *GetRoleOptions) (*client.Response, error) {
 	path := "/roles/{role}"
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
@@ -120,32 +123,34 @@ func (c *Client) GetRoleRaw(ctx context.Context, role string, opts *GetRoleOptio
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // The endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
-func (c *Client) GetRole(ctx context.Context, role string, opts *GetRoleOptions) (*schemas.Role, *client.Response, error) {
-	httpResp, err := c.GetRoleRaw(ctx, role, opts)
+func (c *Client) GetRole(ctx context.Context, role string, opts *GetRoleOptions) (*schemas.Role, error) {
+	resp, err := c.GetRoleRaw(ctx, role, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Role             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetRoleOptions holds optional parameters for GetRole
@@ -156,7 +161,7 @@ type GetRoleOptions struct {
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) roles.
-func (c *Client) GetRolesRaw(ctx context.Context, opts *GetRolesOptions) (*http.Response, error) {
+func (c *Client) GetRolesRaw(ctx context.Context, opts *GetRolesOptions) (*client.Response, error) {
 	path := "/roles"
 
 	params := url.Values{}
@@ -186,18 +191,20 @@ func (c *Client) GetRolesRaw(ctx context.Context, opts *GetRolesOptions) (*http.
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) roles.
-func (c *Client) GetRoles(ctx context.Context, opts *GetRolesOptions) ([]*schemas.Role, *client.Response, error) {
-	httpResp, err := c.GetRolesRaw(ctx, opts)
+func (c *Client) GetRoles(ctx context.Context, opts *GetRolesOptions) ([]*schemas.Role, error) {
+	resp, err := c.GetRolesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Role `json:"data"`
@@ -206,8 +213,8 @@ func (c *Client) GetRoles(ctx context.Context, opts *GetRolesOptions) ([]*schema
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Role, len(result.Data))
@@ -218,8 +225,7 @@ func (c *Client) GetRoles(ctx context.Context, opts *GetRolesOptions) ([]*schema
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetRolesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -260,22 +266,40 @@ func (c *Client) GetRolesIter(ctx context.Context, opts *GetRolesOptions) iter.S
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetRoles(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetRolesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Role{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Role `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Role{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -315,13 +339,36 @@ func (c *Client) GetRolesPaged(ctx context.Context, opts *GetRolesOptions) *clie
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetRoles(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetRolesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Role `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Role, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Role](ctx, pageSize, fetchPage)
@@ -343,7 +390,7 @@ type GetRolesOptions struct {
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
-func (c *Client) UpdateRoleRaw(ctx context.Context, role string, req *schemas.RoleRequest, opts *UpdateRoleOptions) (*http.Response, error) {
+func (c *Client) UpdateRoleRaw(ctx context.Context, role string, req *schemas.RoleRequest, opts *UpdateRoleOptions) (*client.Response, error) {
 	path := "/roles/{role}"
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
@@ -363,32 +410,34 @@ func (c *Client) UpdateRoleRaw(ctx context.Context, role string, req *schemas.Ro
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
-func (c *Client) UpdateRole(ctx context.Context, role string, req *schemas.RoleRequest, opts *UpdateRoleOptions) (*schemas.Role, *client.Response, error) {
-	httpResp, err := c.UpdateRoleRaw(ctx, role, req, opts)
+func (c *Client) UpdateRole(ctx context.Context, role string, req *schemas.RoleRequest, opts *UpdateRoleOptions) (*schemas.Role, error) {
+	resp, err := c.UpdateRoleRaw(ctx, role, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Role             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateRoleOptions holds optional parameters for UpdateRole

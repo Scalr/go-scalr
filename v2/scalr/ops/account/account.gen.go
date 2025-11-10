@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,7 +26,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint adds provided [users](users.html#the-user-resource) to those who can log in to the account via password, even when SSO is enforced.
-func (c *Client) AddSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*http.Response, error) {
+func (c *Client) AddSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
@@ -40,24 +39,26 @@ func (c *Client) AddSsoBypassUsersRaw(ctx context.Context, account string, req [
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint adds provided [users](users.html#the-user-resource) to those who can log in to the account via password, even when SSO is enforced.
-func (c *Client) AddSsoBypassUsers(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
-	httpResp, err := c.AddSsoBypassUsersRaw(ctx, account, req)
+func (c *Client) AddSsoBypassUsers(ctx context.Context, account string, req []schemas.User) error {
+	resp, err := c.AddSsoBypassUsersRaw(ctx, account, req)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return nil
 }
 
 // This endpoint removes given [users](users.html#the-user-resource) from the list of those who can log in to the account via password, even when SSO is enforced.
-func (c *Client) DeleteSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*http.Response, error) {
+func (c *Client) DeleteSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
@@ -70,24 +71,26 @@ func (c *Client) DeleteSsoBypassUsersRaw(ctx context.Context, account string, re
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Delete(ctx, path, body, nil)
-}
-
-// This endpoint removes given [users](users.html#the-user-resource) from the list of those who can log in to the account via password, even when SSO is enforced.
-func (c *Client) DeleteSsoBypassUsers(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
-	httpResp, err := c.DeleteSsoBypassUsersRaw(ctx, account, req)
+	httpResp, err := c.httpClient.Delete(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint removes given [users](users.html#the-user-resource) from the list of those who can log in to the account via password, even when SSO is enforced.
+func (c *Client) DeleteSsoBypassUsers(ctx context.Context, account string, req []schemas.User) error {
+	resp, err := c.DeleteSsoBypassUsersRaw(ctx, account, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific account.
-func (c *Client) GetAccountRaw(ctx context.Context, account string, opts *GetAccountOptions) (*http.Response, error) {
+func (c *Client) GetAccountRaw(ctx context.Context, account string, opts *GetAccountOptions) (*client.Response, error) {
 	path := "/accounts/{account}"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
@@ -105,32 +108,34 @@ func (c *Client) GetAccountRaw(ctx context.Context, account string, opts *GetAcc
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific account.
-func (c *Client) GetAccount(ctx context.Context, account string, opts *GetAccountOptions) (*schemas.Account, *client.Response, error) {
-	httpResp, err := c.GetAccountRaw(ctx, account, opts)
+func (c *Client) GetAccount(ctx context.Context, account string, opts *GetAccountOptions) (*schemas.Account, error) {
+	resp, err := c.GetAccountRaw(ctx, account, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Account          `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetAccountOptions holds optional parameters for GetAccount
@@ -140,7 +145,7 @@ type GetAccountOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) GetAccountsRaw(ctx context.Context, opts *GetAccountsOptions) (*http.Response, error) {
+func (c *Client) GetAccountsRaw(ctx context.Context, opts *GetAccountsOptions) (*client.Response, error) {
 	path := "/accounts"
 
 	params := url.Values{}
@@ -165,17 +170,19 @@ func (c *Client) GetAccountsRaw(ctx context.Context, opts *GetAccountsOptions) (
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) GetAccounts(ctx context.Context, opts *GetAccountsOptions) ([]*schemas.Account, *client.Response, error) {
-	httpResp, err := c.GetAccountsRaw(ctx, opts)
+func (c *Client) GetAccounts(ctx context.Context, opts *GetAccountsOptions) ([]*schemas.Account, error) {
+	resp, err := c.GetAccountsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Account `json:"data"`
@@ -184,8 +191,8 @@ func (c *Client) GetAccounts(ctx context.Context, opts *GetAccountsOptions) ([]*
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Account, len(result.Data))
@@ -196,8 +203,7 @@ func (c *Client) GetAccounts(ctx context.Context, opts *GetAccountsOptions) ([]*
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetAccountsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -238,22 +244,40 @@ func (c *Client) GetAccountsIter(ctx context.Context, opts *GetAccountsOptions) 
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetAccounts(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetAccountsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Account{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Account `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Account{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -293,13 +317,36 @@ func (c *Client) GetAccountsPaged(ctx context.Context, opts *GetAccountsOptions)
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetAccounts(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetAccountsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Account `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Account, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Account](ctx, pageSize, fetchPage)
@@ -318,31 +365,33 @@ type GetAccountsOptions struct {
 	Filter map[string]string
 }
 
-func (c *Client) GetMetricsRaw(ctx context.Context, account string) (*http.Response, error) {
+func (c *Client) GetMetricsRaw(ctx context.Context, account string) (*client.Response, error) {
 	path := "/accounts/{account}/metrics"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) GetMetrics(ctx context.Context, account string) (string, *client.Response, error) {
-	httpResp, err := c.GetMetricsRaw(ctx, account)
+func (c *Client) GetMetrics(ctx context.Context, account string) (string, error) {
+	resp, err := c.GetMetricsRaw(ctx, account)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // This endpoint returns a list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced.
-func (c *Client) ListSsoBypassUsersRaw(ctx context.Context, account string, opts *ListSsoBypassUsersOptions) (*http.Response, error) {
+func (c *Client) ListSsoBypassUsersRaw(ctx context.Context, account string, opts *ListSsoBypassUsersOptions) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
@@ -363,18 +412,20 @@ func (c *Client) ListSsoBypassUsersRaw(ctx context.Context, account string, opts
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced.
-func (c *Client) ListSsoBypassUsers(ctx context.Context, account string, opts *ListSsoBypassUsersOptions) ([]*schemas.User, *client.Response, error) {
-	httpResp, err := c.ListSsoBypassUsersRaw(ctx, account, opts)
+func (c *Client) ListSsoBypassUsers(ctx context.Context, account string, opts *ListSsoBypassUsersOptions) ([]*schemas.User, error) {
+	resp, err := c.ListSsoBypassUsersRaw(ctx, account, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.User `json:"data"`
@@ -383,16 +434,15 @@ func (c *Client) ListSsoBypassUsers(ctx context.Context, account string, opts *L
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.User, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListSsoBypassUsersIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -433,22 +483,36 @@ func (c *Client) ListSsoBypassUsersIter(ctx context.Context, account string, opt
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListSsoBypassUsers(ctx, account, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListSsoBypassUsersRaw(ctx, account, pageOpts)
 			if err != nil {
 				yield(schemas.User{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.User `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -488,13 +552,32 @@ func (c *Client) ListSsoBypassUsersPaged(ctx context.Context, account string, op
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListSsoBypassUsers(ctx, account, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListSsoBypassUsersRaw(ctx, account, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.User `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.User, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.User](ctx, pageSize, fetchPage)
@@ -510,7 +593,7 @@ type ListSsoBypassUsersOptions struct {
 }
 
 // This endpoint completely replaces the list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced, with a provided list.
-func (c *Client) ReplaceSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*http.Response, error) {
+func (c *Client) ReplaceSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
@@ -523,51 +606,55 @@ func (c *Client) ReplaceSsoBypassUsersRaw(ctx context.Context, account string, r
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Patch(ctx, path, body, nil)
-}
-
-// This endpoint completely replaces the list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced, with a provided list.
-func (c *Client) ReplaceSsoBypassUsers(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
-	httpResp, err := c.ReplaceSsoBypassUsersRaw(ctx, account, req)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) UpdateAccountRaw(ctx context.Context, account string, req *schemas.AccountRequest) (*http.Response, error) {
+// This endpoint completely replaces the list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced, with a provided list.
+func (c *Client) ReplaceSsoBypassUsers(ctx context.Context, account string, req []schemas.User) error {
+	resp, err := c.ReplaceSsoBypassUsersRaw(ctx, account, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (c *Client) UpdateAccountRaw(ctx context.Context, account string, req *schemas.AccountRequest) (*client.Response, error) {
 	path := "/accounts/{account}"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) UpdateAccount(ctx context.Context, account string, req *schemas.AccountRequest) (*schemas.Account, *client.Response, error) {
-	httpResp, err := c.UpdateAccountRaw(ctx, account, req)
+func (c *Client) UpdateAccount(ctx context.Context, account string, req *schemas.AccountRequest) (*schemas.Account, error) {
+	resp, err := c.UpdateAccountRaw(ctx, account, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Account          `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,62 +25,66 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new VCS connection between Scalr and a VCS provider. VCS providers can be created at the Scalr account. Self-hosted Scalr also supports the creation of global VCS providers. If a VCS provider is created globally, all accounts within the self-hosted installation will have access to use the VCS provider. Only VCS providers with `personal_token` auth type, can be created through the API. If you need to set up `oauth2` provider, you should use Scalr [web interface](/docs/github) to do this.
-func (c *Client) CreateVcsProviderRaw(ctx context.Context, req *schemas.VcsProviderRequest) (*http.Response, error) {
+func (c *Client) CreateVcsProviderRaw(ctx context.Context, req *schemas.VcsProviderRequest) (*client.Response, error) {
 	path := "/vcs-providers"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new VCS connection between Scalr and a VCS provider. VCS providers can be created at the Scalr account. Self-hosted Scalr also supports the creation of global VCS providers. If a VCS provider is created globally, all accounts within the self-hosted installation will have access to use the VCS provider. Only VCS providers with `personal_token` auth type, can be created through the API. If you need to set up `oauth2` provider, you should use Scalr [web interface](/docs/github) to do this.
-func (c *Client) CreateVcsProvider(ctx context.Context, req *schemas.VcsProviderRequest) (*schemas.VcsProvider, *client.Response, error) {
-	httpResp, err := c.CreateVcsProviderRaw(ctx, req)
+func (c *Client) CreateVcsProvider(ctx context.Context, req *schemas.VcsProviderRequest) (*schemas.VcsProvider, error) {
+	resp, err := c.CreateVcsProviderRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.VcsProvider      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // The endpoint deletes a VCS provider by ID.
-func (c *Client) DeleteVcsProviderRaw(ctx context.Context, vcsProvider string) (*http.Response, error) {
+func (c *Client) DeleteVcsProviderRaw(ctx context.Context, vcsProvider string) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes a VCS provider by ID.
-func (c *Client) DeleteVcsProvider(ctx context.Context, vcsProvider string) (*client.Response, error) {
-	httpResp, err := c.DeleteVcsProviderRaw(ctx, vcsProvider)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// The endpoint deletes a VCS provider by ID.
+func (c *Client) DeleteVcsProvider(ctx context.Context, vcsProvider string) error {
+	resp, err := c.DeleteVcsProviderRaw(ctx, vcsProvider)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific VCS provider.
-func (c *Client) GetVcsProviderRaw(ctx context.Context, vcsProvider string, opts *GetVcsProviderOptions) (*http.Response, error) {
+func (c *Client) GetVcsProviderRaw(ctx context.Context, vcsProvider string, opts *GetVcsProviderOptions) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
@@ -101,32 +104,34 @@ func (c *Client) GetVcsProviderRaw(ctx context.Context, vcsProvider string, opts
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific VCS provider.
-func (c *Client) GetVcsProvider(ctx context.Context, vcsProvider string, opts *GetVcsProviderOptions) (*schemas.VcsProvider, *client.Response, error) {
-	httpResp, err := c.GetVcsProviderRaw(ctx, vcsProvider, opts)
+func (c *Client) GetVcsProvider(ctx context.Context, vcsProvider string, opts *GetVcsProviderOptions) (*schemas.VcsProvider, error) {
+	resp, err := c.GetVcsProviderRaw(ctx, vcsProvider, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.VcsProvider      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetVcsProviderOptions holds optional parameters for GetVcsProvider
@@ -139,7 +144,7 @@ type GetVcsProviderOptions struct {
 }
 
 // This endpoint returns a list of VCS providers by various filters. To list VCS providers accessible from a specific environment - `filter[environment]`, or when from a specific account - `filter[account]` has to be specified. For self-hosted Scalr there's also an option to list all VCS providers created globally - both `filter[account]=null` and `filter[environment]=null` has to be specified. If no `environment` or `account` filters were specified, all VCS providers to which a current user has read access will be returned.
-func (c *Client) ListVcsProvidersRaw(ctx context.Context, opts *ListVcsProvidersOptions) (*http.Response, error) {
+func (c *Client) ListVcsProvidersRaw(ctx context.Context, opts *ListVcsProvidersOptions) (*client.Response, error) {
 	path := "/vcs-providers"
 
 	params := url.Values{}
@@ -171,18 +176,20 @@ func (c *Client) ListVcsProvidersRaw(ctx context.Context, opts *ListVcsProviders
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of VCS providers by various filters. To list VCS providers accessible from a specific environment - `filter[environment]`, or when from a specific account - `filter[account]` has to be specified. For self-hosted Scalr there's also an option to list all VCS providers created globally - both `filter[account]=null` and `filter[environment]=null` has to be specified. If no `environment` or `account` filters were specified, all VCS providers to which a current user has read access will be returned.
-func (c *Client) ListVcsProviders(ctx context.Context, opts *ListVcsProvidersOptions) ([]*schemas.VcsProvider, *client.Response, error) {
-	httpResp, err := c.ListVcsProvidersRaw(ctx, opts)
+func (c *Client) ListVcsProviders(ctx context.Context, opts *ListVcsProvidersOptions) ([]*schemas.VcsProvider, error) {
+	resp, err := c.ListVcsProvidersRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.VcsProvider `json:"data"`
@@ -191,8 +198,8 @@ func (c *Client) ListVcsProviders(ctx context.Context, opts *ListVcsProvidersOpt
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.VcsProvider, len(result.Data))
@@ -203,8 +210,7 @@ func (c *Client) ListVcsProviders(ctx context.Context, opts *ListVcsProvidersOpt
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListVcsProvidersIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -245,22 +251,40 @@ func (c *Client) ListVcsProvidersIter(ctx context.Context, opts *ListVcsProvider
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListVcsProviders(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListVcsProvidersRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.VcsProvider{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.VcsProvider `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.VcsProvider{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -300,13 +324,36 @@ func (c *Client) ListVcsProvidersPaged(ctx context.Context, opts *ListVcsProvide
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListVcsProviders(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListVcsProvidersRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.VcsProvider `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.VcsProvider, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.VcsProvider](ctx, pageSize, fetchPage)
@@ -330,36 +377,38 @@ type ListVcsProvidersOptions struct {
 }
 
 // This endpoint allows updates to attributes of an existing VCS provider.
-func (c *Client) UpdateVcsProviderRaw(ctx context.Context, vcsProvider string, req *schemas.VcsProviderRequest) (*http.Response, error) {
+func (c *Client) UpdateVcsProviderRaw(ctx context.Context, vcsProvider string, req *schemas.VcsProviderRequest) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint allows updates to attributes of an existing VCS provider.
-func (c *Client) UpdateVcsProvider(ctx context.Context, vcsProvider string, req *schemas.VcsProviderRequest) (*schemas.VcsProvider, *client.Response, error) {
-	httpResp, err := c.UpdateVcsProviderRaw(ctx, vcsProvider, req)
+func (c *Client) UpdateVcsProvider(ctx context.Context, vcsProvider string, req *schemas.VcsProviderRequest) (*schemas.VcsProvider, error) {
+	resp, err := c.UpdateVcsProviderRaw(ctx, vcsProvider, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.VcsProvider      `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

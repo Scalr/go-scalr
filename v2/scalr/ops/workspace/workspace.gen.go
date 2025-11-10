@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,7 +26,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint adds provided workspaces to a list of allowed remote state consumers for a given workspace.
-func (c *Client) AddRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*http.Response, error) {
+func (c *Client) AddRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -40,24 +39,26 @@ func (c *Client) AddRemoteStateConsumersRaw(ctx context.Context, workspace strin
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// This endpoint adds provided workspaces to a list of allowed remote state consumers for a given workspace.
-func (c *Client) AddRemoteStateConsumers(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
-	httpResp, err := c.AddRemoteStateConsumersRaw(ctx, workspace, req)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint adds provided workspaces to a list of allowed remote state consumers for a given workspace.
+func (c *Client) AddRemoteStateConsumers(ctx context.Context, workspace string, req []schemas.Workspace) error {
+	resp, err := c.AddRemoteStateConsumersRaw(ctx, workspace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint assigns the list of [tags](tags.html#the-tag-resource) to the workspace.
-func (c *Client) AddWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*http.Response, error) {
+func (c *Client) AddWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/tags"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -70,58 +71,62 @@ func (c *Client) AddWorkspaceTagsRaw(ctx context.Context, workspace string, req 
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// This endpoint assigns the list of [tags](tags.html#the-tag-resource) to the workspace.
-func (c *Client) AddWorkspaceTags(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
-	httpResp, err := c.AddWorkspaceTagsRaw(ctx, workspace, req)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint assigns the list of [tags](tags.html#the-tag-resource) to the workspace.
+func (c *Client) AddWorkspaceTags(ctx context.Context, workspace string, req []schemas.Tag) error {
+	resp, err := c.AddWorkspaceTagsRaw(ctx, workspace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Workspaces represent a unit of infrastructure managed by terraform. To create a workspace you must pass `name` attribute and `environment` relationship. A workspace might be linked to a VCS repository, so that any git push will trigger a terraform Run in the workspace.
-func (c *Client) CreateWorkspaceRaw(ctx context.Context, req *schemas.WorkspaceRequest) (*http.Response, error) {
+func (c *Client) CreateWorkspaceRaw(ctx context.Context, req *schemas.WorkspaceRequest) (*client.Response, error) {
 	path := "/workspaces"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Workspaces represent a unit of infrastructure managed by terraform. To create a workspace you must pass `name` attribute and `environment` relationship. A workspace might be linked to a VCS repository, so that any git push will trigger a terraform Run in the workspace.
-func (c *Client) CreateWorkspace(ctx context.Context, req *schemas.WorkspaceRequest) (*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.CreateWorkspaceRaw(ctx, req)
+func (c *Client) CreateWorkspace(ctx context.Context, req *schemas.WorkspaceRequest) (*schemas.Workspace, error) {
+	resp, err := c.CreateWorkspaceRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Workspace        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // This endpoint removes provided workspaces from a list of allowed remote state consumers for a given workspace.
-func (c *Client) DeleteRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*http.Response, error) {
+func (c *Client) DeleteRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -134,43 +139,47 @@ func (c *Client) DeleteRemoteStateConsumersRaw(ctx context.Context, workspace st
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Delete(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Delete(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint removes provided workspaces from a list of allowed remote state consumers for a given workspace.
-func (c *Client) DeleteRemoteStateConsumers(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
-	httpResp, err := c.DeleteRemoteStateConsumersRaw(ctx, workspace, req)
+func (c *Client) DeleteRemoteStateConsumers(ctx context.Context, workspace string, req []schemas.Workspace) error {
+	resp, err := c.DeleteRemoteStateConsumersRaw(ctx, workspace, req)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return nil
 }
 
-func (c *Client) DeleteWorkspaceRaw(ctx context.Context, workspace string) (*http.Response, error) {
+func (c *Client) DeleteWorkspaceRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteWorkspace(ctx context.Context, workspace string) (*client.Response, error) {
-	httpResp, err := c.DeleteWorkspaceRaw(ctx, workspace)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeleteWorkspace(ctx context.Context, workspace string) error {
+	resp, err := c.DeleteWorkspaceRaw(ctx, workspace)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint removes given [tags](tags.html#the-tag-resource) from the workspace.
-func (c *Client) DeleteWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*http.Response, error) {
+func (c *Client) DeleteWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/tags"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -183,24 +192,26 @@ func (c *Client) DeleteWorkspaceTagsRaw(ctx context.Context, workspace string, r
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Delete(ctx, path, body, nil)
-}
-
-// This endpoint removes given [tags](tags.html#the-tag-resource) from the workspace.
-func (c *Client) DeleteWorkspaceTags(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
-	httpResp, err := c.DeleteWorkspaceTagsRaw(ctx, workspace, req)
+	httpResp, err := c.httpClient.Delete(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint removes given [tags](tags.html#the-tag-resource) from the workspace.
+func (c *Client) DeleteWorkspaceTags(ctx context.Context, workspace string, req []schemas.Tag) error {
+	resp, err := c.DeleteWorkspaceTagsRaw(ctx, workspace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific workspace.
-func (c *Client) GetWorkspaceRaw(ctx context.Context, workspace string, opts *GetWorkspaceOptions) (*http.Response, error) {
+func (c *Client) GetWorkspaceRaw(ctx context.Context, workspace string, opts *GetWorkspaceOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -220,32 +231,34 @@ func (c *Client) GetWorkspaceRaw(ctx context.Context, workspace string, opts *Ge
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific workspace.
-func (c *Client) GetWorkspace(ctx context.Context, workspace string, opts *GetWorkspaceOptions) (*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.GetWorkspaceRaw(ctx, workspace, opts)
+func (c *Client) GetWorkspace(ctx context.Context, workspace string, opts *GetWorkspaceOptions) (*schemas.Workspace, error) {
+	resp, err := c.GetWorkspaceRaw(ctx, workspace, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Workspace        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetWorkspaceOptions holds optional parameters for GetWorkspace
@@ -258,31 +271,33 @@ type GetWorkspaceOptions struct {
 }
 
 // This endpoint returns a list of outputs from current state version run output.
-func (c *Client) GetWorkspaceOutputsRaw(ctx context.Context, workspace string) (*http.Response, error) {
+func (c *Client) GetWorkspaceOutputsRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/outputs"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of outputs from current state version run output.
-func (c *Client) GetWorkspaceOutputs(ctx context.Context, workspace string) (string, *client.Response, error) {
-	httpResp, err := c.GetWorkspaceOutputsRaw(ctx, workspace)
+func (c *Client) GetWorkspaceOutputs(ctx context.Context, workspace string) (string, error) {
+	resp, err := c.GetWorkspaceOutputsRaw(ctx, workspace)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
-func (c *Client) GetWorkspacesRaw(ctx context.Context, opts *GetWorkspacesOptions) (*http.Response, error) {
+func (c *Client) GetWorkspacesRaw(ctx context.Context, opts *GetWorkspacesOptions) (*client.Response, error) {
 	path := "/workspaces"
 
 	params := url.Values{}
@@ -314,17 +329,19 @@ func (c *Client) GetWorkspacesRaw(ctx context.Context, opts *GetWorkspacesOption
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) GetWorkspaces(ctx context.Context, opts *GetWorkspacesOptions) ([]*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.GetWorkspacesRaw(ctx, opts)
+func (c *Client) GetWorkspaces(ctx context.Context, opts *GetWorkspacesOptions) ([]*schemas.Workspace, error) {
+	resp, err := c.GetWorkspacesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Workspace `json:"data"`
@@ -333,8 +350,8 @@ func (c *Client) GetWorkspaces(ctx context.Context, opts *GetWorkspacesOptions) 
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Workspace, len(result.Data))
@@ -345,8 +362,7 @@ func (c *Client) GetWorkspaces(ctx context.Context, opts *GetWorkspacesOptions) 
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetWorkspacesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -387,22 +403,40 @@ func (c *Client) GetWorkspacesIter(ctx context.Context, opts *GetWorkspacesOptio
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetWorkspaces(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetWorkspacesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Workspace{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Workspace `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -442,13 +476,36 @@ func (c *Client) GetWorkspacesPaged(ctx context.Context, opts *GetWorkspacesOpti
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetWorkspaces(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetWorkspacesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Workspace `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Workspace, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Workspace](ctx, pageSize, fetchPage)
@@ -472,7 +529,7 @@ type GetWorkspacesOptions struct {
 }
 
 // This endpoint returns a list of other workspaces that that were explicitly added as state consumers for given workspace.
-func (c *Client) ListRemoteStateConsumersRaw(ctx context.Context, workspace string, opts *ListRemoteStateConsumersOptions) (*http.Response, error) {
+func (c *Client) ListRemoteStateConsumersRaw(ctx context.Context, workspace string, opts *ListRemoteStateConsumersOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -493,18 +550,20 @@ func (c *Client) ListRemoteStateConsumersRaw(ctx context.Context, workspace stri
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of other workspaces that that were explicitly added as state consumers for given workspace.
-func (c *Client) ListRemoteStateConsumers(ctx context.Context, workspace string, opts *ListRemoteStateConsumersOptions) ([]*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.ListRemoteStateConsumersRaw(ctx, workspace, opts)
+func (c *Client) ListRemoteStateConsumers(ctx context.Context, workspace string, opts *ListRemoteStateConsumersOptions) ([]*schemas.Workspace, error) {
+	resp, err := c.ListRemoteStateConsumersRaw(ctx, workspace, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Workspace `json:"data"`
@@ -513,16 +572,15 @@ func (c *Client) ListRemoteStateConsumers(ctx context.Context, workspace string,
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Workspace, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListRemoteStateConsumersIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -563,22 +621,36 @@ func (c *Client) ListRemoteStateConsumersIter(ctx context.Context, workspace str
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListRemoteStateConsumers(ctx, workspace, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListRemoteStateConsumersRaw(ctx, workspace, pageOpts)
 			if err != nil {
 				yield(schemas.Workspace{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Workspace `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -618,13 +690,32 @@ func (c *Client) ListRemoteStateConsumersPaged(ctx context.Context, workspace st
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListRemoteStateConsumers(ctx, workspace, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListRemoteStateConsumersRaw(ctx, workspace, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Workspace `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Workspace, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Workspace](ctx, pageSize, fetchPage)
@@ -640,7 +731,7 @@ type ListRemoteStateConsumersOptions struct {
 }
 
 // This endpoint returns a list of [tags](tags.html#the-tag-resource), assigned to a workspace.
-func (c *Client) ListWorkspaceTagsRaw(ctx context.Context, workspace string, opts *ListWorkspaceTagsOptions) (*http.Response, error) {
+func (c *Client) ListWorkspaceTagsRaw(ctx context.Context, workspace string, opts *ListWorkspaceTagsOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/tags"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -661,18 +752,20 @@ func (c *Client) ListWorkspaceTagsRaw(ctx context.Context, workspace string, opt
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [tags](tags.html#the-tag-resource), assigned to a workspace.
-func (c *Client) ListWorkspaceTags(ctx context.Context, workspace string, opts *ListWorkspaceTagsOptions) ([]*schemas.Tag, *client.Response, error) {
-	httpResp, err := c.ListWorkspaceTagsRaw(ctx, workspace, opts)
+func (c *Client) ListWorkspaceTags(ctx context.Context, workspace string, opts *ListWorkspaceTagsOptions) ([]*schemas.Tag, error) {
+	resp, err := c.ListWorkspaceTagsRaw(ctx, workspace, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Tag `json:"data"`
@@ -681,16 +774,15 @@ func (c *Client) ListWorkspaceTags(ctx context.Context, workspace string, opts *
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Tag, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListWorkspaceTagsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -731,22 +823,36 @@ func (c *Client) ListWorkspaceTagsIter(ctx context.Context, workspace string, op
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListWorkspaceTags(ctx, workspace, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListWorkspaceTagsRaw(ctx, workspace, pageOpts)
 			if err != nil {
 				yield(schemas.Tag{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Tag `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -786,13 +892,32 @@ func (c *Client) ListWorkspaceTagsPaged(ctx context.Context, workspace string, o
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListWorkspaceTags(ctx, workspace, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListWorkspaceTagsRaw(ctx, workspace, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Tag `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Tag, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Tag](ctx, pageSize, fetchPage)
@@ -808,42 +933,44 @@ type ListWorkspaceTagsOptions struct {
 }
 
 // This endpoint locks a workspace.
-func (c *Client) LockWorkspaceRaw(ctx context.Context, workspace string, req *schemas.Reason) (*http.Response, error) {
+func (c *Client) LockWorkspaceRaw(ctx context.Context, workspace string, req *schemas.Reason) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/lock"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint locks a workspace.
-func (c *Client) LockWorkspace(ctx context.Context, workspace string, req *schemas.Reason) (*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.LockWorkspaceRaw(ctx, workspace, req)
+func (c *Client) LockWorkspace(ctx context.Context, workspace string, req *schemas.Reason) (*schemas.Workspace, error) {
+	resp, err := c.LockWorkspaceRaw(ctx, workspace, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Workspace        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // This endpoint replaces a list of allowed remote state consumers for a given workspace.
-func (c *Client) ReplaceRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*http.Response, error) {
+func (c *Client) ReplaceRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -856,24 +983,26 @@ func (c *Client) ReplaceRemoteStateConsumersRaw(ctx context.Context, workspace s
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Patch(ctx, path, body, nil)
-}
-
-// This endpoint replaces a list of allowed remote state consumers for a given workspace.
-func (c *Client) ReplaceRemoteStateConsumers(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
-	httpResp, err := c.ReplaceRemoteStateConsumersRaw(ctx, workspace, req)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint replaces a list of allowed remote state consumers for a given workspace.
+func (c *Client) ReplaceRemoteStateConsumers(ctx context.Context, workspace string, req []schemas.Workspace) error {
+	resp, err := c.ReplaceRemoteStateConsumersRaw(ctx, workspace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint completely replaces workspace's tags with provided list.
-func (c *Client) ReplaceWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*http.Response, error) {
+func (c *Client) ReplaceWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/tags"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
@@ -886,150 +1015,160 @@ func (c *Client) ReplaceWorkspaceTagsRaw(ctx context.Context, workspace string, 
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Patch(ctx, path, body, nil)
-}
-
-// This endpoint completely replaces workspace's tags with provided list.
-func (c *Client) ReplaceWorkspaceTags(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
-	httpResp, err := c.ReplaceWorkspaceTagsRaw(ctx, workspace, req)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// This endpoint completely replaces workspace's tags with provided list.
+func (c *Client) ReplaceWorkspaceTags(ctx context.Context, workspace string, req []schemas.Tag) error {
+	resp, err := c.ReplaceWorkspaceTagsRaw(ctx, workspace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint triggers a Configuration Version resync for a Workspace associated with a VCS repository.
-func (c *Client) ResyncWorkspaceRaw(ctx context.Context, workspace string) (*http.Response, error) {
+func (c *Client) ResyncWorkspaceRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/resync"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint triggers a Configuration Version resync for a Workspace associated with a VCS repository.
-func (c *Client) ResyncWorkspace(ctx context.Context, workspace string) (*schemas.ConfigurationVersion, *client.Response, error) {
-	httpResp, err := c.ResyncWorkspaceRaw(ctx, workspace)
+func (c *Client) ResyncWorkspace(ctx context.Context, workspace string) (*schemas.ConfigurationVersion, error) {
+	resp, err := c.ResyncWorkspaceRaw(ctx, workspace)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.ConfigurationVersion `json:"data"`
 		Included []map[string]interface{}     `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
-func (c *Client) SetScheduleRaw(ctx context.Context, workspace string, req *schemas.WorkspaceSchedule) (*http.Response, error) {
+func (c *Client) SetScheduleRaw(ctx context.Context, workspace string, req *schemas.WorkspaceSchedule) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/set-schedule"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) SetSchedule(ctx context.Context, workspace string, req *schemas.WorkspaceSchedule) (*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.SetScheduleRaw(ctx, workspace, req)
+func (c *Client) SetSchedule(ctx context.Context, workspace string, req *schemas.WorkspaceSchedule) (*schemas.Workspace, error) {
+	resp, err := c.SetScheduleRaw(ctx, workspace, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Workspace        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // This endpoint unlocks a workspace.
-func (c *Client) UnlockWorkspaceRaw(ctx context.Context, workspace string) (*http.Response, error) {
+func (c *Client) UnlockWorkspaceRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/unlock"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint unlocks a workspace.
-func (c *Client) UnlockWorkspace(ctx context.Context, workspace string) (*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.UnlockWorkspaceRaw(ctx, workspace)
+func (c *Client) UnlockWorkspace(ctx context.Context, workspace string) (*schemas.Workspace, error) {
+	resp, err := c.UnlockWorkspaceRaw(ctx, workspace)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Workspace        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
-func (c *Client) UpdateWorkspaceRaw(ctx context.Context, workspace string, req *schemas.WorkspaceRequest) (*http.Response, error) {
+func (c *Client) UpdateWorkspaceRaw(ctx context.Context, workspace string, req *schemas.WorkspaceRequest) (*client.Response, error) {
 	path := "/workspaces/{workspace}"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) UpdateWorkspace(ctx context.Context, workspace string, req *schemas.WorkspaceRequest) (*schemas.Workspace, *client.Response, error) {
-	httpResp, err := c.UpdateWorkspaceRaw(ctx, workspace, req)
+func (c *Client) UpdateWorkspace(ctx context.Context, workspace string, req *schemas.WorkspaceRequest) (*schemas.Workspace, error) {
+	resp, err := c.UpdateWorkspaceRaw(ctx, workspace, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Workspace        `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

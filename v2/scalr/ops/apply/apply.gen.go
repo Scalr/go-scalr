@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,36 +25,38 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Show details of a specific Terraform Apply stage.
-func (c *Client) GetApplyRaw(ctx context.Context, apply string) (*http.Response, error) {
+func (c *Client) GetApplyRaw(ctx context.Context, apply string) (*client.Response, error) {
 	path := "/applies/{apply}"
 	path = strings.ReplaceAll(path, "{apply}", url.PathEscape(apply))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Terraform Apply stage.
-func (c *Client) GetApply(ctx context.Context, apply string) (*schemas.Apply, *client.Response, error) {
-	httpResp, err := c.GetApplyRaw(ctx, apply)
+func (c *Client) GetApply(ctx context.Context, apply string) (*schemas.Apply, error) {
+	resp, err := c.GetApplyRaw(ctx, apply)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Apply            `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Download the raw output of the terraform apply stage.
-func (c *Client) GetApplyLogRaw(ctx context.Context, apply string, opts *GetApplyLogOptions) (*http.Response, error) {
+func (c *Client) GetApplyLogRaw(ctx context.Context, apply string, opts *GetApplyLogOptions) (*client.Response, error) {
 	path := "/applies/{apply}/output"
 	path = strings.ReplaceAll(path, "{apply}", url.PathEscape(apply))
 
@@ -72,24 +73,26 @@ func (c *Client) GetApplyLogRaw(ctx context.Context, apply string, opts *GetAppl
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Download the raw output of the terraform apply stage.
-func (c *Client) GetApplyLog(ctx context.Context, apply string, opts *GetApplyLogOptions) (string, *client.Response, error) {
-	httpResp, err := c.GetApplyLogRaw(ctx, apply, opts)
+func (c *Client) GetApplyLog(ctx context.Context, apply string, opts *GetApplyLogOptions) (string, error) {
+	resp, err := c.GetApplyLogRaw(ctx, apply, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // GetApplyLogOptions holds optional parameters for GetApplyLog

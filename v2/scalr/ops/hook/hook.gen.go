@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,62 +25,66 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Creates a Hook from a VCS repository. The repository is cloned asynchronously, and the specified folder is archived and uploaded to the Blob storage.
-func (c *Client) CreateHookRaw(ctx context.Context, req *schemas.HookRequest) (*http.Response, error) {
+func (c *Client) CreateHookRaw(ctx context.Context, req *schemas.HookRequest) (*client.Response, error) {
 	path := "/hooks"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Creates a Hook from a VCS repository. The repository is cloned asynchronously, and the specified folder is archived and uploaded to the Blob storage.
-func (c *Client) CreateHook(ctx context.Context, req *schemas.HookRequest) (*schemas.Hook, *client.Response, error) {
-	httpResp, err := c.CreateHookRaw(ctx, req)
+func (c *Client) CreateHook(ctx context.Context, req *schemas.HookRequest) (*schemas.Hook, error) {
+	resp, err := c.CreateHookRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Hook             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Deletes a specific hook by its ID.
-func (c *Client) DeleteHookRaw(ctx context.Context, hook string) (*http.Response, error) {
+func (c *Client) DeleteHookRaw(ctx context.Context, hook string) (*client.Response, error) {
 	path := "/hooks/{hook}"
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// Deletes a specific hook by its ID.
-func (c *Client) DeleteHook(ctx context.Context, hook string) (*client.Response, error) {
-	httpResp, err := c.DeleteHookRaw(ctx, hook)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Deletes a specific hook by its ID.
+func (c *Client) DeleteHook(ctx context.Context, hook string) error {
+	resp, err := c.DeleteHookRaw(ctx, hook)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Retrieves details of a specific hook by its ID.
-func (c *Client) GetHookRaw(ctx context.Context, hook string, opts *GetHookOptions) (*http.Response, error) {
+func (c *Client) GetHookRaw(ctx context.Context, hook string, opts *GetHookOptions) (*client.Response, error) {
 	path := "/hooks/{hook}"
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
@@ -101,32 +104,34 @@ func (c *Client) GetHookRaw(ctx context.Context, hook string, opts *GetHookOptio
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Retrieves details of a specific hook by its ID.
-func (c *Client) GetHook(ctx context.Context, hook string, opts *GetHookOptions) (*schemas.Hook, *client.Response, error) {
-	httpResp, err := c.GetHookRaw(ctx, hook, opts)
+func (c *Client) GetHook(ctx context.Context, hook string, opts *GetHookOptions) (*schemas.Hook, error) {
+	resp, err := c.GetHookRaw(ctx, hook, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Hook             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetHookOptions holds optional parameters for GetHook
@@ -139,7 +144,7 @@ type GetHookOptions struct {
 }
 
 // This endpoint returns a list of hooks by various filters.
-func (c *Client) ListHooksRaw(ctx context.Context, opts *ListHooksOptions) (*http.Response, error) {
+func (c *Client) ListHooksRaw(ctx context.Context, opts *ListHooksOptions) (*client.Response, error) {
 	path := "/hooks"
 
 	params := url.Values{}
@@ -171,18 +176,20 @@ func (c *Client) ListHooksRaw(ctx context.Context, opts *ListHooksOptions) (*htt
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of hooks by various filters.
-func (c *Client) ListHooks(ctx context.Context, opts *ListHooksOptions) ([]*schemas.Hook, *client.Response, error) {
-	httpResp, err := c.ListHooksRaw(ctx, opts)
+func (c *Client) ListHooks(ctx context.Context, opts *ListHooksOptions) ([]*schemas.Hook, error) {
+	resp, err := c.ListHooksRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Hook `json:"data"`
@@ -191,8 +198,8 @@ func (c *Client) ListHooks(ctx context.Context, opts *ListHooksOptions) ([]*sche
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Hook, len(result.Data))
@@ -203,8 +210,7 @@ func (c *Client) ListHooks(ctx context.Context, opts *ListHooksOptions) ([]*sche
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListHooksIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -245,22 +251,40 @@ func (c *Client) ListHooksIter(ctx context.Context, opts *ListHooksOptions) iter
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListHooks(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListHooksRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Hook{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Hook `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Hook{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -300,13 +324,36 @@ func (c *Client) ListHooksPaged(ctx context.Context, opts *ListHooksOptions) *cl
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListHooks(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListHooksRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Hook `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Hook, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Hook](ctx, pageSize, fetchPage)
@@ -330,57 +377,61 @@ type ListHooksOptions struct {
 }
 
 // Triggers a resync of the Hook.
-func (c *Client) ResyncHookRaw(ctx context.Context, hook string) (*http.Response, error) {
+func (c *Client) ResyncHookRaw(ctx context.Context, hook string) (*client.Response, error) {
 	path := "/hooks/{hook}/actions/resync"
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Triggers a resync of the Hook.
-func (c *Client) ResyncHook(ctx context.Context, hook string) (*client.Response, error) {
-	httpResp, err := c.ResyncHookRaw(ctx, hook)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Triggers a resync of the Hook.
+func (c *Client) ResyncHook(ctx context.Context, hook string) error {
+	resp, err := c.ResyncHookRaw(ctx, hook)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Updates a specific hook by its ID.
-func (c *Client) UpdateHookRaw(ctx context.Context, hook string, req *schemas.HookRequest) (*http.Response, error) {
+func (c *Client) UpdateHookRaw(ctx context.Context, hook string, req *schemas.HookRequest) (*client.Response, error) {
 	path := "/hooks/{hook}"
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Updates a specific hook by its ID.
-func (c *Client) UpdateHook(ctx context.Context, hook string, req *schemas.HookRequest) (*schemas.Hook, *client.Response, error) {
-	httpResp, err := c.UpdateHookRaw(ctx, hook, req)
+func (c *Client) UpdateHook(ctx context.Context, hook string, req *schemas.HookRequest) (*schemas.Hook, error) {
+	resp, err := c.UpdateHookRaw(ctx, hook, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Hook             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

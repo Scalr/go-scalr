@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,60 +25,64 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new run schedule rule. In order to create a run schedule rule, the user must have `workspaces:set-schedule` permission.
-func (c *Client) CreateRunScheduleRuleRaw(ctx context.Context, req *schemas.RunScheduleRuleRequest) (*http.Response, error) {
+func (c *Client) CreateRunScheduleRuleRaw(ctx context.Context, req *schemas.RunScheduleRuleRequest) (*client.Response, error) {
 	path := "/run-schedule-rules"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new run schedule rule. In order to create a run schedule rule, the user must have `workspaces:set-schedule` permission.
-func (c *Client) CreateRunScheduleRule(ctx context.Context, req *schemas.RunScheduleRuleRequest) (*schemas.RunScheduleRule, *client.Response, error) {
-	httpResp, err := c.CreateRunScheduleRuleRaw(ctx, req)
+func (c *Client) CreateRunScheduleRule(ctx context.Context, req *schemas.RunScheduleRuleRequest) (*schemas.RunScheduleRule, error) {
+	resp, err := c.CreateRunScheduleRuleRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.RunScheduleRule  `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
-func (c *Client) DeleteRunScheduleRuleRaw(ctx context.Context, runScheduleRule string) (*http.Response, error) {
+func (c *Client) DeleteRunScheduleRuleRaw(ctx context.Context, runScheduleRule string) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteRunScheduleRule(ctx context.Context, runScheduleRule string) (*client.Response, error) {
-	httpResp, err := c.DeleteRunScheduleRuleRaw(ctx, runScheduleRule)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeleteRunScheduleRule(ctx context.Context, runScheduleRule string) error {
+	resp, err := c.DeleteRunScheduleRuleRaw(ctx, runScheduleRule)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific run schedule rule.
-func (c *Client) GetRunScheduleRuleRaw(ctx context.Context, runScheduleRule string, opts *GetRunScheduleRuleOptions) (*http.Response, error) {
+func (c *Client) GetRunScheduleRuleRaw(ctx context.Context, runScheduleRule string, opts *GetRunScheduleRuleOptions) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
@@ -97,32 +100,34 @@ func (c *Client) GetRunScheduleRuleRaw(ctx context.Context, runScheduleRule stri
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific run schedule rule.
-func (c *Client) GetRunScheduleRule(ctx context.Context, runScheduleRule string, opts *GetRunScheduleRuleOptions) (*schemas.RunScheduleRule, *client.Response, error) {
-	httpResp, err := c.GetRunScheduleRuleRaw(ctx, runScheduleRule, opts)
+func (c *Client) GetRunScheduleRule(ctx context.Context, runScheduleRule string, opts *GetRunScheduleRuleOptions) (*schemas.RunScheduleRule, error) {
+	resp, err := c.GetRunScheduleRuleRaw(ctx, runScheduleRule, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.RunScheduleRule  `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetRunScheduleRuleOptions holds optional parameters for GetRunScheduleRule
@@ -133,7 +138,7 @@ type GetRunScheduleRuleOptions struct {
 }
 
 // This endpoint returns a list of run schedule rules.
-func (c *Client) ListScheduleRulesRaw(ctx context.Context, opts *ListScheduleRulesOptions) (*http.Response, error) {
+func (c *Client) ListScheduleRulesRaw(ctx context.Context, opts *ListScheduleRulesOptions) (*client.Response, error) {
 	path := "/run-schedule-rules"
 
 	params := url.Values{}
@@ -156,18 +161,20 @@ func (c *Client) ListScheduleRulesRaw(ctx context.Context, opts *ListScheduleRul
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of run schedule rules.
-func (c *Client) ListScheduleRules(ctx context.Context, opts *ListScheduleRulesOptions) ([]*schemas.RunScheduleRule, *client.Response, error) {
-	httpResp, err := c.ListScheduleRulesRaw(ctx, opts)
+func (c *Client) ListScheduleRules(ctx context.Context, opts *ListScheduleRulesOptions) ([]*schemas.RunScheduleRule, error) {
+	resp, err := c.ListScheduleRulesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.RunScheduleRule `json:"data"`
@@ -176,8 +183,8 @@ func (c *Client) ListScheduleRules(ctx context.Context, opts *ListScheduleRulesO
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.RunScheduleRule, len(result.Data))
@@ -188,8 +195,7 @@ func (c *Client) ListScheduleRules(ctx context.Context, opts *ListScheduleRulesO
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListScheduleRulesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -230,22 +236,40 @@ func (c *Client) ListScheduleRulesIter(ctx context.Context, opts *ListScheduleRu
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListScheduleRules(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListScheduleRulesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.RunScheduleRule{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.RunScheduleRule `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.RunScheduleRule{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -285,13 +309,36 @@ func (c *Client) ListScheduleRulesPaged(ctx context.Context, opts *ListScheduleR
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListScheduleRules(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListScheduleRulesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.RunScheduleRule `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.RunScheduleRule, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.RunScheduleRule](ctx, pageSize, fetchPage)
@@ -309,36 +356,38 @@ type ListScheduleRulesOptions struct {
 }
 
 // Updates a specific run schedule rule based on the provided rule ID, schedule mode, and schedule. It validates the cron expression and raises an error if it's invalid.
-func (c *Client) UpdateRunScheduleRuleRaw(ctx context.Context, runScheduleRule string, req *schemas.RunScheduleRuleRequest) (*http.Response, error) {
+func (c *Client) UpdateRunScheduleRuleRaw(ctx context.Context, runScheduleRule string, req *schemas.RunScheduleRuleRequest) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Updates a specific run schedule rule based on the provided rule ID, schedule mode, and schedule. It validates the cron expression and raises an error if it's invalid.
-func (c *Client) UpdateRunScheduleRule(ctx context.Context, runScheduleRule string, req *schemas.RunScheduleRuleRequest) (*schemas.RunScheduleRule, *client.Response, error) {
-	httpResp, err := c.UpdateRunScheduleRuleRaw(ctx, runScheduleRule, req)
+func (c *Client) UpdateRunScheduleRule(ctx context.Context, runScheduleRule string, req *schemas.RunScheduleRuleRequest) (*schemas.RunScheduleRule, error) {
+	resp, err := c.UpdateRunScheduleRuleRaw(ctx, runScheduleRule, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.RunScheduleRule  `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

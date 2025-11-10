@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Grant access for a member identity to a scope identity. Access is a set of `roles`. Member identity might be one of `user`, `team`, or `service-account`. Scope identity is one of `account`, `environment`, or `workspace`. Check out [identity and access management](https://docs.scalr.io/docs/identity-and-access-management) for a detailed description of the Scalr IAM model.
-func (c *Client) CreateAccessPolicyRaw(ctx context.Context, req *schemas.AccessPolicyRequest, opts *CreateAccessPolicyOptions) (*http.Response, error) {
+func (c *Client) CreateAccessPolicyRaw(ctx context.Context, req *schemas.AccessPolicyRequest, opts *CreateAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies"
 
 	params := url.Values{}
@@ -45,32 +44,34 @@ func (c *Client) CreateAccessPolicyRaw(ctx context.Context, req *schemas.AccessP
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Grant access for a member identity to a scope identity. Access is a set of `roles`. Member identity might be one of `user`, `team`, or `service-account`. Scope identity is one of `account`, `environment`, or `workspace`. Check out [identity and access management](https://docs.scalr.io/docs/identity-and-access-management) for a detailed description of the Scalr IAM model.
-func (c *Client) CreateAccessPolicy(ctx context.Context, req *schemas.AccessPolicyRequest, opts *CreateAccessPolicyOptions) (*schemas.AccessPolicy, *client.Response, error) {
-	httpResp, err := c.CreateAccessPolicyRaw(ctx, req, opts)
+func (c *Client) CreateAccessPolicy(ctx context.Context, req *schemas.AccessPolicyRequest, opts *CreateAccessPolicyOptions) (*schemas.AccessPolicy, error) {
+	resp, err := c.CreateAccessPolicyRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccessPolicy     `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateAccessPolicyOptions holds optional parameters for CreateAccessPolicy
@@ -80,27 +81,29 @@ type CreateAccessPolicyOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) DeleteAccessPolicyRaw(ctx context.Context, accessPolicy string) (*http.Response, error) {
+func (c *Client) DeleteAccessPolicyRaw(ctx context.Context, accessPolicy string) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteAccessPolicy(ctx context.Context, accessPolicy string) (*client.Response, error) {
-	httpResp, err := c.DeleteAccessPolicyRaw(ctx, accessPolicy)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeleteAccessPolicy(ctx context.Context, accessPolicy string) error {
+	resp, err := c.DeleteAccessPolicyRaw(ctx, accessPolicy)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) access policies.
-func (c *Client) GetAccessPoliciesRaw(ctx context.Context, opts *GetAccessPoliciesOptions) (*http.Response, error) {
+func (c *Client) GetAccessPoliciesRaw(ctx context.Context, opts *GetAccessPoliciesOptions) (*client.Response, error) {
 	path := "/access-policies"
 
 	params := url.Values{}
@@ -130,18 +133,20 @@ func (c *Client) GetAccessPoliciesRaw(ctx context.Context, opts *GetAccessPolici
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) access policies.
-func (c *Client) GetAccessPolicies(ctx context.Context, opts *GetAccessPoliciesOptions) ([]*schemas.AccessPolicy, *client.Response, error) {
-	httpResp, err := c.GetAccessPoliciesRaw(ctx, opts)
+func (c *Client) GetAccessPolicies(ctx context.Context, opts *GetAccessPoliciesOptions) ([]*schemas.AccessPolicy, error) {
+	resp, err := c.GetAccessPoliciesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AccessPolicy `json:"data"`
@@ -150,8 +155,8 @@ func (c *Client) GetAccessPolicies(ctx context.Context, opts *GetAccessPoliciesO
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AccessPolicy, len(result.Data))
@@ -162,8 +167,7 @@ func (c *Client) GetAccessPolicies(ctx context.Context, opts *GetAccessPoliciesO
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetAccessPoliciesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -204,22 +208,40 @@ func (c *Client) GetAccessPoliciesIter(ctx context.Context, opts *GetAccessPolic
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetAccessPolicies(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetAccessPoliciesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.AccessPolicy{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AccessPolicy `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AccessPolicy{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -259,13 +281,36 @@ func (c *Client) GetAccessPoliciesPaged(ctx context.Context, opts *GetAccessPoli
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetAccessPolicies(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetAccessPoliciesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AccessPolicy `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AccessPolicy, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AccessPolicy](ctx, pageSize, fetchPage)
@@ -287,7 +332,7 @@ type GetAccessPoliciesOptions struct {
 }
 
 // The endpoint returns [IAM](https://docs.scalr.io/docs/identity-and-access-management) access policy by ID.
-func (c *Client) GetAccessPolicyRaw(ctx context.Context, accessPolicy string, opts *GetAccessPolicyOptions) (*http.Response, error) {
+func (c *Client) GetAccessPolicyRaw(ctx context.Context, accessPolicy string, opts *GetAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
@@ -305,32 +350,34 @@ func (c *Client) GetAccessPolicyRaw(ctx context.Context, accessPolicy string, op
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // The endpoint returns [IAM](https://docs.scalr.io/docs/identity-and-access-management) access policy by ID.
-func (c *Client) GetAccessPolicy(ctx context.Context, accessPolicy string, opts *GetAccessPolicyOptions) (*schemas.AccessPolicy, *client.Response, error) {
-	httpResp, err := c.GetAccessPolicyRaw(ctx, accessPolicy, opts)
+func (c *Client) GetAccessPolicy(ctx context.Context, accessPolicy string, opts *GetAccessPolicyOptions) (*schemas.AccessPolicy, error) {
+	resp, err := c.GetAccessPolicyRaw(ctx, accessPolicy, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccessPolicy     `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetAccessPolicyOptions holds optional parameters for GetAccessPolicy
@@ -340,7 +387,7 @@ type GetAccessPolicyOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) UpdateAccessPolicyRaw(ctx context.Context, accessPolicy string, req *schemas.AccessPolicyRequest, opts *UpdateAccessPolicyOptions) (*http.Response, error) {
+func (c *Client) UpdateAccessPolicyRaw(ctx context.Context, accessPolicy string, req *schemas.AccessPolicyRequest, opts *UpdateAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
@@ -360,31 +407,33 @@ func (c *Client) UpdateAccessPolicyRaw(ctx context.Context, accessPolicy string,
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) UpdateAccessPolicy(ctx context.Context, accessPolicy string, req *schemas.AccessPolicyRequest, opts *UpdateAccessPolicyOptions) (*schemas.AccessPolicy, *client.Response, error) {
-	httpResp, err := c.UpdateAccessPolicyRaw(ctx, accessPolicy, req, opts)
+func (c *Client) UpdateAccessPolicy(ctx context.Context, accessPolicy string, req *schemas.AccessPolicyRequest, opts *UpdateAccessPolicyOptions) (*schemas.AccessPolicy, error) {
+	resp, err := c.UpdateAccessPolicyRaw(ctx, accessPolicy, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.AccessPolicy     `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateAccessPolicyOptions holds optional parameters for UpdateAccessPolicy

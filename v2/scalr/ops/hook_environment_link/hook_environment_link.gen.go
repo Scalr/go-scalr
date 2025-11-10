@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,62 +25,66 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Creates a link between a hook and an environment with enabled phases.
-func (c *Client) CreateHookEnvironmentLinkRaw(ctx context.Context, req *schemas.HookEnvironmentLinkRequest) (*http.Response, error) {
+func (c *Client) CreateHookEnvironmentLinkRaw(ctx context.Context, req *schemas.HookEnvironmentLinkRequest) (*client.Response, error) {
 	path := "/hook-environment-links"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Creates a link between a hook and an environment with enabled phases.
-func (c *Client) CreateHookEnvironmentLink(ctx context.Context, req *schemas.HookEnvironmentLinkRequest) (*schemas.HookEnvironmentLink, *client.Response, error) {
-	httpResp, err := c.CreateHookEnvironmentLinkRaw(ctx, req)
+func (c *Client) CreateHookEnvironmentLink(ctx context.Context, req *schemas.HookEnvironmentLinkRequest) (*schemas.HookEnvironmentLink, error) {
+	resp, err := c.CreateHookEnvironmentLinkRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.HookEnvironmentLink `json:"data"`
 		Included []map[string]interface{}    `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Delete a hook-environment link.
-func (c *Client) DeleteHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string) (*http.Response, error) {
+func (c *Client) DeleteHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// Delete a hook-environment link.
-func (c *Client) DeleteHookEnvironmentLink(ctx context.Context, hookEnvironmentLink string) (*client.Response, error) {
-	httpResp, err := c.DeleteHookEnvironmentLinkRaw(ctx, hookEnvironmentLink)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Delete a hook-environment link.
+func (c *Client) DeleteHookEnvironmentLink(ctx context.Context, hookEnvironmentLink string) error {
+	resp, err := c.DeleteHookEnvironmentLinkRaw(ctx, hookEnvironmentLink)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Get a hook-environment link.
-func (c *Client) GetHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string, opts *GetHookEnvironmentLinkOptions) (*http.Response, error) {
+func (c *Client) GetHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string, opts *GetHookEnvironmentLinkOptions) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
@@ -101,32 +104,34 @@ func (c *Client) GetHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentL
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Get a hook-environment link.
-func (c *Client) GetHookEnvironmentLink(ctx context.Context, hookEnvironmentLink string, opts *GetHookEnvironmentLinkOptions) (*schemas.HookEnvironmentLink, *client.Response, error) {
-	httpResp, err := c.GetHookEnvironmentLinkRaw(ctx, hookEnvironmentLink, opts)
+func (c *Client) GetHookEnvironmentLink(ctx context.Context, hookEnvironmentLink string, opts *GetHookEnvironmentLinkOptions) (*schemas.HookEnvironmentLink, error) {
+	resp, err := c.GetHookEnvironmentLinkRaw(ctx, hookEnvironmentLink, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.HookEnvironmentLink `json:"data"`
 		Included []map[string]interface{}    `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetHookEnvironmentLinkOptions holds optional parameters for GetHookEnvironmentLink
@@ -139,7 +144,7 @@ type GetHookEnvironmentLinkOptions struct {
 }
 
 // List all hook-environment links.
-func (c *Client) ListHookEnvironmentLinksRaw(ctx context.Context, opts *ListHookEnvironmentLinksOptions) (*http.Response, error) {
+func (c *Client) ListHookEnvironmentLinksRaw(ctx context.Context, opts *ListHookEnvironmentLinksOptions) (*client.Response, error) {
 	path := "/hook-environment-links"
 
 	params := url.Values{}
@@ -171,18 +176,20 @@ func (c *Client) ListHookEnvironmentLinksRaw(ctx context.Context, opts *ListHook
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // List all hook-environment links.
-func (c *Client) ListHookEnvironmentLinks(ctx context.Context, opts *ListHookEnvironmentLinksOptions) ([]*schemas.HookEnvironmentLink, *client.Response, error) {
-	httpResp, err := c.ListHookEnvironmentLinksRaw(ctx, opts)
+func (c *Client) ListHookEnvironmentLinks(ctx context.Context, opts *ListHookEnvironmentLinksOptions) ([]*schemas.HookEnvironmentLink, error) {
+	resp, err := c.ListHookEnvironmentLinksRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.HookEnvironmentLink `json:"data"`
@@ -191,8 +198,8 @@ func (c *Client) ListHookEnvironmentLinks(ctx context.Context, opts *ListHookEnv
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.HookEnvironmentLink, len(result.Data))
@@ -203,8 +210,7 @@ func (c *Client) ListHookEnvironmentLinks(ctx context.Context, opts *ListHookEnv
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListHookEnvironmentLinksIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -245,22 +251,40 @@ func (c *Client) ListHookEnvironmentLinksIter(ctx context.Context, opts *ListHoo
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListHookEnvironmentLinks(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListHookEnvironmentLinksRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.HookEnvironmentLink{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.HookEnvironmentLink `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.HookEnvironmentLink{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -300,13 +324,36 @@ func (c *Client) ListHookEnvironmentLinksPaged(ctx context.Context, opts *ListHo
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListHookEnvironmentLinks(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListHookEnvironmentLinksRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.HookEnvironmentLink `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.HookEnvironmentLink, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.HookEnvironmentLink](ctx, pageSize, fetchPage)
@@ -330,36 +377,38 @@ type ListHookEnvironmentLinksOptions struct {
 }
 
 // Update a hook-environment link.
-func (c *Client) UpdateHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string, req *schemas.HookEnvironmentLinkRequest) (*http.Response, error) {
+func (c *Client) UpdateHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string, req *schemas.HookEnvironmentLinkRequest) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Update a hook-environment link.
-func (c *Client) UpdateHookEnvironmentLink(ctx context.Context, hookEnvironmentLink string, req *schemas.HookEnvironmentLinkRequest) (*schemas.HookEnvironmentLink, *client.Response, error) {
-	httpResp, err := c.UpdateHookEnvironmentLinkRaw(ctx, hookEnvironmentLink, req)
+func (c *Client) UpdateHookEnvironmentLink(ctx context.Context, hookEnvironmentLink string, req *schemas.HookEnvironmentLinkRequest) (*schemas.HookEnvironmentLink, error) {
+	resp, err := c.UpdateHookEnvironmentLinkRaw(ctx, hookEnvironmentLink, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.HookEnvironmentLink `json:"data"`
 		Included []map[string]interface{}    `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

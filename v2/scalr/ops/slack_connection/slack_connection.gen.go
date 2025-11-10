@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,87 +25,93 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Remove Slack App connection for the account.
-func (c *Client) DeleteSlackConnectionRaw(ctx context.Context, account string) (*http.Response, error) {
+func (c *Client) DeleteSlackConnectionRaw(ctx context.Context, account string) (*client.Response, error) {
 	path := "/integrations/slack/{account}/connection"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// Remove Slack App connection for the account.
-func (c *Client) DeleteSlackConnection(ctx context.Context, account string) (*client.Response, error) {
-	httpResp, err := c.DeleteSlackConnectionRaw(ctx, account)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Remove Slack App connection for the account.
+func (c *Client) DeleteSlackConnection(ctx context.Context, account string) error {
+	resp, err := c.DeleteSlackConnectionRaw(ctx, account)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Get a specific Slack channel by ID.
-func (c *Client) GetSlackChannelRaw(ctx context.Context, account string, channelId string) (*http.Response, error) {
+func (c *Client) GetSlackChannelRaw(ctx context.Context, account string, channelId string) (*client.Response, error) {
 	path := "/integrations/slack/{account}/connection/channels/{channel_id}"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 	path = strings.ReplaceAll(path, "{channel_id}", url.PathEscape(channelId))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Get a specific Slack channel by ID.
-func (c *Client) GetSlackChannel(ctx context.Context, account string, channelId string) (string, *client.Response, error) {
-	httpResp, err := c.GetSlackChannelRaw(ctx, account, channelId)
+func (c *Client) GetSlackChannel(ctx context.Context, account string, channelId string) (string, error) {
+	resp, err := c.GetSlackChannelRaw(ctx, account, channelId)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // Show details of account's Slack App connection.
-func (c *Client) GetSlackConnectionRaw(ctx context.Context, account string) (*http.Response, error) {
+func (c *Client) GetSlackConnectionRaw(ctx context.Context, account string) (*client.Response, error) {
 	path := "/integrations/slack/{account}/connection"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of account's Slack App connection.
-func (c *Client) GetSlackConnection(ctx context.Context, account string) (*schemas.SlackConnection, *client.Response, error) {
-	httpResp, err := c.GetSlackConnectionRaw(ctx, account)
+func (c *Client) GetSlackConnection(ctx context.Context, account string) (*schemas.SlackConnection, error) {
+	resp, err := c.GetSlackConnectionRaw(ctx, account)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SlackConnection  `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Get a list of channels from associated Slack workspace.
-func (c *Client) ListSlackChannelsRaw(ctx context.Context, account string, opts *ListSlackChannelsOptions) (*http.Response, error) {
+func (c *Client) ListSlackChannelsRaw(ctx context.Context, account string, opts *ListSlackChannelsOptions) (*client.Response, error) {
 	path := "/integrations/slack/{account}/connection/channels"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
@@ -135,24 +140,26 @@ func (c *Client) ListSlackChannelsRaw(ctx context.Context, account string, opts 
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Get a list of channels from associated Slack workspace.
-func (c *Client) ListSlackChannels(ctx context.Context, account string, opts *ListSlackChannelsOptions) (string, *client.Response, error) {
-	httpResp, err := c.ListSlackChannelsRaw(ctx, account, opts)
+func (c *Client) ListSlackChannels(ctx context.Context, account string, opts *ListSlackChannelsOptions) (string, error) {
+	resp, err := c.ListSlackChannelsRaw(ctx, account, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // ListSlackChannelsOptions holds optional parameters for ListSlackChannels

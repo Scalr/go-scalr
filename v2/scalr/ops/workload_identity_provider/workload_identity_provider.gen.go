@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,95 +25,101 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new Workload Identity Provider.
-func (c *Client) CreateWorkloadIdentityProviderRaw(ctx context.Context, req *schemas.WorkloadIdentityProviderRequest) (*http.Response, error) {
+func (c *Client) CreateWorkloadIdentityProviderRaw(ctx context.Context, req *schemas.WorkloadIdentityProviderRequest) (*client.Response, error) {
 	path := "/workload-identity-providers"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// Create a new Workload Identity Provider.
-func (c *Client) CreateWorkloadIdentityProvider(ctx context.Context, req *schemas.WorkloadIdentityProviderRequest) (*schemas.WorkloadIdentityProvider, *client.Response, error) {
-	httpResp, err := c.CreateWorkloadIdentityProviderRaw(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.WorkloadIdentityProvider `json:"data"`
-		Included []map[string]interface{}         `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Populate included resources into relationships
-	if len(result.Included) > 0 {
-		result.Data.Relationships.PopulateIncludes(result.Included)
-	}
-	return &result.Data, resp, nil
-}
-
-// The endpoint deletes a Workload identity provider by ID.
-func (c *Client) DeleteWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string) (*http.Response, error) {
-	path := "/workload-identity-providers/{workload_identity_provider}"
-	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes a Workload identity provider by ID.
-func (c *Client) DeleteWorkloadIdentityProvider(ctx context.Context, workloadIdentityProvider string) (*client.Response, error) {
-	httpResp, err := c.DeleteWorkloadIdentityProviderRaw(ctx, workloadIdentityProvider)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// Get Workload Identity Provider.
-func (c *Client) GetWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string) (*http.Response, error) {
-	path := "/workload-identity-providers/{workload_identity_provider}"
-	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Get Workload Identity Provider.
-func (c *Client) GetWorkloadIdentityProvider(ctx context.Context, workloadIdentityProvider string) (*schemas.WorkloadIdentityProvider, *client.Response, error) {
-	httpResp, err := c.GetWorkloadIdentityProviderRaw(ctx, workloadIdentityProvider)
+// Create a new Workload Identity Provider.
+func (c *Client) CreateWorkloadIdentityProvider(ctx context.Context, req *schemas.WorkloadIdentityProviderRequest) (*schemas.WorkloadIdentityProvider, error) {
+	resp, err := c.CreateWorkloadIdentityProviderRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.WorkloadIdentityProvider `json:"data"`
 		Included []map[string]interface{}         `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+// The endpoint deletes a Workload identity provider by ID.
+func (c *Client) DeleteWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string) (*client.Response, error) {
+	path := "/workload-identity-providers/{workload_identity_provider}"
+	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// The endpoint deletes a Workload identity provider by ID.
+func (c *Client) DeleteWorkloadIdentityProvider(ctx context.Context, workloadIdentityProvider string) error {
+	resp, err := c.DeleteWorkloadIdentityProviderRaw(ctx, workloadIdentityProvider)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Get Workload Identity Provider.
+func (c *Client) GetWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string) (*client.Response, error) {
+	path := "/workload-identity-providers/{workload_identity_provider}"
+	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Get Workload Identity Provider.
+func (c *Client) GetWorkloadIdentityProvider(ctx context.Context, workloadIdentityProvider string) (*schemas.WorkloadIdentityProvider, error) {
+	resp, err := c.GetWorkloadIdentityProviderRaw(ctx, workloadIdentityProvider)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.WorkloadIdentityProvider `json:"data"`
+		Included []map[string]interface{}         `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // List Workload Identity Providers.
-func (c *Client) ListWorkloadIdentityProvidersRaw(ctx context.Context, opts *ListWorkloadIdentityProvidersOptions) (*http.Response, error) {
+func (c *Client) ListWorkloadIdentityProvidersRaw(ctx context.Context, opts *ListWorkloadIdentityProvidersOptions) (*client.Response, error) {
 	path := "/workload-identity-providers"
 
 	params := url.Values{}
@@ -141,18 +146,20 @@ func (c *Client) ListWorkloadIdentityProvidersRaw(ctx context.Context, opts *Lis
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // List Workload Identity Providers.
-func (c *Client) ListWorkloadIdentityProviders(ctx context.Context, opts *ListWorkloadIdentityProvidersOptions) ([]*schemas.WorkloadIdentityProvider, *client.Response, error) {
-	httpResp, err := c.ListWorkloadIdentityProvidersRaw(ctx, opts)
+func (c *Client) ListWorkloadIdentityProviders(ctx context.Context, opts *ListWorkloadIdentityProvidersOptions) ([]*schemas.WorkloadIdentityProvider, error) {
+	resp, err := c.ListWorkloadIdentityProvidersRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.WorkloadIdentityProvider `json:"data"`
@@ -161,8 +168,8 @@ func (c *Client) ListWorkloadIdentityProviders(ctx context.Context, opts *ListWo
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.WorkloadIdentityProvider, len(result.Data))
@@ -173,8 +180,7 @@ func (c *Client) ListWorkloadIdentityProviders(ctx context.Context, opts *ListWo
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListWorkloadIdentityProvidersIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -215,22 +221,40 @@ func (c *Client) ListWorkloadIdentityProvidersIter(ctx context.Context, opts *Li
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListWorkloadIdentityProviders(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListWorkloadIdentityProvidersRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.WorkloadIdentityProvider{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.WorkloadIdentityProvider `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.WorkloadIdentityProvider{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -270,13 +294,36 @@ func (c *Client) ListWorkloadIdentityProvidersPaged(ctx context.Context, opts *L
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListWorkloadIdentityProviders(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListWorkloadIdentityProvidersRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.WorkloadIdentityProvider `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.WorkloadIdentityProvider, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.WorkloadIdentityProvider](ctx, pageSize, fetchPage)
@@ -296,36 +343,38 @@ type ListWorkloadIdentityProvidersOptions struct {
 }
 
 // This endpoint updates attributes of an existing Workload Identity Provider.
-func (c *Client) UpdateWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string, req *schemas.WorkloadIdentityProviderRequest) (*http.Response, error) {
+func (c *Client) UpdateWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string, req *schemas.WorkloadIdentityProviderRequest) (*client.Response, error) {
 	path := "/workload-identity-providers/{workload_identity_provider}"
 	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates attributes of an existing Workload Identity Provider.
-func (c *Client) UpdateWorkloadIdentityProvider(ctx context.Context, workloadIdentityProvider string, req *schemas.WorkloadIdentityProviderRequest) (*schemas.WorkloadIdentityProvider, *client.Response, error) {
-	httpResp, err := c.UpdateWorkloadIdentityProviderRaw(ctx, workloadIdentityProvider, req)
+func (c *Client) UpdateWorkloadIdentityProvider(ctx context.Context, workloadIdentityProvider string, req *schemas.WorkloadIdentityProviderRequest) (*schemas.WorkloadIdentityProvider, error) {
+	resp, err := c.UpdateWorkloadIdentityProviderRaw(ctx, workloadIdentityProvider, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.WorkloadIdentityProvider `json:"data"`
 		Included []map[string]interface{}         `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

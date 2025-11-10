@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,131 +26,139 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a state version and set it as the current state version for the given workspace.
-func (c *Client) CreateStateVersionRaw(ctx context.Context, req *schemas.StateVersionRequest) (*http.Response, error) {
+func (c *Client) CreateStateVersionRaw(ctx context.Context, req *schemas.StateVersionRequest) (*client.Response, error) {
 	path := "/state-versions"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a state version and set it as the current state version for the given workspace.
-func (c *Client) CreateStateVersion(ctx context.Context, req *schemas.StateVersionRequest) (*schemas.StateVersion, *client.Response, error) {
-	httpResp, err := c.CreateStateVersionRaw(ctx, req)
+func (c *Client) CreateStateVersion(ctx context.Context, req *schemas.StateVersionRequest) (*schemas.StateVersion, error) {
+	resp, err := c.CreateStateVersionRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.StateVersion     `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Fetch the current state version for the given workspace. This state version will be the input state when running terraform operations.
-func (c *Client) GetCurrentStateVersionRaw(ctx context.Context, workspace string) (*http.Response, error) {
+func (c *Client) GetCurrentStateVersionRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/current-state-version"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Fetch the current state version for the given workspace. This state version will be the input state when running terraform operations.
-func (c *Client) GetCurrentStateVersion(ctx context.Context, workspace string) (*schemas.StateVersion, *client.Response, error) {
-	httpResp, err := c.GetCurrentStateVersionRaw(ctx, workspace)
+func (c *Client) GetCurrentStateVersion(ctx context.Context, workspace string) (*schemas.StateVersion, error) {
+	resp, err := c.GetCurrentStateVersionRaw(ctx, workspace)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.StateVersion     `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Show details of a specific state version.
-func (c *Client) GetStateVersionRaw(ctx context.Context, stateVersion string) (*http.Response, error) {
+func (c *Client) GetStateVersionRaw(ctx context.Context, stateVersion string) (*client.Response, error) {
 	path := "/state-versions/{state_version}"
 	path = strings.ReplaceAll(path, "{state_version}", url.PathEscape(stateVersion))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific state version.
-func (c *Client) GetStateVersion(ctx context.Context, stateVersion string) (*schemas.StateVersion, *client.Response, error) {
-	httpResp, err := c.GetStateVersionRaw(ctx, stateVersion)
+func (c *Client) GetStateVersion(ctx context.Context, stateVersion string) (*schemas.StateVersion, error) {
+	resp, err := c.GetStateVersionRaw(ctx, stateVersion)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.StateVersion     `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Download the `terraform.tfstate`
-func (c *Client) GetStateVersionDownloadRaw(ctx context.Context, stateVersion string) (*http.Response, error) {
+func (c *Client) GetStateVersionDownloadRaw(ctx context.Context, stateVersion string) (*client.Response, error) {
 	path := "/state-versions/{state_version}/download"
 	path = strings.ReplaceAll(path, "{state_version}", url.PathEscape(stateVersion))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Download the `terraform.tfstate`
-func (c *Client) GetStateVersionDownload(ctx context.Context, stateVersion string) (string, *client.Response, error) {
-	httpResp, err := c.GetStateVersionDownloadRaw(ctx, stateVersion)
+func (c *Client) GetStateVersionDownload(ctx context.Context, stateVersion string) (string, error) {
+	resp, err := c.GetStateVersionDownloadRaw(ctx, stateVersion)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
-func (c *Client) ListStateVersionsRaw(ctx context.Context, opts *ListStateVersionsOptions) (*http.Response, error) {
+func (c *Client) ListStateVersionsRaw(ctx context.Context, opts *ListStateVersionsOptions) (*client.Response, error) {
 	path := "/state-versions"
 
 	params := url.Values{}
@@ -178,17 +185,19 @@ func (c *Client) ListStateVersionsRaw(ctx context.Context, opts *ListStateVersio
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) ListStateVersions(ctx context.Context, opts *ListStateVersionsOptions) ([]*schemas.StateVersion, *client.Response, error) {
-	httpResp, err := c.ListStateVersionsRaw(ctx, opts)
+func (c *Client) ListStateVersions(ctx context.Context, opts *ListStateVersionsOptions) ([]*schemas.StateVersion, error) {
+	resp, err := c.ListStateVersionsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.StateVersion `json:"data"`
@@ -197,8 +206,8 @@ func (c *Client) ListStateVersions(ctx context.Context, opts *ListStateVersionsO
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.StateVersion, len(result.Data))
@@ -209,8 +218,7 @@ func (c *Client) ListStateVersions(ctx context.Context, opts *ListStateVersionsO
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListStateVersionsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -251,22 +259,40 @@ func (c *Client) ListStateVersionsIter(ctx context.Context, opts *ListStateVersi
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListStateVersions(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListStateVersionsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.StateVersion{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.StateVersion `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.StateVersion{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -306,13 +332,36 @@ func (c *Client) ListStateVersionsPaged(ctx context.Context, opts *ListStateVers
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListStateVersions(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListStateVersionsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.StateVersion `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.StateVersion, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.StateVersion](ctx, pageSize, fetchPage)

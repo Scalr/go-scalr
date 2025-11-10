@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Download JSON formatted execution plan.
-func (c *Client) GetJsonOutputRaw(ctx context.Context, plan string, opts *GetJsonOutputOptions) (*http.Response, error) {
+func (c *Client) GetJsonOutputRaw(ctx context.Context, plan string, opts *GetJsonOutputOptions) (*client.Response, error) {
 	path := "/plans/{plan}/json-output"
 	path = strings.ReplaceAll(path, "{plan}", url.PathEscape(plan))
 
@@ -45,24 +44,26 @@ func (c *Client) GetJsonOutputRaw(ctx context.Context, plan string, opts *GetJso
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Download JSON formatted execution plan.
-func (c *Client) GetJsonOutput(ctx context.Context, plan string, opts *GetJsonOutputOptions) (string, *client.Response, error) {
-	httpResp, err := c.GetJsonOutputRaw(ctx, plan, opts)
+func (c *Client) GetJsonOutput(ctx context.Context, plan string, opts *GetJsonOutputOptions) (string, error) {
+	resp, err := c.GetJsonOutputRaw(ctx, plan, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // GetJsonOutputOptions holds optional parameters for GetJsonOutput
@@ -73,36 +74,38 @@ type GetJsonOutputOptions struct {
 }
 
 // Show details of a specific Terraform Plan stage.
-func (c *Client) GetPlanRaw(ctx context.Context, plan string) (*http.Response, error) {
+func (c *Client) GetPlanRaw(ctx context.Context, plan string) (*client.Response, error) {
 	path := "/plans/{plan}"
 	path = strings.ReplaceAll(path, "{plan}", url.PathEscape(plan))
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific Terraform Plan stage.
-func (c *Client) GetPlan(ctx context.Context, plan string) (*schemas.Plan, *client.Response, error) {
-	httpResp, err := c.GetPlanRaw(ctx, plan)
+func (c *Client) GetPlan(ctx context.Context, plan string) (*schemas.Plan, error) {
+	resp, err := c.GetPlanRaw(ctx, plan)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Plan             `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // Download the raw output of the terraform plan stage.
-func (c *Client) GetPlanLogRaw(ctx context.Context, plan string, opts *GetPlanLogOptions) (*http.Response, error) {
+func (c *Client) GetPlanLogRaw(ctx context.Context, plan string, opts *GetPlanLogOptions) (*client.Response, error) {
 	path := "/plans/{plan}/output"
 	path = strings.ReplaceAll(path, "{plan}", url.PathEscape(plan))
 
@@ -119,24 +122,26 @@ func (c *Client) GetPlanLogRaw(ctx context.Context, plan string, opts *GetPlanLo
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Download the raw output of the terraform plan stage.
-func (c *Client) GetPlanLog(ctx context.Context, plan string, opts *GetPlanLogOptions) (string, *client.Response, error) {
-	httpResp, err := c.GetPlanLogRaw(ctx, plan, opts)
+func (c *Client) GetPlanLog(ctx context.Context, plan string, opts *GetPlanLogOptions) (string, error) {
+	resp, err := c.GetPlanLogRaw(ctx, plan, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // GetPlanLogOptions holds optional parameters for GetPlanLog
@@ -147,7 +152,7 @@ type GetPlanLogOptions struct {
 }
 
 // Download plan file in machine-readable format with sanitized sensitive values.
-func (c *Client) GetSanitizedJsonOutputRaw(ctx context.Context, plan string, opts *GetSanitizedJsonOutputOptions) (*http.Response, error) {
+func (c *Client) GetSanitizedJsonOutputRaw(ctx context.Context, plan string, opts *GetSanitizedJsonOutputOptions) (*client.Response, error) {
 	path := "/plans/{plan}/sanitized-json-output"
 	path = strings.ReplaceAll(path, "{plan}", url.PathEscape(plan))
 
@@ -166,24 +171,26 @@ func (c *Client) GetSanitizedJsonOutputRaw(ctx context.Context, plan string, opt
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Download plan file in machine-readable format with sanitized sensitive values.
-func (c *Client) GetSanitizedJsonOutput(ctx context.Context, plan string, opts *GetSanitizedJsonOutputOptions) (string, *client.Response, error) {
-	httpResp, err := c.GetSanitizedJsonOutputRaw(ctx, plan, opts)
+func (c *Client) GetSanitizedJsonOutput(ctx context.Context, plan string, opts *GetSanitizedJsonOutputOptions) (string, error) {
+	resp, err := c.GetSanitizedJsonOutputRaw(ctx, plan, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // GetSanitizedJsonOutputOptions holds optional parameters for GetSanitizedJsonOutput

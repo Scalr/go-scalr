@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new terraform or ENV variable.
-func (c *Client) CreateVariableRaw(ctx context.Context, req *schemas.VariableRequest, opts *CreateVariableOptions) (*http.Response, error) {
+func (c *Client) CreateVariableRaw(ctx context.Context, req *schemas.VariableRequest, opts *CreateVariableOptions) (*client.Response, error) {
 	path := "/vars"
 
 	params := url.Values{}
@@ -47,32 +46,34 @@ func (c *Client) CreateVariableRaw(ctx context.Context, req *schemas.VariableReq
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new terraform or ENV variable.
-func (c *Client) CreateVariable(ctx context.Context, req *schemas.VariableRequest, opts *CreateVariableOptions) (*schemas.Variable, *client.Response, error) {
-	httpResp, err := c.CreateVariableRaw(ctx, req, opts)
+func (c *Client) CreateVariable(ctx context.Context, req *schemas.VariableRequest, opts *CreateVariableOptions) (*schemas.Variable, error) {
+	resp, err := c.CreateVariableRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Variable         `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateVariableOptions holds optional parameters for CreateVariable
@@ -84,27 +85,29 @@ type CreateVariableOptions struct {
 	Filter  map[string]string
 }
 
-func (c *Client) DeleteVariableRaw(ctx context.Context, var_ string) (*http.Response, error) {
+func (c *Client) DeleteVariableRaw(ctx context.Context, var_ string) (*client.Response, error) {
 	path := "/vars/{var}"
 	path = strings.ReplaceAll(path, "{var}", url.PathEscape(var_))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteVariable(ctx context.Context, var_ string) (*client.Response, error) {
-	httpResp, err := c.DeleteVariableRaw(ctx, var_)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeleteVariable(ctx context.Context, var_ string) error {
+	resp, err := c.DeleteVariableRaw(ctx, var_)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific variable. For `sensitive: true` variables, their actual `value` is not exposed, and `null` returned instead.
-func (c *Client) GetVariableRaw(ctx context.Context, var_ string, opts *GetVariableOptions) (*http.Response, error) {
+func (c *Client) GetVariableRaw(ctx context.Context, var_ string, opts *GetVariableOptions) (*client.Response, error) {
 	path := "/vars/{var}"
 	path = strings.ReplaceAll(path, "{var}", url.PathEscape(var_))
 
@@ -124,32 +127,34 @@ func (c *Client) GetVariableRaw(ctx context.Context, var_ string, opts *GetVaria
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific variable. For `sensitive: true` variables, their actual `value` is not exposed, and `null` returned instead.
-func (c *Client) GetVariable(ctx context.Context, var_ string, opts *GetVariableOptions) (*schemas.Variable, *client.Response, error) {
-	httpResp, err := c.GetVariableRaw(ctx, var_, opts)
+func (c *Client) GetVariable(ctx context.Context, var_ string, opts *GetVariableOptions) (*schemas.Variable, error) {
+	resp, err := c.GetVariableRaw(ctx, var_, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Variable         `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetVariableOptions holds optional parameters for GetVariable
@@ -162,7 +167,7 @@ type GetVariableOptions struct {
 }
 
 // This endpoint returns a list of variables. Cloud Credentials are exposed as Terraform ENV Variables if filters are specified.
-func (c *Client) GetVariablesRaw(ctx context.Context, opts *GetVariablesOptions) (*http.Response, error) {
+func (c *Client) GetVariablesRaw(ctx context.Context, opts *GetVariablesOptions) (*client.Response, error) {
 	path := "/vars"
 
 	params := url.Values{}
@@ -188,18 +193,20 @@ func (c *Client) GetVariablesRaw(ctx context.Context, opts *GetVariablesOptions)
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of variables. Cloud Credentials are exposed as Terraform ENV Variables if filters are specified.
-func (c *Client) GetVariables(ctx context.Context, opts *GetVariablesOptions) ([]*schemas.Variable, *client.Response, error) {
-	httpResp, err := c.GetVariablesRaw(ctx, opts)
+func (c *Client) GetVariables(ctx context.Context, opts *GetVariablesOptions) ([]*schemas.Variable, error) {
+	resp, err := c.GetVariablesRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Variable `json:"data"`
@@ -208,8 +215,8 @@ func (c *Client) GetVariables(ctx context.Context, opts *GetVariablesOptions) ([
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Variable, len(result.Data))
@@ -220,8 +227,7 @@ func (c *Client) GetVariables(ctx context.Context, opts *GetVariablesOptions) ([
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetVariablesIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -262,22 +268,40 @@ func (c *Client) GetVariablesIter(ctx context.Context, opts *GetVariablesOptions
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetVariables(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetVariablesRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Variable{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Variable `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Variable{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -317,13 +341,36 @@ func (c *Client) GetVariablesPaged(ctx context.Context, opts *GetVariablesOption
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetVariables(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetVariablesRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Variable `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Variable, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Variable](ctx, pageSize, fetchPage)
@@ -342,7 +389,7 @@ type GetVariablesOptions struct {
 	Filter map[string]string
 }
 
-func (c *Client) UpdateVariableRaw(ctx context.Context, var_ string, req *schemas.VariableRequest, opts *UpdateVariableOptions) (*http.Response, error) {
+func (c *Client) UpdateVariableRaw(ctx context.Context, var_ string, req *schemas.VariableRequest, opts *UpdateVariableOptions) (*client.Response, error) {
 	path := "/vars/{var}"
 	path = strings.ReplaceAll(path, "{var}", url.PathEscape(var_))
 
@@ -364,31 +411,33 @@ func (c *Client) UpdateVariableRaw(ctx context.Context, var_ string, req *schema
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) UpdateVariable(ctx context.Context, var_ string, req *schemas.VariableRequest, opts *UpdateVariableOptions) (*schemas.Variable, *client.Response, error) {
-	httpResp, err := c.UpdateVariableRaw(ctx, var_, req, opts)
+func (c *Client) UpdateVariable(ctx context.Context, var_ string, req *schemas.VariableRequest, opts *UpdateVariableOptions) (*schemas.Variable, error) {
+	resp, err := c.UpdateVariableRaw(ctx, var_, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Variable         `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateVariableOptions holds optional parameters for UpdateVariable

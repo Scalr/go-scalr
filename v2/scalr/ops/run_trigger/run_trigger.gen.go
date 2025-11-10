@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -25,60 +24,64 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new run trigger. In order to create a run trigger, the user must have `workspaces:read` permission for the upstream workspace and permissions `workspaces:update` and `runs:create` for the downstream workspace.
-func (c *Client) CreateRunTriggerRaw(ctx context.Context, req *schemas.RunTriggerRequest) (*http.Response, error) {
+func (c *Client) CreateRunTriggerRaw(ctx context.Context, req *schemas.RunTriggerRequest) (*client.Response, error) {
 	path := "/run-triggers"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new run trigger. In order to create a run trigger, the user must have `workspaces:read` permission for the upstream workspace and permissions `workspaces:update` and `runs:create` for the downstream workspace.
-func (c *Client) CreateRunTrigger(ctx context.Context, req *schemas.RunTriggerRequest) (*schemas.RunTrigger, *client.Response, error) {
-	httpResp, err := c.CreateRunTriggerRaw(ctx, req)
+func (c *Client) CreateRunTrigger(ctx context.Context, req *schemas.RunTriggerRequest) (*schemas.RunTrigger, error) {
+	resp, err := c.CreateRunTriggerRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.RunTrigger       `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
-func (c *Client) DeleteRunTriggerRaw(ctx context.Context, runTrigger string) (*http.Response, error) {
+func (c *Client) DeleteRunTriggerRaw(ctx context.Context, runTrigger string) (*client.Response, error) {
 	path := "/run-triggers/{run_trigger}"
 	path = strings.ReplaceAll(path, "{run_trigger}", url.PathEscape(runTrigger))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-func (c *Client) DeleteRunTrigger(ctx context.Context, runTrigger string) (*client.Response, error) {
-	httpResp, err := c.DeleteRunTriggerRaw(ctx, runTrigger)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+func (c *Client) DeleteRunTrigger(ctx context.Context, runTrigger string) error {
+	resp, err := c.DeleteRunTriggerRaw(ctx, runTrigger)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific trigger.
-func (c *Client) GetRunTriggerRaw(ctx context.Context, runTrigger string, opts *GetRunTriggerOptions) (*http.Response, error) {
+func (c *Client) GetRunTriggerRaw(ctx context.Context, runTrigger string, opts *GetRunTriggerOptions) (*client.Response, error) {
 	path := "/run-triggers/{run_trigger}"
 	path = strings.ReplaceAll(path, "{run_trigger}", url.PathEscape(runTrigger))
 
@@ -96,32 +99,34 @@ func (c *Client) GetRunTriggerRaw(ctx context.Context, runTrigger string, opts *
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific trigger.
-func (c *Client) GetRunTrigger(ctx context.Context, runTrigger string, opts *GetRunTriggerOptions) (*schemas.RunTrigger, *client.Response, error) {
-	httpResp, err := c.GetRunTriggerRaw(ctx, runTrigger, opts)
+func (c *Client) GetRunTrigger(ctx context.Context, runTrigger string, opts *GetRunTriggerOptions) (*schemas.RunTrigger, error) {
+	resp, err := c.GetRunTriggerRaw(ctx, runTrigger, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.RunTrigger       `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetRunTriggerOptions holds optional parameters for GetRunTrigger

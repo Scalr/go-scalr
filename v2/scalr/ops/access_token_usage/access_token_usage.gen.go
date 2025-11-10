@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // This endpoint returns a list of access token usage on the account.
-func (c *Client) ListAccessTokenUsageRaw(ctx context.Context, opts *ListAccessTokenUsageOptions) (*http.Response, error) {
+func (c *Client) ListAccessTokenUsageRaw(ctx context.Context, opts *ListAccessTokenUsageOptions) (*client.Response, error) {
 	path := "/reports/access-tokens"
 
 	params := url.Values{}
@@ -57,18 +56,20 @@ func (c *Client) ListAccessTokenUsageRaw(ctx context.Context, opts *ListAccessTo
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of access token usage on the account.
-func (c *Client) ListAccessTokenUsage(ctx context.Context, opts *ListAccessTokenUsageOptions) ([]*schemas.AccessTokenUsage, *client.Response, error) {
-	httpResp, err := c.ListAccessTokenUsageRaw(ctx, opts)
+func (c *Client) ListAccessTokenUsage(ctx context.Context, opts *ListAccessTokenUsageOptions) ([]*schemas.AccessTokenUsage, error) {
+	resp, err := c.ListAccessTokenUsageRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.AccessTokenUsage `json:"data"`
@@ -77,16 +78,15 @@ func (c *Client) ListAccessTokenUsage(ctx context.Context, opts *ListAccessToken
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.AccessTokenUsage, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListAccessTokenUsageIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -127,22 +127,36 @@ func (c *Client) ListAccessTokenUsageIter(ctx context.Context, opts *ListAccessT
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListAccessTokenUsage(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListAccessTokenUsageRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.AccessTokenUsage{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.AccessTokenUsage `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.AccessTokenUsage{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -182,13 +196,32 @@ func (c *Client) ListAccessTokenUsagePaged(ctx context.Context, opts *ListAccess
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListAccessTokenUsage(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListAccessTokenUsageRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.AccessTokenUsage `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.AccessTokenUsage, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.AccessTokenUsage](ctx, pageSize, fetchPage)

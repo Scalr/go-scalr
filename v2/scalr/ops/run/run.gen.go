@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -27,53 +26,57 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Interrupt a run that is currently planning or applying. Performing a cancel is roughly equivalent to hitting `ctrl+c` during a Terraform plan or apply on the CLI. The running Terraform process is sent an `INT` signal, which instructs Terraform to end its work and wrap up in the safest way possible.
-func (c *Client) CancelRunRaw(ctx context.Context, run string, req *schemas.Comment) (*http.Response, error) {
+func (c *Client) CancelRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/cancel"
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
-}
-
-// Interrupt a run that is currently planning or applying. Performing a cancel is roughly equivalent to hitting `ctrl+c` during a Terraform plan or apply on the CLI. The running Terraform process is sent an `INT` signal, which instructs Terraform to end its work and wrap up in the safest way possible.
-func (c *Client) CancelRun(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
-	httpResp, err := c.CancelRunRaw(ctx, run, req)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Interrupt a run that is currently planning or applying. Performing a cancel is roughly equivalent to hitting `ctrl+c` during a Terraform plan or apply on the CLI. The running Terraform process is sent an `INT` signal, which instructs Terraform to end its work and wrap up in the safest way possible.
+func (c *Client) CancelRun(ctx context.Context, run string, req *schemas.Comment) error {
+	resp, err := c.CancelRunRaw(ctx, run, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Apply a run that is paused waiting for confirmation after a plan. This includes runs in the `planned` and `policy_checked` states. This action is only required for runs that can't be auto-applied.
-func (c *Client) ConfirmRunRaw(ctx context.Context, run string, req *schemas.ConfirmRequest) (*http.Response, error) {
+func (c *Client) ConfirmRunRaw(ctx context.Context, run string, req *schemas.ConfirmRequest) (*client.Response, error) {
 	path := "/runs/{run}/actions/apply"
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
-}
-
-// Apply a run that is paused waiting for confirmation after a plan. This includes runs in the `planned` and `policy_checked` states. This action is only required for runs that can't be auto-applied.
-func (c *Client) ConfirmRun(ctx context.Context, run string, req *schemas.ConfirmRequest) (*client.Response, error) {
-	httpResp, err := c.ConfirmRunRaw(ctx, run, req)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Apply a run that is paused waiting for confirmation after a plan. This includes runs in the `planned` and `policy_checked` states. This action is only required for runs that can't be auto-applied.
+func (c *Client) ConfirmRun(ctx context.Context, run string, req *schemas.ConfirmRequest) error {
+	resp, err := c.ConfirmRunRaw(ctx, run, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // A run performs terraform plan and apply using a configuration version and the workspace's current variables. If the configuration version is omitted, the run will be created using the workspace's latest configuration version. If you want to create a dry run, specify `is-dry: true` or reference configuration version with `is-dry: true` in the relationships.
-func (c *Client) CreateRunRaw(ctx context.Context, req *schemas.RunRequest, opts *CreateRunOptions) (*http.Response, error) {
+func (c *Client) CreateRunRaw(ctx context.Context, req *schemas.RunRequest, opts *CreateRunOptions) (*client.Response, error) {
 	path := "/runs"
 
 	params := url.Values{}
@@ -95,32 +98,34 @@ func (c *Client) CreateRunRaw(ctx context.Context, req *schemas.RunRequest, opts
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // A run performs terraform plan and apply using a configuration version and the workspace's current variables. If the configuration version is omitted, the run will be created using the workspace's latest configuration version. If you want to create a dry run, specify `is-dry: true` or reference configuration version with `is-dry: true` in the relationships.
-func (c *Client) CreateRun(ctx context.Context, req *schemas.RunRequest, opts *CreateRunOptions) (*schemas.Run, *client.Response, error) {
-	httpResp, err := c.CreateRunRaw(ctx, req, opts)
+func (c *Client) CreateRun(ctx context.Context, req *schemas.RunRequest, opts *CreateRunOptions) (*schemas.Run, error) {
+	resp, err := c.CreateRunRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Run              `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateRunOptions holds optional parameters for CreateRun
@@ -133,30 +138,32 @@ type CreateRunOptions struct {
 }
 
 // Skip any remaining work on runs that are paused waiting for confirmation or priority. This includes runs in the `pending`, `planned`, `policy_checked` and `policy_override` states.
-func (c *Client) DiscardRunRaw(ctx context.Context, run string, req *schemas.Comment) (*http.Response, error) {
+func (c *Client) DiscardRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/discard"
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
-}
-
-// Skip any remaining work on runs that are paused waiting for confirmation or priority. This includes runs in the `pending`, `planned`, `policy_checked` and `policy_override` states.
-func (c *Client) DiscardRun(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
-	httpResp, err := c.DiscardRunRaw(ctx, run, req)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Skip any remaining work on runs that are paused waiting for confirmation or priority. This includes runs in the `pending`, `planned`, `policy_checked` and `policy_override` states.
+func (c *Client) DiscardRun(ctx context.Context, run string, req *schemas.Comment) error {
+	resp, err := c.DiscardRunRaw(ctx, run, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Get a Zip archive with policy check input data generated for a given run. See [Policy Input](https://docs.scalr.io/docs/policy-as-code) data structure.
-func (c *Client) DownloadPolicyInputRaw(ctx context.Context, run string, opts *DownloadPolicyInputOptions) (*http.Response, error) {
+func (c *Client) DownloadPolicyInputRaw(ctx context.Context, run string, opts *DownloadPolicyInputOptions) (*client.Response, error) {
 	path := "/runs/{run}/policy-input"
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
@@ -175,24 +182,26 @@ func (c *Client) DownloadPolicyInputRaw(ctx context.Context, run string, opts *D
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Get a Zip archive with policy check input data generated for a given run. See [Policy Input](https://docs.scalr.io/docs/policy-as-code) data structure.
-func (c *Client) DownloadPolicyInput(ctx context.Context, run string, opts *DownloadPolicyInputOptions) (string, *client.Response, error) {
-	httpResp, err := c.DownloadPolicyInputRaw(ctx, run, opts)
+func (c *Client) DownloadPolicyInput(ctx context.Context, run string, opts *DownloadPolicyInputOptions) (string, error) {
+	resp, err := c.DownloadPolicyInputRaw(ctx, run, opts)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
-	defer httpResp.Body.Close()
+	defer resp.Body.Close()
 
-	resp := &client.Response{Response: httpResp}
-
-	bodyBytes, err := io.ReadAll(httpResp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", resp, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
-	return string(bodyBytes), resp, nil
+	return string(bodyBytes), nil
 }
 
 // DownloadPolicyInputOptions holds optional parameters for DownloadPolicyInput
@@ -203,30 +212,32 @@ type DownloadPolicyInputOptions struct {
 }
 
 // Cancel all previous runs in pending or waiting for confirmation statuses.
-func (c *Client) ForceRunRaw(ctx context.Context, run string, req *schemas.Comment) (*http.Response, error) {
+func (c *Client) ForceRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/force"
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.Post(ctx, path, req, headers)
-}
-
-// Cancel all previous runs in pending or waiting for confirmation statuses.
-func (c *Client) ForceRun(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
-	httpResp, err := c.ForceRunRaw(ctx, run, req)
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// Cancel all previous runs in pending or waiting for confirmation statuses.
+func (c *Client) ForceRun(ctx context.Context, run string, req *schemas.Comment) error {
+	resp, err := c.ForceRunRaw(ctx, run, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific run.
-func (c *Client) GetRunRaw(ctx context.Context, run string, opts *GetRunOptions) (*http.Response, error) {
+func (c *Client) GetRunRaw(ctx context.Context, run string, opts *GetRunOptions) (*client.Response, error) {
 	path := "/runs/{run}"
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
@@ -246,32 +257,34 @@ func (c *Client) GetRunRaw(ctx context.Context, run string, opts *GetRunOptions)
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific run.
-func (c *Client) GetRun(ctx context.Context, run string, opts *GetRunOptions) (*schemas.Run, *client.Response, error) {
-	httpResp, err := c.GetRunRaw(ctx, run, opts)
+func (c *Client) GetRun(ctx context.Context, run string, opts *GetRunOptions) (*schemas.Run, error) {
+	resp, err := c.GetRunRaw(ctx, run, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.Run              `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetRunOptions holds optional parameters for GetRun
@@ -284,7 +297,7 @@ type GetRunOptions struct {
 }
 
 // This endpoint lists runs for a specific workspace.
-func (c *Client) GetRunsRaw(ctx context.Context, opts *GetRunsOptions) (*http.Response, error) {
+func (c *Client) GetRunsRaw(ctx context.Context, opts *GetRunsOptions) (*client.Response, error) {
 	path := "/runs"
 
 	params := url.Values{}
@@ -317,18 +330,20 @@ func (c *Client) GetRunsRaw(ctx context.Context, opts *GetRunsOptions) (*http.Re
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists runs for a specific workspace.
-func (c *Client) GetRuns(ctx context.Context, opts *GetRunsOptions) ([]*schemas.Run, *client.Response, error) {
-	httpResp, err := c.GetRunsRaw(ctx, opts)
+func (c *Client) GetRuns(ctx context.Context, opts *GetRunsOptions) ([]*schemas.Run, error) {
+	resp, err := c.GetRunsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Run `json:"data"`
@@ -337,8 +352,8 @@ func (c *Client) GetRuns(ctx context.Context, opts *GetRunsOptions) ([]*schemas.
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Run, len(result.Data))
@@ -349,8 +364,7 @@ func (c *Client) GetRuns(ctx context.Context, opts *GetRunsOptions) ([]*schemas.
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetRunsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -391,22 +405,40 @@ func (c *Client) GetRunsIter(ctx context.Context, opts *GetRunsOptions) iter.Seq
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetRuns(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetRunsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Run{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Run `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -446,13 +478,36 @@ func (c *Client) GetRunsPaged(ctx context.Context, opts *GetRunsOptions) *client
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetRuns(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetRunsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Run `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Run, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Run](ctx, pageSize, fetchPage)
@@ -476,7 +531,7 @@ type GetRunsOptions struct {
 }
 
 // This endpoint lists Runs Queue on allowed scopes.
-func (c *Client) GetRunsQueueRaw(ctx context.Context, opts *GetRunsQueueOptions) (*http.Response, error) {
+func (c *Client) GetRunsQueueRaw(ctx context.Context, opts *GetRunsQueueOptions) (*client.Response, error) {
 	path := "/runs-queue"
 
 	params := url.Values{}
@@ -509,18 +564,20 @@ func (c *Client) GetRunsQueueRaw(ctx context.Context, opts *GetRunsQueueOptions)
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint lists Runs Queue on allowed scopes.
-func (c *Client) GetRunsQueue(ctx context.Context, opts *GetRunsQueueOptions) ([]*schemas.Run, *client.Response, error) {
-	httpResp, err := c.GetRunsQueueRaw(ctx, opts)
+func (c *Client) GetRunsQueue(ctx context.Context, opts *GetRunsQueueOptions) ([]*schemas.Run, error) {
+	resp, err := c.GetRunsQueueRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.Run `json:"data"`
@@ -529,8 +586,8 @@ func (c *Client) GetRunsQueue(ctx context.Context, opts *GetRunsQueueOptions) ([
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.Run, len(result.Data))
@@ -541,8 +598,7 @@ func (c *Client) GetRunsQueue(ctx context.Context, opts *GetRunsQueueOptions) ([
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // GetRunsQueueIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -583,22 +639,40 @@ func (c *Client) GetRunsQueueIter(ctx context.Context, opts *GetRunsQueueOptions
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.GetRunsQueue(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.GetRunsQueueRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.Run{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Run `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -638,13 +712,36 @@ func (c *Client) GetRunsQueuePaged(ctx context.Context, opts *GetRunsQueueOption
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.GetRunsQueue(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.GetRunsQueueRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.Run `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Run, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.Run](ctx, pageSize, fetchPage)

@@ -59,7 +59,7 @@ func main() {
 	ctx := context.Background()
 
 	// Create a workspace in environment env-xxx
-	ws, _, err := client.Workspace.CreateWorkspace(
+	ws, err := client.Workspace.CreateWorkspace(
 		ctx,
 		&schemas.WorkspaceRequest{
 			Attributes: schemas.WorkspaceAttributesRequest{

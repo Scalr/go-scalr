@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,7 +25,7 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new webhook integration
-func (c *Client) CreateWebhookIntegrationRaw(ctx context.Context, req *schemas.WebhookIntegrationRequest, opts *CreateWebhookIntegrationOptions) (*http.Response, error) {
+func (c *Client) CreateWebhookIntegrationRaw(ctx context.Context, req *schemas.WebhookIntegrationRequest, opts *CreateWebhookIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/webhooks"
 
 	params := url.Values{}
@@ -44,32 +43,34 @@ func (c *Client) CreateWebhookIntegrationRaw(ctx context.Context, req *schemas.W
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Create a new webhook integration
-func (c *Client) CreateWebhookIntegration(ctx context.Context, req *schemas.WebhookIntegrationRequest, opts *CreateWebhookIntegrationOptions) (*schemas.WebhookIntegration, *client.Response, error) {
-	httpResp, err := c.CreateWebhookIntegrationRaw(ctx, req, opts)
+func (c *Client) CreateWebhookIntegration(ctx context.Context, req *schemas.WebhookIntegrationRequest, opts *CreateWebhookIntegrationOptions) (*schemas.WebhookIntegration, error) {
+	resp, err := c.CreateWebhookIntegrationRaw(ctx, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.WebhookIntegration `json:"data"`
 		Included []map[string]interface{}   `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // CreateWebhookIntegrationOptions holds optional parameters for CreateWebhookIntegration
@@ -80,28 +81,30 @@ type CreateWebhookIntegrationOptions struct {
 }
 
 // The endpoint deletes webhook by ID.
-func (c *Client) DeleteWebhookIntegrationRaw(ctx context.Context, webhook string) (*http.Response, error) {
+func (c *Client) DeleteWebhookIntegrationRaw(ctx context.Context, webhook string) (*client.Response, error) {
 	path := "/integrations/webhooks/{webhook}"
 	path = strings.ReplaceAll(path, "{webhook}", url.PathEscape(webhook))
 
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes webhook by ID.
-func (c *Client) DeleteWebhookIntegration(ctx context.Context, webhook string) (*client.Response, error) {
-	httpResp, err := c.DeleteWebhookIntegrationRaw(ctx, webhook)
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
+	return &client.Response{Response: httpResp}, nil
+}
 
-	resp := &client.Response{Response: httpResp}
+// The endpoint deletes webhook by ID.
+func (c *Client) DeleteWebhookIntegration(ctx context.Context, webhook string) error {
+	resp, err := c.DeleteWebhookIntegrationRaw(ctx, webhook)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	return nil
 }
 
 // Show details of a specific webhook.
-func (c *Client) GetWebhookIntegrationRaw(ctx context.Context, webhook string, opts *GetWebhookIntegrationOptions) (*http.Response, error) {
+func (c *Client) GetWebhookIntegrationRaw(ctx context.Context, webhook string, opts *GetWebhookIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/webhooks/{webhook}"
 	path = strings.ReplaceAll(path, "{webhook}", url.PathEscape(webhook))
 
@@ -118,32 +121,34 @@ func (c *Client) GetWebhookIntegrationRaw(ctx context.Context, webhook string, o
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // Show details of a specific webhook.
-func (c *Client) GetWebhookIntegration(ctx context.Context, webhook string, opts *GetWebhookIntegrationOptions) (*schemas.WebhookIntegration, *client.Response, error) {
-	httpResp, err := c.GetWebhookIntegrationRaw(ctx, webhook, opts)
+func (c *Client) GetWebhookIntegration(ctx context.Context, webhook string, opts *GetWebhookIntegrationOptions) (*schemas.WebhookIntegration, error) {
+	resp, err := c.GetWebhookIntegrationRaw(ctx, webhook, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.WebhookIntegration `json:"data"`
 		Included []map[string]interface{}   `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // GetWebhookIntegrationOptions holds optional parameters for GetWebhookIntegration
@@ -154,7 +159,7 @@ type GetWebhookIntegrationOptions struct {
 }
 
 // This endpoint returns a list of webhooks.
-func (c *Client) ListWebhookIntegrationsRaw(ctx context.Context, opts *ListWebhookIntegrationsOptions) (*http.Response, error) {
+func (c *Client) ListWebhookIntegrationsRaw(ctx context.Context, opts *ListWebhookIntegrationsOptions) (*client.Response, error) {
 	path := "/integrations/webhooks"
 
 	params := url.Values{}
@@ -183,18 +188,20 @@ func (c *Client) ListWebhookIntegrationsRaw(ctx context.Context, opts *ListWebho
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of webhooks.
-func (c *Client) ListWebhookIntegrations(ctx context.Context, opts *ListWebhookIntegrationsOptions) ([]*schemas.WebhookIntegration, *client.Response, error) {
-	httpResp, err := c.ListWebhookIntegrationsRaw(ctx, opts)
+func (c *Client) ListWebhookIntegrations(ctx context.Context, opts *ListWebhookIntegrationsOptions) ([]*schemas.WebhookIntegration, error) {
+	resp, err := c.ListWebhookIntegrationsRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.WebhookIntegration `json:"data"`
@@ -203,8 +210,8 @@ func (c *Client) ListWebhookIntegrations(ctx context.Context, opts *ListWebhookI
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.WebhookIntegration, len(result.Data))
@@ -215,8 +222,7 @@ func (c *Client) ListWebhookIntegrations(ctx context.Context, opts *ListWebhookI
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListWebhookIntegrationsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -257,22 +263,40 @@ func (c *Client) ListWebhookIntegrationsIter(ctx context.Context, opts *ListWebh
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListWebhookIntegrations(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListWebhookIntegrationsRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.WebhookIntegration{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.WebhookIntegration `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.WebhookIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -312,13 +336,36 @@ func (c *Client) ListWebhookIntegrationsPaged(ctx context.Context, opts *ListWeb
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListWebhookIntegrations(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListWebhookIntegrationsRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.WebhookIntegration `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.WebhookIntegration, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.WebhookIntegration](ctx, pageSize, fetchPage)
@@ -340,7 +387,7 @@ type ListWebhookIntegrationsOptions struct {
 }
 
 // This endpoint updates webhook by ID.
-func (c *Client) UpdateWebhookIntegrationRaw(ctx context.Context, webhook string, req *schemas.WebhookIntegrationRequest, opts *UpdateWebhookIntegrationOptions) (*http.Response, error) {
+func (c *Client) UpdateWebhookIntegrationRaw(ctx context.Context, webhook string, req *schemas.WebhookIntegrationRequest, opts *UpdateWebhookIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/webhooks/{webhook}"
 	path = strings.ReplaceAll(path, "{webhook}", url.PathEscape(webhook))
 
@@ -359,32 +406,34 @@ func (c *Client) UpdateWebhookIntegrationRaw(ctx context.Context, webhook string
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint updates webhook by ID.
-func (c *Client) UpdateWebhookIntegration(ctx context.Context, webhook string, req *schemas.WebhookIntegrationRequest, opts *UpdateWebhookIntegrationOptions) (*schemas.WebhookIntegration, *client.Response, error) {
-	httpResp, err := c.UpdateWebhookIntegrationRaw(ctx, webhook, req, opts)
+func (c *Client) UpdateWebhookIntegration(ctx context.Context, webhook string, req *schemas.WebhookIntegrationRequest, opts *UpdateWebhookIntegrationOptions) (*schemas.WebhookIntegration, error) {
+	resp, err := c.UpdateWebhookIntegrationRaw(ctx, webhook, req, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.WebhookIntegration `json:"data"`
 		Included []map[string]interface{}   `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }
 
 // UpdateWebhookIntegrationOptions holds optional parameters for UpdateWebhookIntegration

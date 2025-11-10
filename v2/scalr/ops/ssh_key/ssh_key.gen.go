@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,95 +25,101 @@ func New(httpClient *client.HTTPClient) *Client {
 }
 
 // Create a new SSH key.
-func (c *Client) CreateSshKeyRaw(ctx context.Context, req *schemas.SSHKeyRequest) (*http.Response, error) {
+func (c *Client) CreateSshKeyRaw(ctx context.Context, req *schemas.SSHKeyRequest) (*client.Response, error) {
 	path := "/ssh-keys"
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Post(ctx, path, body, nil)
-}
-
-// Create a new SSH key.
-func (c *Client) CreateSshKey(ctx context.Context, req *schemas.SSHKeyRequest) (*schemas.SSHKey, *client.Response, error) {
-	httpResp, err := c.CreateSshKeyRaw(ctx, req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	var result struct {
-		Data     schemas.SSHKey           `json:"data"`
-		Included []map[string]interface{} `json:"included"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	// Populate included resources into relationships
-	if len(result.Included) > 0 {
-		result.Data.Relationships.PopulateIncludes(result.Included)
-	}
-	return &result.Data, resp, nil
-}
-
-// The endpoint deletes an SSH key by ID.
-func (c *Client) DeleteSshKeyRaw(ctx context.Context, accountSshKey string) (*http.Response, error) {
-	path := "/ssh-keys/{account_ssh_key}"
-	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
-
-	return c.httpClient.Delete(ctx, path, nil, nil)
-}
-
-// The endpoint deletes an SSH key by ID.
-func (c *Client) DeleteSshKey(ctx context.Context, accountSshKey string) (*client.Response, error) {
-	httpResp, err := c.DeleteSshKeyRaw(ctx, accountSshKey)
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
-
-	return resp, nil
+	return &client.Response{Response: httpResp}, nil
 }
 
-// Show details of a specific SSH key.
-func (c *Client) GetSshKeyRaw(ctx context.Context, accountSshKey string) (*http.Response, error) {
-	path := "/ssh-keys/{account_ssh_key}"
-	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
-
-	return c.httpClient.Get(ctx, path, nil)
-}
-
-// Show details of a specific SSH key.
-func (c *Client) GetSshKey(ctx context.Context, accountSshKey string) (*schemas.SSHKey, *client.Response, error) {
-	httpResp, err := c.GetSshKeyRaw(ctx, accountSshKey)
+// Create a new SSH key.
+func (c *Client) CreateSshKey(ctx context.Context, req *schemas.SSHKeyRequest) (*schemas.SSHKey, error) {
+	resp, err := c.CreateSshKeyRaw(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SSHKey           `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
+}
+
+// The endpoint deletes an SSH key by ID.
+func (c *Client) DeleteSshKeyRaw(ctx context.Context, accountSshKey string) (*client.Response, error) {
+	path := "/ssh-keys/{account_ssh_key}"
+	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// The endpoint deletes an SSH key by ID.
+func (c *Client) DeleteSshKey(ctx context.Context, accountSshKey string) error {
+	resp, err := c.DeleteSshKeyRaw(ctx, accountSshKey)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Show details of a specific SSH key.
+func (c *Client) GetSshKeyRaw(ctx context.Context, accountSshKey string) (*client.Response, error) {
+	path := "/ssh-keys/{account_ssh_key}"
+	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Show details of a specific SSH key.
+func (c *Client) GetSshKey(ctx context.Context, accountSshKey string) (*schemas.SSHKey, error) {
+	resp, err := c.GetSshKeyRaw(ctx, accountSshKey)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.SSHKey           `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // This endpoint returns a list of SSH keys by various filters.
-func (c *Client) ListSshKeysRaw(ctx context.Context, opts *ListSshKeysOptions) (*http.Response, error) {
+func (c *Client) ListSshKeysRaw(ctx context.Context, opts *ListSshKeysOptions) (*client.Response, error) {
 	path := "/ssh-keys"
 
 	params := url.Values{}
@@ -143,18 +148,20 @@ func (c *Client) ListSshKeysRaw(ctx context.Context, opts *ListSshKeysOptions) (
 		path += "?" + params.Encode()
 	}
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint returns a list of SSH keys by various filters.
-func (c *Client) ListSshKeys(ctx context.Context, opts *ListSshKeysOptions) ([]*schemas.SSHKey, *client.Response, error) {
-	httpResp, err := c.ListSshKeysRaw(ctx, opts)
+func (c *Client) ListSshKeys(ctx context.Context, opts *ListSshKeysOptions) ([]*schemas.SSHKey, error) {
+	resp, err := c.ListSshKeysRaw(ctx, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.SSHKey `json:"data"`
@@ -163,8 +170,8 @@ func (c *Client) ListSshKeys(ctx context.Context, opts *ListSshKeysOptions) ([]*
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.SSHKey, len(result.Data))
@@ -175,8 +182,7 @@ func (c *Client) ListSshKeys(ctx context.Context, opts *ListSshKeysOptions) ([]*
 			resources[i].Relationships.PopulateIncludes(result.Included)
 		}
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
 
 // ListSshKeysIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
@@ -217,22 +223,40 @@ func (c *Client) ListSshKeysIter(ctx context.Context, opts *ListSshKeysOptions) 
 			pageOpts.PageNumber = pageNum
 			pageOpts.PageSize = pageSize
 
-			// Fetch page
-			items, resp, err := c.ListSshKeys(ctx, pageOpts)
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListSshKeysRaw(ctx, pageOpts)
 			if err != nil {
 				yield(schemas.SSHKey{}, err)
 				return
 			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.SSHKey `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.SSHKey{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
 
 			// Yield each item
-			for _, item := range items {
-				if !yield(*item, nil) {
+			for i := range result.Data {
+				// Populate included resources into relationships
+				if len(result.Included) > 0 {
+					result.Data[i].Relationships.PopulateIncludes(result.Included)
+				}
+				if !yield(result.Data[i], nil) {
 					return // Consumer requested early exit
 				}
 			}
 
 			// Check if there are more pages
-			if resp.Pagination == nil || resp.Pagination.NextPage == nil {
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
 				break
 			}
 
@@ -272,13 +296,36 @@ func (c *Client) ListSshKeysPaged(ctx context.Context, opts *ListSshKeysOptions)
 		pageOpts.PageNumber = pageNum
 		pageOpts.PageSize = pageSize
 
-		// Call the actual list method
-		items, resp, err := c.ListSshKeys(ctx, pageOpts)
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListSshKeysRaw(ctx, pageOpts)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer resp.Body.Close()
 
-		return items, resp.Pagination, nil
+		// Decode response
+		var result struct {
+			Data []schemas.SSHKey `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.SSHKey, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+			// Populate included resources into relationships
+			if len(result.Included) > 0 {
+				items[i].Relationships.PopulateIncludes(result.Included)
+			}
+		}
+
+		return items, result.Meta.Pagination, nil
 	}
 
 	return client.NewIterator[schemas.SSHKey](ctx, pageSize, fetchPage)
@@ -300,36 +347,38 @@ type ListSshKeysOptions struct {
 }
 
 // This endpoint allows updates to attributes of an existing SSH key.
-func (c *Client) UpdateSshKeyRaw(ctx context.Context, accountSshKey string, req *schemas.SSHKeyRequest) (*http.Response, error) {
+func (c *Client) UpdateSshKeyRaw(ctx context.Context, accountSshKey string, req *schemas.SSHKeyRequest) (*client.Response, error) {
 	path := "/ssh-keys/{account_ssh_key}"
 	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
 
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.Patch(ctx, path, body, nil)
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
 // This endpoint allows updates to attributes of an existing SSH key.
-func (c *Client) UpdateSshKey(ctx context.Context, accountSshKey string, req *schemas.SSHKeyRequest) (*schemas.SSHKey, *client.Response, error) {
-	httpResp, err := c.UpdateSshKeyRaw(ctx, accountSshKey, req)
+func (c *Client) UpdateSshKey(ctx context.Context, accountSshKey string, req *schemas.SSHKeyRequest) (*schemas.SSHKey, error) {
+	resp, err := c.UpdateSshKeyRaw(ctx, accountSshKey, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data     schemas.SSHKey           `json:"data"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Populate included resources into relationships
 	if len(result.Included) > 0 {
 		result.Data.Relationships.PopulateIncludes(result.Included)
 	}
-	return &result.Data, resp, nil
+	return &result.Data, nil
 }

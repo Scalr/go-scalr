@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/scalr/go-scalr/v2/scalr/client"
 	"github.com/scalr/go-scalr/v2/scalr/schemas"
@@ -22,20 +21,22 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
-func (c *Client) ListEventDefinitionsRaw(ctx context.Context) (*http.Response, error) {
+func (c *Client) ListEventDefinitionsRaw(ctx context.Context) (*client.Response, error) {
 	path := "/event-definitions"
 
-	return c.httpClient.Get(ctx, path, nil)
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) ListEventDefinitions(ctx context.Context) ([]*schemas.EventDefinition, *client.Response, error) {
-	httpResp, err := c.ListEventDefinitionsRaw(ctx)
+func (c *Client) ListEventDefinitions(ctx context.Context) ([]*schemas.EventDefinition, error) {
+	resp, err := c.ListEventDefinitionsRaw(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer httpResp.Body.Close()
-
-	resp := &client.Response{Response: httpResp}
+	defer resp.Body.Close()
 
 	var result struct {
 		Data []schemas.EventDefinition `json:"data"`
@@ -44,14 +45,13 @@ func (c *Client) ListEventDefinitions(ctx context.Context) ([]*schemas.EventDefi
 		} `json:"meta"`
 		Included []map[string]interface{} `json:"included"`
 	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
-		return nil, resp, fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	resources := make([]*schemas.EventDefinition, len(result.Data))
 	for i := range result.Data {
 		resources[i] = &result.Data[i]
 	}
-	resp.Pagination = result.Meta.Pagination
-	return resources, resp, nil
+	return resources, nil
 }
