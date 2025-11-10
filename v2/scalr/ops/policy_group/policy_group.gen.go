@@ -113,7 +113,7 @@ func (c *Client) DeletePolicyGroupRaw(ctx context.Context, policyGroup string) (
 	path := "/policy-groups/{policy_group}"
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // This endpoint deletes a [policy group](/docs/policy-governance#open-policy-agent) by ID. Only an unused policy group (that is not linked to any environment) can be removed.
@@ -134,7 +134,7 @@ func (c *Client) DeletePolicyGroupEnvironmentsRaw(ctx context.Context, policyGro
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeletePolicyGroupEnvironments(ctx context.Context, policyGroup string, environment string) (*client.Response, error) {

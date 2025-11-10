@@ -30,7 +30,7 @@ func (c *Client) DeleteSlackConnectionRaw(ctx context.Context, account string) (
 	path := "/integrations/slack/{account}/connection"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // Remove Slack App connection for the account.

@@ -64,7 +64,7 @@ func (c *Client) DeleteSlackIntegrationRaw(ctx context.Context, slackIntegration
 	path := "/integrations/slack/{slack_integration}"
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // This endpoint deletes Slack integration.

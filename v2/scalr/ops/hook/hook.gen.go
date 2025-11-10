@@ -64,7 +64,7 @@ func (c *Client) DeleteHookRaw(ctx context.Context, hook string) (*http.Response
 	path := "/hooks/{hook}"
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // Deletes a specific hook by its ID.

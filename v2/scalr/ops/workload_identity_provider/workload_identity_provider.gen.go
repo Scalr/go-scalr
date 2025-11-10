@@ -64,7 +64,7 @@ func (c *Client) DeleteWorkloadIdentityProviderRaw(ctx context.Context, workload
 	path := "/workload-identity-providers/{workload_identity_provider}"
 	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes a Workload identity provider by ID.

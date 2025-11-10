@@ -60,7 +60,7 @@ func (c *Client) DeleteStorageProfileRaw(ctx context.Context, storageProfile str
 	path := "/storage-profiles/{storage_profile}"
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // Delete a storage profile. The operation is only allowed if the storage profile is not being used by any blobs and is not set as default.
@@ -76,7 +76,7 @@ func (c *Client) DeleteStorageProfile(ctx context.Context, storageProfile string
 	return resp, nil
 }
 
-// Get storage profile by id.
+// List all storage profiles.
 func (c *Client) GetStorageProfileRaw(ctx context.Context, storageProfile string) (*http.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
@@ -84,7 +84,7 @@ func (c *Client) GetStorageProfileRaw(ctx context.Context, storageProfile string
 	return c.httpClient.Get(ctx, path, nil)
 }
 
-// Get storage profile by id.
+// List all storage profiles.
 func (c *Client) GetStorageProfile(ctx context.Context, storageProfile string) (*schemas.StorageProfile, *client.Response, error) {
 	httpResp, err := c.GetStorageProfileRaw(ctx, storageProfile)
 	if err != nil {
@@ -105,7 +105,7 @@ func (c *Client) GetStorageProfile(ctx context.Context, storageProfile string) (
 	return &result.Data, resp, nil
 }
 
-// List all storage profiles.
+// Get storage profile by id.
 func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStorageProfilesOptions) (*http.Response, error) {
 	path := "/storage-profiles"
 
@@ -136,7 +136,7 @@ func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStoragePr
 	return c.httpClient.Get(ctx, path, nil)
 }
 
-// List all storage profiles.
+// Get storage profile by id.
 func (c *Client) ListStorageProfiles(ctx context.Context, opts *ListStorageProfilesOptions) ([]*schemas.StorageProfile, *client.Response, error) {
 	httpResp, err := c.ListStorageProfilesRaw(ctx, opts)
 	if err != nil {

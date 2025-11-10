@@ -65,7 +65,7 @@ func (c *Client) DeleteProviderConfigurationParameterRaw(ctx context.Context, pr
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes a Provider configuration parameter by ID.
@@ -81,7 +81,7 @@ func (c *Client) DeleteProviderConfigurationParameter(ctx context.Context, provi
 	return resp, nil
 }
 
-// Show details of a specific Provider configuration parameter.
+// Show details of a specific Proivider configuration parameter.
 func (c *Client) GetProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*http.Response, error) {
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
@@ -89,7 +89,7 @@ func (c *Client) GetProviderConfigurationParameterRaw(ctx context.Context, provi
 	return c.httpClient.Get(ctx, path, nil)
 }
 
-// Show details of a specific Provider configuration parameter.
+// Show details of a specific Proivider configuration parameter.
 func (c *Client) GetProviderConfigurationParameter(ctx context.Context, providerConfigurationParameter string) (*schemas.ProviderConfigurationParameter, *client.Response, error) {
 	httpResp, err := c.GetProviderConfigurationParameterRaw(ctx, providerConfigurationParameter)
 	if err != nil {

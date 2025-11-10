@@ -142,7 +142,7 @@ func (c *Client) DeleteAssumeServiceAccountPolicyRaw(ctx context.Context, servic
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 	path = strings.ReplaceAll(path, "{assume_service_account_policy}", url.PathEscape(assumeServiceAccountPolicy))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes an assume service account policy by ID.
@@ -163,7 +163,7 @@ func (c *Client) DeleteServiceAccountRaw(ctx context.Context, serviceAccount str
 	path := "/service-accounts/{service_account}"
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.

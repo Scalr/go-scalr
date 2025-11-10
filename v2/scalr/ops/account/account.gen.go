@@ -70,7 +70,7 @@ func (c *Client) DeleteSsoBypassUsersRaw(ctx context.Context, account string, re
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
+	return c.httpClient.Delete(ctx, path, body, nil)
 }
 
 // This endpoint removes given [users](users.html#the-user-resource) from the list of those who can log in to the account via password, even when SSO is enforced.

@@ -141,7 +141,7 @@ func (c *Client) DeleteEnvironmentRaw(ctx context.Context, environment string) (
 	path := "/environments/{environment}"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteEnvironment(ctx context.Context, environment string) (*client.Response, error) {
@@ -170,7 +170,7 @@ func (c *Client) DeleteEnvironmentTagsRaw(ctx context.Context, environment strin
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
+	return c.httpClient.Delete(ctx, path, body, nil)
 }
 
 // This endpoint removes given [tags](/docs/tags-1) from the environment.
@@ -200,7 +200,7 @@ func (c *Client) DeleteFederatedEnvironmentRaw(ctx context.Context, environment 
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
+	return c.httpClient.Delete(ctx, path, body, nil)
 }
 
 // This endpoint removes provided environments from a list of federated one for a given environment.

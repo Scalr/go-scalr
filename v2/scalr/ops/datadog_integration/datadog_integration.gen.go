@@ -63,7 +63,7 @@ func (c *Client) DeleteDatadogIntegrationRaw(ctx context.Context, datadogIntegra
 	path := "/integrations/datadog/{datadog_integration}"
 	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteDatadogIntegration(ctx context.Context, datadogIntegration string) (*client.Response, error) {

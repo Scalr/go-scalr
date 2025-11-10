@@ -85,7 +85,7 @@ func (c *Client) DeleteAgentPoolRaw(ctx context.Context, agentPool string) (*htt
 	path := "/agent-pools/{agent_pool}"
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // This endpoint deletes an [agent pool](/docs/agent-pools) by ID.

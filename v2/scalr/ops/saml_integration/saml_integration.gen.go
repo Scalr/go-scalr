@@ -64,7 +64,7 @@ func (c *Client) DeleteSamlIntegrationRaw(ctx context.Context, samlIntegration s
 	path := "/integrations/saml/{saml_integration}"
 	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // Delete SAML Integration.

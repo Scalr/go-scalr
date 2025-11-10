@@ -84,7 +84,7 @@ func (c *Client) DeleteCheckovIntegrationRaw(ctx context.Context, integration st
 	path := "/integrations/checkov/{integration}"
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteCheckovIntegration(ctx context.Context, integration string) (*client.Response, error) {

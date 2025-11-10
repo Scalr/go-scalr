@@ -84,7 +84,7 @@ func (c *Client) DeleteInfracostIntegrationRaw(ctx context.Context, infracostInt
 	path := "/integrations/infracost/{infracost_integration}"
 	path = strings.ReplaceAll(path, "{infracost_integration}", url.PathEscape(infracostIntegration))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteInfracostIntegration(ctx context.Context, infracostIntegration string) (*client.Response, error) {

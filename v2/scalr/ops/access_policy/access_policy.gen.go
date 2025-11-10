@@ -84,7 +84,7 @@ func (c *Client) DeleteAccessPolicyRaw(ctx context.Context, accessPolicy string)
 	path := "/access-policies/{access_policy}"
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteAccessPolicy(ctx context.Context, accessPolicy string) (*client.Response, error) {

@@ -84,7 +84,7 @@ func (c *Client) DeleteWebhookIntegrationRaw(ctx context.Context, webhook string
 	path := "/integrations/webhooks/{webhook}"
 	path = strings.ReplaceAll(path, "{webhook}", url.PathEscape(webhook))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes webhook by ID.

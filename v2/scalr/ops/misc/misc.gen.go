@@ -85,7 +85,7 @@ func (c *Client) DeleteWorkspaceSshKeyLinkRaw(ctx context.Context, workspace str
 	path := "/workspaces/{workspace}/ssh-key-links"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // Deletes a link between a workspace and an SSH key.

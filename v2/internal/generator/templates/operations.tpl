@@ -79,7 +79,7 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 	{{if .UsesPlainJSON -}}
 	// Plain JSON request (not JSON:API)
 	headers := map[string]string{"Content-Type": "application/json"}
-	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else}}Post{{end}}(ctx, path, req, headers)
+	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, req, headers)
 	{{else if .IsRelationshipOp -}}
 	// This is a relationship operation - convert resources to relationship identifiers
 	relationshipData := make([]map[string]interface{}, len(req))
@@ -90,14 +90,18 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else}}Post{{end}}(ctx, path, body, nil)
+	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, body, nil)
 	{{else -}}
 	// Wrap request in JSON:API envelope
 	body := map[string]interface{}{"data": req}
-	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else}}Post{{end}}(ctx, path, body, nil)
+	return c.httpClient.{{if eq .Method "POST"}}Post{{else if eq .Method "PATCH"}}Patch{{else if eq .Method "PUT"}}Put{{else if eq .Method "DELETE"}}Delete{{else}}Post{{end}}(ctx, path, body, nil)
 	{{end -}}
 	{{else -}}
-	return c.httpClient.{{if eq .Method "GET"}}Get{{else if eq .Method "DELETE"}}Delete{{else}}Get{{end}}(ctx, path, nil)
+	{{if eq .Method "DELETE" -}}
+	return c.httpClient.Delete(ctx, path, nil, nil)
+	{{else -}}
+	return c.httpClient.Get(ctx, path, nil)
+	{{end -}}
 	{{end -}}
 }
 

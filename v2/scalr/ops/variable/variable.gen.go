@@ -88,7 +88,7 @@ func (c *Client) DeleteVariableRaw(ctx context.Context, var_ string) (*http.Resp
 	path := "/vars/{var}"
 	path = strings.ReplaceAll(path, "{var}", url.PathEscape(var_))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteVariable(ctx context.Context, var_ string) (*client.Response, error) {

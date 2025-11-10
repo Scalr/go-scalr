@@ -85,7 +85,7 @@ func (c *Client) DeleteRoleRaw(ctx context.Context, role string) (*http.Response
 	path := "/roles/{role}"
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.

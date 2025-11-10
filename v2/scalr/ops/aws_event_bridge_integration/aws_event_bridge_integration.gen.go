@@ -63,7 +63,7 @@ func (c *Client) DeleteAwsEventBridgeIntegrationRaw(ctx context.Context, awsEven
 	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
 	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteAwsEventBridgeIntegration(ctx context.Context, awsEventBridgeIntegration string) (*client.Response, error) {

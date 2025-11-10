@@ -177,8 +177,8 @@ func (c *HTTPClient) Put(ctx context.Context, path string, body interface{}, hea
 }
 
 // Delete performs a DELETE request
-func (c *HTTPClient) Delete(ctx context.Context, path string, headers map[string]string) (*http.Response, error) {
-	return c.do(ctx, "DELETE", path, nil, headers)
+func (c *HTTPClient) Delete(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+	return c.do(ctx, "DELETE", path, body, headers)
 }
 
 func (c *HTTPClient) do(ctx context.Context, method, path string, body interface{}, headers map[string]string) (*http.Response, error) {

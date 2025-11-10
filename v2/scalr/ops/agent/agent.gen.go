@@ -30,7 +30,7 @@ func (c *Client) DeleteAgentRaw(ctx context.Context, agent string) (*http.Respon
 	path := "/agents/{agent}"
 	path = strings.ReplaceAll(path, "{agent}", url.PathEscape(agent))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // This endpoint deletes an agent by ID. Only `offline` or `errored` agents can be removed from the pool. Offline or errored agents will be removed automatically after 4 hours of inactivity.

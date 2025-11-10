@@ -64,7 +64,7 @@ func (c *Client) DeleteVcsProviderRaw(ctx context.Context, vcsProvider string) (
 	path := "/vcs-providers/{vcs_provider}"
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes a VCS provider by ID.

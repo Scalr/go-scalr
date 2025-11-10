@@ -85,7 +85,7 @@ func (c *Client) DeleteTeamRaw(ctx context.Context, team string) (*http.Response
 	path := "/teams/{team}"
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.

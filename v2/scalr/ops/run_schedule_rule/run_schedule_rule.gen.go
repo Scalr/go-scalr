@@ -63,7 +63,7 @@ func (c *Client) DeleteRunScheduleRuleRaw(ctx context.Context, runScheduleRule s
 	path := "/run-schedule-rules/{run_schedule_rule}"
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteRunScheduleRule(ctx context.Context, runScheduleRule string) (*client.Response, error) {

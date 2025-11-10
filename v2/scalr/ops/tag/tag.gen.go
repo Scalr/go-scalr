@@ -64,7 +64,7 @@ func (c *Client) DeleteTagRaw(ctx context.Context, tag string) (*http.Response, 
 	path := "/tags/{tag}"
 	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes tag by ID.

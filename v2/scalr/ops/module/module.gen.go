@@ -64,7 +64,7 @@ func (c *Client) DeleteModuleRaw(ctx context.Context, module string) (*http.Resp
 	path := "/modules/{module}"
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // This endpoint removes the module from the registry.

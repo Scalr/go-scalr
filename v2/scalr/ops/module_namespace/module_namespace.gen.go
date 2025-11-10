@@ -64,7 +64,7 @@ func (c *Client) DeleteModuleNamespaceRaw(ctx context.Context, moduleNamespace s
 	path := "/module-namespaces/{module_namespace}"
 	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // Delete a module namespace.

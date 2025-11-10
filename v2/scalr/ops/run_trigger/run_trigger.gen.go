@@ -62,7 +62,7 @@ func (c *Client) DeleteRunTriggerRaw(ctx context.Context, runTrigger string) (*h
 	path := "/run-triggers/{run_trigger}"
 	path = strings.ReplaceAll(path, "{run_trigger}", url.PathEscape(runTrigger))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteRunTrigger(ctx context.Context, runTrigger string) (*client.Response, error) {

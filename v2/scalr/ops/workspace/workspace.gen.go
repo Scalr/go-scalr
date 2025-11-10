@@ -134,7 +134,7 @@ func (c *Client) DeleteRemoteStateConsumersRaw(ctx context.Context, workspace st
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
+	return c.httpClient.Delete(ctx, path, body, nil)
 }
 
 // This endpoint removes provided workspaces from a list of allowed remote state consumers for a given workspace.
@@ -154,7 +154,7 @@ func (c *Client) DeleteWorkspaceRaw(ctx context.Context, workspace string) (*htt
 	path := "/workspaces/{workspace}"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 func (c *Client) DeleteWorkspace(ctx context.Context, workspace string) (*client.Response, error) {
@@ -183,7 +183,7 @@ func (c *Client) DeleteWorkspaceTagsRaw(ctx context.Context, workspace string, r
 		}
 	}
 	body := map[string]interface{}{"data": relationshipData}
-	return c.httpClient.Post(ctx, path, body, nil)
+	return c.httpClient.Delete(ctx, path, body, nil)
 }
 
 // This endpoint removes given [tags](tags.html#the-tag-resource) from the workspace.

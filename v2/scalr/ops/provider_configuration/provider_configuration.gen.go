@@ -64,7 +64,7 @@ func (c *Client) DeleteProviderConfigurationRaw(ctx context.Context, providerCon
 	path := "/provider-configurations/{provider_configuration}"
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes a Provider configuration by ID.

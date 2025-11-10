@@ -64,7 +64,7 @@ func (c *Client) DeleteHookEnvironmentLinkRaw(ctx context.Context, hookEnvironme
 	path := "/hook-environment-links/{hook_environment_link}"
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // Delete a hook-environment link.

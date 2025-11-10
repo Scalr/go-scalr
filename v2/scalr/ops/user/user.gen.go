@@ -85,7 +85,7 @@ func (c *Client) DeleteUserRaw(ctx context.Context, user string) (*http.Response
 	path := "/users/{user}"
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
@@ -597,7 +597,7 @@ func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, u
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint removes all user access policies and team bindings associated with the account.

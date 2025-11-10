@@ -213,7 +213,54 @@ func TestHTTPClientDelete(t *testing.T) {
 	defer server.Close()
 
 	client := NewHTTPClient(server.URL, "test-token", WithRetryMax(0))
-	resp, err := client.Delete(context.Background(), "/test", nil)
+	resp, err := client.Delete(context.Background(), "/test", nil, nil)
+
+	if err != nil {
+		t.Fatalf("Delete() error: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusNoContent {
+		t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusNoContent)
+	}
+}
+
+// TestHTTPClientDeleteWithBody tests DELETE with a request body (JSON:API relationship delete)
+func TestHTTPClientDeleteWithBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "DELETE" {
+			t.Errorf("Method = %s, want DELETE", r.Method)
+		}
+		if r.Header.Get("Authorization") != "Bearer test-token" {
+			t.Errorf("Authorization header = %q, want %q", r.Header.Get("Authorization"), "Bearer test-token")
+		}
+
+		// Verify body is present
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("Failed to read body: %v", err)
+		}
+		if len(body) == 0 {
+			t.Error("Expected body in DELETE request, got empty body")
+		}
+
+		// Verify it's valid JSON
+		var data map[string]interface{}
+		if err := json.Unmarshal(body, &data); err != nil {
+			t.Errorf("Body is not valid JSON: %v", err)
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := NewHTTPClient(server.URL, "test-token", WithRetryMax(0))
+	body := map[string]interface{}{
+		"data": []map[string]interface{}{
+			{"id": "ws-123", "type": "workspaces"},
+		},
+	}
+	resp, err := client.Delete(context.Background(), "/test", body, nil)
 
 	if err != nil {
 		t.Fatalf("Delete() error: %v", err)

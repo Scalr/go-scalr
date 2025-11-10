@@ -64,7 +64,7 @@ func (c *Client) DeleteSshKeyRaw(ctx context.Context, accountSshKey string) (*ht
 	path := "/ssh-keys/{account_ssh_key}"
 	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // The endpoint deletes an SSH key by ID.

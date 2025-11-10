@@ -224,7 +224,7 @@ func (c *Client) DeleteAccessTokenRaw(ctx context.Context, accessToken string) (
 	path := "/access-tokens/{access_token}"
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
-	return c.httpClient.Delete(ctx, path, nil)
+	return c.httpClient.Delete(ctx, path, nil, nil)
 }
 
 // Delete an access token by ID.
