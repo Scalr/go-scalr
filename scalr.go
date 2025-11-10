@@ -124,6 +124,7 @@ type Client struct {
 	AssumeServiceAccountPolicies    AssumeServiceAccountPolicies
 	ConfigurationVersions           ConfigurationVersions
 	CheckovIntegrations             CheckovIntegrations
+	DriftDetections                 DriftDetections
 	EnvironmentHooks                EnvironmentHooks
 	EnvironmentTags                 EnvironmentTags
 	Environments                    Environments
@@ -235,6 +236,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.AssumeServiceAccountPolicies = &assumeServiceAccountPolicies{client: client}
 	client.ConfigurationVersions = &configurationVersions{client: client}
 	client.CheckovIntegrations = &checkovIntegrations{client: client}
+	client.DriftDetections = &driftDetections{client: client}
 	client.EnvironmentHooks = &environmentHooks{client: client}
 	client.EnvironmentTags = &environmentTag{client: client}
 	client.Environments = &environments{client: client}
