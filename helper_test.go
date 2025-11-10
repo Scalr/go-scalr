@@ -664,3 +664,22 @@ func addFederatedEnvironments(t *testing.T, client *Client, environment *Environ
 		t.Fatal(err)
 	}
 }
+
+func createDriftDetection(t *testing.T, client *Client, environment *Environment, period DriftDetectionSchedulePeriod) (*DriftDetection, func()) {
+	ctx := context.Background()
+	driftDetection, err := client.DriftDetections.Create(ctx, DriftDetectionCreateOptions{
+		Schedule:    period,
+		Environment: environment,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return driftDetection, func() {
+		if err := client.DriftDetections.Delete(ctx, driftDetection.ID); err != nil {
+			t.Errorf("Error destroying drift tetection schedule! WARNING: Dangling resources\n"+
+				"may exist! The full error is shown below.\n\n"+
+				"DriftDetection: %s\nError: %s", driftDetection.ID, err)
+		}
+	}
+}
