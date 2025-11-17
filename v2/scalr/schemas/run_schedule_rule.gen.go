@@ -8,6 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// RunScheduleRuleScheduleMode represents the type for RunScheduleRuleScheduleMode
+// Mode of the scheduled run.
+type RunScheduleRuleScheduleMode string
+
+// RunScheduleRuleScheduleMode constants
+const (
+	RunScheduleRuleScheduleModeApply   RunScheduleRuleScheduleMode = "apply"
+	RunScheduleRuleScheduleModeDestroy RunScheduleRuleScheduleMode = "destroy"
+	RunScheduleRuleScheduleModeRefresh RunScheduleRuleScheduleMode = "refresh"
+)
+
 // Response version - used when unmarshalling from API responses
 // A RunScheduleRule resource represents a rule for scheduling runs in a workspace. Each RunScheduleRule is associated with a workspace and has a schedule and a schedule mode. The schedule is a cron expression that determines when runs should be triggered. The schedule mode determines whether the triggered run is an 'apply' 'destroy' or 'refresh' run.
 type RunScheduleRule struct {
@@ -35,7 +46,7 @@ type RunScheduleRuleAttributes struct {
 	// Cron expression for scheduled runs. Time should be in UTC.
 	Schedule string `json:"schedule"`
 	// Mode of the scheduled run.
-	ScheduleMode string `json:"schedule-mode"`
+	ScheduleMode RunScheduleRuleScheduleMode `json:"schedule-mode"`
 }
 
 // RunScheduleRuleRelationships holds the relationships for RunScheduleRule (response)
@@ -137,7 +148,7 @@ type RunScheduleRuleAttributesRequest struct {
 	// Cron expression for scheduled runs. Time should be in UTC.
 	Schedule *value.Value[string] `json:"schedule,omitempty"`
 	// Mode of the scheduled run.
-	ScheduleMode *value.Value[string] `json:"schedule-mode,omitempty"`
+	ScheduleMode *value.Value[RunScheduleRuleScheduleMode] `json:"schedule-mode,omitempty"`
 }
 
 // RunScheduleRuleRelationshipsRequest holds the relationships for RunScheduleRule (request)

@@ -8,6 +8,28 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// SlackIntegrationRunMode represents the type for SlackIntegrationRunMode
+// What type of runs should be reported.
+type SlackIntegrationRunMode string
+
+// SlackIntegrationRunMode constants
+const (
+	SlackIntegrationRunModeAll   SlackIntegrationRunMode = "all"
+	SlackIntegrationRunModeApply SlackIntegrationRunMode = "apply"
+	SlackIntegrationRunModeDry   SlackIntegrationRunMode = "dry"
+)
+
+// SlackIntegrationStatus represents the type for SlackIntegrationStatus
+// Status of integration.
+type SlackIntegrationStatus string
+
+// SlackIntegrationStatus constants
+const (
+	SlackIntegrationStatusActive   SlackIntegrationStatus = "active"
+	SlackIntegrationStatusDisabled SlackIntegrationStatus = "disabled"
+	SlackIntegrationStatusFailed   SlackIntegrationStatus = "failed"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type SlackIntegration struct {
@@ -43,9 +65,9 @@ type SlackIntegrationAttributes struct {
 	// Name of Slack integration
 	Name string `json:"name"`
 	// What type of runs should be reported.
-	RunMode string `json:"run-mode"`
+	RunMode SlackIntegrationRunMode `json:"run-mode"`
 	// Status of integration.
-	Status string `json:"status"`
+	Status SlackIntegrationStatus `json:"status"`
 }
 
 // SlackIntegrationRelationships holds the relationships for SlackIntegration (response)
@@ -263,9 +285,9 @@ type SlackIntegrationAttributesRequest struct {
 	// Name of Slack integration
 	Name *value.Value[string] `json:"name,omitempty"`
 	// What type of runs should be reported.
-	RunMode *value.Value[string] `json:"run-mode,omitempty"`
+	RunMode *value.Value[SlackIntegrationRunMode] `json:"run-mode,omitempty"`
 	// Status of integration.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[SlackIntegrationStatus] `json:"status,omitempty"`
 }
 
 // SlackIntegrationRelationshipsRequest holds the relationships for SlackIntegration (request)

@@ -8,6 +8,21 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// PlanStatus represents the type for PlanStatus
+// The Plan's current status. Transient states: * `pending` - Plan has been created but not yet queued. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Plan canceled in some way. * `errored` - An error occurred during the plan. See `output` for details. * `finished` - Plan completed successfully. * `unreachable` - Plan will not be run.
+type PlanStatus string
+
+// PlanStatus constants
+const (
+	PlanStatusPending     PlanStatus = "pending"
+	PlanStatusQueued      PlanStatus = "queued"
+	PlanStatusRunning     PlanStatus = "running"
+	PlanStatusFinished    PlanStatus = "finished"
+	PlanStatusCanceled    PlanStatus = "canceled"
+	PlanStatusErrored     PlanStatus = "errored"
+	PlanStatusUnreachable PlanStatus = "unreachable"
+)
+
 // Response version - used when unmarshalling from API responses
 // Provides details of a Terraform plan operation.
 type Plan struct {
@@ -42,7 +57,7 @@ type PlanAttributes struct {
 	// The number of resources that will be destroyed.
 	ResourceDestructions *int `json:"resource-destructions"`
 	// The Plan's current status. Transient states: * `pending` - Plan has been created but not yet queued. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Plan canceled in some way. * `errored` - An error occurred during the plan. See `output` for details. * `finished` - Plan completed successfully. * `unreachable` - Plan will not be run.
-	Status string `json:"status"`
+	Status PlanStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
 }
@@ -87,7 +102,7 @@ type PlanAttributesRequest struct {
 	// The number of resources that will be destroyed.
 	ResourceDestructions *value.Value[int] `json:"resource-destructions,omitempty"`
 	// The Plan's current status. Transient states: * `pending` - Plan has been created but not yet queued. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Plan canceled in some way. * `errored` - An error occurred during the plan. See `output` for details. * `finished` - Plan completed successfully. * `unreachable` - Plan will not be run.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[PlanStatus] `json:"status,omitempty"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps *value.Value[map[string]interface{}] `json:"status-timestamps,omitempty"`
 }

@@ -9,6 +9,16 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// AccessTokenUsageOwnerType represents the type for AccessTokenUsageOwnerType
+
+type AccessTokenUsageOwnerType string
+
+// AccessTokenUsageOwnerType constants
+const (
+	AccessTokenUsageOwnerTypeUser           AccessTokenUsageOwnerType = "user"
+	AccessTokenUsageOwnerTypeServiceAccount AccessTokenUsageOwnerType = "service-account"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents the access token item.
 type AccessTokenUsage struct {
@@ -43,9 +53,9 @@ type AccessTokenUsageAttributes struct {
 	// The time when the token was last used.
 	LastUsedAt *time.Time `json:"last-used-at"`
 	// The name of the token.
-	Name       *string `json:"name"`
-	OwnerEmail string  `json:"owner-email"`
-	OwnerType  string  `json:"owner-type"`
+	Name       *string                   `json:"name"`
+	OwnerEmail string                    `json:"owner-email"`
+	OwnerType  AccessTokenUsageOwnerType `json:"owner-type"`
 }
 
 // Request version - used when marshalling for API requests
@@ -88,7 +98,7 @@ type AccessTokenUsageAttributesRequest struct {
 	// The time when the token was last used.
 	LastUsedAt *value.Value[time.Time] `json:"last-used-at,omitempty"`
 	// The name of the token.
-	Name       *value.Value[string] `json:"name,omitempty"`
-	OwnerEmail *value.Value[string] `json:"owner-email,omitempty"`
-	OwnerType  *value.Value[string] `json:"owner-type,omitempty"`
+	Name       *value.Value[string]                    `json:"name,omitempty"`
+	OwnerEmail *value.Value[string]                    `json:"owner-email,omitempty"`
+	OwnerType  *value.Value[AccessTokenUsageOwnerType] `json:"owner-type,omitempty"`
 }

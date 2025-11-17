@@ -8,6 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// AccountUserStatus represents the type for AccountUserStatus
+// The relation status. Can be: `Active`, `Inactive`, `Pending`.
+type AccountUserStatus string
+
+// AccountUserStatus constants
+const (
+	AccountUserStatusActive   AccountUserStatus = "Active"
+	AccountUserStatusInactive AccountUserStatus = "Inactive"
+	AccountUserStatusPending  AccountUserStatus = "Pending"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents an account-user relation.
 type AccountUser struct {
@@ -33,7 +44,7 @@ func (r AccountUser) GetResourceType() string {
 // AccountUserAttributes holds the attributes for AccountUser (response)
 type AccountUserAttributes struct {
 	// The relation status. Can be: `Active`, `Inactive`, `Pending`.
-	Status string `json:"status"`
+	Status AccountUserStatus `json:"status"`
 }
 
 // AccountUserRelationships holds the relationships for AccountUser (response)
@@ -201,7 +212,7 @@ func (r AccountUserRequest) GetResourceType() string {
 // AccountUserAttributesRequest holds the attributes for AccountUser (request)
 type AccountUserAttributesRequest struct {
 	// The relation status. Can be: `Active`, `Inactive`, `Pending`.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[AccountUserStatus] `json:"status,omitempty"`
 }
 
 // AccountUserRelationshipsRequest holds the relationships for AccountUser (request)

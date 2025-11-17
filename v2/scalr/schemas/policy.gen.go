@@ -8,6 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// PolicyEnforcedLevel represents the type for PolicyEnforcedLevel
+// The policy's enforcement level. * `hard-mandatory` - cannot be overridden. * `soft-mandatory` - can be overridden through an approval by account admins and other authorized roles. * `advisory` - provides a warning only.
+type PolicyEnforcedLevel string
+
+// PolicyEnforcedLevel constants
+const (
+	PolicyEnforcedLevelHardMandatory PolicyEnforcedLevel = "hard-mandatory"
+	PolicyEnforcedLevelSoftMandatory PolicyEnforcedLevel = "soft-mandatory"
+	PolicyEnforcedLevelAdvisory      PolicyEnforcedLevel = "advisory"
+)
+
 // Response version - used when unmarshalling from API responses
 // A policy provides details of a single OPA policy as declared in [scalr-policy.hcl](../../opa.html#creating-policy-groups).
 type Policy struct {
@@ -35,7 +46,7 @@ type PolicyAttributes struct {
 	// If set to `false`, the policy will not be evaluated during a run.
 	Enabled bool `json:"enabled"`
 	// The policy's enforcement level. * `hard-mandatory` - cannot be overridden. * `soft-mandatory` - can be overridden through an approval by account admins and other authorized roles. * `advisory` - provides a warning only.
-	EnforcedLevel string `json:"enforced-level"`
+	EnforcedLevel PolicyEnforcedLevel `json:"enforced-level"`
 	// The name of the policy.
 	Name string `json:"name"`
 }

@@ -9,6 +9,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// UserStatus represents the type for UserStatus
+
+type UserStatus string
+
+// UserStatus constants
+const (
+	UserStatusActive   UserStatus = "Active"
+	UserStatusInactive UserStatus = "Inactive"
+	UserStatusPending  UserStatus = "Pending"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents a Scalr [IAM](https://docs.scalr.io/docs/identity-and-access-management) user.
 type User struct {
@@ -37,7 +48,7 @@ type UserAttributes struct {
 	Email       string     `json:"email"`
 	FullName    *string    `json:"full-name"`
 	LastLoginAt *time.Time `json:"last-login-at"`
-	Status      string     `json:"status"`
+	Status      UserStatus `json:"status"`
 	Username    string     `json:"username"`
 }
 
@@ -181,12 +192,12 @@ func (r UserRequest) GetResourceType() string {
 
 // UserAttributesRequest holds the attributes for User (request)
 type UserAttributesRequest struct {
-	CreatedAt   *value.Value[time.Time] `json:"created-at,omitempty"`
-	Email       *value.Value[string]    `json:"email,omitempty"`
-	FullName    *value.Value[string]    `json:"full-name,omitempty"`
-	LastLoginAt *value.Value[time.Time] `json:"last-login-at,omitempty"`
-	Status      *value.Value[string]    `json:"status,omitempty"`
-	Username    *value.Value[string]    `json:"username,omitempty"`
+	CreatedAt   *value.Value[time.Time]  `json:"created-at,omitempty"`
+	Email       *value.Value[string]     `json:"email,omitempty"`
+	FullName    *value.Value[string]     `json:"full-name,omitempty"`
+	LastLoginAt *value.Value[time.Time]  `json:"last-login-at,omitempty"`
+	Status      *value.Value[UserStatus] `json:"status,omitempty"`
+	Username    *value.Value[string]     `json:"username,omitempty"`
 }
 
 // UserRelationshipsRequest holds the relationships for User (request)

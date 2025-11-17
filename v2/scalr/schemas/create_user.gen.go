@@ -9,6 +9,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// CreateUserStatus represents the type for CreateUserStatus
+// User status. Can be: `Active`, `Inactive`, `Pending`. Pending user will be activated after the first sign in.
+type CreateUserStatus string
+
+// CreateUserStatus constants
+const (
+	CreateUserStatusActive   CreateUserStatus = "Active"
+	CreateUserStatusInactive CreateUserStatus = "Inactive"
+	CreateUserStatusPending  CreateUserStatus = "Pending"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents a request to create an [IAM](https://docs.scalr.io/docs/identity-and-access-management) user.
 type CreateUser struct {
@@ -41,7 +52,7 @@ type CreateUserAttributes struct {
 	// Must be at least 8 characters long and contain at least one digit, one lowercase letter, one uppercase letter, and one special character.
 	Password *string `json:"password"`
 	// User status. Can be: `Active`, `Inactive`, `Pending`. Pending user will be activated after the first sign in.
-	Status string `json:"status"`
+	Status CreateUserStatus `json:"status"`
 }
 
 // CreateUserRelationships holds the relationships for CreateUser (response)
@@ -154,7 +165,7 @@ type CreateUserAttributesRequest struct {
 	// Must be at least 8 characters long and contain at least one digit, one lowercase letter, one uppercase letter, and one special character.
 	Password *value.Value[string] `json:"password,omitempty"`
 	// User status. Can be: `Active`, `Inactive`, `Pending`. Pending user will be activated after the first sign in.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[CreateUserStatus] `json:"status,omitempty"`
 }
 
 // CreateUserRelationshipsRequest holds the relationships for CreateUser (request)

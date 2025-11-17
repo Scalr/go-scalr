@@ -225,6 +225,22 @@ type SchemaData struct {
 	Relationships        []Relationship
 	NestedStructs        []NestedStruct
 	RequestNestedStructs []NestedStruct
+	EnumTypes            []EnumType
+}
+
+// EnumType represents an enum type definition
+type EnumType struct {
+	Name        string
+	Description string
+	BaseType    string // "string" or "int"
+	Values      []EnumValue
+}
+
+// EnumValue represents a single enum constant
+type EnumValue struct {
+	Name        string
+	Value       string
+	Description string
 }
 
 // Attribute represents a schema attribute
@@ -310,16 +326,35 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 				// value.Value already provides tri-state: unset/null/set
 				requestType = "*value.Value[" + requestStructName + "]"
 			} else {
+				// Check if this is an enum field
+				var enumTypeName string
+				if len(attrRef.Value.Enum) > 0 {
+					enumTypeName = name + strcase.ToCamel(attrName)
+					enumType := g.buildEnumType(enumTypeName, attrRef.Value)
+					data.EnumTypes = append(data.EnumTypes, enumType)
+				}
+
 				// For non-nested types, use schemaToGoType which handles nullable
-				responseType = g.schemaToGoType(attrRef.Value)
+				if enumTypeName != "" {
+					// Use enum type constant as field type
+					if attrRef.Value.Nullable {
+						responseType = "*" + enumTypeName
+					} else {
+						responseType = enumTypeName
+					}
+					requestType = "*value.Value[" + enumTypeName + "]"
+				} else {
+					// Use standard type
+					responseType = g.schemaToGoType(attrRef.Value)
 
-				// For request, get base type without nullable pointer
-				// We need to call schemaToGoType with nullable=false to get base type
-				baseAttrSchema := *attrRef.Value
-				baseAttrSchema.Nullable = false
-				baseType := g.schemaToGoType(&baseAttrSchema)
+					// For request, get base type without nullable pointer
+					// We need to call schemaToGoType with nullable=false to get base type
+					baseAttrSchema := *attrRef.Value
+					baseAttrSchema.Nullable = false
+					baseType := g.schemaToGoType(&baseAttrSchema)
 
-				requestType = "*value.Value[" + baseType + "]"
+					requestType = "*value.Value[" + baseType + "]"
+				}
 			}
 
 			attr := Attribute{
@@ -376,6 +411,44 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 	}
 
 	return data
+}
+
+// buildEnumType creates an enum type definition from a schema with enum values
+func (g *Generator) buildEnumType(typeName string, schema *openapi3.Schema) EnumType {
+	enumType := EnumType{
+		Name:        typeName,
+		Description: cleanDescription(schema.Description),
+		BaseType:    "string",
+	}
+
+	if schema.Type.Is("integer") {
+		enumType.BaseType = "int"
+	}
+
+	// Generate enum values
+	for _, enumVal := range schema.Enum {
+		var valStr string
+		var constName string
+
+		switch v := enumVal.(type) {
+		case string:
+			valStr = v
+			constName = typeName + strcase.ToCamel(v)
+		case int, int64, float64:
+			valStr = fmt.Sprintf("%v", v)
+			constName = typeName + strcase.ToCamel(valStr)
+		default:
+			valStr = fmt.Sprintf("%v", v)
+			constName = typeName + strcase.ToCamel(valStr)
+		}
+
+		enumType.Values = append(enumType.Values, EnumValue{
+			Name:  constName,
+			Value: valStr,
+		})
+	}
+
+	return enumType
 }
 
 // buildNestedStruct creates a nested struct definition for an object attribute

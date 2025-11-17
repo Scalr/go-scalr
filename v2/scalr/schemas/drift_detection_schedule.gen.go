@@ -8,6 +8,16 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// DriftDetectionScheduleSchedule represents the type for DriftDetectionScheduleSchedule
+// The schedule of the drift detection.
+type DriftDetectionScheduleSchedule string
+
+// DriftDetectionScheduleSchedule constants
+const (
+	DriftDetectionScheduleScheduleDaily  DriftDetectionScheduleSchedule = "daily"
+	DriftDetectionScheduleScheduleWeekly DriftDetectionScheduleSchedule = "weekly"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type DriftDetectionSchedule struct {
@@ -33,7 +43,7 @@ func (r DriftDetectionSchedule) GetResourceType() string {
 // DriftDetectionScheduleAttributes holds the attributes for DriftDetectionSchedule (response)
 type DriftDetectionScheduleAttributes struct {
 	// The schedule of the drift detection.
-	Schedule string `json:"schedule"`
+	Schedule DriftDetectionScheduleSchedule `json:"schedule"`
 	// The workspace filters to monitor for drift.
 	WorkspaceFilters DriftDetectionScheduleWorkspaceFilters `json:"workspace-filters"`
 }
@@ -135,7 +145,7 @@ func (r DriftDetectionScheduleRequest) GetResourceType() string {
 // DriftDetectionScheduleAttributesRequest holds the attributes for DriftDetectionSchedule (request)
 type DriftDetectionScheduleAttributesRequest struct {
 	// The schedule of the drift detection.
-	Schedule *value.Value[string] `json:"schedule,omitempty"`
+	Schedule *value.Value[DriftDetectionScheduleSchedule] `json:"schedule,omitempty"`
 	// The workspace filters to monitor for drift.
 	WorkspaceFilters *value.Value[DriftDetectionScheduleWorkspaceFiltersRequest] `json:"workspace-filters,omitempty"`
 }

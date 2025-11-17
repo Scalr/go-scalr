@@ -8,6 +8,20 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// CostEstimateStatus represents the type for CostEstimateStatus
+// The Cost estimate's current status. Transient states: * `pending` - Cost estimation has been created but not yet `queued`. * `queued` - Queued and waiting for capacity to be available. Final states: * `canceled` - The cost estimate has been canceled. * `errored` - The cost estimate has finished with an error. Attribute `error-message` contains the details. * `finished` - The cost estimate has completed successfully. * `unreachable` - The cost estimate will not run.
+type CostEstimateStatus string
+
+// CostEstimateStatus constants
+const (
+	CostEstimateStatusPending     CostEstimateStatus = "pending"
+	CostEstimateStatusQueued      CostEstimateStatus = "queued"
+	CostEstimateStatusFinished    CostEstimateStatus = "finished"
+	CostEstimateStatusCanceled    CostEstimateStatus = "canceled"
+	CostEstimateStatusErrored     CostEstimateStatus = "errored"
+	CostEstimateStatusUnreachable CostEstimateStatus = "unreachable"
+)
+
 // Response version - used when unmarshalling from API responses
 // A Cost Estimate is the details of the cost estimation phase of a `run` in Scalr. Cost estimation is optional and is enabled/disable per `environment`. If enabled a cost estimation is performed immediately after Terraform plan has completed for every run in every workspace, including dry runs.
 type CostEstimate struct {
@@ -44,7 +58,7 @@ type CostEstimateAttributes struct {
 	// The total number of resources in the terraform plan.
 	ResourcesCount *int `json:"resources-count"`
 	// The Cost estimate's current status. Transient states: * `pending` - Cost estimation has been created but not yet `queued`. * `queued` - Queued and waiting for capacity to be available. Final states: * `canceled` - The cost estimate has been canceled. * `errored` - The cost estimate has finished with an error. Attribute `error-message` contains the details. * `finished` - The cost estimate has completed successfully. * `unreachable` - The cost estimate will not run.
-	Status string `json:"status"`
+	Status CostEstimateStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
 	// The number of resources in the terraform plan that were excluded from the estimation.
@@ -93,7 +107,7 @@ type CostEstimateAttributesRequest struct {
 	// The total number of resources in the terraform plan.
 	ResourcesCount *value.Value[int] `json:"resources-count,omitempty"`
 	// The Cost estimate's current status. Transient states: * `pending` - Cost estimation has been created but not yet `queued`. * `queued` - Queued and waiting for capacity to be available. Final states: * `canceled` - The cost estimate has been canceled. * `errored` - The cost estimate has finished with an error. Attribute `error-message` contains the details. * `finished` - The cost estimate has completed successfully. * `unreachable` - The cost estimate will not run.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[CostEstimateStatus] `json:"status,omitempty"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps *value.Value[map[string]interface{}] `json:"status-timestamps,omitempty"`
 	// The number of resources in the terraform plan that were excluded from the estimation.

@@ -8,6 +8,41 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// VcsProviderCompareStrategy represents the type for VcsProviderCompareStrategy
+// Designates which commit is compared with the head commit to produce diff changes.
+type VcsProviderCompareStrategy string
+
+// VcsProviderCompareStrategy constants
+const (
+	VcsProviderCompareStrategyBaseCommit     VcsProviderCompareStrategy = "base-commit"
+	VcsProviderCompareStrategyPreviousCommit VcsProviderCompareStrategy = "previous-commit"
+)
+
+// VcsProviderVcsType represents the type for VcsProviderVcsType
+// VCS provider type.
+type VcsProviderVcsType string
+
+// VcsProviderVcsType constants
+const (
+	VcsProviderVcsTypeGithub              VcsProviderVcsType = "github"
+	VcsProviderVcsTypeGitlab              VcsProviderVcsType = "gitlab"
+	VcsProviderVcsTypeBitbucket           VcsProviderVcsType = "bitbucket"
+	VcsProviderVcsTypeBitbucketEnterprise VcsProviderVcsType = "bitbucket_enterprise"
+	VcsProviderVcsTypeGitlabEnterprise    VcsProviderVcsType = "gitlab_enterprise"
+	VcsProviderVcsTypeGithubEnterprise    VcsProviderVcsType = "github_enterprise"
+	VcsProviderVcsTypeAzureDevOpsServices VcsProviderVcsType = "azure_dev_ops_services"
+)
+
+// VcsProviderAuthType represents the type for VcsProviderAuthType
+// Authentication type, the VCS API client is using to establish connection with the VCS. * `oauth2` - private OAuth App, user or organization creates in their VCS account. Setup through this method requires a user to complete a [web flow through a browser](/docs/github), where the user should authorize Scalr to connect to their OAuth App. * `personal_token` - a pre-generated authentication token. This method works better if you need to fully automate the VCS provider creation. How to generate access tokens for different VCS providers: * [GitHub and GitHub Enterprise](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) * [GitLab and GitLab Enterprise](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html#creating-a-personal-access-token) * [Azure DevOps](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops-2019&tabs=preview-page) * [Bitbucket Data Center](https://confluence.atlassian.com/bitbucketserver/personal-access-tokens-939515499.html)
+type VcsProviderAuthType string
+
+// VcsProviderAuthType constants
+const (
+	VcsProviderAuthTypeOauth2        VcsProviderAuthType = "oauth2"
+	VcsProviderAuthTypePersonalToken VcsProviderAuthType = "personal_token"
+)
+
 // Response version - used when unmarshalling from API responses
 // The VCS Provider resource represents a connection between a Scalr account and a VCS, such as GitHub, Gitlab, Bitbucket, and Azure DevOps.
 type VcsProvider struct {
@@ -35,7 +70,7 @@ type VcsProviderAttributes struct {
 	// Indicates whether triggering apply runs from a PR comment is enabled for this VCS provider.
 	AppliesEnabled bool `json:"applies-enabled"`
 	// Authentication type, the VCS API client is using to establish connection with the VCS. * `oauth2` - private OAuth App, user or organization creates in their VCS account. Setup through this method requires a user to complete a [web flow through a browser](/docs/github), where the user should authorize Scalr to connect to their OAuth App. * `personal_token` - a pre-generated authentication token. This method works better if you need to fully automate the VCS provider creation. How to generate access tokens for different VCS providers: * [GitHub and GitHub Enterprise](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) * [GitLab and GitLab Enterprise](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html#creating-a-personal-access-token) * [Azure DevOps](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops-2019&tabs=preview-page) * [Bitbucket Data Center](https://confluence.atlassian.com/bitbucketserver/personal-access-tokens-939515499.html)
-	AuthType string `json:"auth-type"`
+	AuthType VcsProviderAuthType `json:"auth-type"`
 	// Designates whether to automatically merge the base branch into the head before run execution.
 	AutoMerge bool `json:"auto-merge"`
 	// Indicates whether checks are enabled for this VCS provider.
@@ -43,7 +78,7 @@ type VcsProviderAttributes struct {
 	// Indicates whether commenting on PRs is enabled for this VCS provider.
 	CommentsEnabled bool `json:"comments-enabled"`
 	// Designates which commit is compared with the head commit to produce diff changes.
-	CompareStrategy string `json:"compare-strategy"`
+	CompareStrategy VcsProviderCompareStrategy `json:"compare-strategy"`
 	// Indicates whether the draft pull-request runs are enabled for this VCS provider.
 	DraftPrRunsEnabled bool `json:"draft-pr-runs-enabled"`
 	// Contains error message, if the connection to VCS provider is broken.
@@ -63,7 +98,7 @@ type VcsProviderAttributes struct {
 	// Username for personal_token auth type. This field is required for bitbucket_enterprise provider.
 	Username *string `json:"username"`
 	// VCS provider type.
-	VcsType string `json:"vcs-type"`
+	VcsType VcsProviderVcsType `json:"vcs-type"`
 }
 
 // VcsProviderRelationships holds the relationships for VcsProvider (response)
@@ -236,7 +271,7 @@ type VcsProviderAttributesRequest struct {
 	// Indicates whether triggering apply runs from a PR comment is enabled for this VCS provider.
 	AppliesEnabled *value.Value[bool] `json:"applies-enabled,omitempty"`
 	// Authentication type, the VCS API client is using to establish connection with the VCS. * `oauth2` - private OAuth App, user or organization creates in their VCS account. Setup through this method requires a user to complete a [web flow through a browser](/docs/github), where the user should authorize Scalr to connect to their OAuth App. * `personal_token` - a pre-generated authentication token. This method works better if you need to fully automate the VCS provider creation. How to generate access tokens for different VCS providers: * [GitHub and GitHub Enterprise](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) * [GitLab and GitLab Enterprise](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html#creating-a-personal-access-token) * [Azure DevOps](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops-2019&tabs=preview-page) * [Bitbucket Data Center](https://confluence.atlassian.com/bitbucketserver/personal-access-tokens-939515499.html)
-	AuthType *value.Value[string] `json:"auth-type,omitempty"`
+	AuthType *value.Value[VcsProviderAuthType] `json:"auth-type,omitempty"`
 	// Designates whether to automatically merge the base branch into the head before run execution.
 	AutoMerge *value.Value[bool] `json:"auto-merge,omitempty"`
 	// Indicates whether checks are enabled for this VCS provider.
@@ -244,7 +279,7 @@ type VcsProviderAttributesRequest struct {
 	// Indicates whether commenting on PRs is enabled for this VCS provider.
 	CommentsEnabled *value.Value[bool] `json:"comments-enabled,omitempty"`
 	// Designates which commit is compared with the head commit to produce diff changes.
-	CompareStrategy *value.Value[string] `json:"compare-strategy,omitempty"`
+	CompareStrategy *value.Value[VcsProviderCompareStrategy] `json:"compare-strategy,omitempty"`
 	// Indicates whether the draft pull-request runs are enabled for this VCS provider.
 	DraftPrRunsEnabled *value.Value[bool] `json:"draft-pr-runs-enabled,omitempty"`
 	// Indicates whether the VCS provider can be used in any account environments or only linked one.
@@ -262,7 +297,7 @@ type VcsProviderAttributesRequest struct {
 	// Username for personal_token auth type. This field is required for bitbucket_enterprise provider.
 	Username *value.Value[string] `json:"username,omitempty"`
 	// VCS provider type.
-	VcsType *value.Value[string] `json:"vcs-type,omitempty"`
+	VcsType *value.Value[VcsProviderVcsType] `json:"vcs-type,omitempty"`
 }
 
 // VcsProviderRelationshipsRequest holds the relationships for VcsProvider (request)

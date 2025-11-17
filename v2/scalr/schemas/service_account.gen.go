@@ -9,6 +9,16 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ServiceAccountStatus represents the type for ServiceAccountStatus
+// The service account status. Can be: `Active`, `Inactive`.
+type ServiceAccountStatus string
+
+// ServiceAccountStatus constants
+const (
+	ServiceAccountStatusActive   ServiceAccountStatus = "Active"
+	ServiceAccountStatusInactive ServiceAccountStatus = "Inactive"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents a service account definition. A service account is a special type of account intended to represent a non-human user that needs to authenticate and be authorized to access data in Scalr APIs.
 type ServiceAccount struct {
@@ -41,7 +51,7 @@ type ServiceAccountAttributes struct {
 	// The service account name. The service account email will be created using this name.
 	Name string `json:"name"`
 	// The service account status. Can be: `Active`, `Inactive`.
-	Status string `json:"status"`
+	Status ServiceAccountStatus `json:"status"`
 }
 
 // ServiceAccountRelationships holds the relationships for ServiceAccount (response)
@@ -216,7 +226,7 @@ type ServiceAccountAttributesRequest struct {
 	// The service account name. The service account email will be created using this name.
 	Name *value.Value[string] `json:"name,omitempty"`
 	// The service account status. Can be: `Active`, `Inactive`.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[ServiceAccountStatus] `json:"status,omitempty"`
 }
 
 // ServiceAccountRelationshipsRequest holds the relationships for ServiceAccount (request)

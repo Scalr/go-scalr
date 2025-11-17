@@ -9,6 +9,27 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// PolicyGroupExecuteAs represents the type for PolicyGroupExecuteAs
+// The stage of the run to evaluate the policy group.
+type PolicyGroupExecuteAs string
+
+// PolicyGroupExecuteAs constants
+const (
+	PolicyGroupExecuteAsPrePlanCheck PolicyGroupExecuteAs = "pre_plan_check"
+	PolicyGroupExecuteAsPolicyCheck  PolicyGroupExecuteAs = "policy_check"
+)
+
+// PolicyGroupStatus represents the type for PolicyGroupStatus
+// Policy group current status. * `fetching` - waiting for policies to be synchronized with VCS. * `active` - synchronization completed, policy group is ready. * `errored` - synchronization has failed. Attribute `error-message` contains the details.
+type PolicyGroupStatus string
+
+// PolicyGroupStatus constants
+const (
+	PolicyGroupStatusFetching PolicyGroupStatus = "fetching"
+	PolicyGroupStatusActive   PolicyGroupStatus = "active"
+	PolicyGroupStatusErrored  PolicyGroupStatus = "errored"
+)
+
 // Response version - used when unmarshalling from API responses
 // A policy group represents the collection of [OPA](/docs/policy-governance#open-policy-agent) policies stored in a VCS repository. When [linked to an environment](/docs/assign-policies), the policy group will participate in the policy check phase of every run in that environment.
 type PolicyGroup struct {
@@ -40,7 +61,7 @@ type PolicyGroupAttributes struct {
 	// This field contains the error description when the group's status is `errored`.
 	ErrorMessage *string `json:"error-message"`
 	// The stage of the run to evaluate the policy group.
-	ExecuteAs string `json:"execute-as"`
+	ExecuteAs PolicyGroupExecuteAs `json:"execute-as"`
 	// Indicates whether the policy group is enforced in all environments.
 	IsEnforced bool `json:"is-enforced"`
 	// The policy group name must be unique within the account and contain only letters, numbers, dashes
@@ -48,7 +69,7 @@ type PolicyGroupAttributes struct {
 	// The version of Open Policy Agent to use for the policy evaluation. If omitted, the system default version is assigned.
 	OpaVersion string `json:"opa-version"`
 	// Policy group current status. * `fetching` - waiting for policies to be synchronized with VCS. * `active` - synchronization completed, policy group is ready. * `errored` - synchronization has failed. Attribute `error-message` contains the details.
-	Status  string             `json:"status"`
+	Status  PolicyGroupStatus  `json:"status"`
 	VcsRepo PolicyGroupVcsRepo `json:"vcs-repo"`
 }
 
@@ -293,7 +314,7 @@ type PolicyGroupAttributesRequest struct {
 	// An absolute path from the repository root to the folder that contains common rego functions.
 	CommonFunctionsFolder *value.Value[string] `json:"common-functions-folder,omitempty"`
 	// The stage of the run to evaluate the policy group.
-	ExecuteAs *value.Value[string] `json:"execute-as,omitempty"`
+	ExecuteAs *value.Value[PolicyGroupExecuteAs] `json:"execute-as,omitempty"`
 	// Indicates whether the policy group is enforced in all environments.
 	IsEnforced *value.Value[bool] `json:"is-enforced,omitempty"`
 	// The policy group name must be unique within the account and contain only letters, numbers, dashes
