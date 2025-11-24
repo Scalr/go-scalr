@@ -665,11 +665,16 @@ func addFederatedEnvironments(t *testing.T, client *Client, environment *Environ
 	}
 }
 
-func createDriftDetection(t *testing.T, client *Client, environment *Environment, period DriftDetectionSchedulePeriod) (*DriftDetection, func()) {
+func createDriftDetection(
+	t *testing.T, client *Client, environment *Environment, period DriftDetectionSchedulePeriod,
+	workspaceFilters DriftDetectionWorkspaceFilter, runMode *DriftDetectionScheduleRunMode,
+) (*DriftDetection, func()) {
 	ctx := context.Background()
 	driftDetection, err := client.DriftDetections.Create(ctx, DriftDetectionCreateOptions{
-		Schedule:    period,
-		Environment: environment,
+		Schedule:         period,
+		Environment:      environment,
+		WorkspaceFilters: workspaceFilters,
+		RunMode:          runMode,
 	})
 	if err != nil {
 		t.Fatal(err)

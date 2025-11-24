@@ -2,6 +2,7 @@ package scalr
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -45,16 +46,50 @@ func (o DriftDetectionSchedulePeriod) IsValid() bool {
 	return false
 }
 
+// DriftDetectionScheduleRunMode represents drift detection schedule run mode (run_mode attribute)
+type DriftDetectionScheduleRunMode string
+
+// Available drift detection schedule run modes
+const (
+	DriftDetectionScheduleRunModeRefreshOnly DriftDetectionScheduleRunMode = "refresh-only"
+	DriftDetectionScheduleRunModePlan        DriftDetectionScheduleRunMode = "plan"
+)
+
+func (o DriftDetectionScheduleRunMode) IsValid() bool {
+	switch o {
+	case DriftDetectionScheduleRunModeRefreshOnly,
+		DriftDetectionScheduleRunModePlan:
+		return true
+	}
+	return false
+}
+
 type DriftDetectionWorkspaceFilter struct {
-	NamePattern     *string                   `jsonapi:"attr,name-pattern,omitempty"`
-	EnvironmentType *WorkspaceEnvironmentType `jsonapi:"attr,environment-type,omitempty"`
-	Tags            *[]string                 `jsonapi:"attr,tags,omitempty"`
+	NamePatterns     *[]string                   `json:"name-patterns,omitempty"`
+	EnvironmentTypes *[]WorkspaceEnvironmentType `json:"environment-types,omitempty"`
+	Tags             *[]string                   `json:"tags,omitempty"`
+}
+
+func (o *DriftDetectionWorkspaceFilter) IsEmpty() bool {
+	return o == nil || (o.NamePatterns == nil && o.EnvironmentTypes == nil && o.Tags == nil)
+}
+
+func (o *DriftDetectionWorkspaceFilter) MarshalJSON() ([]byte, error) {
+	type alias DriftDetectionWorkspaceFilter
+	return json.Marshal((*alias)(o))
+}
+
+func (o *DriftDetectionWorkspaceFilter) UnmarshalJSON(data []byte) error {
+	type alias DriftDetectionWorkspaceFilter
+	aux := (*alias)(o)
+	return json.Unmarshal(data, aux)
 }
 
 type DriftDetection struct {
-	ID               string                         `jsonapi:"primary,drift-detection-schedule"`
-	Schedule         DriftDetectionSchedulePeriod   `jsonapi:"attr,schedule"`
-	WorkspaceFilters *DriftDetectionWorkspaceFilter `jsonapi:"attr,workspace-filters,omitempty"`
+	ID               string                        `jsonapi:"primary,drift-detection-schedule"`
+	Schedule         DriftDetectionSchedulePeriod  `jsonapi:"attr,schedule"`
+	WorkspaceFilters DriftDetectionWorkspaceFilter `jsonapi:"attr,workspace-filters"`
+	RunMode          DriftDetectionScheduleRunMode `jsonapi:"attr,run-mode"`
 
 	// Relations
 	Environment *Environment `jsonapi:"relation,environment"`
@@ -66,7 +101,8 @@ type DriftDetectionCreateOptions struct {
 	ID string `jsonapi:"primary,drift-detection-schedule"`
 
 	Schedule         DriftDetectionSchedulePeriod   `jsonapi:"attr,schedule"`
-	WorkspaceFilters *DriftDetectionWorkspaceFilter `jsonapi:"attr,workspace-filters,omitempty"`
+	WorkspaceFilters DriftDetectionWorkspaceFilter  `jsonapi:"attr,workspace-filters"`
+	RunMode          *DriftDetectionScheduleRunMode `jsonapi:"attr,run-mode,omitempty"`
 
 	// Relations
 	Environment *Environment `jsonapi:"relation,environment"`
@@ -82,6 +118,9 @@ func (o DriftDetectionCreateOptions) valid() error {
 	if !o.Schedule.IsValid() {
 		return errors.New("invalid value for schedule")
 	}
+	if o.RunMode != nil && !o.RunMode.IsValid() {
+		return errors.New("invalid value for run_mode")
+	}
 	return nil
 }
 
@@ -91,7 +130,8 @@ type DriftDetectionUpdateOptions struct {
 	ID string `jsonapi:"primary,drift-detection-schedule"`
 
 	Schedule         DriftDetectionSchedulePeriod   `jsonapi:"attr,schedule"`
-	WorkspaceFilters *DriftDetectionWorkspaceFilter `jsonapi:"attr,workspace-filters,omitempty"`
+	WorkspaceFilters DriftDetectionWorkspaceFilter  `jsonapi:"attr,workspace-filters"`
+	RunMode          *DriftDetectionScheduleRunMode `jsonapi:"attr,run-mode,omitempty"`
 
 	// Relations
 	Environment *Environment `jsonapi:"relation,environment"`
@@ -106,6 +146,9 @@ func (o DriftDetectionUpdateOptions) valid() error {
 	}
 	if !o.Schedule.IsValid() {
 		return errors.New("invalid value for schedule")
+	}
+	if o.RunMode != nil && !o.RunMode.IsValid() {
+		return errors.New("invalid value for run_mode")
 	}
 	return nil
 }
