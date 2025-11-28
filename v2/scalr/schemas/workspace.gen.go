@@ -9,6 +9,63 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// WorkspaceAutoDestroyDays represents the type for WorkspaceAutoDestroyDays
+// How many days should the workspace exist.
+type WorkspaceAutoDestroyDays int
+
+// WorkspaceAutoDestroyDays constants
+const (
+	WorkspaceAutoDestroyDays1  WorkspaceAutoDestroyDays = 1
+	WorkspaceAutoDestroyDays2  WorkspaceAutoDestroyDays = 2
+	WorkspaceAutoDestroyDays7  WorkspaceAutoDestroyDays = 7
+	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
+)
+
+// WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns
+// Indicates if runs have to be queued automatically when a new configuration version is uploaded. `skip_first` - after the very first configuration version is uploaded into the workspace the run will not be triggered. But the following configurations will do. This is the default behavior. `on_create_only` - single run will be triggered only when the workspace is created and the first configuration version is uploaded. Subsequent configurations will not trigger runs. `always` - runs will be triggered automatically on every upload of the configuration version. `never` - configuration versions are uploaded into the workspace, but runs will not be triggered.
+type WorkspaceAutoQueueRuns string
+
+// WorkspaceAutoQueueRuns constants
+const (
+	WorkspaceAutoQueueRunsAlways       WorkspaceAutoQueueRuns = "always"
+	WorkspaceAutoQueueRunsNever        WorkspaceAutoQueueRuns = "never"
+	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
+	WorkspaceAutoQueueRunsOnCreateOnly WorkspaceAutoQueueRuns = "on_create_only"
+)
+
+// WorkspaceEnvironmentType represents the type for WorkspaceEnvironmentType
+// The type of the Scalr Workspace environment.
+type WorkspaceEnvironmentType string
+
+// WorkspaceEnvironmentType constants
+const (
+	WorkspaceEnvironmentTypeProduction  WorkspaceEnvironmentType = "production"
+	WorkspaceEnvironmentTypeStaging     WorkspaceEnvironmentType = "staging"
+	WorkspaceEnvironmentTypeTesting     WorkspaceEnvironmentType = "testing"
+	WorkspaceEnvironmentTypeDevelopment WorkspaceEnvironmentType = "development"
+	WorkspaceEnvironmentTypeUnmapped    WorkspaceEnvironmentType = "unmapped"
+)
+
+// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
+// The IaC platform of this workspace.
+type WorkspaceIacPlatform string
+
+// WorkspaceIacPlatform constants
+const (
+	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
+	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
+)
+
+// WorkspaceExecutionMode represents the type for WorkspaceExecutionMode
+// Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
+type WorkspaceExecutionMode string
+
+// WorkspaceExecutionMode constants
+const (
+	WorkspaceExecutionModeRemote WorkspaceExecutionMode = "remote"
+	WorkspaceExecutionModeLocal  WorkspaceExecutionMode = "local"
+)
+
 // Response version - used when unmarshalling from API responses
 // A Workspace is where Terraform runs are performed for a specific configuration, and where the resulting state file(s) are stored. Workspaces belong to environments and can have `variables` configured to provide inputs to the configuration, authenticate providers etc. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[workspaces]`: * module
 type Workspace struct {
@@ -38,13 +95,13 @@ type WorkspaceAttributes struct {
 	// Indicates whether `terraform apply` should automatically run when terraform plan ends without error. Default `false`.
 	AutoApply bool `json:"auto-apply"`
 	// How many days should the workspace exist.
-	AutoDestroyDays *string `json:"auto-destroy-days"`
+	AutoDestroyDays *WorkspaceAutoDestroyDays `json:"auto-destroy-days"`
 	// The status of scheduled destruction of the workspace.
 	AutoDestroyStatus *string `json:"auto-destroy-status"`
 	// When should the destruction of the workspace begin.
 	AutoDestroyTime *time.Time `json:"auto-destroy-time"`
 	// Indicates if runs have to be queued automatically when a new configuration version is uploaded. `skip_first` - after the very first configuration version is uploaded into the workspace the run will not be triggered. But the following configurations will do. This is the default behavior. `on_create_only` - single run will be triggered only when the workspace is created and the first configuration version is uploaded. Subsequent configurations will not trigger runs. `always` - runs will be triggered automatically on every upload of the configuration version. `never` - configuration versions are uploaded into the workspace, but runs will not be triggered.
-	AutoQueueRuns string `json:"auto-queue-runs"`
+	AutoQueueRuns WorkspaceAutoQueueRuns `json:"auto-queue-runs"`
 	// The resource creation timestamp.
 	CreatedAt time.Time `json:"created-at"`
 	// The email of a user who toggled deletion protection.
@@ -54,16 +111,16 @@ type WorkspaceAttributes struct {
 	// Cron expression for scheduled destroy runs. Time should be in UTC.
 	DestroySchedule *string `json:"destroy-schedule"`
 	// The type of the Scalr Workspace environment.
-	EnvironmentType string `json:"environment-type"`
+	EnvironmentType WorkspaceEnvironmentType `json:"environment-type"`
 	// Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
-	ExecutionMode string `json:"execution-mode"`
+	ExecutionMode WorkspaceExecutionMode `json:"execution-mode"`
 	// Indicates whether `force run` should automatically apply to latest run. Default `false`.
 	ForceLatestRun bool `json:"force-latest-run"`
 	// Indicates whether the workspace's current state version contains terraform resources.
 	HasResources bool            `json:"has-resources"`
 	Hooks        *WorkspaceHooks `json:"hooks"`
 	// The IaC platform of this workspace.
-	IacPlatform string `json:"iac-platform"`
+	IacPlatform WorkspaceIacPlatform `json:"iac-platform"`
 	// The reason (if any) that the workspace has been locked.
 	LockReason *string `json:"lock-reason"`
 	// Indicates whether the workspace is locked for operations. The `lock-reason` attribute carries the explanation. This semaphore is acquired and released by terraform apply and can also manage it with Lock/Unlock Workspace. Default: `false`
@@ -708,20 +765,20 @@ type WorkspaceAttributesRequest struct {
 	// Indicates whether `terraform apply` should automatically run when terraform plan ends without error. Default `false`.
 	AutoApply *value.Value[bool] `json:"auto-apply,omitempty"`
 	// How many days should the workspace exist.
-	AutoDestroyDays *value.Value[string] `json:"auto-destroy-days,omitempty"`
+	AutoDestroyDays *value.Value[WorkspaceAutoDestroyDays] `json:"auto-destroy-days,omitempty"`
 	// Indicates if runs have to be queued automatically when a new configuration version is uploaded. `skip_first` - after the very first configuration version is uploaded into the workspace the run will not be triggered. But the following configurations will do. This is the default behavior. `on_create_only` - single run will be triggered only when the workspace is created and the first configuration version is uploaded. Subsequent configurations will not trigger runs. `always` - runs will be triggered automatically on every upload of the configuration version. `never` - configuration versions are uploaded into the workspace, but runs will not be triggered.
-	AutoQueueRuns *value.Value[string] `json:"auto-queue-runs,omitempty"`
+	AutoQueueRuns *value.Value[WorkspaceAutoQueueRuns] `json:"auto-queue-runs,omitempty"`
 	// Designates whether deletion protection is enabled.
 	DeletionProtectionEnabled *value.Value[bool] `json:"deletion-protection-enabled,omitempty"`
 	// The type of the Scalr Workspace environment.
-	EnvironmentType *value.Value[string] `json:"environment-type,omitempty"`
+	EnvironmentType *value.Value[WorkspaceEnvironmentType] `json:"environment-type,omitempty"`
 	// Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
-	ExecutionMode *value.Value[string] `json:"execution-mode,omitempty"`
+	ExecutionMode *value.Value[WorkspaceExecutionMode] `json:"execution-mode,omitempty"`
 	// Indicates whether `force run` should automatically apply to latest run. Default `false`.
 	ForceLatestRun *value.Value[bool]                  `json:"force-latest-run,omitempty"`
 	Hooks          *value.Value[WorkspaceHooksRequest] `json:"hooks,omitempty"`
 	// The IaC platform of this workspace.
-	IacPlatform *value.Value[string] `json:"iac-platform,omitempty"`
+	IacPlatform *value.Value[WorkspaceIacPlatform] `json:"iac-platform,omitempty"`
 	// Workspace name which must be unique within the environment. Comprises letters, numbers, `-`, and `_` only.
 	Name *value.Value[string] `json:"name,omitempty"`
 	// The attribute `operations` is deprecated. Use `execution-mode` instead.

@@ -9,6 +9,33 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// SoftwareVersionStatus represents the type for SoftwareVersionStatus
+// The Docker image status.
+type SoftwareVersionStatus string
+
+// SoftwareVersionStatus constants
+const (
+	SoftwareVersionStatusPending      SoftwareVersionStatus = "pending"
+	SoftwareVersionStatusFailed       SoftwareVersionStatus = "failed"
+	SoftwareVersionStatusActive       SoftwareVersionStatus = "active"
+	SoftwareVersionStatusNotAvailable SoftwareVersionStatus = "not-available"
+)
+
+// SoftwareVersionSoftwareType represents the type for SoftwareVersionSoftwareType
+// The type of the software.
+type SoftwareVersionSoftwareType string
+
+// SoftwareVersionSoftwareType constants
+const (
+	SoftwareVersionSoftwareTypeOpa        SoftwareVersionSoftwareType = "opa"
+	SoftwareVersionSoftwareTypeTerraform  SoftwareVersionSoftwareType = "terraform"
+	SoftwareVersionSoftwareTypeInfracost  SoftwareVersionSoftwareType = "infracost"
+	SoftwareVersionSoftwareTypeOpentofu   SoftwareVersionSoftwareType = "opentofu"
+	SoftwareVersionSoftwareTypeTerragrunt SoftwareVersionSoftwareType = "terragrunt"
+	SoftwareVersionSoftwareTypeCheckov    SoftwareVersionSoftwareType = "checkov"
+	SoftwareVersionSoftwareTypeRunner     SoftwareVersionSoftwareType = "runner"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents a software version.
 type SoftwareVersion struct {
@@ -47,9 +74,9 @@ type SoftwareVersionAttributes struct {
 	// Indicates that this software-version is the latest one for the given software-type.
 	Latest bool `json:"latest"`
 	// The type of the software.
-	SoftwareType string `json:"software-type"`
+	SoftwareType SoftwareVersionSoftwareType `json:"software-type"`
 	// The Docker image status.
-	Status string `json:"status"`
+	Status SoftwareVersionStatus `json:"status"`
 	// Semantic Version.
 	Version string `json:"version"`
 }
@@ -88,7 +115,7 @@ type SoftwareVersionAttributesRequest struct {
 	// Reference to a container image in OCI registry.
 	Image *value.Value[string] `json:"image,omitempty"`
 	// The type of the software.
-	SoftwareType *value.Value[string] `json:"software-type,omitempty"`
+	SoftwareType *value.Value[SoftwareVersionSoftwareType] `json:"software-type,omitempty"`
 	// Semantic Version.
 	Version *value.Value[string] `json:"version,omitempty"`
 }

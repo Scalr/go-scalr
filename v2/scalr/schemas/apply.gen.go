@@ -8,6 +8,21 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ApplyStatus represents the type for ApplyStatus
+// The Apply's current status. Transient states: * `pending` - Apply has been created but not yet `queued`. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Apply canceled in some way. * `errored` - An error occurred during the apply. See `output` for details. * `finished` - Apply completed successfully. * `unreachable` - Apply will not be run.
+type ApplyStatus string
+
+// ApplyStatus constants
+const (
+	ApplyStatusPending     ApplyStatus = "pending"
+	ApplyStatusQueued      ApplyStatus = "queued"
+	ApplyStatusRunning     ApplyStatus = "running"
+	ApplyStatusFinished    ApplyStatus = "finished"
+	ApplyStatusCanceled    ApplyStatus = "canceled"
+	ApplyStatusErrored     ApplyStatus = "errored"
+	ApplyStatusUnreachable ApplyStatus = "unreachable"
+)
+
 // Response version - used when unmarshalling from API responses
 // Applies are the details of a request to apply a Terraform plan. An apply may or may not be successful as indicated by the `status` attribute.
 type Apply struct {
@@ -40,7 +55,7 @@ type ApplyAttributes struct {
 	// The number of resources destroyed.
 	ResourceDestructions *int `json:"resource-destructions"`
 	// The Apply's current status. Transient states: * `pending` - Apply has been created but not yet `queued`. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Apply canceled in some way. * `errored` - An error occurred during the apply. See `output` for details. * `finished` - Apply completed successfully. * `unreachable` - Apply will not be run.
-	Status string `json:"status"`
+	Status ApplyStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
 }
@@ -83,7 +98,7 @@ type ApplyAttributesRequest struct {
 	// The number of resources destroyed.
 	ResourceDestructions *value.Value[int] `json:"resource-destructions,omitempty"`
 	// The Apply's current status. Transient states: * `pending` - Apply has been created but not yet `queued`. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Apply canceled in some way. * `errored` - An error occurred during the apply. See `output` for details. * `finished` - Apply completed successfully. * `unreachable` - Apply will not be run.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[ApplyStatus] `json:"status,omitempty"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps *value.Value[map[string]interface{}] `json:"status-timestamps,omitempty"`
 }

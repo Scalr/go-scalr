@@ -79,7 +79,7 @@ func (c *Client) DeleteStorageProfile(ctx context.Context, storageProfile string
 	return nil
 }
 
-// List all storage profiles.
+// Get storage profile by id.
 func (c *Client) GetStorageProfileRaw(ctx context.Context, storageProfile string) (*client.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
@@ -91,7 +91,7 @@ func (c *Client) GetStorageProfileRaw(ctx context.Context, storageProfile string
 	return &client.Response{Response: httpResp}, nil
 }
 
-// List all storage profiles.
+// Get storage profile by id.
 func (c *Client) GetStorageProfile(ctx context.Context, storageProfile string) (*schemas.StorageProfile, error) {
 	resp, err := c.GetStorageProfileRaw(ctx, storageProfile)
 	if err != nil {
@@ -110,7 +110,7 @@ func (c *Client) GetStorageProfile(ctx context.Context, storageProfile string) (
 	return &result.Data, nil
 }
 
-// Get storage profile by id.
+// List all storage profiles.
 func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStorageProfilesOptions) (*client.Response, error) {
 	path := "/storage-profiles"
 
@@ -145,7 +145,7 @@ func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStoragePr
 	return &client.Response{Response: httpResp}, nil
 }
 
-// Get storage profile by id.
+// List all storage profiles.
 func (c *Client) ListStorageProfiles(ctx context.Context, opts *ListStorageProfilesOptions) ([]*schemas.StorageProfile, error) {
 	resp, err := c.ListStorageProfilesRaw(ctx, opts)
 	if err != nil {

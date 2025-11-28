@@ -8,6 +8,78 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ProviderConfigurationGoogleAuthType represents the type for ProviderConfigurationGoogleAuthType
+// Authentication type to access GCP.
+type ProviderConfigurationGoogleAuthType string
+
+// ProviderConfigurationGoogleAuthType constants
+const (
+	ProviderConfigurationGoogleAuthTypeServiceAccountKey ProviderConfigurationGoogleAuthType = "service-account-key"
+	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
+)
+
+// ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
+// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
+type ProviderConfigurationAwsDefaultTagsStrategy string
+
+// ProviderConfigurationAwsDefaultTagsStrategy constants
+const (
+	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
+	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
+)
+
+// ProviderConfigurationAwsAccountType represents the type for ProviderConfigurationAwsAccountType
+// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
+type ProviderConfigurationAwsAccountType string
+
+// ProviderConfigurationAwsAccountType constants
+const (
+	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
+	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
+	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
+)
+
+// ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
+// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
+type ProviderConfigurationAwsTrustedEntityType string
+
+// ProviderConfigurationAwsTrustedEntityType constants
+const (
+	ProviderConfigurationAwsTrustedEntityTypeAwsAccount ProviderConfigurationAwsTrustedEntityType = "aws_account"
+	ProviderConfigurationAwsTrustedEntityTypeAwsService ProviderConfigurationAwsTrustedEntityType = "aws_service"
+)
+
+// ProviderConfigurationAzurermAuthType represents the type for ProviderConfigurationAzurermAuthType
+// The type of azurerm credentials, available options: `client-secrets`, `oidc`.
+type ProviderConfigurationAzurermAuthType string
+
+// ProviderConfigurationAzurermAuthType constants
+const (
+	ProviderConfigurationAzurermAuthTypeClientSecrets ProviderConfigurationAzurermAuthType = "client-secrets"
+	ProviderConfigurationAzurermAuthTypeOidc          ProviderConfigurationAzurermAuthType = "oidc"
+)
+
+// ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
+// Provider configuration status. Can be: `active`, `errored`.
+type ProviderConfigurationStatus string
+
+// ProviderConfigurationStatus constants
+const (
+	ProviderConfigurationStatusActive  ProviderConfigurationStatus = "active"
+	ProviderConfigurationStatusErrored ProviderConfigurationStatus = "errored"
+)
+
+// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
+// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
+type ProviderConfigurationAwsCredentialsType string
+
+// ProviderConfigurationAwsCredentialsType constants
+const (
+	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
+	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
+	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
+)
+
 // Response version - used when unmarshalling from API responses
 // The configuration of provider. Provider configuration is managed on the account scope and can be linked to environments or workspaces.
 type ProviderConfiguration struct {
@@ -35,15 +107,15 @@ type ProviderConfigurationAttributes struct {
 	// AWS access key. This option is required with the `access_keys` credential type.
 	AwsAccessKey *string `json:"aws-access-key"`
 	// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
-	AwsAccountType *string `json:"aws-account-type"`
+	AwsAccountType *ProviderConfigurationAwsAccountType `json:"aws-account-type"`
 	// The value of the aud claim for the identity token.
 	AwsAudience *string `json:"aws-audience"`
 	// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
-	AwsCredentialsType *string `json:"aws-credentials-type"`
+	AwsCredentialsType *ProviderConfigurationAwsCredentialsType `json:"aws-credentials-type"`
 	// Default tags to be applied to all resources created by this provider configuration.
 	AwsDefaultTags *map[string]interface{} `json:"aws-default-tags"`
 	// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
-	AwsDefaultTagsStrategy *string `json:"aws-default-tags-strategy"`
+	AwsDefaultTagsStrategy *ProviderConfigurationAwsDefaultTagsStrategy `json:"aws-default-tags-strategy"`
 	// External identifier to use when assuming the role. This option is required with the `role_delegation` credential type.
 	AwsExternalId *string `json:"aws-external-id"`
 	// Amazon Resource Name (ARN) of the IAM Role to assume. This option is required with the `role_delegation` and `oidc` credential type.
@@ -51,11 +123,11 @@ type ProviderConfigurationAttributes struct {
 	// AWS secret key. This option is required with the `access_keys` credential type.
 	AwsSecretKey *string `json:"aws-secret-key"`
 	// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
-	AwsTrustedEntityType *string `json:"aws-trusted-entity-type"`
+	AwsTrustedEntityType *ProviderConfigurationAwsTrustedEntityType `json:"aws-trusted-entity-type"`
 	// The value of the aud claim for the identity token.
 	AzurermAudience *string `json:"azurerm-audience"`
 	// The type of azurerm credentials, available options: `client-secrets`, `oidc`.
-	AzurermAuthType *string `json:"azurerm-auth-type"`
+	AzurermAuthType *ProviderConfigurationAzurermAuthType `json:"azurerm-auth-type"`
 	// The Client ID which should be used.
 	AzurermClientId *string `json:"azurerm-client-id"`
 	// The Client Secret which should be used.
@@ -69,7 +141,7 @@ type ProviderConfigurationAttributes struct {
 	// Export provider variables into the run environment. This option is available only for built in providers.
 	ExportShellVariables bool `json:"export-shell-variables"`
 	// Authentication type to access GCP.
-	GoogleAuthType *string `json:"google-auth-type"`
+	GoogleAuthType *ProviderConfigurationGoogleAuthType `json:"google-auth-type"`
 	// Service account key file in JSON format.
 	GoogleCredentials *string `json:"google-credentials"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.
@@ -95,7 +167,7 @@ type ProviderConfigurationAttributes struct {
 	// The Scalr token which should be used.
 	ScalrToken *string `json:"scalr-token"`
 	// Provider configuration status. Can be: `active`, `errored`.
-	Status string `json:"status"`
+	Status ProviderConfigurationStatus `json:"status"`
 }
 
 // ProviderConfigurationRelationships holds the relationships for ProviderConfiguration (response)
@@ -314,15 +386,15 @@ type ProviderConfigurationAttributesRequest struct {
 	// AWS access key. This option is required with the `access_keys` credential type.
 	AwsAccessKey *value.Value[string] `json:"aws-access-key,omitempty"`
 	// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
-	AwsAccountType *value.Value[string] `json:"aws-account-type,omitempty"`
+	AwsAccountType *value.Value[ProviderConfigurationAwsAccountType] `json:"aws-account-type,omitempty"`
 	// The value of the aud claim for the identity token.
 	AwsAudience *value.Value[string] `json:"aws-audience,omitempty"`
 	// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
-	AwsCredentialsType *value.Value[string] `json:"aws-credentials-type,omitempty"`
+	AwsCredentialsType *value.Value[ProviderConfigurationAwsCredentialsType] `json:"aws-credentials-type,omitempty"`
 	// Default tags to be applied to all resources created by this provider configuration.
 	AwsDefaultTags *value.Value[map[string]interface{}] `json:"aws-default-tags,omitempty"`
 	// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
-	AwsDefaultTagsStrategy *value.Value[string] `json:"aws-default-tags-strategy,omitempty"`
+	AwsDefaultTagsStrategy *value.Value[ProviderConfigurationAwsDefaultTagsStrategy] `json:"aws-default-tags-strategy,omitempty"`
 	// External identifier to use when assuming the role. This option is required with the `role_delegation` credential type.
 	AwsExternalId *value.Value[string] `json:"aws-external-id,omitempty"`
 	// Amazon Resource Name (ARN) of the IAM Role to assume. This option is required with the `role_delegation` and `oidc` credential type.
@@ -330,11 +402,11 @@ type ProviderConfigurationAttributesRequest struct {
 	// AWS secret key. This option is required with the `access_keys` credential type.
 	AwsSecretKey *value.Value[string] `json:"aws-secret-key,omitempty"`
 	// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
-	AwsTrustedEntityType *value.Value[string] `json:"aws-trusted-entity-type,omitempty"`
+	AwsTrustedEntityType *value.Value[ProviderConfigurationAwsTrustedEntityType] `json:"aws-trusted-entity-type,omitempty"`
 	// The value of the aud claim for the identity token.
 	AzurermAudience *value.Value[string] `json:"azurerm-audience,omitempty"`
 	// The type of azurerm credentials, available options: `client-secrets`, `oidc`.
-	AzurermAuthType *value.Value[string] `json:"azurerm-auth-type,omitempty"`
+	AzurermAuthType *value.Value[ProviderConfigurationAzurermAuthType] `json:"azurerm-auth-type,omitempty"`
 	// The Client ID which should be used.
 	AzurermClientId *value.Value[string] `json:"azurerm-client-id,omitempty"`
 	// The Client Secret which should be used.
@@ -346,7 +418,7 @@ type ProviderConfigurationAttributesRequest struct {
 	// Export provider variables into the run environment. This option is available only for built in providers.
 	ExportShellVariables *value.Value[bool] `json:"export-shell-variables,omitempty"`
 	// Authentication type to access GCP.
-	GoogleAuthType *value.Value[string] `json:"google-auth-type,omitempty"`
+	GoogleAuthType *value.Value[ProviderConfigurationGoogleAuthType] `json:"google-auth-type,omitempty"`
 	// Service account key file in JSON format.
 	GoogleCredentials *value.Value[string] `json:"google-credentials,omitempty"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.

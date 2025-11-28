@@ -8,7 +8,7 @@ import (
 )
 
 // Version is the current version of the client.
-var Version = "dev"
+var Version = "v2.0.0-rc.2"
 
 // UserAgent returns the default User-Agent string for the client.
 //

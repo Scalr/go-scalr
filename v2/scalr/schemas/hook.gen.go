@@ -9,6 +9,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// HookStatus represents the type for HookStatus
+// The status of the hook.
+type HookStatus string
+
+// HookStatus constants
+const (
+	HookStatusPending HookStatus = "pending"
+	HookStatusActive  HookStatus = "active"
+	HookStatusErrored HookStatus = "errored"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents a reusable hook in the Scalr Hooks Registry.
 type Hook struct {
@@ -46,7 +57,7 @@ type HookAttributes struct {
 	// The path to the script file in the repository. This path is relative to the root of the repository. Examples: - `script.sh` - a script in the root directory - `scripts/hook.py` - a script in the scripts subdirectory - `/absolute/path.sh` - leading slash is automatically removed When the hook executes, the script runs in the Terraform workspace directory, not in the hook's directory. To access files within the hook directory, use the `SCALR_HOOK_DIR` environment variable: ```bash # Example: Read a config file from the hook directory cat "$SCALR_HOOK_DIR/config.json" # Example: Execute another script from the hook directory bash "$SCALR_HOOK_DIR/helpers/cleanup.sh" ``` The `interpreter` attribute specifies the command used to execute this script.
 	ScriptfilePath string `json:"scriptfile-path"`
 	// The status of the hook.
-	Status string `json:"status"`
+	Status HookStatus `json:"status"`
 	// Timestamp of the last update.
 	UpdatedAt time.Time `json:"updated-at"`
 	// A reference to the VCS repository for the hook.

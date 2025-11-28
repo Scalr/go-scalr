@@ -8,6 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// BillingPlanPlanType represents the type for BillingPlanPlanType
+
+type BillingPlanPlanType string
+
+// BillingPlanPlanType constants
+const (
+	BillingPlanPlanTypeMonthly          BillingPlanPlanType = "monthly"
+	BillingPlanPlanTypeYearly           BillingPlanPlanType = "yearly"
+	BillingPlanPlanTypeDeprecatedYearly BillingPlanPlanType = "deprecated-yearly"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type BillingPlan struct {
@@ -33,7 +44,7 @@ func (r BillingPlan) GetResourceType() string {
 type BillingPlanAttributes struct {
 	Amount       int                      `json:"amount"`
 	IncludedRuns *int                     `json:"included-runs"`
-	PlanType     string                   `json:"plan-type"`
+	PlanType     BillingPlanPlanType      `json:"plan-type"`
 	Prices       []map[string]interface{} `json:"prices"`
 }
 
@@ -68,6 +79,6 @@ func (r BillingPlanRequest) GetResourceType() string {
 type BillingPlanAttributesRequest struct {
 	Amount       *value.Value[int]                      `json:"amount,omitempty"`
 	IncludedRuns *value.Value[int]                      `json:"included-runs,omitempty"`
-	PlanType     *value.Value[string]                   `json:"plan-type,omitempty"`
+	PlanType     *value.Value[BillingPlanPlanType]      `json:"plan-type,omitempty"`
 	Prices       *value.Value[[]map[string]interface{}] `json:"prices,omitempty"`
 }

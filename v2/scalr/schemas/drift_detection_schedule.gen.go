@@ -8,6 +8,26 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// DriftDetectionScheduleSchedule represents the type for DriftDetectionScheduleSchedule
+// The schedule of the drift detection.
+type DriftDetectionScheduleSchedule string
+
+// DriftDetectionScheduleSchedule constants
+const (
+	DriftDetectionScheduleScheduleDaily  DriftDetectionScheduleSchedule = "daily"
+	DriftDetectionScheduleScheduleWeekly DriftDetectionScheduleSchedule = "weekly"
+)
+
+// DriftDetectionScheduleRunMode represents the type for DriftDetectionScheduleRunMode
+// The run mode of the drift detection.
+type DriftDetectionScheduleRunMode string
+
+// DriftDetectionScheduleRunMode constants
+const (
+	DriftDetectionScheduleRunModeRefreshOnly DriftDetectionScheduleRunMode = "refresh-only"
+	DriftDetectionScheduleRunModePlan        DriftDetectionScheduleRunMode = "plan"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type DriftDetectionSchedule struct {
@@ -32,8 +52,10 @@ func (r DriftDetectionSchedule) GetResourceType() string {
 
 // DriftDetectionScheduleAttributes holds the attributes for DriftDetectionSchedule (response)
 type DriftDetectionScheduleAttributes struct {
+	// The run mode of the drift detection.
+	RunMode DriftDetectionScheduleRunMode `json:"run-mode"`
 	// The schedule of the drift detection.
-	Schedule string `json:"schedule"`
+	Schedule DriftDetectionScheduleSchedule `json:"schedule"`
 	// The workspace filters to monitor for drift.
 	WorkspaceFilters DriftDetectionScheduleWorkspaceFilters `json:"workspace-filters"`
 }
@@ -134,8 +156,10 @@ func (r DriftDetectionScheduleRequest) GetResourceType() string {
 
 // DriftDetectionScheduleAttributesRequest holds the attributes for DriftDetectionSchedule (request)
 type DriftDetectionScheduleAttributesRequest struct {
+	// The run mode of the drift detection.
+	RunMode *value.Value[DriftDetectionScheduleRunMode] `json:"run-mode,omitempty"`
 	// The schedule of the drift detection.
-	Schedule *value.Value[string] `json:"schedule,omitempty"`
+	Schedule *value.Value[DriftDetectionScheduleSchedule] `json:"schedule,omitempty"`
 	// The workspace filters to monitor for drift.
 	WorkspaceFilters *value.Value[DriftDetectionScheduleWorkspaceFiltersRequest] `json:"workspace-filters,omitempty"`
 }
@@ -148,14 +172,14 @@ type DriftDetectionScheduleRelationshipsRequest struct {
 
 // The workspace filters to monitor for drift.
 type DriftDetectionScheduleWorkspaceFilters struct {
-	EnvironmentType string   `json:"environment-type"`
-	NamePattern     string   `json:"name-pattern"`
-	Tags            []string `json:"tags"`
+	EnvironmentTypes []string `json:"environment-types"`
+	NamePatterns     []string `json:"name-patterns"`
+	Tags             []string `json:"tags"`
 }
 
 // The workspace filters to monitor for drift. (for requests)
 type DriftDetectionScheduleWorkspaceFiltersRequest struct {
-	EnvironmentType *value.Value[string]   `json:"environment-type,omitempty"`
-	NamePattern     *value.Value[string]   `json:"name-pattern,omitempty"`
-	Tags            *value.Value[[]string] `json:"tags,omitempty"`
+	EnvironmentTypes *value.Value[[]string] `json:"environment-types,omitempty"`
+	NamePatterns     *value.Value[[]string] `json:"name-patterns,omitempty"`
+	Tags             *value.Value[[]string] `json:"tags,omitempty"`
 }

@@ -9,6 +9,77 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// AgentRuntime represents the type for AgentRuntime
+// The agent's runtime (docker, kubernetes, vm, fatgate, etc)
+type AgentRuntime string
+
+// AgentRuntime constants
+const (
+	AgentRuntimeUnknown    AgentRuntime = "unknown"
+	AgentRuntimeDocker     AgentRuntime = "docker"
+	AgentRuntimeKubernetes AgentRuntime = "kubernetes"
+	AgentRuntimeVm         AgentRuntime = "vm"
+	AgentRuntimeFargate    AgentRuntime = "fargate"
+)
+
+// AgentStatus represents the type for AgentStatus
+// The agent's current status * `busy` - The agent is working on a task. * `errored` - The agent has an error and can't operate correctly. The attribute `error-message` has the details. * `idle` - The agent is idle and ready to start working on a task. * `offline` - API server hasn't seen the agent's heartbeat for 30 seconds.
+type AgentStatus string
+
+// AgentStatus constants
+const (
+	AgentStatusIdle    AgentStatus = "idle"
+	AgentStatusBusy    AgentStatus = "busy"
+	AgentStatusOffline AgentStatus = "offline"
+	AgentStatusErrored AgentStatus = "errored"
+)
+
+// AgentUpgradeStatus represents the type for AgentUpgradeStatus
+// Agent version upgrade status indicating how current the agent version is and what level of upgrade attention is required. Used to display appropriate warnings and encourage timely upgrades.
+type AgentUpgradeStatus string
+
+// AgentUpgradeStatus constants
+const (
+	AgentUpgradeStatusNone   AgentUpgradeStatus = "none"
+	AgentUpgradeStatusLow    AgentUpgradeStatus = "low"
+	AgentUpgradeStatusMedium AgentUpgradeStatus = "medium"
+	AgentUpgradeStatusHigh   AgentUpgradeStatus = "high"
+)
+
+// AgentDriver represents the type for AgentDriver
+// The agent's driver: docker, kubernetes or local.
+type AgentDriver string
+
+// AgentDriver constants
+const (
+	AgentDriverUnknown       AgentDriver = "unknown"
+	AgentDriverLocal         AgentDriver = "local"
+	AgentDriverDocker        AgentDriver = "docker"
+	AgentDriverKubernetes    AgentDriver = "kubernetes"
+	AgentDriverKubernetesJob AgentDriver = "kubernetes-job"
+)
+
+// AgentCpuPlatform represents the type for AgentCpuPlatform
+// The agent's CPU platform. The default value is `linux_amd64`.
+type AgentCpuPlatform string
+
+// AgentCpuPlatform constants
+const (
+	AgentCpuPlatformLinuxAmd64 AgentCpuPlatform = "linux_amd64"
+	AgentCpuPlatformLinuxArm64 AgentCpuPlatform = "linux_arm64"
+)
+
+// AgentKubernetesDriverMode represents the type for AgentKubernetesDriverMode
+// The Kubernetes driver mode (default, controller, or worker). Defines the agent's role within the Kubernetes execution model.
+type AgentKubernetesDriverMode string
+
+// AgentKubernetesDriverMode constants
+const (
+	AgentKubernetesDriverModeDefault    AgentKubernetesDriverMode = "default"
+	AgentKubernetesDriverModeController AgentKubernetesDriverMode = "controller"
+	AgentKubernetesDriverModeWorker     AgentKubernetesDriverMode = "worker"
+)
+
 // Response version - used when unmarshalling from API responses
 // An agent represents a single instance of self-hosted runner installed on a customer's on-prem infrastructure. An agent resource is automatically created when [self-hosted runner](../../agent_pools.html) connects to the API server to join it [agent pool](agent-pools.html). In order to connect to the pool, the runner requires an [agent pool token](access-tokens.html#create-an-agent-pool-access-token).
 type Agent struct {
@@ -34,15 +105,15 @@ func (r Agent) GetResourceType() string {
 // AgentAttributes holds the attributes for Agent (response)
 type AgentAttributes struct {
 	// The agent's CPU platform. The default value is `linux_amd64`.
-	CpuPlatform string `json:"cpu-platform"`
+	CpuPlatform AgentCpuPlatform `json:"cpu-platform"`
 	// The resource creation timestamp.
 	CreatedAt time.Time `json:"created-at"`
 	// The agent's driver: docker, kubernetes or local.
-	Driver string `json:"driver"`
+	Driver AgentDriver `json:"driver"`
 	// Contains the error message if the agent is in an `errored` status.
 	ErrorMessage *string `json:"error-message"`
 	// The Kubernetes driver mode (default, controller, or worker). Defines the agent's role within the Kubernetes execution model.
-	KubernetesDriverMode string `json:"kubernetes-driver-mode"`
+	KubernetesDriverMode AgentKubernetesDriverMode `json:"kubernetes-driver-mode"`
 	// The timestamp when the agent was last seen online.
 	LastSeenAt time.Time `json:"last-seen-at"`
 	// The name of the agent. This must be unique within the agent pool.
@@ -52,11 +123,11 @@ type AgentAttributes struct {
 	// The UTC datetime of the last relay connect from the Agent.
 	RelayLastSeenAt *time.Time `json:"relay-last-seen-at"`
 	// The agent's runtime (docker, kubernetes, vm, fatgate, etc)
-	Runtime string `json:"runtime"`
+	Runtime AgentRuntime `json:"runtime"`
 	// The agent's current status * `busy` - The agent is working on a task. * `errored` - The agent has an error and can't operate correctly. The attribute `error-message` has the details. * `idle` - The agent is idle and ready to start working on a task. * `offline` - API server hasn't seen the agent's heartbeat for 30 seconds.
-	Status string `json:"status"`
+	Status AgentStatus `json:"status"`
 	// Agent version upgrade status indicating how current the agent version is and what level of upgrade attention is required. Used to display appropriate warnings and encourage timely upgrades.
-	UpgradeStatus string `json:"upgrade-status"`
+	UpgradeStatus AgentUpgradeStatus `json:"upgrade-status"`
 	// The agent's version.
 	Version string `json:"version"`
 }
@@ -158,17 +229,17 @@ func (r AgentRequest) GetResourceType() string {
 // AgentAttributesRequest holds the attributes for Agent (request)
 type AgentAttributesRequest struct {
 	// The agent's CPU platform. The default value is `linux_amd64`.
-	CpuPlatform *value.Value[string] `json:"cpu-platform,omitempty"`
+	CpuPlatform *value.Value[AgentCpuPlatform] `json:"cpu-platform,omitempty"`
 	// The agent's driver: docker, kubernetes or local.
-	Driver *value.Value[string] `json:"driver,omitempty"`
+	Driver *value.Value[AgentDriver] `json:"driver,omitempty"`
 	// The Kubernetes driver mode (default, controller, or worker). Defines the agent's role within the Kubernetes execution model.
-	KubernetesDriverMode *value.Value[string] `json:"kubernetes-driver-mode,omitempty"`
+	KubernetesDriverMode *value.Value[AgentKubernetesDriverMode] `json:"kubernetes-driver-mode,omitempty"`
 	// The name of the agent. This must be unique within the agent pool.
 	Name *value.Value[string] `json:"name,omitempty"`
 	// The agent's OS distribution name and version (ex: `centos_8`, `ubuntu_20`)
 	Os *value.Value[string] `json:"os,omitempty"`
 	// The agent's runtime (docker, kubernetes, vm, fatgate, etc)
-	Runtime *value.Value[string] `json:"runtime,omitempty"`
+	Runtime *value.Value[AgentRuntime] `json:"runtime,omitempty"`
 	// The agent's version.
 	Version *value.Value[string] `json:"version,omitempty"`
 }

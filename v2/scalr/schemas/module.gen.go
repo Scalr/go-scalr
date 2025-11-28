@@ -9,6 +9,18 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ModuleStatus represents the type for ModuleStatus
+// The Module's current status. Initial status: * `pending` - The initial status of a module once it has been created. Now Scalr will download the code from the VCS, and create a `module-version` resource for each matching Git tag. Ending statuses: * `no_version_tags` - a Module has been created, however the Module source repository has no tags. * `setup_complete` - a Module has been created, and at least one ModuleVersion has been successfully uploaded. Scalr assigns this status while some module-versions upload might be still in-progress. If you want to ensure a specific version was uploaded, you can poll [List Module Versions](module-versions.html#list-module-versions) for the `ok` status. * `errored` - Module has been created, however its synchronization has failed. Attribute `error-message` contains the details.
+type ModuleStatus string
+
+// ModuleStatus constants
+const (
+	ModuleStatusNoVersionTags ModuleStatus = "no_version_tags"
+	ModuleStatusPending       ModuleStatus = "pending"
+	ModuleStatusSetupComplete ModuleStatus = "setup_complete"
+	ModuleStatusErrored       ModuleStatus = "errored"
+)
+
 // Response version - used when unmarshalling from API responses
 // A terraform module in the [Private Module Registry](/docs/private-module-registry).
 type Module struct {
@@ -46,7 +58,7 @@ type ModuleAttributes struct {
 	// The `source` by which the module should be addressed from a HCL template.
 	Source string `json:"source"`
 	// The Module's current status. Initial status: * `pending` - The initial status of a module once it has been created. Now Scalr will download the code from the VCS, and create a `module-version` resource for each matching Git tag. Ending statuses: * `no_version_tags` - a Module has been created, however the Module source repository has no tags. * `setup_complete` - a Module has been created, and at least one ModuleVersion has been successfully uploaded. Scalr assigns this status while some module-versions upload might be still in-progress. If you want to ensure a specific version was uploaded, you can poll [List Module Versions](module-versions.html#list-module-versions) for the `ok` status. * `errored` - Module has been created, however its synchronization has failed. Attribute `error-message` contains the details.
-	Status  string        `json:"status"`
+	Status  ModuleStatus  `json:"status"`
 	VcsRepo ModuleVcsRepo `json:"vcs-repo"`
 }
 

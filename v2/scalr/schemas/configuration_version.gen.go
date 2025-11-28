@@ -9,6 +9,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ConfigurationVersionStatus represents the type for ConfigurationVersionStatus
+// The Configuration version's current status. * `pending` - waiting for the configuration files to upload. * `uploaded` - upload successful. At this point if the `auto-queue-runs: true` the new run should be `queued`. * `errored` - uploaded files post processing failed. Attribute `error-message` contains the details.
+type ConfigurationVersionStatus string
+
+// ConfigurationVersionStatus constants
+const (
+	ConfigurationVersionStatusErrored  ConfigurationVersionStatus = "errored"
+	ConfigurationVersionStatusPending  ConfigurationVersionStatus = "pending"
+	ConfigurationVersionStatusUploaded ConfigurationVersionStatus = "uploaded"
+)
+
 // Response version - used when unmarshalling from API responses
 // A Configuration Version describes the version of a Terraform configuration files. Each run is associated with a configuration version. It provides details of the source of the configuration files, the upload status, and the relationships to VCS and the workspace.
 type ConfigurationVersion struct {
@@ -48,7 +59,7 @@ type ConfigurationVersionAttributes struct {
 	// The origin for the configuration version.
 	Source string `json:"source"`
 	// The Configuration version's current status. * `pending` - waiting for the configuration files to upload. * `uploaded` - upload successful. At this point if the `auto-queue-runs: true` the new run should be `queued`. * `errored` - uploaded files post processing failed. Attribute `error-message` contains the details.
-	Status string `json:"status"`
+	Status ConfigurationVersionStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
 }

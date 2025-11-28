@@ -8,6 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// DatadogIntegrationStatus represents the type for DatadogIntegrationStatus
+// Status of integration.
+type DatadogIntegrationStatus string
+
+// DatadogIntegrationStatus constants
+const (
+	DatadogIntegrationStatusActive   DatadogIntegrationStatus = "active"
+	DatadogIntegrationStatusDisabled DatadogIntegrationStatus = "disabled"
+	DatadogIntegrationStatusFailed   DatadogIntegrationStatus = "failed"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type DatadogIntegration struct {
@@ -41,7 +52,7 @@ type DatadogIntegrationAttributes struct {
 	// Name of Datadog integration
 	Name string `json:"name"`
 	// Status of integration.
-	Status string `json:"status"`
+	Status DatadogIntegrationStatus `json:"status"`
 }
 
 // DatadogIntegrationRelationships holds the relationships for DatadogIntegration (response)
@@ -147,7 +158,7 @@ type DatadogIntegrationAttributesRequest struct {
 	// Name of Datadog integration
 	Name *value.Value[string] `json:"name,omitempty"`
 	// Status of integration.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[DatadogIntegrationStatus] `json:"status,omitempty"`
 }
 
 // DatadogIntegrationRelationshipsRequest holds the relationships for DatadogIntegration (request)

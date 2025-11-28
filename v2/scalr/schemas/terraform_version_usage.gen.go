@@ -9,6 +9,16 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// TerraformVersionUsageIacPlatform represents the type for TerraformVersionUsageIacPlatform
+// The IaC platform of the usage instance.
+type TerraformVersionUsageIacPlatform string
+
+// TerraformVersionUsageIacPlatform constants
+const (
+	TerraformVersionUsageIacPlatformTerraform TerraformVersionUsageIacPlatform = "terraform"
+	TerraformVersionUsageIacPlatformOpentofu  TerraformVersionUsageIacPlatform = "opentofu"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents terraform version usage instance.
 type TerraformVersionUsage struct {
@@ -35,7 +45,7 @@ func (r TerraformVersionUsage) GetResourceType() string {
 type TerraformVersionUsageAttributes struct {
 	CreatedAt time.Time `json:"created-at"`
 	// The IaC platform of the usage instance.
-	IacPlatform string `json:"iac-platform"`
+	IacPlatform TerraformVersionUsageIacPlatform `json:"iac-platform"`
 	// Indicates whether the version is auto-detected
 	IsAuto  bool   `json:"is-auto"`
 	Version string `json:"version"`
@@ -203,7 +213,7 @@ func (r TerraformVersionUsageRequest) GetResourceType() string {
 type TerraformVersionUsageAttributesRequest struct {
 	CreatedAt *value.Value[time.Time] `json:"created-at,omitempty"`
 	// The IaC platform of the usage instance.
-	IacPlatform *value.Value[string] `json:"iac-platform,omitempty"`
+	IacPlatform *value.Value[TerraformVersionUsageIacPlatform] `json:"iac-platform,omitempty"`
 	// Indicates whether the version is auto-detected
 	IsAuto  *value.Value[bool]   `json:"is-auto,omitempty"`
 	Version *value.Value[string] `json:"version,omitempty"`

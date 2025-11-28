@@ -8,6 +8,18 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// AWSEventBridgeIntegrationStatus represents the type for AWSEventBridgeIntegrationStatus
+// Status of integration.
+type AWSEventBridgeIntegrationStatus string
+
+// AWSEventBridgeIntegrationStatus constants
+const (
+	AWSEventBridgeIntegrationStatusActive   AWSEventBridgeIntegrationStatus = "active"
+	AWSEventBridgeIntegrationStatusDisabled AWSEventBridgeIntegrationStatus = "disabled"
+	AWSEventBridgeIntegrationStatusFailed   AWSEventBridgeIntegrationStatus = "failed"
+	AWSEventBridgeIntegrationStatusPending  AWSEventBridgeIntegrationStatus = "pending"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type AWSEventBridgeIntegration struct {
@@ -45,7 +57,7 @@ type AWSEventBridgeIntegrationAttributes struct {
 	// The AWS region name.
 	Region string `json:"region"`
 	// Status of integration.
-	Status string `json:"status"`
+	Status AWSEventBridgeIntegrationStatus `json:"status"`
 }
 
 // AWSEventBridgeIntegrationRelationships holds the relationships for AWSEventBridgeIntegration (response)
@@ -151,7 +163,7 @@ type AWSEventBridgeIntegrationAttributesRequest struct {
 	// The AWS region name.
 	Region *value.Value[string] `json:"region,omitempty"`
 	// Status of integration.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[AWSEventBridgeIntegrationStatus] `json:"status,omitempty"`
 }
 
 // AWSEventBridgeIntegrationRelationshipsRequest holds the relationships for AWSEventBridgeIntegration (request)

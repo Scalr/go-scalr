@@ -9,6 +9,22 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// DriftReportStatus represents the type for DriftReportStatus
+// The status of the drift report.
+type DriftReportStatus string
+
+// DriftReportStatus constants
+const (
+	DriftReportStatusPending              DriftReportStatus = "pending"
+	DriftReportStatusErrored              DriftReportStatus = "errored"
+	DriftReportStatusInProgress           DriftReportStatus = "in_progress"
+	DriftReportStatusNoDriftDetected      DriftReportStatus = "no_drift_detected"
+	DriftReportStatusAwaitingManualAction DriftReportStatus = "awaiting_manual_action"
+	DriftReportStatusDiscarded            DriftReportStatus = "discarded"
+	DriftReportStatusAcceptState          DriftReportStatus = "accept_state"
+	DriftReportStatusResetState           DriftReportStatus = "reset_state"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type DriftReport struct {
@@ -36,7 +52,7 @@ type DriftReportAttributes struct {
 	// The reason for the drift report action.
 	Reason *string `json:"reason"`
 	// The status of the drift report.
-	Status string `json:"status"`
+	Status DriftReportStatus `json:"status"`
 	// The resource last update timestamp.
 	UpdatedAt *time.Time `json:"updated-at"`
 	// The email of the last user, that updated this drift report.
@@ -142,7 +158,7 @@ type DriftReportAttributesRequest struct {
 	// The reason for the drift report action.
 	Reason *value.Value[string] `json:"reason,omitempty"`
 	// The status of the drift report.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[DriftReportStatus] `json:"status,omitempty"`
 	// The resource last update timestamp.
 	UpdatedAt *value.Value[time.Time] `json:"updated-at,omitempty"`
 	// The email of the last user, that updated this drift report.

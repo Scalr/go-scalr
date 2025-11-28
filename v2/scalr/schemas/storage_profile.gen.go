@@ -9,6 +9,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// StorageProfileBackendType represents the type for StorageProfileBackendType
+// Type of backend
+type StorageProfileBackendType string
+
+// StorageProfileBackendType constants
+const (
+	StorageProfileBackendTypeGoogle  StorageProfileBackendType = "google"
+	StorageProfileBackendTypeAwsS3   StorageProfileBackendType = "aws-s3"
+	StorageProfileBackendTypeAzurerm StorageProfileBackendType = "azurerm"
+)
+
 // Response version - used when unmarshalling from API responses
 // API resource describing the storage profile, where Scalr will store this account blobs: e.g. source code, terraform state, and logs.
 type StorageProfile struct {
@@ -51,7 +62,7 @@ type StorageProfileAttributes struct {
 	// Azure tenant ID for authentication
 	AzurermTenantId *string `json:"azurerm-tenant-id"`
 	// Type of backend
-	BackendType string `json:"backend-type"`
+	BackendType StorageProfileBackendType `json:"backend-type"`
 	// The resource creation timestamp.
 	CreatedAt time.Time `json:"created-at"`
 	// The default storage profile.
@@ -122,7 +133,7 @@ type StorageProfileAttributesRequest struct {
 	// Azure tenant ID for authentication
 	AzurermTenantId *value.Value[string] `json:"azurerm-tenant-id,omitempty"`
 	// Type of backend
-	BackendType *value.Value[string] `json:"backend-type,omitempty"`
+	BackendType *value.Value[StorageProfileBackendType] `json:"backend-type,omitempty"`
 	// The default storage profile.
 	Default *value.Value[bool] `json:"default,omitempty"`
 	// Service Account JSON key. Required IAM roles: `Storage Admin` assigned on a `google-storage-bucket` bucket. See: [use IAM with bucket](https://cloud.google.com/storage/docs/access-control/using-iam-permissions#bucket-iam).

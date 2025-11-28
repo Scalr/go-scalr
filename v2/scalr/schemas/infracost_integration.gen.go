@@ -8,6 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// InfracostIntegrationStatus represents the type for InfracostIntegrationStatus
+// Status of the integration.
+type InfracostIntegrationStatus string
+
+// InfracostIntegrationStatus constants
+const (
+	InfracostIntegrationStatusActive   InfracostIntegrationStatus = "active"
+	InfracostIntegrationStatusDisabled InfracostIntegrationStatus = "disabled"
+	InfracostIntegrationStatusFailed   InfracostIntegrationStatus = "failed"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type InfracostIntegration struct {
@@ -41,7 +52,7 @@ type InfracostIntegrationAttributes struct {
 	// Name of the Infracost integration
 	Name string `json:"name"`
 	// Status of the integration.
-	Status string `json:"status"`
+	Status InfracostIntegrationStatus `json:"status"`
 }
 
 // InfracostIntegrationRelationships holds the relationships for InfracostIntegration (response)
@@ -154,7 +165,7 @@ type InfracostIntegrationAttributesRequest struct {
 	// Name of the Infracost integration
 	Name *value.Value[string] `json:"name,omitempty"`
 	// Status of the integration.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[InfracostIntegrationStatus] `json:"status,omitempty"`
 }
 
 // InfracostIntegrationRelationshipsRequest holds the relationships for InfracostIntegration (request)

@@ -9,6 +9,26 @@ import (
 	"github.com/scalr/go-scalr/v2/{{ .ApiPackageName }}/value"
 )
 
+{{range .EnumTypes}}
+// {{ .Name }} represents the type for {{ .Name }}
+{{if .Description}}// {{ .Description }}{{end}}
+type {{ .Name }} {{ .BaseType }}
+
+// {{ .Name }} constants
+const (
+{{- $enumTypeName := .Name}}
+{{- $baseType := .BaseType}}
+{{- range .Values}}
+	{{- if eq $baseType "string"}}
+	{{.Name}} {{$enumTypeName}} = "{{.Value}}"
+	{{- else}}
+	{{.Name}} {{$enumTypeName}} = {{.Value}}
+	{{- end}}
+{{- end}}
+)
+
+{{end}}
+
 // Response version - used when unmarshalling from API responses
 {{if .Description}}// {{ .Description }}{{end}}
 type {{ .Name }} struct {

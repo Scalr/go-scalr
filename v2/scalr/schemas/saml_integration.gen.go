@@ -8,6 +8,62 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// SamlIntegrationVerificationStatus represents the type for SamlIntegrationVerificationStatus
+// Represents the verification status with the IdP SAML provider)
+type SamlIntegrationVerificationStatus string
+
+// SamlIntegrationVerificationStatus constants
+const (
+	SamlIntegrationVerificationStatusPending SamlIntegrationVerificationStatus = "pending"
+	SamlIntegrationVerificationStatusSuccess SamlIntegrationVerificationStatus = "success"
+	SamlIntegrationVerificationStatusRunning SamlIntegrationVerificationStatus = "running"
+)
+
+// SamlIntegrationStatus represents the type for SamlIntegrationStatus
+// Status of SAML integration.
+type SamlIntegrationStatus string
+
+// SamlIntegrationStatus constants
+const (
+	SamlIntegrationStatusActive   SamlIntegrationStatus = "active"
+	SamlIntegrationStatusDisabled SamlIntegrationStatus = "disabled"
+	SamlIntegrationStatusFailed   SamlIntegrationStatus = "failed"
+)
+
+// SamlIntegrationSecurityDigestAlgorithm represents the type for SamlIntegrationSecurityDigestAlgorithm
+// Algorithm that Scalr will use on digest process.
+type SamlIntegrationSecurityDigestAlgorithm string
+
+// SamlIntegrationSecurityDigestAlgorithm constants
+const (
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmldsigMoresha384 SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#sha384"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha512      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha512"
+)
+
+// SamlIntegrationSecurityRequestedAuthnContextComparison represents the type for SamlIntegrationSecurityRequestedAuthnContextComparison
+// Allows the authn comparison parameter to be set.
+type SamlIntegrationSecurityRequestedAuthnContextComparison string
+
+// SamlIntegrationSecurityRequestedAuthnContextComparison constants
+const (
+	SamlIntegrationSecurityRequestedAuthnContextComparisonExact   SamlIntegrationSecurityRequestedAuthnContextComparison = "exact"
+	SamlIntegrationSecurityRequestedAuthnContextComparisonMinimum SamlIntegrationSecurityRequestedAuthnContextComparison = "minimum"
+	SamlIntegrationSecurityRequestedAuthnContextComparisonBetter  SamlIntegrationSecurityRequestedAuthnContextComparison = "better"
+	SamlIntegrationSecurityRequestedAuthnContextComparisonMaximum SamlIntegrationSecurityRequestedAuthnContextComparison = "maximum"
+)
+
+// SamlIntegrationSecuritySignatureAlgorithm represents the type for SamlIntegrationSecuritySignatureAlgorithm
+// Algorithm that Scalr will use on signing process.
+type SamlIntegrationSecuritySignatureAlgorithm string
+
+// SamlIntegrationSecuritySignatureAlgorithm constants
+const (
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha256 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha384 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha512 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type SamlIntegration struct {
@@ -89,7 +145,7 @@ type SamlIntegrationAttributes struct {
 	// Indicates whether the <samlp:AuthnRequest> messages sent by Scalr will be signed.
 	SecurityAuthnRequestsSigned bool `json:"security-authn-requests-signed"`
 	// Algorithm that Scalr will use on digest process.
-	SecurityDigestAlgorithm *string `json:"security-digest-algorithm"`
+	SecurityDigestAlgorithm *SamlIntegrationSecurityDigestAlgorithm `json:"security-digest-algorithm"`
 	// Indicates whether the <samlp:logoutRequest> messages sent by Scalr will be signed.
 	SecurityLogoutRequestSigned bool `json:"security-logout-request-signed"`
 	// Indicates whether the <samlp:logoutResponse> messages sent by Scalr will be signed.
@@ -99,11 +155,11 @@ type SamlIntegrationAttributes struct {
 	// Leave empty and no AuthContext will be sent in the AuthNRequest,Set an array with the possible auth context values: ["urn:oasis:names:tc:SAML:2.0:ac:classes:Password", "urn:oasis:names:tc:SAML:2.0:ac:classes:X509"]
 	SecurityRequestedAuthnContext string `json:"security-requested-authn-context"`
 	// Allows the authn comparison parameter to be set.
-	SecurityRequestedAuthnContextComparison string `json:"security-requested-authn-context-comparison"`
+	SecurityRequestedAuthnContextComparison SamlIntegrationSecurityRequestedAuthnContextComparison `json:"security-requested-authn-context-comparison"`
 	// Sign the Metadata. If enabled SP certificate must be provided.
 	SecuritySignMetadata *bool `json:"security-sign-metadata"`
 	// Algorithm that Scalr will use on signing process.
-	SecuritySignatureAlgorithm string `json:"security-signature-algorithm"`
+	SecuritySignatureAlgorithm SamlIntegrationSecuritySignatureAlgorithm `json:"security-signature-algorithm"`
 	// Indicates a requirement for the <saml:Assertion> elements received by Scalr to be encrypted.
 	SecurityWantAssertionsEncrypted bool `json:"security-want-assertions-encrypted"`
 	// Indicates a requirement for the <saml:Assertion> elements received by Scalr to be signed.
@@ -130,12 +186,12 @@ type SamlIntegrationAttributes struct {
 	// SP x509cert new
 	SpX509CertNew *string `json:"sp-x509cert-new"`
 	// Status of SAML integration.
-	Status string `json:"status"`
+	Status SamlIntegrationStatus `json:"status"`
 	// If enabled, Scalr will reject unsigned or unencrypted messages when expects them to be signed or encrypted.
 	Strict              bool `json:"strict"`
 	UseIdentifierInUrls bool `json:"use-identifier-in-urls"`
 	// Represents the verification status with the IdP SAML provider)
-	VerificationStatus string `json:"verification-status"`
+	VerificationStatus SamlIntegrationVerificationStatus `json:"verification-status"`
 }
 
 // SamlIntegrationRelationships holds the relationships for SamlIntegration (response)
@@ -287,7 +343,7 @@ type SamlIntegrationAttributesRequest struct {
 	// Indicates whether the <samlp:AuthnRequest> messages sent by Scalr will be signed.
 	SecurityAuthnRequestsSigned *value.Value[bool] `json:"security-authn-requests-signed,omitempty"`
 	// Algorithm that Scalr will use on digest process.
-	SecurityDigestAlgorithm *value.Value[string] `json:"security-digest-algorithm,omitempty"`
+	SecurityDigestAlgorithm *value.Value[SamlIntegrationSecurityDigestAlgorithm] `json:"security-digest-algorithm,omitempty"`
 	// Indicates whether the <samlp:logoutRequest> messages sent by Scalr will be signed.
 	SecurityLogoutRequestSigned *value.Value[bool] `json:"security-logout-request-signed,omitempty"`
 	// Indicates whether the <samlp:logoutResponse> messages sent by Scalr will be signed.
@@ -297,11 +353,11 @@ type SamlIntegrationAttributesRequest struct {
 	// Leave empty and no AuthContext will be sent in the AuthNRequest,Set an array with the possible auth context values: ["urn:oasis:names:tc:SAML:2.0:ac:classes:Password", "urn:oasis:names:tc:SAML:2.0:ac:classes:X509"]
 	SecurityRequestedAuthnContext *value.Value[string] `json:"security-requested-authn-context,omitempty"`
 	// Allows the authn comparison parameter to be set.
-	SecurityRequestedAuthnContextComparison *value.Value[string] `json:"security-requested-authn-context-comparison,omitempty"`
+	SecurityRequestedAuthnContextComparison *value.Value[SamlIntegrationSecurityRequestedAuthnContextComparison] `json:"security-requested-authn-context-comparison,omitempty"`
 	// Sign the Metadata. If enabled SP certificate must be provided.
 	SecuritySignMetadata *value.Value[bool] `json:"security-sign-metadata,omitempty"`
 	// Algorithm that Scalr will use on signing process.
-	SecuritySignatureAlgorithm *value.Value[string] `json:"security-signature-algorithm,omitempty"`
+	SecuritySignatureAlgorithm *value.Value[SamlIntegrationSecuritySignatureAlgorithm] `json:"security-signature-algorithm,omitempty"`
 	// Indicates a requirement for the <saml:Assertion> elements received by Scalr to be encrypted.
 	SecurityWantAssertionsEncrypted *value.Value[bool] `json:"security-want-assertions-encrypted,omitempty"`
 	// Indicates a requirement for the <saml:Assertion> elements received by Scalr to be signed.
@@ -327,7 +383,7 @@ type SamlIntegrationAttributesRequest struct {
 	// SP x509cert new
 	SpX509CertNew *value.Value[string] `json:"sp-x509cert-new,omitempty"`
 	// Status of SAML integration.
-	Status *value.Value[string] `json:"status,omitempty"`
+	Status *value.Value[SamlIntegrationStatus] `json:"status,omitempty"`
 	// If enabled, Scalr will reject unsigned or unencrypted messages when expects them to be signed or encrypted.
 	Strict              *value.Value[bool] `json:"strict,omitempty"`
 	UseIdentifierInUrls *value.Value[bool] `json:"use-identifier-in-urls,omitempty"`

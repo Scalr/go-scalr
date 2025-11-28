@@ -8,6 +8,28 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// IdentityProviderIdpType represents the type for IdentityProviderIdpType
+// The IdP type. Can be one of `scalr`, `ldap`, or `saml`.
+type IdentityProviderIdpType string
+
+// IdentityProviderIdpType constants
+const (
+	IdentityProviderIdpTypeScalr IdentityProviderIdpType = "scalr"
+	IdentityProviderIdpTypeLdap  IdentityProviderIdpType = "ldap"
+	IdentityProviderIdpTypeSaml  IdentityProviderIdpType = "saml"
+)
+
+// IdentityProviderVerificationStatus represents the type for IdentityProviderVerificationStatus
+// Represents the verification status with the external IdP (SAML/LDAP only)
+type IdentityProviderVerificationStatus string
+
+// IdentityProviderVerificationStatus constants
+const (
+	IdentityProviderVerificationStatusPending IdentityProviderVerificationStatus = "pending"
+	IdentityProviderVerificationStatusSuccess IdentityProviderVerificationStatus = "success"
+	IdentityProviderVerificationStatusRunning IdentityProviderVerificationStatus = "running"
+)
+
 // Response version - used when unmarshalling from API responses
 // The Identity Provider (IdP).
 type IdentityProvider struct {
@@ -33,11 +55,11 @@ func (r IdentityProvider) GetResourceType() string {
 // IdentityProviderAttributes holds the attributes for IdentityProvider (response)
 type IdentityProviderAttributes struct {
 	// The IdP type. Can be one of `scalr`, `ldap`, or `saml`.
-	IdpType string `json:"idp-type"`
+	IdpType IdentityProviderIdpType `json:"idp-type"`
 	// The IdP name.
 	Name string `json:"name"`
 	// Represents the verification status with the external IdP (SAML/LDAP only)
-	VerificationStatus string `json:"verification-status"`
+	VerificationStatus IdentityProviderVerificationStatus `json:"verification-status"`
 }
 
 // IdentityProviderRelationships holds the relationships for IdentityProvider (response)
@@ -137,11 +159,11 @@ func (r IdentityProviderRequest) GetResourceType() string {
 // IdentityProviderAttributesRequest holds the attributes for IdentityProvider (request)
 type IdentityProviderAttributesRequest struct {
 	// The IdP type. Can be one of `scalr`, `ldap`, or `saml`.
-	IdpType *value.Value[string] `json:"idp-type,omitempty"`
+	IdpType *value.Value[IdentityProviderIdpType] `json:"idp-type,omitempty"`
 	// The IdP name.
 	Name *value.Value[string] `json:"name,omitempty"`
 	// Represents the verification status with the external IdP (SAML/LDAP only)
-	VerificationStatus *value.Value[string] `json:"verification-status,omitempty"`
+	VerificationStatus *value.Value[IdentityProviderVerificationStatus] `json:"verification-status,omitempty"`
 }
 
 // IdentityProviderRelationshipsRequest holds the relationships for IdentityProvider (request)

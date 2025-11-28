@@ -9,6 +9,20 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// WorkloadIdentityProviderStatus represents the type for WorkloadIdentityProviderStatus
+// The status of the workload identity provider.
+type WorkloadIdentityProviderStatus string
+
+// WorkloadIdentityProviderStatus constants
+const (
+	WorkloadIdentityProviderStatusPending                 WorkloadIdentityProviderStatus = "pending"
+	WorkloadIdentityProviderStatusActive                  WorkloadIdentityProviderStatus = "active"
+	WorkloadIdentityProviderStatusInvalidProviderSettings WorkloadIdentityProviderStatus = "invalid_provider_settings"
+	WorkloadIdentityProviderStatusFetchJwksError          WorkloadIdentityProviderStatus = "fetch_jwks_error"
+	WorkloadIdentityProviderStatusNotSupportedJwks        WorkloadIdentityProviderStatus = "not_supported_jwks"
+	WorkloadIdentityProviderStatusInternalError           WorkloadIdentityProviderStatus = "internal_error"
+)
+
 // Response version - used when unmarshalling from API responses
 // External OpenID Connect 1.0 compliant identity provider.
 type WorkloadIdentityProvider struct {
@@ -42,7 +56,7 @@ type WorkloadIdentityProviderAttributes struct {
 	// The name of the workload identity provider.
 	Name string `json:"name"`
 	// The status of the workload identity provider.
-	Status string `json:"status"`
+	Status WorkloadIdentityProviderStatus `json:"status"`
 	// The publicly available URL of the IdP (must start with "https://", not include a port number and not end with a trailing slash).
 	Url string `json:"url"`
 }

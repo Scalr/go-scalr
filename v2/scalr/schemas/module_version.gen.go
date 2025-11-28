@@ -9,6 +9,19 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ModuleVersionStatus represents the type for ModuleVersionStatus
+// The module version's current status. Initial status: * `not_uploaded` - Module version has been created, however the code has not been uploaded. Transitional statuses: * `pending` - Module version has been created and is currently synchronizing. * `pending_delete` - Module version has been deleted from the repository and pending deletion from the registry. Ending statuses: * `ok` - Module version has been created and the code has been uploaded. * `errored` - Module version has been created, however its synchronization has failed. Attribute `error-message` contains the details.
+type ModuleVersionStatus string
+
+// ModuleVersionStatus constants
+const (
+	ModuleVersionStatusNotUploaded   ModuleVersionStatus = "not_uploaded"
+	ModuleVersionStatusPending       ModuleVersionStatus = "pending"
+	ModuleVersionStatusOk            ModuleVersionStatus = "ok"
+	ModuleVersionStatusErrored       ModuleVersionStatus = "errored"
+	ModuleVersionStatusPendingDelete ModuleVersionStatus = "pending_delete"
+)
+
 // Response version - used when unmarshalling from API responses
 // A terraform module's version in the [Private Module Registry](../../module.html).
 type ModuleVersion struct {
@@ -52,7 +65,7 @@ type ModuleVersionAttributes struct {
 	// A blob size in bytes.
 	Size *int `json:"size"`
 	// The module version's current status. Initial status: * `not_uploaded` - Module version has been created, however the code has not been uploaded. Transitional statuses: * `pending` - Module version has been created and is currently synchronizing. * `pending_delete` - Module version has been deleted from the repository and pending deletion from the registry. Ending statuses: * `ok` - Module version has been created and the code has been uploaded. * `errored` - Module version has been created, however its synchronization has failed. Attribute `error-message` contains the details.
-	Status string `json:"status"`
+	Status ModuleVersionStatus `json:"status"`
 	// Semantic Version.
 	Version string `json:"version"`
 }

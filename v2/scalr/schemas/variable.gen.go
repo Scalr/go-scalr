@@ -9,6 +9,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// VariableCategory represents the type for VariableCategory
+// * `terraform` - Values to be passed to terraform input variables of the same name. * `env` - shell environment variables. They will be injected via `export` during a terraform run.
+type VariableCategory string
+
+// VariableCategory constants
+const (
+	VariableCategoryTerraform VariableCategory = "terraform"
+	VariableCategoryShell     VariableCategory = "shell"
+	VariableCategoryEnv       VariableCategory = "env"
+)
+
 // Response version - used when unmarshalling from API responses
 // A Variable describes the configuration and value of a variable in a workspace. In Scalr there are "terraform" and "environment" variables. * Terraform variables define values to be passed into the corresponding Terraform input variable that is defined in the Configuration Version to be used in a run. Scalr Terraform variables are added to the `terraform.tfvars.json` file in the working directory of the workspace prior to any run. The values passed in can be HCL structures if the `hcl` attribute is `true`. * Environment variables define shell variables that are added to the run time environment of a workspace using `export VAR=value`. These variables can pass authentication parameters to providers or any data required for local processing, such as via `local-exec` provisioners.
 type Variable struct {
@@ -34,7 +45,7 @@ func (r Variable) GetResourceType() string {
 // VariableAttributes holds the attributes for Variable (response)
 type VariableAttributes struct {
 	// * `terraform` - Values to be passed to terraform input variables of the same name. * `env` - shell environment variables. They will be injected via `export` during a terraform run.
-	Category string `json:"category"`
+	Category VariableCategory `json:"category"`
 	// Variable description.
 	Description *string `json:"description"`
 	// Indicates whether the variable can be overridden on a lower down the Scalr organizational model.
@@ -246,7 +257,7 @@ func (r VariableRequest) GetResourceType() string {
 // VariableAttributesRequest holds the attributes for Variable (request)
 type VariableAttributesRequest struct {
 	// * `terraform` - Values to be passed to terraform input variables of the same name. * `env` - shell environment variables. They will be injected via `export` during a terraform run.
-	Category *value.Value[string] `json:"category,omitempty"`
+	Category *value.Value[VariableCategory] `json:"category,omitempty"`
 	// Variable description.
 	Description *value.Value[string] `json:"description,omitempty"`
 	// Indicates whether the variable can be overridden on a lower down the Scalr organizational model.

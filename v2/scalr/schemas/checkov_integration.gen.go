@@ -8,6 +8,18 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// CheckovIntegrationStatus represents the type for CheckovIntegrationStatus
+// Status of the integration.
+type CheckovIntegrationStatus string
+
+// CheckovIntegrationStatus constants
+const (
+	CheckovIntegrationStatusActive   CheckovIntegrationStatus = "active"
+	CheckovIntegrationStatusDisabled CheckovIntegrationStatus = "disabled"
+	CheckovIntegrationStatusFailed   CheckovIntegrationStatus = "failed"
+	CheckovIntegrationStatusPending  CheckovIntegrationStatus = "pending"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type CheckovIntegration struct {
@@ -43,7 +55,7 @@ type CheckovIntegrationAttributes struct {
 	// Name of the Checkov integration.
 	Name string `json:"name"`
 	// Status of the integration.
-	Status  string                     `json:"status"`
+	Status  CheckovIntegrationStatus   `json:"status"`
 	VcsRepo *CheckovIntegrationVcsRepo `json:"vcs-repo"`
 	// Version of Checkov to use.
 	Version string `json:"version"`
@@ -193,7 +205,7 @@ type CheckovIntegrationAttributesRequest struct {
 	// Name of the Checkov integration.
 	Name *value.Value[string] `json:"name,omitempty"`
 	// Status of the integration.
-	Status  *value.Value[string]                           `json:"status,omitempty"`
+	Status  *value.Value[CheckovIntegrationStatus]         `json:"status,omitempty"`
 	VcsRepo *value.Value[CheckovIntegrationVcsRepoRequest] `json:"vcs-repo,omitempty"`
 	// Version of Checkov to use.
 	Version *value.Value[string] `json:"version,omitempty"`
