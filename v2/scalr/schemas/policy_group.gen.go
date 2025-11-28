@@ -9,16 +9,6 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// PolicyGroupExecuteAs represents the type for PolicyGroupExecuteAs
-// The stage of the run to evaluate the policy group.
-type PolicyGroupExecuteAs string
-
-// PolicyGroupExecuteAs constants
-const (
-	PolicyGroupExecuteAsPrePlanCheck PolicyGroupExecuteAs = "pre_plan_check"
-	PolicyGroupExecuteAsPolicyCheck  PolicyGroupExecuteAs = "policy_check"
-)
-
 // PolicyGroupStatus represents the type for PolicyGroupStatus
 // Policy group current status. * `fetching` - waiting for policies to be synchronized with VCS. * `active` - synchronization completed, policy group is ready. * `errored` - synchronization has failed. Attribute `error-message` contains the details.
 type PolicyGroupStatus string
@@ -28,6 +18,16 @@ const (
 	PolicyGroupStatusFetching PolicyGroupStatus = "fetching"
 	PolicyGroupStatusActive   PolicyGroupStatus = "active"
 	PolicyGroupStatusErrored  PolicyGroupStatus = "errored"
+)
+
+// PolicyGroupExecuteAs represents the type for PolicyGroupExecuteAs
+// The stage of the run to evaluate the policy group.
+type PolicyGroupExecuteAs string
+
+// PolicyGroupExecuteAs constants
+const (
+	PolicyGroupExecuteAsPrePlanCheck PolicyGroupExecuteAs = "pre_plan_check"
+	PolicyGroupExecuteAsPolicyCheck  PolicyGroupExecuteAs = "policy_check"
 )
 
 // Response version - used when unmarshalling from API responses

@@ -8,16 +8,6 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
-// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
-type ProviderConfigurationAwsTrustedEntityType string
-
-// ProviderConfigurationAwsTrustedEntityType constants
-const (
-	ProviderConfigurationAwsTrustedEntityTypeAwsAccount ProviderConfigurationAwsTrustedEntityType = "aws_account"
-	ProviderConfigurationAwsTrustedEntityTypeAwsService ProviderConfigurationAwsTrustedEntityType = "aws_service"
-)
-
 // ProviderConfigurationGoogleAuthType represents the type for ProviderConfigurationGoogleAuthType
 // Authentication type to access GCP.
 type ProviderConfigurationGoogleAuthType string
@@ -28,25 +18,14 @@ const (
 	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
 )
 
-// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
-// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
-type ProviderConfigurationAwsCredentialsType string
+// ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
+// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
+type ProviderConfigurationAwsDefaultTagsStrategy string
 
-// ProviderConfigurationAwsCredentialsType constants
+// ProviderConfigurationAwsDefaultTagsStrategy constants
 const (
-	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
-	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
-	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
-)
-
-// ProviderConfigurationAzurermAuthType represents the type for ProviderConfigurationAzurermAuthType
-// The type of azurerm credentials, available options: `client-secrets`, `oidc`.
-type ProviderConfigurationAzurermAuthType string
-
-// ProviderConfigurationAzurermAuthType constants
-const (
-	ProviderConfigurationAzurermAuthTypeClientSecrets ProviderConfigurationAzurermAuthType = "client-secrets"
-	ProviderConfigurationAzurermAuthTypeOidc          ProviderConfigurationAzurermAuthType = "oidc"
+	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
+	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
 )
 
 // ProviderConfigurationAwsAccountType represents the type for ProviderConfigurationAwsAccountType
@@ -60,6 +39,26 @@ const (
 	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
 )
 
+// ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
+// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
+type ProviderConfigurationAwsTrustedEntityType string
+
+// ProviderConfigurationAwsTrustedEntityType constants
+const (
+	ProviderConfigurationAwsTrustedEntityTypeAwsAccount ProviderConfigurationAwsTrustedEntityType = "aws_account"
+	ProviderConfigurationAwsTrustedEntityTypeAwsService ProviderConfigurationAwsTrustedEntityType = "aws_service"
+)
+
+// ProviderConfigurationAzurermAuthType represents the type for ProviderConfigurationAzurermAuthType
+// The type of azurerm credentials, available options: `client-secrets`, `oidc`.
+type ProviderConfigurationAzurermAuthType string
+
+// ProviderConfigurationAzurermAuthType constants
+const (
+	ProviderConfigurationAzurermAuthTypeClientSecrets ProviderConfigurationAzurermAuthType = "client-secrets"
+	ProviderConfigurationAzurermAuthTypeOidc          ProviderConfigurationAzurermAuthType = "oidc"
+)
+
 // ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
 // Provider configuration status. Can be: `active`, `errored`.
 type ProviderConfigurationStatus string
@@ -70,14 +69,15 @@ const (
 	ProviderConfigurationStatusErrored ProviderConfigurationStatus = "errored"
 )
 
-// ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
-// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
-type ProviderConfigurationAwsDefaultTagsStrategy string
+// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
+// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
+type ProviderConfigurationAwsCredentialsType string
 
-// ProviderConfigurationAwsDefaultTagsStrategy constants
+// ProviderConfigurationAwsCredentialsType constants
 const (
-	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
-	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
+	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
+	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
+	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
 )
 
 // Response version - used when unmarshalling from API responses

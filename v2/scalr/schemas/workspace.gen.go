@@ -9,24 +9,16 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
-// The IaC platform of this workspace.
-type WorkspaceIacPlatform string
+// WorkspaceAutoDestroyDays represents the type for WorkspaceAutoDestroyDays
+// How many days should the workspace exist.
+type WorkspaceAutoDestroyDays int
 
-// WorkspaceIacPlatform constants
+// WorkspaceAutoDestroyDays constants
 const (
-	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
-	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
-)
-
-// WorkspaceExecutionMode represents the type for WorkspaceExecutionMode
-// Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
-type WorkspaceExecutionMode string
-
-// WorkspaceExecutionMode constants
-const (
-	WorkspaceExecutionModeRemote WorkspaceExecutionMode = "remote"
-	WorkspaceExecutionModeLocal  WorkspaceExecutionMode = "local"
+	WorkspaceAutoDestroyDays1  WorkspaceAutoDestroyDays = 1
+	WorkspaceAutoDestroyDays2  WorkspaceAutoDestroyDays = 2
+	WorkspaceAutoDestroyDays7  WorkspaceAutoDestroyDays = 7
+	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
 )
 
 // WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns
@@ -54,16 +46,24 @@ const (
 	WorkspaceEnvironmentTypeUnmapped    WorkspaceEnvironmentType = "unmapped"
 )
 
-// WorkspaceAutoDestroyDays represents the type for WorkspaceAutoDestroyDays
-// How many days should the workspace exist.
-type WorkspaceAutoDestroyDays int
+// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
+// The IaC platform of this workspace.
+type WorkspaceIacPlatform string
 
-// WorkspaceAutoDestroyDays constants
+// WorkspaceIacPlatform constants
 const (
-	WorkspaceAutoDestroyDays1  WorkspaceAutoDestroyDays = 1
-	WorkspaceAutoDestroyDays2  WorkspaceAutoDestroyDays = 2
-	WorkspaceAutoDestroyDays7  WorkspaceAutoDestroyDays = 7
-	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
+	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
+	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
+)
+
+// WorkspaceExecutionMode represents the type for WorkspaceExecutionMode
+// Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
+type WorkspaceExecutionMode string
+
+// WorkspaceExecutionMode constants
+const (
+	WorkspaceExecutionModeRemote WorkspaceExecutionMode = "remote"
+	WorkspaceExecutionModeLocal  WorkspaceExecutionMode = "local"
 )
 
 // Response version - used when unmarshalling from API responses

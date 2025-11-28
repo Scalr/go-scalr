@@ -8,14 +8,14 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// VcsProviderCompareStrategy represents the type for VcsProviderCompareStrategy
-// Designates which commit is compared with the head commit to produce diff changes.
-type VcsProviderCompareStrategy string
+// VcsProviderAuthType represents the type for VcsProviderAuthType
+// Authentication type, the VCS API client is using to establish connection with the VCS. * `oauth2` - private OAuth App, user or organization creates in their VCS account. Setup through this method requires a user to complete a [web flow through a browser](/docs/github), where the user should authorize Scalr to connect to their OAuth App. * `personal_token` - a pre-generated authentication token. This method works better if you need to fully automate the VCS provider creation. How to generate access tokens for different VCS providers: * [GitHub and GitHub Enterprise](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) * [GitLab and GitLab Enterprise](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html#creating-a-personal-access-token) * [Azure DevOps](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops-2019&tabs=preview-page) * [Bitbucket Data Center](https://confluence.atlassian.com/bitbucketserver/personal-access-tokens-939515499.html)
+type VcsProviderAuthType string
 
-// VcsProviderCompareStrategy constants
+// VcsProviderAuthType constants
 const (
-	VcsProviderCompareStrategyBaseCommit     VcsProviderCompareStrategy = "base-commit"
-	VcsProviderCompareStrategyPreviousCommit VcsProviderCompareStrategy = "previous-commit"
+	VcsProviderAuthTypeOauth2        VcsProviderAuthType = "oauth2"
+	VcsProviderAuthTypePersonalToken VcsProviderAuthType = "personal_token"
 )
 
 // VcsProviderVcsType represents the type for VcsProviderVcsType
@@ -33,14 +33,14 @@ const (
 	VcsProviderVcsTypeAzureDevOpsServices VcsProviderVcsType = "azure_dev_ops_services"
 )
 
-// VcsProviderAuthType represents the type for VcsProviderAuthType
-// Authentication type, the VCS API client is using to establish connection with the VCS. * `oauth2` - private OAuth App, user or organization creates in their VCS account. Setup through this method requires a user to complete a [web flow through a browser](/docs/github), where the user should authorize Scalr to connect to their OAuth App. * `personal_token` - a pre-generated authentication token. This method works better if you need to fully automate the VCS provider creation. How to generate access tokens for different VCS providers: * [GitHub and GitHub Enterprise](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) * [GitLab and GitLab Enterprise](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html#creating-a-personal-access-token) * [Azure DevOps](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops-2019&tabs=preview-page) * [Bitbucket Data Center](https://confluence.atlassian.com/bitbucketserver/personal-access-tokens-939515499.html)
-type VcsProviderAuthType string
+// VcsProviderCompareStrategy represents the type for VcsProviderCompareStrategy
+// Designates which commit is compared with the head commit to produce diff changes.
+type VcsProviderCompareStrategy string
 
-// VcsProviderAuthType constants
+// VcsProviderCompareStrategy constants
 const (
-	VcsProviderAuthTypeOauth2        VcsProviderAuthType = "oauth2"
-	VcsProviderAuthTypePersonalToken VcsProviderAuthType = "personal_token"
+	VcsProviderCompareStrategyBaseCommit     VcsProviderCompareStrategy = "base-commit"
+	VcsProviderCompareStrategyPreviousCommit VcsProviderCompareStrategy = "previous-commit"
 )
 
 // Response version - used when unmarshalling from API responses

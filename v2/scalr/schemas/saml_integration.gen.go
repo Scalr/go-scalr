@@ -8,6 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// SamlIntegrationVerificationStatus represents the type for SamlIntegrationVerificationStatus
+// Represents the verification status with the IdP SAML provider)
+type SamlIntegrationVerificationStatus string
+
+// SamlIntegrationVerificationStatus constants
+const (
+	SamlIntegrationVerificationStatusPending SamlIntegrationVerificationStatus = "pending"
+	SamlIntegrationVerificationStatusSuccess SamlIntegrationVerificationStatus = "success"
+	SamlIntegrationVerificationStatusRunning SamlIntegrationVerificationStatus = "running"
+)
+
 // SamlIntegrationStatus represents the type for SamlIntegrationStatus
 // Status of SAML integration.
 type SamlIntegrationStatus string
@@ -19,15 +30,15 @@ const (
 	SamlIntegrationStatusFailed   SamlIntegrationStatus = "failed"
 )
 
-// SamlIntegrationSecuritySignatureAlgorithm represents the type for SamlIntegrationSecuritySignatureAlgorithm
-// Algorithm that Scalr will use on signing process.
-type SamlIntegrationSecuritySignatureAlgorithm string
+// SamlIntegrationSecurityDigestAlgorithm represents the type for SamlIntegrationSecurityDigestAlgorithm
+// Algorithm that Scalr will use on digest process.
+type SamlIntegrationSecurityDigestAlgorithm string
 
-// SamlIntegrationSecuritySignatureAlgorithm constants
+// SamlIntegrationSecurityDigestAlgorithm constants
 const (
-	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha256 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
-	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha384 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"
-	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha512 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmldsigMoresha384 SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#sha384"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha512      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha512"
 )
 
 // SamlIntegrationSecurityRequestedAuthnContextComparison represents the type for SamlIntegrationSecurityRequestedAuthnContextComparison
@@ -42,26 +53,15 @@ const (
 	SamlIntegrationSecurityRequestedAuthnContextComparisonMaximum SamlIntegrationSecurityRequestedAuthnContextComparison = "maximum"
 )
 
-// SamlIntegrationVerificationStatus represents the type for SamlIntegrationVerificationStatus
-// Represents the verification status with the IdP SAML provider)
-type SamlIntegrationVerificationStatus string
+// SamlIntegrationSecuritySignatureAlgorithm represents the type for SamlIntegrationSecuritySignatureAlgorithm
+// Algorithm that Scalr will use on signing process.
+type SamlIntegrationSecuritySignatureAlgorithm string
 
-// SamlIntegrationVerificationStatus constants
+// SamlIntegrationSecuritySignatureAlgorithm constants
 const (
-	SamlIntegrationVerificationStatusPending SamlIntegrationVerificationStatus = "pending"
-	SamlIntegrationVerificationStatusSuccess SamlIntegrationVerificationStatus = "success"
-	SamlIntegrationVerificationStatusRunning SamlIntegrationVerificationStatus = "running"
-)
-
-// SamlIntegrationSecurityDigestAlgorithm represents the type for SamlIntegrationSecurityDigestAlgorithm
-// Algorithm that Scalr will use on digest process.
-type SamlIntegrationSecurityDigestAlgorithm string
-
-// SamlIntegrationSecurityDigestAlgorithm constants
-const (
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmldsigMoresha384 SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#sha384"
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha512      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha512"
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha256 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha384 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha512 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
 )
 
 // Response version - used when unmarshalling from API responses
