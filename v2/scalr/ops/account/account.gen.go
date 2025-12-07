@@ -104,6 +104,10 @@ func (c *Client) GetAccountRaw(ctx context.Context, account string, opts *GetAcc
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -147,6 +151,8 @@ func (c *Client) GetAccount(ctx context.Context, account string, opts *GetAccoun
 type GetAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -166,8 +172,10 @@ func (c *Client) GetAccountsRaw(ctx context.Context, opts *GetAccountsOptions) (
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -367,8 +375,8 @@ type GetAccountsOptions struct {
 	PageSize int
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -411,6 +419,10 @@ func (c *Client) ListSsoBypassUsersRaw(ctx context.Context, account string, opts
 		}
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -598,6 +610,8 @@ type ListSsoBypassUsersOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

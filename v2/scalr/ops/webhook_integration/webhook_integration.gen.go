@@ -38,8 +38,10 @@ func (c *Client) CreateWebhookIntegrationRaw(ctx context.Context, req *schemas.W
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -83,8 +85,8 @@ func (c *Client) CreateWebhookIntegration(ctx context.Context, req *schemas.Webh
 
 // CreateWebhookIntegrationOptions holds optional parameters for CreateWebhookIntegration
 type CreateWebhookIntegrationOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -120,8 +122,10 @@ func (c *Client) GetWebhookIntegrationRaw(ctx context.Context, webhook string, o
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -163,8 +167,8 @@ func (c *Client) GetWebhookIntegration(ctx context.Context, webhook string, opts
 
 // GetWebhookIntegrationOptions holds optional parameters for GetWebhookIntegration
 type GetWebhookIntegrationOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -189,8 +193,10 @@ func (c *Client) ListWebhookIntegrationsRaw(ctx context.Context, opts *ListWebho
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -393,8 +399,8 @@ type ListWebhookIntegrationsOptions struct {
 	Sort []string
 	// Query string
 	Query string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -407,8 +413,10 @@ func (c *Client) UpdateWebhookIntegrationRaw(ctx context.Context, webhook string
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -452,8 +460,8 @@ func (c *Client) UpdateWebhookIntegration(ctx context.Context, webhook string, r
 
 // UpdateWebhookIntegrationOptions holds optional parameters for UpdateWebhookIntegration
 type UpdateWebhookIntegrationOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

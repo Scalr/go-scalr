@@ -42,6 +42,10 @@ func (c *Client) ListUsageStatisticsRaw(ctx context.Context, opts *ListUsageStat
 		if opts.Total != "" {
 			params.Set("total", opts.Total)
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -94,6 +98,8 @@ type ListUsageStatisticsOptions struct {
 	BreakdownBy string
 	// Summarize usage statistics by the whole period.
 	Total string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

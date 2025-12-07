@@ -47,6 +47,10 @@ func (c *Client) CreateAssumeServiceAccountPolicyRaw(ctx context.Context, servic
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -92,6 +96,8 @@ func (c *Client) CreateAssumeServiceAccountPolicy(ctx context.Context, serviceAc
 type CreateAssumeServiceAccountPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -105,6 +111,10 @@ func (c *Client) CreateServiceAccountRaw(ctx context.Context, req *schemas.Servi
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -151,6 +161,8 @@ func (c *Client) CreateServiceAccount(ctx context.Context, req *schemas.ServiceA
 type CreateServiceAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -214,6 +226,10 @@ func (c *Client) GetAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAc
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -257,6 +273,8 @@ func (c *Client) GetAssumeServiceAccountPolicy(ctx context.Context, serviceAccou
 type GetAssumeServiceAccountPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -271,6 +289,10 @@ func (c *Client) GetServiceAccountRaw(ctx context.Context, serviceAccount string
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -315,6 +337,8 @@ func (c *Client) GetServiceAccount(ctx context.Context, serviceAccount string, o
 type GetServiceAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -341,6 +365,10 @@ func (c *Client) GetServiceAccountsRaw(ctx context.Context, opts *GetServiceAcco
 		// Handle parameter: Query (string)
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -546,6 +574,8 @@ type GetServiceAccountsOptions struct {
 	Sort []string
 	// Query string
 	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -572,6 +602,10 @@ func (c *Client) ListAssumeServiceAccountPoliciesRaw(ctx context.Context, opts *
 		// Handle parameter: Query (string)
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -777,6 +811,8 @@ type ListAssumeServiceAccountPoliciesOptions struct {
 	Sort []string
 	// Query string
 	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -792,6 +828,10 @@ func (c *Client) UpdateAssumeServiceAccountPolicyRaw(ctx context.Context, servic
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -838,6 +878,8 @@ func (c *Client) UpdateAssumeServiceAccountPolicy(ctx context.Context, serviceAc
 type UpdateAssumeServiceAccountPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -852,6 +894,10 @@ func (c *Client) UpdateServiceAccountRaw(ctx context.Context, serviceAccount str
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -898,6 +944,8 @@ func (c *Client) UpdateServiceAccount(ctx context.Context, serviceAccount string
 type UpdateServiceAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

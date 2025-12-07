@@ -46,8 +46,10 @@ func (c *Client) GetWebhookIntegrationDeliveryRaw(ctx context.Context, webhookDe
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -91,8 +93,8 @@ func (c *Client) GetWebhookIntegrationDelivery(ctx context.Context, webhookDeliv
 type GetWebhookIntegrationDeliveryOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -120,8 +122,10 @@ func (c *Client) ListWebhookIntegrationDeliveriesRaw(ctx context.Context, opts *
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -326,8 +330,8 @@ type ListWebhookIntegrationDeliveriesOptions struct {
 	Sort []string
 	// Query string
 	Query string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

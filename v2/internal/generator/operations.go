@@ -205,6 +205,7 @@ type QueryParam struct {
 	IsSort       bool
 	IsInclude    bool
 	IsPagination bool
+	IsFields     bool
 }
 
 // parseOperation parses an OpenAPI operation
@@ -305,6 +306,10 @@ func (g *Generator) parseQueryParam(param *openapi3.Parameter) QueryParam {
 	case strings.HasPrefix(param.Name, "filter["):
 		qp.IsFilter = true
 		qp.Type = "string"
+	case param.Name == "fields":
+		qp.IsFields = true
+		qp.GoName = "Fields"
+		qp.Type = "map[string]string"
 	case param.Name == "sort":
 		qp.IsSort = true
 		qp.Type = "[]string"

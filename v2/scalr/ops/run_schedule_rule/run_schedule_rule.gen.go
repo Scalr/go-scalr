@@ -97,6 +97,10 @@ func (c *Client) GetRunScheduleRuleRaw(ctx context.Context, runScheduleRule stri
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -140,6 +144,8 @@ func (c *Client) GetRunScheduleRule(ctx context.Context, runScheduleRule string,
 type GetRunScheduleRuleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -159,6 +165,10 @@ func (c *Client) ListScheduleRulesRaw(ctx context.Context, opts *ListScheduleRul
 		}
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -360,6 +370,8 @@ type ListScheduleRulesOptions struct {
 	PageSize int
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

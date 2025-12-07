@@ -35,6 +35,10 @@ func (c *Client) GetJsonOutputRaw(ctx context.Context, plan string, opts *GetJso
 		if opts.Format != "" {
 			params.Set("format", opts.Format)
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -70,6 +74,8 @@ func (c *Client) GetJsonOutput(ctx context.Context, plan string, opts *GetJsonOu
 type GetJsonOutputOptions struct {
 	// Format of the response.
 	Format string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -115,6 +121,10 @@ func (c *Client) GetPlanLogRaw(ctx context.Context, plan string, opts *GetPlanLo
 	if opts != nil {
 		// Handle parameter: Clean (bool)
 		params.Set("clean", fmt.Sprintf("%t", opts.Clean))
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -150,6 +160,8 @@ func (c *Client) GetPlanLog(ctx context.Context, plan string, opts *GetPlanLogOp
 type GetPlanLogOptions struct {
 	// Strip ANSI escape codes.
 	Clean bool
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -165,6 +177,10 @@ func (c *Client) GetSanitizedJsonOutputRaw(ctx context.Context, plan string, opt
 		// Handle parameter: Format (string)
 		if opts.Format != "" {
 			params.Set("format", opts.Format)
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -201,6 +217,8 @@ func (c *Client) GetSanitizedJsonOutput(ctx context.Context, plan string, opts *
 type GetSanitizedJsonOutputOptions struct {
 	// Format of the response.
 	Format string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

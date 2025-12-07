@@ -53,6 +53,10 @@ func (c *Client) ListAccessTokenUsageRaw(ctx context.Context, opts *ListAccessTo
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -245,6 +249,8 @@ type ListAccessTokenUsageOptions struct {
 	Query string
 	// The comma-separated list of attributes.
 	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

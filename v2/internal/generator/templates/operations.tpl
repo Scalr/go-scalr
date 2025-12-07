@@ -50,6 +50,7 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 	if opts != nil {
 		{{range .QueryParams -}}
 		{{if .IsFilter -}}
+		{{else if .IsFields -}}
 		{{else if .IsInclude -}}
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
@@ -75,6 +76,10 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 		{{end -}}
 		{{end -}}
 		{{end -}}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -345,12 +350,14 @@ func (c *Client) {{ .Name }}Paged(ctx context.Context{{range .PathParameters}}, 
 // {{ .Name }}Options holds optional parameters for {{ .Name }}
 type {{ .Name }}Options struct {
 	{{range .QueryParams -}}
-	{{if not .IsFilter -}}
+	{{if not (or .IsFilter .IsFields) -}}
 	{{if .Description}}// {{ .Description }}
 	{{end -}}
 	{{.GoName}} {{.Type}}
 	{{end -}}
 	{{end -}}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

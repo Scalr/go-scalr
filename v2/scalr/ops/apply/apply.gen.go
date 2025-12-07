@@ -64,6 +64,10 @@ func (c *Client) GetApplyLogRaw(ctx context.Context, apply string, opts *GetAppl
 	if opts != nil {
 		// Handle parameter: Clean (bool)
 		params.Set("clean", fmt.Sprintf("%t", opts.Clean))
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -99,6 +103,8 @@ func (c *Client) GetApplyLog(ctx context.Context, apply string, opts *GetApplyLo
 type GetApplyLogOptions struct {
 	// Strip ANSI escape codes.
 	Clean bool
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

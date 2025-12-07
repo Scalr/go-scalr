@@ -63,6 +63,10 @@ func (c *Client) GetPolicyChecksLogRaw(ctx context.Context, policyCheck string, 
 	if opts != nil {
 		// Handle parameter: Clean (bool)
 		params.Set("clean", fmt.Sprintf("%t", opts.Clean))
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -94,6 +98,8 @@ func (c *Client) GetPolicyChecksLog(ctx context.Context, policyCheck string, opt
 type GetPolicyChecksLogOptions struct {
 	// Strip ANSI escape codes.
 	Clean bool
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

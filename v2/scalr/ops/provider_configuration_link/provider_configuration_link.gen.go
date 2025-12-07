@@ -138,6 +138,10 @@ func (c *Client) ListProviderConfigurationLinksRaw(ctx context.Context, workspac
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -340,6 +344,8 @@ type ListProviderConfigurationLinksOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

@@ -103,8 +103,10 @@ func (c *Client) CreateEnvironmentRaw(ctx context.Context, req *schemas.Environm
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -148,8 +150,8 @@ func (c *Client) CreateEnvironment(ctx context.Context, req *schemas.Environment
 
 // CreateEnvironmentOptions holds optional parameters for CreateEnvironment
 type CreateEnvironmentOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -250,8 +252,10 @@ func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -295,8 +299,8 @@ func (c *Client) GetEnvironment(ctx context.Context, environment string, opts *G
 type GetEnvironmentOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -314,6 +318,10 @@ func (c *Client) ListEnvironmentTagsRaw(ctx context.Context, environment string,
 		}
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -501,6 +509,8 @@ type ListEnvironmentTagsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -528,8 +538,10 @@ func (c *Client) ListEnvironmentsRaw(ctx context.Context, opts *ListEnvironments
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -734,8 +746,8 @@ type ListEnvironmentsOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -752,6 +764,10 @@ func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment s
 		}
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -938,6 +954,8 @@ type ListFederatedEnvironmentsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -1011,8 +1029,10 @@ func (c *Client) UpdateEnvironmentRaw(ctx context.Context, environment string, r
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -1055,8 +1075,8 @@ func (c *Client) UpdateEnvironment(ctx context.Context, environment string, req 
 
 // UpdateEnvironmentOptions holds optional parameters for UpdateEnvironment
 type UpdateEnvironmentOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

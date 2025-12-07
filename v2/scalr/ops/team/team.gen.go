@@ -41,6 +41,10 @@ func (c *Client) CreateTeamRaw(ctx context.Context, req *schemas.TeamRequest, op
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -86,6 +90,8 @@ func (c *Client) CreateTeam(ctx context.Context, req *schemas.TeamRequest, opts 
 type CreateTeamOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -123,6 +129,10 @@ func (c *Client) GetTeamRaw(ctx context.Context, team string, opts *GetTeamOptio
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -167,6 +177,8 @@ func (c *Client) GetTeam(ctx context.Context, team string, opts *GetTeamOptions)
 type GetTeamOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -193,6 +205,10 @@ func (c *Client) GetTeamsRaw(ctx context.Context, opts *GetTeamsOptions) (*clien
 		// Handle parameter: Query (string)
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -398,6 +414,8 @@ type GetTeamsOptions struct {
 	Sort []string
 	// Query string
 	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -412,6 +430,10 @@ func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.Te
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -458,6 +480,8 @@ func (c *Client) UpdateTeam(ctx context.Context, team string, req *schemas.TeamR
 type UpdateTeamOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

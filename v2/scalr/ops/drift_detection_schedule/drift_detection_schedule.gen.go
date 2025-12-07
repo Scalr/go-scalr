@@ -29,8 +29,10 @@ func (c *Client) CreateDriftDetectionScheduleRaw(ctx context.Context, req *schem
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -74,8 +76,8 @@ func (c *Client) CreateDriftDetectionSchedule(ctx context.Context, req *schemas.
 
 // CreateDriftDetectionScheduleOptions holds optional parameters for CreateDriftDetectionSchedule
 type CreateDriftDetectionScheduleOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

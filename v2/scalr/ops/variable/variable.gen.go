@@ -44,6 +44,10 @@ func (c *Client) CreateVariableRaw(ctx context.Context, req *schemas.VariableReq
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -91,6 +95,8 @@ type CreateVariableOptions struct {
 	Force bool
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -127,8 +133,10 @@ func (c *Client) GetVariableRaw(ctx context.Context, var_ string, opts *GetVaria
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -172,8 +180,8 @@ func (c *Client) GetVariable(ctx context.Context, var_ string, opts *GetVariable
 type GetVariableOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -196,6 +204,10 @@ func (c *Client) GetVariablesRaw(ctx context.Context, opts *GetVariablesOptions)
 		}
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -399,6 +411,8 @@ type GetVariablesOptions struct {
 	Include []string
 	// The comma-separated list of attributes.
 	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -414,6 +428,10 @@ func (c *Client) UpdateVariableRaw(ctx context.Context, var_ string, req *schema
 		params.Set("force", fmt.Sprintf("%t", opts.Force))
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -461,6 +479,8 @@ type UpdateVariableOptions struct {
 	Force bool
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

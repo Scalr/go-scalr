@@ -182,6 +182,10 @@ func (c *Client) ListStateVersionsRaw(ctx context.Context, opts *ListStateVersio
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -383,6 +387,8 @@ type ListStateVersionsOptions struct {
 	Sort []string
 	// Query string
 	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

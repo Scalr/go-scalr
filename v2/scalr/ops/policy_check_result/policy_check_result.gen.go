@@ -51,8 +51,6 @@ func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupC
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
 		if opts.PageNumber > 0 {
 			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
 		}
@@ -61,6 +59,10 @@ func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupC
 		}
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -262,14 +264,14 @@ type GetPolicyGroupCheckResultsOptions struct {
 	Format string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
 	// Page number
 	PageNumber int
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
 	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

@@ -40,6 +40,10 @@ func (c *Client) CreateRoleRaw(ctx context.Context, req *schemas.RoleRequest, op
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -85,6 +89,8 @@ func (c *Client) CreateRole(ctx context.Context, req *schemas.RoleRequest, opts 
 type CreateRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -122,6 +128,10 @@ func (c *Client) GetRoleRaw(ctx context.Context, role string, opts *GetRoleOptio
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -166,6 +176,8 @@ func (c *Client) GetRole(ctx context.Context, role string, opts *GetRoleOptions)
 type GetRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -192,6 +204,10 @@ func (c *Client) GetRolesRaw(ctx context.Context, opts *GetRolesOptions) (*clien
 		}
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -397,6 +413,8 @@ type GetRolesOptions struct {
 	Query string
 	// The comma-separated list of attributes.
 	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -411,6 +429,10 @@ func (c *Client) UpdateRoleRaw(ctx context.Context, role string, req *schemas.Ro
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -457,6 +479,8 @@ func (c *Client) UpdateRole(ctx context.Context, role string, req *schemas.RoleR
 type UpdateRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

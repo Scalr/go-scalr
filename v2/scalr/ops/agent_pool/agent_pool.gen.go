@@ -44,6 +44,10 @@ func (c *Client) CreateAgentPoolRaw(ctx context.Context, req *schemas.AgentPoolR
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -89,6 +93,8 @@ func (c *Client) CreateAgentPool(ctx context.Context, req *schemas.AgentPoolRequ
 type CreateAgentPoolOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -126,6 +132,10 @@ func (c *Client) GetAgentPoolRaw(ctx context.Context, agentPool string, opts *Ge
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -170,6 +180,8 @@ func (c *Client) GetAgentPool(ctx context.Context, agentPool string, opts *GetAg
 type GetAgentPoolOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -192,6 +204,10 @@ func (c *Client) GetAgentPoolsRaw(ctx context.Context, opts *GetAgentPoolsOption
 		}
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -395,6 +411,8 @@ type GetAgentPoolsOptions struct {
 	Include []string
 	// The comma-separated list of attributes.
 	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -409,6 +427,10 @@ func (c *Client) UpdateAgentPoolRaw(ctx context.Context, agentPool string, req *
 	if opts != nil {
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -455,6 +477,8 @@ func (c *Client) UpdateAgentPool(ctx context.Context, agentPool string, req *sch
 type UpdateAgentPoolOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

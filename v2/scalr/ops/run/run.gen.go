@@ -105,6 +105,10 @@ func (c *Client) CreateRunRaw(ctx context.Context, req *schemas.RunRequest, opts
 		if opts.VcsTaskId != "" {
 			params.Set("vcs-task-id", opts.VcsTaskId)
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -152,6 +156,8 @@ type CreateRunOptions struct {
 	VcsUserId int
 	// The ID of a VCS task which triggered the run. Internal use only.
 	VcsTaskId string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -193,6 +199,10 @@ func (c *Client) DownloadPolicyInputRaw(ctx context.Context, run string, opts *D
 		if opts.Stage != "" {
 			params.Set("stage", opts.Stage)
 		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -228,6 +238,8 @@ func (c *Client) DownloadPolicyInput(ctx context.Context, run string, opts *Down
 type DownloadPolicyInputOptions struct {
 	// The run stage
 	Stage string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -268,8 +280,10 @@ func (c *Client) GetRunRaw(ctx context.Context, run string, opts *GetRunOptions)
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -313,8 +327,8 @@ func (c *Client) GetRun(ctx context.Context, run string, opts *GetRunOptions) (*
 type GetRunOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -343,8 +357,10 @@ func (c *Client) GetRunsRaw(ctx context.Context, opts *GetRunsOptions) (*client.
 		if opts.Scheduled != "" {
 			params.Set("scheduled", opts.Scheduled)
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -549,8 +565,8 @@ type GetRunsOptions struct {
 	Query string
 	// List only runs that are scheduled.
 	Scheduled string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -579,8 +595,10 @@ func (c *Client) GetRunsQueueRaw(ctx context.Context, opts *GetRunsQueueOptions)
 		if opts.Scheduled != "" {
 			params.Set("scheduled", opts.Scheduled)
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -785,8 +803,8 @@ type GetRunsQueueOptions struct {
 	Query string
 	// List only runs that are scheduled.
 	Scheduled string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string

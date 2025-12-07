@@ -37,8 +37,10 @@ func (c *Client) GetResourceUsageRaw(ctx context.Context, resourceUsage string, 
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -80,8 +82,8 @@ func (c *Client) GetResourceUsage(ctx context.Context, resourceUsage string, opt
 
 // GetResourceUsageOptions holds optional parameters for GetResourceUsage
 type GetResourceUsageOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -96,6 +98,10 @@ func (c *Client) ListTerraformResourceProvidersRaw(ctx context.Context, opts *Li
 		// Handle parameter: Query (string)
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
+		}
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
 		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
@@ -132,6 +138,8 @@ func (c *Client) ListTerraformResourceProviders(ctx context.Context, opts *ListT
 type ListTerraformResourceProvidersOptions struct {
 	// Query string
 	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
@@ -160,8 +168,10 @@ func (c *Client) ListTerraformResourceUsagesRaw(ctx context.Context, opts *ListT
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
 		// Add filters (keys should be full parameter names like "filter[account]")
 		for k, v := range opts.Filters {
 			params.Set(k, v)
@@ -366,8 +376,8 @@ type ListTerraformResourceUsagesOptions struct {
 	Format string
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
 	// Filters maps filter keys to their values.
 	// Use the Filter* constants defined in this package.
 	Filters map[string]string
