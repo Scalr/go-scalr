@@ -9,49 +9,49 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// RunStatus represents the type for RunStatus
-// The Run's current status. Initial status: * `pending` - The initial status of a run once it has been created. Scalr processes each workspace's runs in the order they were queued, and a run remains pending until every run before it has completed. The exception are Runs having `is-dry: true`. Such runs don't modify a workspace's state, and could run in a parallel until the account's runs quota limit. Plan stage: * `plan_queued` - The plan is queued and waiting for capacity/and or quota to be available. * `planning` - Scalr is currently running `terraform plan`. * `planned` - `terraform plan` has finished. If the run's workspace has `auto-apply: false`, Scalr pauses the run in this state, awaiting confirmation. * `confirmed` - Run has been confirmed to apply. Cost estimate stage (optional): * `cost_estimating` - Scalr is currently calculating the cost estimate for the plan. * `cost_estimated` - The cost estimation stage has finished. Policy check stage (optional): * `policy_checking` - Scalr is currently checking the plan against the environment's policies. * `policy_checked` - The policy check succeeded, and Policy Engine will allow an apply to proceed. Scalr sometimes pauses in this state, depending on workspace settings. * `policy_override` - The policy check finished, but at least one `soft-mandatory` policy failed, so an apply cannot proceed without approval from a user having `policy-checks:override` permission. The run pauses in this state. Apply stage: * `apply_queued` - The apply is queued and waiting for capacity/and or quota to be available. * `applying` - Scalr is currently running `terraform apply`. * `applied` - Scalr has successfully finished applying. Ending statuses: * `planned_and_finished` - Dry run's pipeline of Plan -> CostEstimate -> PolicyCheck stages have finished. This is the final state for dry run. * `errored` - The run has finished with an error. The attribute `error-message` has the details. * `discarded` - A user chose not to continue this run from a confirmation state * `canceled` - A user interrupted the run from any active stage.
-type RunStatus string
-
-// RunStatus constants
-const (
-	RunStatusPending            RunStatus = "pending"
-	RunStatusPrePlanQueued      RunStatus = "pre_plan_queued"
-	RunStatusPrePlanRunning     RunStatus = "pre_plan_running"
-	RunStatusPrePlanFinished    RunStatus = "pre_plan_finished"
-	RunStatusPlanQueued         RunStatus = "plan_queued"
-	RunStatusPlanning           RunStatus = "planning"
-	RunStatusPlanned            RunStatus = "planned"
-	RunStatusConfirmed          RunStatus = "confirmed"
-	RunStatusDiscarded          RunStatus = "discarded"
-	RunStatusPlannedAndFinished RunStatus = "planned_and_finished"
-	RunStatusPostPlanRunning    RunStatus = "post_plan_running"
-	RunStatusPostPlanFinished   RunStatus = "post_plan_finished"
-	RunStatusCostEstimating     RunStatus = "cost_estimating"
-	RunStatusCostEstimated      RunStatus = "cost_estimated"
-	RunStatusPolicyChecking     RunStatus = "policy_checking"
-	RunStatusPolicyOverride     RunStatus = "policy_override"
-	RunStatusPolicyChecked      RunStatus = "policy_checked"
-	RunStatusPreApplyQueued     RunStatus = "pre_apply_queued"
-	RunStatusPreApplyRunning    RunStatus = "pre_apply_running"
-	RunStatusPreApplyFinished   RunStatus = "pre_apply_finished"
-	RunStatusApplyQueued        RunStatus = "apply_queued"
-	RunStatusApplying           RunStatus = "applying"
-	RunStatusApplied            RunStatus = "applied"
-	RunStatusPostApplyRunning   RunStatus = "post_apply_running"
-	RunStatusPostApplyFinished  RunStatus = "post_apply_finished"
-	RunStatusErrored            RunStatus = "errored"
-	RunStatusCanceled           RunStatus = "canceled"
-)
-
 // RunIacPlatform represents the type for RunIacPlatform
 // The IaC platform for the run.
 type RunIacPlatform string
 
 // RunIacPlatform constants
 const (
-	RunIacPlatformTerraform RunIacPlatform = "terraform"
 	RunIacPlatformOpentofu  RunIacPlatform = "opentofu"
+	RunIacPlatformTerraform RunIacPlatform = "terraform"
+)
+
+// RunStatus represents the type for RunStatus
+// The Run's current status. Initial status: * `pending` - The initial status of a run once it has been created. Scalr processes each workspace's runs in the order they were queued, and a run remains pending until every run before it has completed. The exception are Runs having `is-dry: true`. Such runs don't modify a workspace's state, and could run in a parallel until the account's runs quota limit. Plan stage: * `plan_queued` - The plan is queued and waiting for capacity/and or quota to be available. * `planning` - Scalr is currently running `terraform plan`. * `planned` - `terraform plan` has finished. If the run's workspace has `auto-apply: false`, Scalr pauses the run in this state, awaiting confirmation. * `confirmed` - Run has been confirmed to apply. Cost estimate stage (optional): * `cost_estimating` - Scalr is currently calculating the cost estimate for the plan. * `cost_estimated` - The cost estimation stage has finished. Policy check stage (optional): * `policy_checking` - Scalr is currently checking the plan against the environment's policies. * `policy_checked` - The policy check succeeded, and Policy Engine will allow an apply to proceed. Scalr sometimes pauses in this state, depending on workspace settings. * `policy_override` - The policy check finished, but at least one `soft-mandatory` policy failed, so an apply cannot proceed without approval from a user having `policy-checks:override` permission. The run pauses in this state. Apply stage: * `apply_queued` - The apply is queued and waiting for capacity/and or quota to be available. * `applying` - Scalr is currently running `terraform apply`. * `applied` - Scalr has successfully finished applying. Ending statuses: * `planned_and_finished` - Dry run's pipeline of Plan -> CostEstimate -> PolicyCheck stages have finished. This is the final state for dry run. * `errored` - The run has finished with an error. The attribute `error-message` has the details. * `discarded` - A user chose not to continue this run from a confirmation state * `canceled` - A user interrupted the run from any active stage.
+type RunStatus string
+
+// RunStatus constants
+const (
+	RunStatusApplied            RunStatus = "applied"
+	RunStatusApplyQueued        RunStatus = "apply_queued"
+	RunStatusApplying           RunStatus = "applying"
+	RunStatusCanceled           RunStatus = "canceled"
+	RunStatusConfirmed          RunStatus = "confirmed"
+	RunStatusCostEstimated      RunStatus = "cost_estimated"
+	RunStatusCostEstimating     RunStatus = "cost_estimating"
+	RunStatusDiscarded          RunStatus = "discarded"
+	RunStatusErrored            RunStatus = "errored"
+	RunStatusPending            RunStatus = "pending"
+	RunStatusPlanQueued         RunStatus = "plan_queued"
+	RunStatusPlanned            RunStatus = "planned"
+	RunStatusPlannedAndFinished RunStatus = "planned_and_finished"
+	RunStatusPlanning           RunStatus = "planning"
+	RunStatusPolicyChecked      RunStatus = "policy_checked"
+	RunStatusPolicyChecking     RunStatus = "policy_checking"
+	RunStatusPolicyOverride     RunStatus = "policy_override"
+	RunStatusPostApplyFinished  RunStatus = "post_apply_finished"
+	RunStatusPostApplyRunning   RunStatus = "post_apply_running"
+	RunStatusPostPlanFinished   RunStatus = "post_plan_finished"
+	RunStatusPostPlanRunning    RunStatus = "post_plan_running"
+	RunStatusPreApplyFinished   RunStatus = "pre_apply_finished"
+	RunStatusPreApplyQueued     RunStatus = "pre_apply_queued"
+	RunStatusPreApplyRunning    RunStatus = "pre_apply_running"
+	RunStatusPrePlanFinished    RunStatus = "pre_plan_finished"
+	RunStatusPrePlanQueued      RunStatus = "pre_plan_queued"
+	RunStatusPrePlanRunning     RunStatus = "pre_plan_running"
 )
 
 // Response version - used when unmarshalling from API responses

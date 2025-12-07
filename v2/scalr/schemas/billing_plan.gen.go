@@ -14,9 +14,9 @@ type BillingPlanPlanType string
 
 // BillingPlanPlanType constants
 const (
+	BillingPlanPlanTypeDeprecatedYearly BillingPlanPlanType = "deprecated-yearly"
 	BillingPlanPlanTypeMonthly          BillingPlanPlanType = "monthly"
 	BillingPlanPlanTypeYearly           BillingPlanPlanType = "yearly"
-	BillingPlanPlanTypeDeprecatedYearly BillingPlanPlanType = "deprecated-yearly"
 )
 
 // Response version - used when unmarshalling from API responses

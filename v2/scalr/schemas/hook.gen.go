@@ -15,9 +15,9 @@ type HookStatus string
 
 // HookStatus constants
 const (
-	HookStatusPending HookStatus = "pending"
 	HookStatusActive  HookStatus = "active"
 	HookStatusErrored HookStatus = "errored"
+	HookStatusPending HookStatus = "pending"
 )
 
 // Response version - used when unmarshalling from API responses

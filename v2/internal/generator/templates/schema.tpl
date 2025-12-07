@@ -242,6 +242,25 @@ type {{ .Name }}RelationshipsRequest struct {
 {{end}}
 
 {{range .NestedStructs}}
+{{range .EnumTypes}}
+// {{ .Name }} represents the type for {{ .Name }}
+{{if .Description}}// {{ .Description }}{{end}}
+type {{ .Name }} {{ .BaseType }}
+
+// {{ .Name }} constants
+const (
+{{- $enumTypeName := .Name}}
+{{- $baseType := .BaseType}}
+{{- range .Values}}
+	{{- if eq $baseType "string"}}
+	{{.Name}} {{$enumTypeName}} = "{{.Value}}"
+	{{- else}}
+	{{.Name}} {{$enumTypeName}} = {{.Value}}
+	{{- end}}
+{{- end}}
+)
+
+{{end}}
 {{if .Description}}// {{ .Description }}{{end}}
 type {{ .Name }} struct {
 {{range .Fields -}}
@@ -254,6 +273,25 @@ type {{ .Name }} struct {
 {{end}}
 
 {{range .RequestNestedStructs}}
+{{range .EnumTypes}}
+// {{ .Name }} represents the type for {{ .Name }}
+{{if .Description}}// {{ .Description }}{{end}}
+type {{ .Name }} {{ .BaseType }}
+
+// {{ .Name }} constants
+const (
+{{- $enumTypeName := .Name}}
+{{- $baseType := .BaseType}}
+{{- range .Values}}
+	{{- if eq $baseType "string"}}
+	{{.Name}} {{$enumTypeName}} = "{{.Value}}"
+	{{- else}}
+	{{.Name}} {{$enumTypeName}} = {{.Value}}
+	{{- end}}
+{{- end}}
+)
+
+{{end}}
 {{if .Description}}// {{ .Description }} (for requests){{end}}
 type {{ .Name }} struct {
 {{range .Fields -}}

@@ -15,10 +15,10 @@ type ModuleVersionStatus string
 
 // ModuleVersionStatus constants
 const (
-	ModuleVersionStatusNotUploaded   ModuleVersionStatus = "not_uploaded"
-	ModuleVersionStatusPending       ModuleVersionStatus = "pending"
-	ModuleVersionStatusOk            ModuleVersionStatus = "ok"
 	ModuleVersionStatusErrored       ModuleVersionStatus = "errored"
+	ModuleVersionStatusNotUploaded   ModuleVersionStatus = "not_uploaded"
+	ModuleVersionStatusOk            ModuleVersionStatus = "ok"
+	ModuleVersionStatusPending       ModuleVersionStatus = "pending"
 	ModuleVersionStatusPendingDelete ModuleVersionStatus = "pending_delete"
 )
 

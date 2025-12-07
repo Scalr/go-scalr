@@ -9,31 +9,31 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// SoftwareVersionStatus represents the type for SoftwareVersionStatus
-// The Docker image status.
-type SoftwareVersionStatus string
-
-// SoftwareVersionStatus constants
-const (
-	SoftwareVersionStatusPending      SoftwareVersionStatus = "pending"
-	SoftwareVersionStatusFailed       SoftwareVersionStatus = "failed"
-	SoftwareVersionStatusActive       SoftwareVersionStatus = "active"
-	SoftwareVersionStatusNotAvailable SoftwareVersionStatus = "not-available"
-)
-
 // SoftwareVersionSoftwareType represents the type for SoftwareVersionSoftwareType
 // The type of the software.
 type SoftwareVersionSoftwareType string
 
 // SoftwareVersionSoftwareType constants
 const (
-	SoftwareVersionSoftwareTypeOpa        SoftwareVersionSoftwareType = "opa"
-	SoftwareVersionSoftwareTypeTerraform  SoftwareVersionSoftwareType = "terraform"
-	SoftwareVersionSoftwareTypeInfracost  SoftwareVersionSoftwareType = "infracost"
-	SoftwareVersionSoftwareTypeOpentofu   SoftwareVersionSoftwareType = "opentofu"
-	SoftwareVersionSoftwareTypeTerragrunt SoftwareVersionSoftwareType = "terragrunt"
 	SoftwareVersionSoftwareTypeCheckov    SoftwareVersionSoftwareType = "checkov"
+	SoftwareVersionSoftwareTypeInfracost  SoftwareVersionSoftwareType = "infracost"
+	SoftwareVersionSoftwareTypeOpa        SoftwareVersionSoftwareType = "opa"
+	SoftwareVersionSoftwareTypeOpentofu   SoftwareVersionSoftwareType = "opentofu"
 	SoftwareVersionSoftwareTypeRunner     SoftwareVersionSoftwareType = "runner"
+	SoftwareVersionSoftwareTypeTerraform  SoftwareVersionSoftwareType = "terraform"
+	SoftwareVersionSoftwareTypeTerragrunt SoftwareVersionSoftwareType = "terragrunt"
+)
+
+// SoftwareVersionStatus represents the type for SoftwareVersionStatus
+// The Docker image status.
+type SoftwareVersionStatus string
+
+// SoftwareVersionStatus constants
+const (
+	SoftwareVersionStatusActive       SoftwareVersionStatus = "active"
+	SoftwareVersionStatusFailed       SoftwareVersionStatus = "failed"
+	SoftwareVersionStatusNotAvailable SoftwareVersionStatus = "not-available"
+	SoftwareVersionStatusPending      SoftwareVersionStatus = "pending"
 )
 
 // Response version - used when unmarshalling from API responses

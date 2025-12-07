@@ -8,15 +8,38 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// SamlIntegrationVerificationStatus represents the type for SamlIntegrationVerificationStatus
-// Represents the verification status with the IdP SAML provider)
-type SamlIntegrationVerificationStatus string
+// SamlIntegrationSecurityDigestAlgorithm represents the type for SamlIntegrationSecurityDigestAlgorithm
+// Algorithm that Scalr will use on digest process.
+type SamlIntegrationSecurityDigestAlgorithm string
 
-// SamlIntegrationVerificationStatus constants
+// SamlIntegrationSecurityDigestAlgorithm constants
 const (
-	SamlIntegrationVerificationStatusPending SamlIntegrationVerificationStatus = "pending"
-	SamlIntegrationVerificationStatusSuccess SamlIntegrationVerificationStatus = "success"
-	SamlIntegrationVerificationStatusRunning SamlIntegrationVerificationStatus = "running"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmldsigMoresha384 SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#sha384"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha512      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha512"
+)
+
+// SamlIntegrationSecurityRequestedAuthnContextComparison represents the type for SamlIntegrationSecurityRequestedAuthnContextComparison
+// Allows the authn comparison parameter to be set.
+type SamlIntegrationSecurityRequestedAuthnContextComparison string
+
+// SamlIntegrationSecurityRequestedAuthnContextComparison constants
+const (
+	SamlIntegrationSecurityRequestedAuthnContextComparisonBetter  SamlIntegrationSecurityRequestedAuthnContextComparison = "better"
+	SamlIntegrationSecurityRequestedAuthnContextComparisonExact   SamlIntegrationSecurityRequestedAuthnContextComparison = "exact"
+	SamlIntegrationSecurityRequestedAuthnContextComparisonMaximum SamlIntegrationSecurityRequestedAuthnContextComparison = "maximum"
+	SamlIntegrationSecurityRequestedAuthnContextComparisonMinimum SamlIntegrationSecurityRequestedAuthnContextComparison = "minimum"
+)
+
+// SamlIntegrationSecuritySignatureAlgorithm represents the type for SamlIntegrationSecuritySignatureAlgorithm
+// Algorithm that Scalr will use on signing process.
+type SamlIntegrationSecuritySignatureAlgorithm string
+
+// SamlIntegrationSecuritySignatureAlgorithm constants
+const (
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha256 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha384 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"
+	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha512 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
 )
 
 // SamlIntegrationStatus represents the type for SamlIntegrationStatus
@@ -30,38 +53,15 @@ const (
 	SamlIntegrationStatusFailed   SamlIntegrationStatus = "failed"
 )
 
-// SamlIntegrationSecurityDigestAlgorithm represents the type for SamlIntegrationSecurityDigestAlgorithm
-// Algorithm that Scalr will use on digest process.
-type SamlIntegrationSecurityDigestAlgorithm string
+// SamlIntegrationVerificationStatus represents the type for SamlIntegrationVerificationStatus
+// Represents the verification status with the IdP SAML provider)
+type SamlIntegrationVerificationStatus string
 
-// SamlIntegrationSecurityDigestAlgorithm constants
+// SamlIntegrationVerificationStatus constants
 const (
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmldsigMoresha384 SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#sha384"
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha512      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha512"
-)
-
-// SamlIntegrationSecurityRequestedAuthnContextComparison represents the type for SamlIntegrationSecurityRequestedAuthnContextComparison
-// Allows the authn comparison parameter to be set.
-type SamlIntegrationSecurityRequestedAuthnContextComparison string
-
-// SamlIntegrationSecurityRequestedAuthnContextComparison constants
-const (
-	SamlIntegrationSecurityRequestedAuthnContextComparisonExact   SamlIntegrationSecurityRequestedAuthnContextComparison = "exact"
-	SamlIntegrationSecurityRequestedAuthnContextComparisonMinimum SamlIntegrationSecurityRequestedAuthnContextComparison = "minimum"
-	SamlIntegrationSecurityRequestedAuthnContextComparisonBetter  SamlIntegrationSecurityRequestedAuthnContextComparison = "better"
-	SamlIntegrationSecurityRequestedAuthnContextComparisonMaximum SamlIntegrationSecurityRequestedAuthnContextComparison = "maximum"
-)
-
-// SamlIntegrationSecuritySignatureAlgorithm represents the type for SamlIntegrationSecuritySignatureAlgorithm
-// Algorithm that Scalr will use on signing process.
-type SamlIntegrationSecuritySignatureAlgorithm string
-
-// SamlIntegrationSecuritySignatureAlgorithm constants
-const (
-	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha256 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
-	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha384 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"
-	SamlIntegrationSecuritySignatureAlgorithmHttpwwwW3Org200104xmldsigMorersaSha512 SamlIntegrationSecuritySignatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
+	SamlIntegrationVerificationStatusPending SamlIntegrationVerificationStatus = "pending"
+	SamlIntegrationVerificationStatusRunning SamlIntegrationVerificationStatus = "running"
+	SamlIntegrationVerificationStatusSuccess SamlIntegrationVerificationStatus = "success"
 )
 
 // Response version - used when unmarshalling from API responses

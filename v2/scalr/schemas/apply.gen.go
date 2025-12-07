@@ -14,12 +14,12 @@ type ApplyStatus string
 
 // ApplyStatus constants
 const (
+	ApplyStatusCanceled    ApplyStatus = "canceled"
+	ApplyStatusErrored     ApplyStatus = "errored"
+	ApplyStatusFinished    ApplyStatus = "finished"
 	ApplyStatusPending     ApplyStatus = "pending"
 	ApplyStatusQueued      ApplyStatus = "queued"
 	ApplyStatusRunning     ApplyStatus = "running"
-	ApplyStatusFinished    ApplyStatus = "finished"
-	ApplyStatusCanceled    ApplyStatus = "canceled"
-	ApplyStatusErrored     ApplyStatus = "errored"
 	ApplyStatusUnreachable ApplyStatus = "unreachable"
 )
 

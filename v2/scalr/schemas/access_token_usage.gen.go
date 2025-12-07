@@ -15,8 +15,8 @@ type AccessTokenUsageOwnerType string
 
 // AccessTokenUsageOwnerType constants
 const (
-	AccessTokenUsageOwnerTypeUser           AccessTokenUsageOwnerType = "user"
 	AccessTokenUsageOwnerTypeServiceAccount AccessTokenUsageOwnerType = "service-account"
+	AccessTokenUsageOwnerTypeUser           AccessTokenUsageOwnerType = "user"
 )
 
 // Response version - used when unmarshalling from API responses

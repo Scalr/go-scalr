@@ -15,9 +15,9 @@ type VariableCategory string
 
 // VariableCategory constants
 const (
-	VariableCategoryTerraform VariableCategory = "terraform"
-	VariableCategoryShell     VariableCategory = "shell"
 	VariableCategoryEnv       VariableCategory = "env"
+	VariableCategoryShell     VariableCategory = "shell"
+	VariableCategoryTerraform VariableCategory = "terraform"
 )
 
 // Response version - used when unmarshalling from API responses

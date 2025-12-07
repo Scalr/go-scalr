@@ -15,13 +15,13 @@ type DriftReportStatus string
 
 // DriftReportStatus constants
 const (
-	DriftReportStatusPending              DriftReportStatus = "pending"
+	DriftReportStatusAcceptState          DriftReportStatus = "accept_state"
+	DriftReportStatusAwaitingManualAction DriftReportStatus = "awaiting_manual_action"
+	DriftReportStatusDiscarded            DriftReportStatus = "discarded"
 	DriftReportStatusErrored              DriftReportStatus = "errored"
 	DriftReportStatusInProgress           DriftReportStatus = "in_progress"
 	DriftReportStatusNoDriftDetected      DriftReportStatus = "no_drift_detected"
-	DriftReportStatusAwaitingManualAction DriftReportStatus = "awaiting_manual_action"
-	DriftReportStatusDiscarded            DriftReportStatus = "discarded"
-	DriftReportStatusAcceptState          DriftReportStatus = "accept_state"
+	DriftReportStatusPending              DriftReportStatus = "pending"
 	DriftReportStatusResetState           DriftReportStatus = "reset_state"
 )
 

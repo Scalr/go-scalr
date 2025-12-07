@@ -8,14 +8,26 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// ProviderConfigurationGoogleAuthType represents the type for ProviderConfigurationGoogleAuthType
-// Authentication type to access GCP.
-type ProviderConfigurationGoogleAuthType string
+// ProviderConfigurationAwsAccountType represents the type for ProviderConfigurationAwsAccountType
+// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
+type ProviderConfigurationAwsAccountType string
 
-// ProviderConfigurationGoogleAuthType constants
+// ProviderConfigurationAwsAccountType constants
 const (
-	ProviderConfigurationGoogleAuthTypeServiceAccountKey ProviderConfigurationGoogleAuthType = "service-account-key"
-	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
+	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
+	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
+	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
+)
+
+// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
+// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
+type ProviderConfigurationAwsCredentialsType string
+
+// ProviderConfigurationAwsCredentialsType constants
+const (
+	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
+	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
+	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
 )
 
 // ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
@@ -26,17 +38,6 @@ type ProviderConfigurationAwsDefaultTagsStrategy string
 const (
 	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
 	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
-)
-
-// ProviderConfigurationAwsAccountType represents the type for ProviderConfigurationAwsAccountType
-// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
-type ProviderConfigurationAwsAccountType string
-
-// ProviderConfigurationAwsAccountType constants
-const (
-	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
-	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
-	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
 )
 
 // ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
@@ -59,6 +60,16 @@ const (
 	ProviderConfigurationAzurermAuthTypeOidc          ProviderConfigurationAzurermAuthType = "oidc"
 )
 
+// ProviderConfigurationGoogleAuthType represents the type for ProviderConfigurationGoogleAuthType
+// Authentication type to access GCP.
+type ProviderConfigurationGoogleAuthType string
+
+// ProviderConfigurationGoogleAuthType constants
+const (
+	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
+	ProviderConfigurationGoogleAuthTypeServiceAccountKey ProviderConfigurationGoogleAuthType = "service-account-key"
+)
+
 // ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
 // Provider configuration status. Can be: `active`, `errored`.
 type ProviderConfigurationStatus string
@@ -67,17 +78,6 @@ type ProviderConfigurationStatus string
 const (
 	ProviderConfigurationStatusActive  ProviderConfigurationStatus = "active"
 	ProviderConfigurationStatusErrored ProviderConfigurationStatus = "errored"
-)
-
-// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
-// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
-type ProviderConfigurationAwsCredentialsType string
-
-// ProviderConfigurationAwsCredentialsType constants
-const (
-	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
-	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
-	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
 )
 
 // Response version - used when unmarshalling from API responses

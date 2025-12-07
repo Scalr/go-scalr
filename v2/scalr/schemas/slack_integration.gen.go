@@ -8,6 +8,18 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// SlackIntegrationEventsItem represents the type for SlackIntegrationEventsItem
+
+type SlackIntegrationEventsItem string
+
+// SlackIntegrationEventsItem constants
+const (
+	SlackIntegrationEventsItemDriftDetected       SlackIntegrationEventsItem = "drift_detected"
+	SlackIntegrationEventsItemRunApprovalRequired SlackIntegrationEventsItem = "run_approval_required"
+	SlackIntegrationEventsItemRunErrored          SlackIntegrationEventsItem = "run_errored"
+	SlackIntegrationEventsItemRunSuccess          SlackIntegrationEventsItem = "run_success"
+)
+
 // SlackIntegrationRunMode represents the type for SlackIntegrationRunMode
 // What type of runs should be reported.
 type SlackIntegrationRunMode string
@@ -59,7 +71,7 @@ type SlackIntegrationAttributes struct {
 	// Message from service that points to nature of a problem
 	ErrMessage *string `json:"err-message"`
 	// Events for which to get notifications.
-	Events []string `json:"events"`
+	Events []SlackIntegrationEventsItem `json:"events"`
 	// Whether to notify about success or failure from the apply step only
 	IsApplyOnly bool `json:"is-apply-only"`
 	// Name of Slack integration
@@ -279,7 +291,7 @@ type SlackIntegrationAttributesRequest struct {
 	// A Slack channel ID to which to send messages.
 	ChannelId *value.Value[string] `json:"channel-id,omitempty"`
 	// Events for which to get notifications.
-	Events *value.Value[[]string] `json:"events,omitempty"`
+	Events *value.Value[[]SlackIntegrationEventsItem] `json:"events,omitempty"`
 	// Whether to notify about success or failure from the apply step only
 	IsApplyOnly *value.Value[bool] `json:"is-apply-only,omitempty"`
 	// Name of Slack integration

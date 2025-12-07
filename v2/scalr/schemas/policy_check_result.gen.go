@@ -14,10 +14,10 @@ type PolicyCheckResultResult string
 
 // PolicyCheckResultResult constants
 const (
-	PolicyCheckResultResultPassed         PolicyCheckResultResult = "passed"
-	PolicyCheckResultResultHardFailed     PolicyCheckResultResult = "hard_failed"
-	PolicyCheckResultResultSoftFailed     PolicyCheckResultResult = "soft_failed"
 	PolicyCheckResultResultAdvisoryFailed PolicyCheckResultResult = "advisory_failed"
+	PolicyCheckResultResultHardFailed     PolicyCheckResultResult = "hard_failed"
+	PolicyCheckResultResultPassed         PolicyCheckResultResult = "passed"
+	PolicyCheckResultResultSoftFailed     PolicyCheckResultResult = "soft_failed"
 )
 
 // Response version - used when unmarshalling from API responses

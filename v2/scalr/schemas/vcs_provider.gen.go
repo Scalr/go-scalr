@@ -18,21 +18,6 @@ const (
 	VcsProviderAuthTypePersonalToken VcsProviderAuthType = "personal_token"
 )
 
-// VcsProviderVcsType represents the type for VcsProviderVcsType
-// VCS provider type.
-type VcsProviderVcsType string
-
-// VcsProviderVcsType constants
-const (
-	VcsProviderVcsTypeGithub              VcsProviderVcsType = "github"
-	VcsProviderVcsTypeGitlab              VcsProviderVcsType = "gitlab"
-	VcsProviderVcsTypeBitbucket           VcsProviderVcsType = "bitbucket"
-	VcsProviderVcsTypeBitbucketEnterprise VcsProviderVcsType = "bitbucket_enterprise"
-	VcsProviderVcsTypeGitlabEnterprise    VcsProviderVcsType = "gitlab_enterprise"
-	VcsProviderVcsTypeGithubEnterprise    VcsProviderVcsType = "github_enterprise"
-	VcsProviderVcsTypeAzureDevOpsServices VcsProviderVcsType = "azure_dev_ops_services"
-)
-
 // VcsProviderCompareStrategy represents the type for VcsProviderCompareStrategy
 // Designates which commit is compared with the head commit to produce diff changes.
 type VcsProviderCompareStrategy string
@@ -41,6 +26,21 @@ type VcsProviderCompareStrategy string
 const (
 	VcsProviderCompareStrategyBaseCommit     VcsProviderCompareStrategy = "base-commit"
 	VcsProviderCompareStrategyPreviousCommit VcsProviderCompareStrategy = "previous-commit"
+)
+
+// VcsProviderVcsType represents the type for VcsProviderVcsType
+// VCS provider type.
+type VcsProviderVcsType string
+
+// VcsProviderVcsType constants
+const (
+	VcsProviderVcsTypeAzureDevOpsServices VcsProviderVcsType = "azure_dev_ops_services"
+	VcsProviderVcsTypeBitbucket           VcsProviderVcsType = "bitbucket"
+	VcsProviderVcsTypeBitbucketEnterprise VcsProviderVcsType = "bitbucket_enterprise"
+	VcsProviderVcsTypeGithub              VcsProviderVcsType = "github"
+	VcsProviderVcsTypeGithubEnterprise    VcsProviderVcsType = "github_enterprise"
+	VcsProviderVcsTypeGitlab              VcsProviderVcsType = "gitlab"
+	VcsProviderVcsTypeGitlabEnterprise    VcsProviderVcsType = "gitlab_enterprise"
 )
 
 // Response version - used when unmarshalling from API responses

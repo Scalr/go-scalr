@@ -9,56 +9,6 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// AgentRuntime represents the type for AgentRuntime
-// The agent's runtime (docker, kubernetes, vm, fatgate, etc)
-type AgentRuntime string
-
-// AgentRuntime constants
-const (
-	AgentRuntimeUnknown    AgentRuntime = "unknown"
-	AgentRuntimeDocker     AgentRuntime = "docker"
-	AgentRuntimeKubernetes AgentRuntime = "kubernetes"
-	AgentRuntimeVm         AgentRuntime = "vm"
-	AgentRuntimeFargate    AgentRuntime = "fargate"
-)
-
-// AgentStatus represents the type for AgentStatus
-// The agent's current status * `busy` - The agent is working on a task. * `errored` - The agent has an error and can't operate correctly. The attribute `error-message` has the details. * `idle` - The agent is idle and ready to start working on a task. * `offline` - API server hasn't seen the agent's heartbeat for 30 seconds.
-type AgentStatus string
-
-// AgentStatus constants
-const (
-	AgentStatusIdle    AgentStatus = "idle"
-	AgentStatusBusy    AgentStatus = "busy"
-	AgentStatusOffline AgentStatus = "offline"
-	AgentStatusErrored AgentStatus = "errored"
-)
-
-// AgentUpgradeStatus represents the type for AgentUpgradeStatus
-// Agent version upgrade status indicating how current the agent version is and what level of upgrade attention is required. Used to display appropriate warnings and encourage timely upgrades.
-type AgentUpgradeStatus string
-
-// AgentUpgradeStatus constants
-const (
-	AgentUpgradeStatusNone   AgentUpgradeStatus = "none"
-	AgentUpgradeStatusLow    AgentUpgradeStatus = "low"
-	AgentUpgradeStatusMedium AgentUpgradeStatus = "medium"
-	AgentUpgradeStatusHigh   AgentUpgradeStatus = "high"
-)
-
-// AgentDriver represents the type for AgentDriver
-// The agent's driver: docker, kubernetes or local.
-type AgentDriver string
-
-// AgentDriver constants
-const (
-	AgentDriverUnknown       AgentDriver = "unknown"
-	AgentDriverLocal         AgentDriver = "local"
-	AgentDriverDocker        AgentDriver = "docker"
-	AgentDriverKubernetes    AgentDriver = "kubernetes"
-	AgentDriverKubernetesJob AgentDriver = "kubernetes-job"
-)
-
 // AgentCpuPlatform represents the type for AgentCpuPlatform
 // The agent's CPU platform. The default value is `linux_amd64`.
 type AgentCpuPlatform string
@@ -69,15 +19,65 @@ const (
 	AgentCpuPlatformLinuxArm64 AgentCpuPlatform = "linux_arm64"
 )
 
+// AgentDriver represents the type for AgentDriver
+// The agent's driver: docker, kubernetes or local.
+type AgentDriver string
+
+// AgentDriver constants
+const (
+	AgentDriverDocker        AgentDriver = "docker"
+	AgentDriverKubernetes    AgentDriver = "kubernetes"
+	AgentDriverKubernetesJob AgentDriver = "kubernetes-job"
+	AgentDriverLocal         AgentDriver = "local"
+	AgentDriverUnknown       AgentDriver = "unknown"
+)
+
 // AgentKubernetesDriverMode represents the type for AgentKubernetesDriverMode
 // The Kubernetes driver mode (default, controller, or worker). Defines the agent's role within the Kubernetes execution model.
 type AgentKubernetesDriverMode string
 
 // AgentKubernetesDriverMode constants
 const (
-	AgentKubernetesDriverModeDefault    AgentKubernetesDriverMode = "default"
 	AgentKubernetesDriverModeController AgentKubernetesDriverMode = "controller"
+	AgentKubernetesDriverModeDefault    AgentKubernetesDriverMode = "default"
 	AgentKubernetesDriverModeWorker     AgentKubernetesDriverMode = "worker"
+)
+
+// AgentRuntime represents the type for AgentRuntime
+// The agent's runtime (docker, kubernetes, vm, fatgate, etc)
+type AgentRuntime string
+
+// AgentRuntime constants
+const (
+	AgentRuntimeDocker     AgentRuntime = "docker"
+	AgentRuntimeFargate    AgentRuntime = "fargate"
+	AgentRuntimeKubernetes AgentRuntime = "kubernetes"
+	AgentRuntimeUnknown    AgentRuntime = "unknown"
+	AgentRuntimeVm         AgentRuntime = "vm"
+)
+
+// AgentStatus represents the type for AgentStatus
+// The agent's current status * `busy` - The agent is working on a task. * `errored` - The agent has an error and can't operate correctly. The attribute `error-message` has the details. * `idle` - The agent is idle and ready to start working on a task. * `offline` - API server hasn't seen the agent's heartbeat for 30 seconds.
+type AgentStatus string
+
+// AgentStatus constants
+const (
+	AgentStatusBusy    AgentStatus = "busy"
+	AgentStatusErrored AgentStatus = "errored"
+	AgentStatusIdle    AgentStatus = "idle"
+	AgentStatusOffline AgentStatus = "offline"
+)
+
+// AgentUpgradeStatus represents the type for AgentUpgradeStatus
+// Agent version upgrade status indicating how current the agent version is and what level of upgrade attention is required. Used to display appropriate warnings and encourage timely upgrades.
+type AgentUpgradeStatus string
+
+// AgentUpgradeStatus constants
+const (
+	AgentUpgradeStatusHigh   AgentUpgradeStatus = "high"
+	AgentUpgradeStatusLow    AgentUpgradeStatus = "low"
+	AgentUpgradeStatusMedium AgentUpgradeStatus = "medium"
+	AgentUpgradeStatusNone   AgentUpgradeStatus = "none"
 )
 
 // Response version - used when unmarshalling from API responses

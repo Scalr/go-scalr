@@ -14,9 +14,9 @@ type PolicyEnforcedLevel string
 
 // PolicyEnforcedLevel constants
 const (
+	PolicyEnforcedLevelAdvisory      PolicyEnforcedLevel = "advisory"
 	PolicyEnforcedLevelHardMandatory PolicyEnforcedLevel = "hard-mandatory"
 	PolicyEnforcedLevelSoftMandatory PolicyEnforcedLevel = "soft-mandatory"
-	PolicyEnforcedLevelAdvisory      PolicyEnforcedLevel = "advisory"
 )
 
 // Response version - used when unmarshalling from API responses

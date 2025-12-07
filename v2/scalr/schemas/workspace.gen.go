@@ -16,9 +16,9 @@ type WorkspaceAutoDestroyDays int
 // WorkspaceAutoDestroyDays constants
 const (
 	WorkspaceAutoDestroyDays1  WorkspaceAutoDestroyDays = 1
+	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
 	WorkspaceAutoDestroyDays2  WorkspaceAutoDestroyDays = 2
 	WorkspaceAutoDestroyDays7  WorkspaceAutoDestroyDays = 7
-	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
 )
 
 // WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns
@@ -29,8 +29,8 @@ type WorkspaceAutoQueueRuns string
 const (
 	WorkspaceAutoQueueRunsAlways       WorkspaceAutoQueueRuns = "always"
 	WorkspaceAutoQueueRunsNever        WorkspaceAutoQueueRuns = "never"
-	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
 	WorkspaceAutoQueueRunsOnCreateOnly WorkspaceAutoQueueRuns = "on_create_only"
+	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
 )
 
 // WorkspaceEnvironmentType represents the type for WorkspaceEnvironmentType
@@ -39,21 +39,11 @@ type WorkspaceEnvironmentType string
 
 // WorkspaceEnvironmentType constants
 const (
+	WorkspaceEnvironmentTypeDevelopment WorkspaceEnvironmentType = "development"
 	WorkspaceEnvironmentTypeProduction  WorkspaceEnvironmentType = "production"
 	WorkspaceEnvironmentTypeStaging     WorkspaceEnvironmentType = "staging"
 	WorkspaceEnvironmentTypeTesting     WorkspaceEnvironmentType = "testing"
-	WorkspaceEnvironmentTypeDevelopment WorkspaceEnvironmentType = "development"
 	WorkspaceEnvironmentTypeUnmapped    WorkspaceEnvironmentType = "unmapped"
-)
-
-// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
-// The IaC platform of this workspace.
-type WorkspaceIacPlatform string
-
-// WorkspaceIacPlatform constants
-const (
-	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
-	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
 )
 
 // WorkspaceExecutionMode represents the type for WorkspaceExecutionMode
@@ -62,8 +52,18 @@ type WorkspaceExecutionMode string
 
 // WorkspaceExecutionMode constants
 const (
-	WorkspaceExecutionModeRemote WorkspaceExecutionMode = "remote"
 	WorkspaceExecutionModeLocal  WorkspaceExecutionMode = "local"
+	WorkspaceExecutionModeRemote WorkspaceExecutionMode = "remote"
+)
+
+// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
+// The IaC platform of this workspace.
+type WorkspaceIacPlatform string
+
+// WorkspaceIacPlatform constants
+const (
+	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
+	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
 )
 
 // Response version - used when unmarshalling from API responses

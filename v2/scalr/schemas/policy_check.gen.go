@@ -14,15 +14,15 @@ type PolicyCheckStatus string
 
 // PolicyCheckStatus constants
 const (
-	PolicyCheckStatusPending     PolicyCheckStatus = "pending"
-	PolicyCheckStatusQueued      PolicyCheckStatus = "queued"
-	PolicyCheckStatusPassed      PolicyCheckStatus = "passed"
+	PolicyCheckStatusCanceled    PolicyCheckStatus = "canceled"
 	PolicyCheckStatusErrored     PolicyCheckStatus = "errored"
 	PolicyCheckStatusHardFailed  PolicyCheckStatus = "hard_failed"
-	PolicyCheckStatusSoftFailed  PolicyCheckStatus = "soft_failed"
 	PolicyCheckStatusOverridden  PolicyCheckStatus = "overridden"
+	PolicyCheckStatusPassed      PolicyCheckStatus = "passed"
+	PolicyCheckStatusPending     PolicyCheckStatus = "pending"
+	PolicyCheckStatusQueued      PolicyCheckStatus = "queued"
+	PolicyCheckStatusSoftFailed  PolicyCheckStatus = "soft_failed"
 	PolicyCheckStatusUnreachable PolicyCheckStatus = "unreachable"
-	PolicyCheckStatusCanceled    PolicyCheckStatus = "canceled"
 )
 
 // Response version - used when unmarshalling from API responses

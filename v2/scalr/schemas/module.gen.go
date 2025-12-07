@@ -15,10 +15,10 @@ type ModuleStatus string
 
 // ModuleStatus constants
 const (
+	ModuleStatusErrored       ModuleStatus = "errored"
 	ModuleStatusNoVersionTags ModuleStatus = "no_version_tags"
 	ModuleStatusPending       ModuleStatus = "pending"
 	ModuleStatusSetupComplete ModuleStatus = "setup_complete"
-	ModuleStatusErrored       ModuleStatus = "errored"
 )
 
 // Response version - used when unmarshalling from API responses

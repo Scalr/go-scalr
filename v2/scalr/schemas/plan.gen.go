@@ -14,12 +14,12 @@ type PlanStatus string
 
 // PlanStatus constants
 const (
+	PlanStatusCanceled    PlanStatus = "canceled"
+	PlanStatusErrored     PlanStatus = "errored"
+	PlanStatusFinished    PlanStatus = "finished"
 	PlanStatusPending     PlanStatus = "pending"
 	PlanStatusQueued      PlanStatus = "queued"
 	PlanStatusRunning     PlanStatus = "running"
-	PlanStatusFinished    PlanStatus = "finished"
-	PlanStatusCanceled    PlanStatus = "canceled"
-	PlanStatusErrored     PlanStatus = "errored"
 	PlanStatusUnreachable PlanStatus = "unreachable"
 )
 

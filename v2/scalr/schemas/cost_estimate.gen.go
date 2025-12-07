@@ -14,11 +14,11 @@ type CostEstimateStatus string
 
 // CostEstimateStatus constants
 const (
-	CostEstimateStatusPending     CostEstimateStatus = "pending"
-	CostEstimateStatusQueued      CostEstimateStatus = "queued"
-	CostEstimateStatusFinished    CostEstimateStatus = "finished"
 	CostEstimateStatusCanceled    CostEstimateStatus = "canceled"
 	CostEstimateStatusErrored     CostEstimateStatus = "errored"
+	CostEstimateStatusFinished    CostEstimateStatus = "finished"
+	CostEstimateStatusPending     CostEstimateStatus = "pending"
+	CostEstimateStatusQueued      CostEstimateStatus = "queued"
 	CostEstimateStatusUnreachable CostEstimateStatus = "unreachable"
 )
 
