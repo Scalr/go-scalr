@@ -25,6 +25,24 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Run operations
+const (
+	FilterAccount        = "filter[account]"         // The account ID to list runs for.
+	FilterCreatedAt      = "filter[created-at]"      // The run created at filter.
+	FilterCreatedBy      = "filter[created-by]"      // The ID of the User who triggered this run
+	FilterCreatedByRun   = "filter[created-by-run]"  // The ID of the Run which triggered this run
+	FilterEnvOrWs        = "filter[env-or-ws]"       // The list of environment or workspaces IDs to match
+	FilterEnvironment    = "filter[environment]"     // The environment ID to list runs for.
+	FilterIsDry          = "filter[is-dry]"          // The is dry runs filter.
+	FilterResourceDrifts = "filter[resource-drifts]" // Filter the runs by drifted resources count.
+	FilterRun            = "filter[run]"             // The comma-separated list of run IDs.
+	FilterSource         = "filter[source]"          // The run source filter.
+	FilterStatus         = "filter[status]"          // The run status filter.
+	FilterTag            = "filter[tag]"             // Filter runs by tags.
+	FilterVcsRevision    = "filter[vcs-revision]"    // Commit sha that affected runs
+	FilterWorkspace      = "filter[workspace]"       // The workspace ID to list runs for.
+)
+
 // Interrupt a run that is currently planning or applying. Performing a cancel is roughly equivalent to hitting `ctrl+c` during a Terraform plan or apply on the CLI. The running Terraform process is sent an `INT` signal, which instructs Terraform to end its work and wrap up in the safest way possible.
 func (c *Client) CancelRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/cancel"
@@ -87,9 +105,9 @@ func (c *Client) CreateRunRaw(ctx context.Context, req *schemas.RunRequest, opts
 		if opts.VcsTaskId != "" {
 			params.Set("vcs-task-id", opts.VcsTaskId)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -134,7 +152,9 @@ type CreateRunOptions struct {
 	VcsUserId int
 	// The ID of a VCS task which triggered the run. Internal use only.
 	VcsTaskId string
-	Filter    map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Skip any remaining work on runs that are paused waiting for confirmation or priority. This includes runs in the `pending`, `planned`, `policy_checked` and `policy_override` states.
@@ -173,9 +193,9 @@ func (c *Client) DownloadPolicyInputRaw(ctx context.Context, run string, opts *D
 		if opts.Stage != "" {
 			params.Set("stage", opts.Stage)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -207,8 +227,10 @@ func (c *Client) DownloadPolicyInput(ctx context.Context, run string, opts *Down
 // DownloadPolicyInputOptions holds optional parameters for DownloadPolicyInput
 type DownloadPolicyInputOptions struct {
 	// The run stage
-	Stage  string
-	Filter map[string]string
+	Stage string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Cancel all previous runs in pending or waiting for confirmation statuses.
@@ -248,9 +270,9 @@ func (c *Client) GetRunRaw(ctx context.Context, run string, opts *GetRunOptions)
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -293,7 +315,9 @@ type GetRunOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists runs for a specific workspace.
@@ -321,9 +345,9 @@ func (c *Client) GetRunsRaw(ctx context.Context, opts *GetRunsOptions) (*client.
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -527,7 +551,9 @@ type GetRunsOptions struct {
 	Scheduled string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists Runs Queue on allowed scopes.
@@ -555,9 +581,9 @@ func (c *Client) GetRunsQueueRaw(ctx context.Context, opts *GetRunsQueueOptions)
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -761,5 +787,7 @@ type GetRunsQueueOptions struct {
 	Scheduled string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

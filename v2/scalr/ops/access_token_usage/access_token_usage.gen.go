@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for AccessTokenUsage operations
+const (
+	FilterCreatedAt = "filter[created-at]" // Filter tokens by creation date.
+	FilterIsExpired = "filter[is-expired]" // Returns tokens by expiration status
+)
+
 // This endpoint returns a list of access token usage on the account.
 func (c *Client) ListAccessTokenUsageRaw(ctx context.Context, opts *ListAccessTokenUsageOptions) (*client.Response, error) {
 	path := "/reports/access-tokens"
@@ -47,9 +53,9 @@ func (c *Client) ListAccessTokenUsageRaw(ctx context.Context, opts *ListAccessTo
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -238,6 +244,8 @@ type ListAccessTokenUsageOptions struct {
 	// Query by token and user email
 	Query string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

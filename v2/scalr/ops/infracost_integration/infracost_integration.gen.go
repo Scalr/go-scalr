@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for InfracostIntegration operations
+const (
+	FilterInfracostIntegration = "filter[infracost-integration]" // The ID(s) of the Infracost integration(s).
+	FilterName                 = "filter[name]"                  // The Infracost integration name filter.
+)
+
 // This endpoint creates Infracost integration.
 func (c *Client) CreateInfracostIntegrationRaw(ctx context.Context, req *schemas.InfracostIntegrationRequest, opts *CreateInfracostIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/infracost"
@@ -33,9 +39,9 @@ func (c *Client) CreateInfracostIntegrationRaw(ctx context.Context, req *schemas
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,7 +84,9 @@ func (c *Client) CreateInfracostIntegration(ctx context.Context, req *schemas.In
 type CreateInfracostIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteInfracostIntegrationRaw(ctx context.Context, infracostIntegration string) (*client.Response, error) {
@@ -112,9 +120,9 @@ func (c *Client) GetInfracostIntegrationRaw(ctx context.Context, infracostIntegr
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -155,7 +163,9 @@ func (c *Client) GetInfracostIntegration(ctx context.Context, infracostIntegrati
 type GetInfracostIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Infracost integrations.
@@ -176,9 +186,9 @@ func (c *Client) ListInfracostIntegrationsRaw(ctx context.Context, opts *ListInf
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -377,8 +387,10 @@ type ListInfracostIntegrationsOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates Infracost integration.
@@ -391,9 +403,9 @@ func (c *Client) UpdateInfracostIntegrationRaw(ctx context.Context, infracostInt
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -436,5 +448,7 @@ func (c *Client) UpdateInfracostIntegration(ctx context.Context, infracostIntegr
 type UpdateInfracostIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

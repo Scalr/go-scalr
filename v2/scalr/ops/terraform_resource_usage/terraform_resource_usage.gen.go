@@ -25,6 +25,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for TerraformResourceUsage operations
+const (
+	FilterProviderType = "filter[provider-type]" // Filter resources by provider type.
+)
+
 // This endpoint returns instance of resource usage.
 func (c *Client) GetResourceUsageRaw(ctx context.Context, resourceUsage string, opts *GetResourceUsageOptions) (*client.Response, error) {
 	path := "/reports/resources/{resource_usage}"
@@ -34,9 +39,9 @@ func (c *Client) GetResourceUsageRaw(ctx context.Context, resourceUsage string, 
 	if opts != nil {
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -77,7 +82,9 @@ func (c *Client) GetResourceUsage(ctx context.Context, resourceUsage string, opt
 type GetResourceUsageOptions struct {
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists unique terraform resource provider types.
@@ -90,9 +97,9 @@ func (c *Client) ListTerraformResourceProvidersRaw(ctx context.Context, opts *Li
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -124,8 +131,10 @@ func (c *Client) ListTerraformResourceProviders(ctx context.Context, opts *ListT
 // ListTerraformResourceProvidersOptions holds optional parameters for ListTerraformResourceProviders
 type ListTerraformResourceProvidersOptions struct {
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists terraform resource usages.
@@ -153,9 +162,9 @@ func (c *Client) ListTerraformResourceUsagesRaw(ctx context.Context, opts *ListT
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -359,5 +368,7 @@ type ListTerraformResourceUsagesOptions struct {
 	Sort []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

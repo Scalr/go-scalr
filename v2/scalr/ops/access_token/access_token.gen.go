@@ -25,6 +25,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for AccessToken operations
+const (
+	FilterIsExpired = "filter[is-expired]" // Returns tokens by expiration status
+)
+
 // This endpoint creates service account's access token.
 func (c *Client) AssumeServiceAccountRaw(ctx context.Context, req *schemas.AssumeServiceAccountRequest) (*client.Response, error) {
 	path := "/service-accounts/assume"
@@ -62,9 +67,9 @@ func (c *Client) CreateAccessTokenRaw(ctx context.Context, req *schemas.AccessTo
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -107,7 +112,9 @@ func (c *Client) CreateAccessToken(ctx context.Context, req *schemas.AccessToken
 type CreateAccessTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint creates agent pool's access token.
@@ -120,9 +127,9 @@ func (c *Client) CreateAgentPoolTokenRaw(ctx context.Context, agentPool string, 
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -165,7 +172,9 @@ func (c *Client) CreateAgentPoolToken(ctx context.Context, agentPool string, req
 type CreateAgentPoolTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint creates service account's access token.
@@ -178,9 +187,9 @@ func (c *Client) CreateServiceAccountTokenRaw(ctx context.Context, serviceAccoun
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -223,7 +232,9 @@ func (c *Client) CreateServiceAccountToken(ctx context.Context, serviceAccount s
 type CreateServiceAccountTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Delete an access token by ID.
@@ -259,9 +270,9 @@ func (c *Client) GetAccessTokenRaw(ctx context.Context, accessToken string, opts
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -302,7 +313,9 @@ func (c *Client) GetAccessToken(ctx context.Context, accessToken string, opts *G
 type GetAccessTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists user access tokens.
@@ -327,9 +340,9 @@ func (c *Client) ListAccessTokensRaw(ctx context.Context, opts *ListAccessTokens
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -530,8 +543,10 @@ type ListAccessTokensOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) ListAgentPoolAccessTokensRaw(ctx context.Context, agentPool string, opts *ListAgentPoolAccessTokensOptions) (*client.Response, error) {
@@ -556,9 +571,9 @@ func (c *Client) ListAgentPoolAccessTokensRaw(ctx context.Context, agentPool str
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -758,8 +773,10 @@ type ListAgentPoolAccessTokensOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists service account's access tokens.
@@ -785,9 +802,9 @@ func (c *Client) ListServiceAccountAccessTokensRaw(ctx context.Context, serviceA
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -988,8 +1005,10 @@ type ListServiceAccountAccessTokensOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update an access token by ID.
@@ -1002,9 +1021,9 @@ func (c *Client) UpdateAccessTokenRaw(ctx context.Context, accessToken string, r
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -1047,5 +1066,7 @@ func (c *Client) UpdateAccessToken(ctx context.Context, accessToken string, req 
 type UpdateAccessTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

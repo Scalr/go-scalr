@@ -25,6 +25,15 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for TerraformVersionUsage operations
+const (
+	FilterAccount     = "filter[account]"      // The account ID to list terraform versions usage for.
+	FilterEnvironment = "filter[environment]"  // The environment ID to list terraform versions usage for.
+	FilterIacPlatform = "filter[iac-platform]" // Filter terraform versions usage by IaC platform.
+	FilterIsAuto      = "filter[is-auto]"      // Filter terraform versions usage by auto versions.
+	FilterVersion     = "filter[version]"      // Filter terraform versions usage by version.
+)
+
 // This endpoint lists terraform versions usage.
 func (c *Client) ListTerraformVersionsUsageRaw(ctx context.Context, opts *ListTerraformVersionsUsageOptions) (*client.Response, error) {
 	path := "/reports/tf-versions-usage"
@@ -53,9 +62,9 @@ func (c *Client) ListTerraformVersionsUsageRaw(ctx context.Context, opts *ListTe
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -261,7 +270,9 @@ type ListTerraformVersionsUsageOptions struct {
 	Fields map[string]interface{}
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists unique terraform versions in use.
@@ -280,9 +291,9 @@ func (c *Client) ListTerraformVersionsUsageVersionsRaw(ctx context.Context, opts
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -319,5 +330,7 @@ type ListTerraformVersionsUsageVersionsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

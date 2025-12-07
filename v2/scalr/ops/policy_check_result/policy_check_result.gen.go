@@ -24,6 +24,15 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for PolicyCheckResult operations
+const (
+	FilterEnvironment    = "filter[environment]"     // The environment ID to list policy check results for. Example: `filter[environment]=env-123456`
+	FilterPolicy         = "filter[policy]"          // The policy name filter. Example: `filter[policy]=workspace_name`
+	FilterResult         = "filter[result]"          // The result of the policy check filter. Example: `filter[result]=hard-failed`
+	FilterTerragruntUnit = "filter[terragrunt-unit]" // The unit path filter. Example: `filter[unit_path]=vpc`
+	FilterWorkspace      = "filter[workspace]"       // The workspace ID to list policy check results for. Example: `filter[workspace]=ws-123456`
+)
+
 // List policy check results for a specific policy group check. Required permission: policy_groups:read
 func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupCheck string, opts *GetPolicyGroupCheckResultsOptions) (*client.Response, error) {
 	path := "/policy-group-checks/{policy_group_check}/policy-check-results"
@@ -53,9 +62,9 @@ func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupC
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -260,6 +269,8 @@ type GetPolicyGroupCheckResultsOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

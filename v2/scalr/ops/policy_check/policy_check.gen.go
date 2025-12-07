@@ -63,9 +63,9 @@ func (c *Client) GetPolicyChecksLogRaw(ctx context.Context, policyCheck string, 
 	if opts != nil {
 		// Handle parameter: Clean (bool)
 		params.Set("clean", fmt.Sprintf("%t", opts.Clean))
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -93,8 +93,10 @@ func (c *Client) GetPolicyChecksLog(ctx context.Context, policyCheck string, opt
 // GetPolicyChecksLogOptions holds optional parameters for GetPolicyChecksLog
 type GetPolicyChecksLogOptions struct {
 	// Strip ANSI escape codes.
-	Clean  bool
-	Filter map[string]string
+	Clean bool
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // List policy checks for a specific run.

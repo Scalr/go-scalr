@@ -25,6 +25,14 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for TerraformModuleUsage operations
+const (
+	FilterEnvironment       = "filter[environment]"         // The environment ID to list modules usage for.
+	FilterSource            = "filter[source]"              // Filter modules by source.
+	FilterTfModuleNamespace = "filter[tf-module-namespace]" // The namespace ID to list modules for.
+	FilterWorkspace         = "filter[workspace]"           // The workspace ID to list modules usage for.
+)
+
 // This endpoint returns instance of module usage.
 func (c *Client) GetModuleUsageRaw(ctx context.Context, moduleUsage string, opts *GetModuleUsageOptions) (*client.Response, error) {
 	path := "/reports/modules/{module_usage}"
@@ -37,9 +45,9 @@ func (c *Client) GetModuleUsageRaw(ctx context.Context, moduleUsage string, opts
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -82,7 +90,9 @@ type GetModuleUsageOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists unique terraform module sources.
@@ -101,9 +111,9 @@ func (c *Client) ListTerraformModuleSourcesRaw(ctx context.Context, opts *ListTe
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -140,7 +150,9 @@ type ListTerraformModuleSourcesOptions struct {
 	PageNumber int
 	// Page size.
 	PageSize int
-	Filter   map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists terraform module usages.
@@ -171,9 +183,9 @@ func (c *Client) ListTerraformModuleUsagesRaw(ctx context.Context, opts *ListTer
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -379,5 +391,7 @@ type ListTerraformModuleUsagesOptions struct {
 	Fields map[string]interface{}
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

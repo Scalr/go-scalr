@@ -24,6 +24,17 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Environment operations
+const (
+	FilterAccount        = "filter[account]"         // The ID of the Account
+	FilterEnvironment    = "filter[environment]"     // The ID of the Environment
+	FilterLatestRunDate  = "filter[latest-run-date]" // Filter by latest run date. Example: `filter[latest-run-date]=between:2022-01-01T00:00:00Z,2022-02-01T00:00:00Z`
+	FilterName           = "filter[name]"            // The environment name filter.
+	FilterPolicyGroup    = "filter[policy-group]"    // The ID of the Policy Group.
+	FilterStorageProfile = "filter[storage-profile]" // The ID of the Storage Profile.
+	FilterTag            = "filter[tag]"             // Filter environments by tags
+)
+
 // This endpoint assigns the list of [tags](/docs/tags-1) to the environment.
 func (c *Client) AddEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
@@ -94,9 +105,9 @@ func (c *Client) CreateEnvironmentRaw(ctx context.Context, req *schemas.Environm
 	if opts != nil {
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -139,7 +150,9 @@ func (c *Client) CreateEnvironment(ctx context.Context, req *schemas.Environment
 type CreateEnvironmentOptions struct {
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteEnvironmentRaw(ctx context.Context, environment string) (*client.Response, error) {
@@ -239,9 +252,9 @@ func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -284,7 +297,9 @@ type GetEnvironmentOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an environment.
@@ -300,9 +315,9 @@ func (c *Client) ListEnvironmentTagsRaw(ctx context.Context, environment string,
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -486,7 +501,9 @@ type ListEnvironmentTagsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists account environments.
@@ -513,9 +530,9 @@ func (c *Client) ListEnvironmentsRaw(ctx context.Context, opts *ListEnvironments
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -719,7 +736,9 @@ type ListEnvironmentsOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment string, opts *ListFederatedEnvironmentsOptions) (*client.Response, error) {
@@ -734,9 +753,9 @@ func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment s
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -919,7 +938,9 @@ type ListFederatedEnvironmentsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint completely replaces environment's tags with provided list.
@@ -992,9 +1013,9 @@ func (c *Client) UpdateEnvironmentRaw(ctx context.Context, environment string, r
 	if opts != nil {
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -1036,5 +1057,7 @@ func (c *Client) UpdateEnvironment(ctx context.Context, environment string, req 
 type UpdateEnvironmentOptions struct {
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

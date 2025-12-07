@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for StorageProfile operations
+const (
+	FilterDefault        = "filter[default]"         // Whether the storage profile is set as default.
+	FilterName           = "filter[name]"            // The resource storage profile name.
+	FilterStorageProfile = "filter[storage-profile]" // The ID of the resource storage profile.
+)
+
 // Create a new storage profile for storing blobs (source code, terraform state, logs, etc).
 func (c *Client) CreateStorageProfileRaw(ctx context.Context, req *schemas.StorageProfileRequest) (*client.Response, error) {
 	path := "/storage-profiles"
@@ -129,9 +136,9 @@ func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStoragePr
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -318,8 +325,10 @@ type ListStorageProfilesOptions struct {
 	// Query string
 	Query string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update an existing storage profile. The operation is only allowed if the storage profile is not being used by any blobs.

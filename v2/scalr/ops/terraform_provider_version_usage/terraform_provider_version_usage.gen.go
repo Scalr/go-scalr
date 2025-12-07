@@ -25,6 +25,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for TerraformProviderVersionUsage operations
+const (
+	FilterEnvironment     = "filter[environment]"       // The environment ID to list providers usage for.
+	FilterTfProviderUsage = "filter[tf-provider-usage]" // Filter by terraform provider usage.
+	FilterVersion         = "filter[version]"           // Filter providers usage by version.
+)
+
 // This endpoint lists terraform provider version usages.
 func (c *Client) ListTerraformProviderUsageRaw(ctx context.Context, opts *ListTerraformProviderUsageOptions) (*client.Response, error) {
 	path := "/reports/provider-usage"
@@ -53,9 +60,9 @@ func (c *Client) ListTerraformProviderUsageRaw(ctx context.Context, opts *ListTe
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -261,7 +268,9 @@ type ListTerraformProviderUsageOptions struct {
 	Fields map[string]interface{}
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists unique terraform provider versions.
@@ -274,9 +283,9 @@ func (c *Client) ListTerraformProviderVersionsUsageRaw(ctx context.Context, opts
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -308,6 +317,8 @@ func (c *Client) ListTerraformProviderVersionsUsage(ctx context.Context, opts *L
 // ListTerraformProviderVersionsUsageOptions holds optional parameters for ListTerraformProviderVersionsUsage
 type ListTerraformProviderVersionsUsageOptions struct {
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

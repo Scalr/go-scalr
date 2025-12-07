@@ -24,6 +24,15 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for VcsProvider operations
+const (
+	FilterAccount     = "filter[account]"      // The account filter
+	FilterAgentPool   = "filter[agent-pool]"   // The agent pool filter
+	FilterEnvironment = "filter[environment]"  // The environment filter
+	FilterVcsProvider = "filter[vcs-provider]" // The ID of the VCS provider. Multiple values are allowed through COMMA `,`
+	FilterVcsType     = "filter[vcs-type]"     // Filter by VCS type
+)
+
 // Create a new VCS connection between Scalr and a VCS provider. VCS providers can be created at the Scalr account. Self-hosted Scalr also supports the creation of global VCS providers. If a VCS provider is created globally, all accounts within the self-hosted installation will have access to use the VCS provider. Only VCS providers with `personal_token` auth type, can be created through the API. If you need to set up `oauth2` provider, you should use Scalr [web interface](/docs/github) to do this.
 func (c *Client) CreateVcsProviderRaw(ctx context.Context, req *schemas.VcsProviderRequest) (*client.Response, error) {
 	path := "/vcs-providers"
@@ -95,9 +104,9 @@ func (c *Client) GetVcsProviderRaw(ctx context.Context, vcsProvider string, opts
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -140,7 +149,9 @@ type GetVcsProviderOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of VCS providers by various filters. To list VCS providers accessible from a specific environment - `filter[environment]`, or when from a specific account - `filter[account]` has to be specified. For self-hosted Scalr there's also an option to list all VCS providers created globally - both `filter[account]=null` and `filter[environment]=null` has to be specified. If no `environment` or `account` filters were specified, all VCS providers to which a current user has read access will be returned.
@@ -167,9 +178,9 @@ func (c *Client) ListVcsProvidersRaw(ctx context.Context, opts *ListVcsProviders
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -373,7 +384,9 @@ type ListVcsProvidersOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint allows updates to attributes of an existing VCS provider.

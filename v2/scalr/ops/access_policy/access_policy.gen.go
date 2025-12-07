@@ -24,6 +24,17 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for AccessPolicy operations
+const (
+	FilterAccessPolicy   = "filter[access-policy]"   // Access Policy filter.
+	FilterAccount        = "filter[account]"         // Account filter
+	FilterEnvironment    = "filter[environment]"     // Environment filter
+	FilterServiceAccount = "filter[service-account]" // Service account filter
+	FilterTeam           = "filter[team]"            // Team filter
+	FilterUser           = "filter[user]"            // User filter
+	FilterWorkspace      = "filter[workspace]"       // Workspace filter
+)
+
 // Grant access for a member identity to a scope identity. Access is a set of `roles`. Member identity might be one of `user`, `team`, or `service-account`. Scope identity is one of `account`, `environment`, or `workspace`. Check out [identity and access management](https://docs.scalr.io/docs/identity-and-access-management) for a detailed description of the Scalr IAM model.
 func (c *Client) CreateAccessPolicyRaw(ctx context.Context, req *schemas.AccessPolicyRequest, opts *CreateAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies"
@@ -33,9 +44,9 @@ func (c *Client) CreateAccessPolicyRaw(ctx context.Context, req *schemas.AccessP
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,7 +89,9 @@ func (c *Client) CreateAccessPolicy(ctx context.Context, req *schemas.AccessPoli
 type CreateAccessPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteAccessPolicyRaw(ctx context.Context, accessPolicy string) (*client.Response, error) {
@@ -124,9 +137,9 @@ func (c *Client) GetAccessPoliciesRaw(ctx context.Context, opts *GetAccessPolici
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -328,7 +341,9 @@ type GetAccessPoliciesOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint returns [IAM](https://docs.scalr.io/docs/identity-and-access-management) access policy by ID.
@@ -341,9 +356,9 @@ func (c *Client) GetAccessPolicyRaw(ctx context.Context, accessPolicy string, op
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -384,7 +399,9 @@ func (c *Client) GetAccessPolicy(ctx context.Context, accessPolicy string, opts 
 type GetAccessPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) UpdateAccessPolicyRaw(ctx context.Context, accessPolicy string, req *schemas.AccessPolicyRequest, opts *UpdateAccessPolicyOptions) (*client.Response, error) {
@@ -396,9 +413,9 @@ func (c *Client) UpdateAccessPolicyRaw(ctx context.Context, accessPolicy string,
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -440,5 +457,7 @@ func (c *Client) UpdateAccessPolicy(ctx context.Context, accessPolicy string, re
 type UpdateAccessPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

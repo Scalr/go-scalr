@@ -25,6 +25,32 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Workspace operations
+const (
+	FilterAccount                   = "filter[account]"                     // The ID of the Account
+	FilterAgentPool                 = "filter[agent-pool]"                  // The ID(s) of the Agent Pool.
+	FilterCreatedBy                 = "filter[created-by]"                  // The ID of the User who created this workspace
+	FilterDeletionProtectionEnabled = "filter[deletion-protection-enabled]" // Deletion protection enabled filter
+	FilterEnvironment               = "filter[environment]"                 // The ID of the Environment
+	FilterEnvironmentType           = "filter[environment-type]"            // Workspace environment type
+	FilterFederatedByEnv            = "filter[federated-by-env]"            // The ID of the Environment that gives access to workspaces through federation.
+	FilterFederatedToEnv            = "filter[federated-to-env]"            // The ID of the Environment that got access to workspaces through federation.
+	FilterHasResources              = "filter[has-resources]"               // Has resources filter
+	FilterName                      = "filter[name]"                        // Workspace name
+	FilterProviderConfiguration     = "filter[provider-configuration]"      // The ID of the Provider configuration.
+	FilterRunCreatedBy              = "filter[run][created-by]"             // Last run created by filter
+	FilterRunResourceDrifts         = "filter[run][resource-drifts]"        // Filter the workspaces by last run drifted resources count.
+	FilterRunStatus                 = "filter[run][status]"                 // Last run status
+	FilterSoftwareVersion           = "filter[software-version]"            // The ID of the Software Version
+	FilterStateConsumerOf           = "filter[state-consumer-of]"           // Filter by remote state consumer source Workspace ID.
+	FilterTag                       = "filter[tag]"                         // Filter workspaces by tags
+	FilterUpdatedAt                 = "filter[updated-at]"                  // Date of workspace modification.
+	FilterUpdatedBy                 = "filter[updated-by]"                  // The ID of the User who update this workspace
+	FilterVcsProvider               = "filter[vcs-provider]"                // The ID of the VCS provider
+	FilterVcsRepoIdentifier         = "filter[vcs-repo][identifier]"        // Filter by VCS repository
+	FilterWorkspace                 = "filter[workspace]"                   // The ID(s) of the Workspace.
+)
+
 // This endpoint adds provided workspaces to a list of allowed remote state consumers for a given workspace.
 func (c *Client) AddRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
@@ -222,9 +248,9 @@ func (c *Client) GetWorkspaceRaw(ctx context.Context, workspace string, opts *Ge
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -267,7 +293,9 @@ type GetWorkspaceOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of outputs from current state version run output.
@@ -320,9 +348,9 @@ func (c *Client) GetWorkspacesRaw(ctx context.Context, opts *GetWorkspacesOption
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -525,7 +553,9 @@ type GetWorkspacesOptions struct {
 	Sort []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of other workspaces that that were explicitly added as state consumers for given workspace.
@@ -541,9 +571,9 @@ func (c *Client) ListRemoteStateConsumersRaw(ctx context.Context, workspace stri
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -727,7 +757,9 @@ type ListRemoteStateConsumersOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [tags](tags.html#the-tag-resource), assigned to a workspace.
@@ -743,9 +775,9 @@ func (c *Client) ListWorkspaceTagsRaw(ctx context.Context, workspace string, opt
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -929,7 +961,9 @@ type ListWorkspaceTagsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint locks a workspace.

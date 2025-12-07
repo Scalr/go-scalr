@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for RunScheduleRule operations
+const (
+	FilterScheduleMode = "filter[schedule-mode]" // Filter by the schedule mode.
+	FilterWorkspace    = "filter[workspace]"     // Filter by the ID of the workspace.
+)
+
 // Create a new run schedule rule. In order to create a run schedule rule, the user must have `workspaces:set-schedule` permission.
 func (c *Client) CreateRunScheduleRuleRaw(ctx context.Context, req *schemas.RunScheduleRuleRequest) (*client.Response, error) {
 	path := "/run-schedule-rules"
@@ -91,9 +97,9 @@ func (c *Client) GetRunScheduleRuleRaw(ctx context.Context, runScheduleRule stri
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -134,7 +140,9 @@ func (c *Client) GetRunScheduleRule(ctx context.Context, runScheduleRule string,
 type GetRunScheduleRuleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of run schedule rules.
@@ -152,9 +160,9 @@ func (c *Client) ListScheduleRulesRaw(ctx context.Context, opts *ListScheduleRul
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -352,7 +360,9 @@ type ListScheduleRulesOptions struct {
 	PageSize int
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Updates a specific run schedule rule based on the provided rule ID, schedule mode, and schedule. It validates the cron expression and raises an error if it's invalid.

@@ -24,6 +24,21 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Module operations
+const (
+	FilterAccount                    = "filter[account]"                         // Filter modules by account
+	FilterEnvironment                = "filter[environment]"                     // Filter modules by environment
+	FilterModuleNamespace            = "filter[module-namespace]"                // Filter modules by namespace
+	FilterModuleVersionsIsRootModule = "filter[module-versions][is-root-module]" // Filter modules by module-version is-root-module
+	FilterModuleVersionsStatus       = "filter[module-versions][status]"         // Filter modules by module-version status
+	FilterName                       = "filter[name]"                            // Filter modules by name
+	FilterNamespaceEnvironments      = "filter[namespace][environments]"         // Filter modules by namespace environments
+	FilterProvider                   = "filter[provider]"                        // Filter modules by provider
+	FilterSource                     = "filter[source]"                          // Filter modules by source
+	FilterStatus                     = "filter[status]"                          // Filter modules by status
+	FilterVcsProvider                = "filter[vcs-provider]"                    // The ID of the VCS provider
+)
+
 // This endpoint creates a Module from a VCS repository. The module's source code directory should follow the [standard module structure](https://www.terraform.io/docs/language/modules/develop/structure.html). Scalr extracts various meta information from the module's source: * It's important to provide each `variable` and `output` blocks with a meaningful descriptions, as they will be displayed in a Module and Workspace Variables pages for your internal users. * README or README.md file will be displayed on a Module page. * Nested modules from `modules/` directory will be searchable and available though the Registry just like top-level modules. Modules can be published on both `account` and `environment` scopes. If neither scope is specified in the request body, the module will be published in the same scope that the related `vcs-provider` is published.
 func (c *Client) CreateModuleRaw(ctx context.Context, req *schemas.ModuleRequest) (*client.Response, error) {
 	path := "/modules"
@@ -93,9 +108,9 @@ func (c *Client) GetModuleRaw(ctx context.Context, module string, opts *GetModul
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -136,7 +151,9 @@ func (c *Client) GetModule(ctx context.Context, module string, opts *GetModuleOp
 type GetModuleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists modules by various filters. To list modules accessible from a certain environment, `filter[environment]` has to be specified. Modules from the account which this environment belongs as well as globally published modules will be listed as well. To list modules accessible from a certain account, `filter[account]` has to be specified. Modules published globally will be listed as well. To list modules accessible globally, both `filter[account]=null` and `filter[environment]=null` have to be specified. If no filters were specified, all modules which the user has read access to will be listed.
@@ -163,9 +180,9 @@ func (c *Client) ListModulesRaw(ctx context.Context, opts *ListModulesOptions) (
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -369,7 +386,9 @@ type ListModulesOptions struct {
 	Sort []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Trigger resync of the Module associated with the VCS repository.

@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ModuleNamespace operations
+const (
+	FilterEnvironment = "filter[environment]" // Filter module namespaces by environment
+	FilterName        = "filter[name]"        // Filter module namespaces by name
+)
+
 // Create a new module namespace.
 func (c *Client) CreateModuleNamespaceRaw(ctx context.Context, req *schemas.ModuleNamespaceRequest) (*client.Response, error) {
 	path := "/module-namespaces"
@@ -133,9 +139,9 @@ func (c *Client) ListModuleNamespacesRaw(ctx context.Context, opts *ListModuleNa
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -332,8 +338,10 @@ type ListModuleNamespacesOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update an existing module namespace.

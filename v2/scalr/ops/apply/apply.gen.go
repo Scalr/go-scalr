@@ -64,9 +64,9 @@ func (c *Client) GetApplyLogRaw(ctx context.Context, apply string, opts *GetAppl
 	if opts != nil {
 		// Handle parameter: Clean (bool)
 		params.Set("clean", fmt.Sprintf("%t", opts.Clean))
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -98,6 +98,8 @@ func (c *Client) GetApplyLog(ctx context.Context, apply string, opts *GetApplyLo
 // GetApplyLogOptions holds optional parameters for GetApplyLog
 type GetApplyLogOptions struct {
 	// Strip ANSI escape codes.
-	Clean  bool
-	Filter map[string]string
+	Clean bool
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

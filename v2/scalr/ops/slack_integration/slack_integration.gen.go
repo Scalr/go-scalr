@@ -24,6 +24,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for SlackIntegration operations
+const (
+	FilterAccount = "filter[account]" // The ID of the Account
+)
+
 // This endpoint creates Slack integration.
 func (c *Client) CreateSlackIntegrationRaw(ctx context.Context, req *schemas.SlackIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/slack"
@@ -93,9 +98,9 @@ func (c *Client) GetSlackIntegrationRaw(ctx context.Context, slackIntegration st
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -136,7 +141,9 @@ func (c *Client) GetSlackIntegration(ctx context.Context, slackIntegration strin
 type GetSlackIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Slack integrations.
@@ -157,9 +164,9 @@ func (c *Client) ListSlackIntegrationsRaw(ctx context.Context, opts *ListSlackIn
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -358,8 +365,10 @@ type ListSlackIntegrationsOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates Slack integration.

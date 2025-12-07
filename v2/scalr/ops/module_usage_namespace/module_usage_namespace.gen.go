@@ -24,6 +24,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ModuleUsageNamespace operations
+const (
+	FilterTfModuleNamespace = "filter[tf-module-namespace]" // The ID of the module usage namespace.
+)
+
 // This endpoint lists unique terraform module usage namespaces.
 func (c *Client) ListModuleUsageNamespacesRaw(ctx context.Context, opts *ListModuleUsageNamespacesOptions) (*client.Response, error) {
 	path := "/reports/module-namespaces"
@@ -48,9 +53,9 @@ func (c *Client) ListModuleUsageNamespacesRaw(ctx context.Context, opts *ListMod
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -254,5 +259,7 @@ type ListModuleUsageNamespacesOptions struct {
 	Fields map[string]interface{}
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

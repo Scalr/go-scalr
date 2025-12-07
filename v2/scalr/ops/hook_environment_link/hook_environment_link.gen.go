@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for HookEnvironmentLink operations
+const (
+	FilterEnvironment = "filter[environment]" // The ID of the Environment
+	FilterEvents      = "filter[events]"      // The events to filter by
+)
+
 // Creates a link between a hook and an environment with enabled phases.
 func (c *Client) CreateHookEnvironmentLinkRaw(ctx context.Context, req *schemas.HookEnvironmentLinkRequest) (*client.Response, error) {
 	path := "/hook-environment-links"
@@ -95,9 +101,9 @@ func (c *Client) GetHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentL
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -140,7 +146,9 @@ type GetHookEnvironmentLinkOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // List all hook-environment links.
@@ -167,9 +175,9 @@ func (c *Client) ListHookEnvironmentLinksRaw(ctx context.Context, opts *ListHook
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -373,7 +381,9 @@ type ListHookEnvironmentLinksOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update a hook-environment link.

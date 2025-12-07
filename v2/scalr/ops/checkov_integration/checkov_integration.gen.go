@@ -33,9 +33,9 @@ func (c *Client) CreateCheckovIntegrationRaw(ctx context.Context, req *schemas.C
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,7 +78,9 @@ func (c *Client) CreateCheckovIntegration(ctx context.Context, req *schemas.Chec
 type CreateCheckovIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteCheckovIntegrationRaw(ctx context.Context, integration string) (*client.Response, error) {
@@ -112,9 +114,9 @@ func (c *Client) GetCheckovIntegrationRaw(ctx context.Context, integration strin
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -155,7 +157,9 @@ func (c *Client) GetCheckovIntegration(ctx context.Context, integration string, 
 type GetCheckovIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Checkov integrations.
@@ -176,9 +180,9 @@ func (c *Client) ListCheckovIntegrationsRaw(ctx context.Context, opts *ListCheck
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -377,8 +381,10 @@ type ListCheckovIntegrationsOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) ResyncCheckovIntegrationRaw(ctx context.Context, integration string) (*client.Response, error) {
@@ -412,9 +418,9 @@ func (c *Client) UpdateCheckovIntegrationRaw(ctx context.Context, integration st
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -457,5 +463,7 @@ func (c *Client) UpdateCheckovIntegration(ctx context.Context, integration strin
 type UpdateCheckovIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

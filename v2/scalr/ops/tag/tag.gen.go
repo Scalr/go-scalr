@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Tag operations
+const (
+	FilterName         = "filter[name]"          // The tag name filter
+	FilterResourceType = "filter[resource-type]" // The resource type filter
+	FilterTag          = "filter[tag]"           // The ID(s) of tag(s).
+)
+
 // Create a new tag in the account.
 func (c *Client) CreateTagRaw(ctx context.Context, req *schemas.TagRequest) (*client.Response, error) {
 	path := "/tags"
@@ -137,9 +144,9 @@ func (c *Client) ListTagsRaw(ctx context.Context, opts *ListTagsOptions) (*clien
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -338,8 +345,10 @@ type ListTagsOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates tag by ID.

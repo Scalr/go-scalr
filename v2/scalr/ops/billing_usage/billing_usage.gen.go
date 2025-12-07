@@ -24,6 +24,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for BillingUsage operations
+const (
+	FilterDate = "filter[date]" // The date filter. Example: `filter[date]=between:2022-01-01T00:00:00Z,2022-02-01T00:00:00Z`
+)
+
 // This endpoint returns billing usage statistics.
 func (c *Client) ListBillingUsageRaw(ctx context.Context, opts *ListBillingUsageOptions) (*client.Response, error) {
 	path := "/reports/billing"
@@ -49,9 +54,9 @@ func (c *Client) ListBillingUsageRaw(ctx context.Context, opts *ListBillingUsage
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -242,6 +247,8 @@ type ListBillingUsageOptions struct {
 	// Page size.
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

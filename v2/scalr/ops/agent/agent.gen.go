@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Agent operations
+const (
+	FilterAgent     = "filter[agent]"      // The agent identifier.
+	FilterAgentPool = "filter[agent-pool]" // The agent pool identifier.
+	FilterName      = "filter[name]"       // The agent name.
+)
+
 // This endpoint deletes an agent by ID. Only `offline` or `errored` agents can be removed from the pool. Offline or errored agents will be removed automatically after 4 hours of inactivity.
 func (c *Client) DeleteAgentRaw(ctx context.Context, agent string) (*client.Response, error) {
 	path := "/agents/{agent}"
@@ -57,9 +64,9 @@ func (c *Client) GetAgentRaw(ctx context.Context, agent string, opts *GetAgentOp
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -100,7 +107,9 @@ func (c *Client) GetAgent(ctx context.Context, agent string, opts *GetAgentOptio
 type GetAgentOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint returns a list of agents by various filters.
@@ -121,9 +130,9 @@ func (c *Client) GetAgentsRaw(ctx context.Context, opts *GetAgentsOptions) (*cli
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -322,6 +331,8 @@ type GetAgentsOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

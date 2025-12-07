@@ -24,6 +24,19 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ServiceAccount operations
+const (
+	FilterAccount                    = "filter[account]"                       // The account filter.
+	FilterAssumeServiceAccountPolicy = "filter[assume-service-account-policy]" // The ID(s) of assume service account policy(ies).
+	FilterEmail                      = "filter[email]"                         // The service account email filter.
+	FilterHasOwners                  = "filter[has-owners]"                    // Filter service accounts with/without owners.
+	FilterName                       = "filter[name]"                          // The assume service account policy name filter.
+	FilterOwnedByMe                  = "filter[owned-by-me]"                   // Show service accounts owned by me.
+	FilterOwner                      = "filter[owner]"                         // The service account owner filter.
+	FilterServiceAccount             = "filter[service-account]"               // The service account filter.
+	FilterWorkloadIdentityProvider   = "filter[workload-identity-provider]"    // The workload identity provider filter.
+)
+
 // Create an assume service account policy.
 func (c *Client) CreateAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, req *schemas.AssumeServiceAccountPolicyRequest, opts *CreateAssumeServiceAccountPolicyOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies"
@@ -34,9 +47,9 @@ func (c *Client) CreateAssumeServiceAccountPolicyRaw(ctx context.Context, servic
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -79,7 +92,9 @@ func (c *Client) CreateAssumeServiceAccountPolicy(ctx context.Context, serviceAc
 type CreateAssumeServiceAccountPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account.
@@ -91,9 +106,9 @@ func (c *Client) CreateServiceAccountRaw(ctx context.Context, req *schemas.Servi
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -136,7 +151,9 @@ func (c *Client) CreateServiceAccount(ctx context.Context, req *schemas.ServiceA
 type CreateServiceAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint deletes an assume service account policy by ID.
@@ -197,9 +214,9 @@ func (c *Client) GetAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAc
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -240,7 +257,9 @@ func (c *Client) GetAssumeServiceAccountPolicy(ctx context.Context, serviceAccou
 type GetAssumeServiceAccountPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
@@ -253,9 +272,9 @@ func (c *Client) GetServiceAccountRaw(ctx context.Context, serviceAccount string
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -296,7 +315,9 @@ func (c *Client) GetServiceAccount(ctx context.Context, serviceAccount string, o
 type GetServiceAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) service accounts.
@@ -321,9 +342,9 @@ func (c *Client) GetServiceAccountsRaw(ctx context.Context, opts *GetServiceAcco
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -524,8 +545,10 @@ type GetServiceAccountsOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // List service account assume policies.
@@ -550,9 +573,9 @@ func (c *Client) ListAssumeServiceAccountPoliciesRaw(ctx context.Context, opts *
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -753,8 +776,10 @@ type ListAssumeServiceAccountPoliciesOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update an assume service account policy.
@@ -768,9 +793,9 @@ func (c *Client) UpdateAssumeServiceAccountPolicyRaw(ctx context.Context, servic
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -813,7 +838,9 @@ func (c *Client) UpdateAssumeServiceAccountPolicy(ctx context.Context, serviceAc
 type UpdateAssumeServiceAccountPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
@@ -826,9 +853,9 @@ func (c *Client) UpdateServiceAccountRaw(ctx context.Context, serviceAccount str
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -871,5 +898,7 @@ func (c *Client) UpdateServiceAccount(ctx context.Context, serviceAccount string
 type UpdateServiceAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for WorkloadIdentityProvider operations
+const (
+	FilterName                     = "filter[name]"                       // The workload identity provider name filter.
+	FilterUrl                      = "filter[url]"                        // The workload identity provider url filter.
+	FilterWorkloadIdentityProvider = "filter[workload-identity-provider]" // The ID(s) of workload identity provider(s).
+)
+
 // Create a new Workload Identity Provider.
 func (c *Client) CreateWorkloadIdentityProviderRaw(ctx context.Context, req *schemas.WorkloadIdentityProviderRequest) (*client.Response, error) {
 	path := "/workload-identity-providers"
@@ -137,9 +144,9 @@ func (c *Client) ListWorkloadIdentityProvidersRaw(ctx context.Context, opts *Lis
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -338,8 +345,10 @@ type ListWorkloadIdentityProvidersOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates attributes of an existing Workload Identity Provider.

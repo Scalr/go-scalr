@@ -35,9 +35,9 @@ func (c *Client) GetJsonOutputRaw(ctx context.Context, plan string, opts *GetJso
 		if opts.Format != "" {
 			params.Set("format", opts.Format)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -70,7 +70,9 @@ func (c *Client) GetJsonOutput(ctx context.Context, plan string, opts *GetJsonOu
 type GetJsonOutputOptions struct {
 	// Format of the response.
 	Format string
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Show details of a specific Terraform Plan stage.
@@ -113,9 +115,9 @@ func (c *Client) GetPlanLogRaw(ctx context.Context, plan string, opts *GetPlanLo
 	if opts != nil {
 		// Handle parameter: Clean (bool)
 		params.Set("clean", fmt.Sprintf("%t", opts.Clean))
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -147,8 +149,10 @@ func (c *Client) GetPlanLog(ctx context.Context, plan string, opts *GetPlanLogOp
 // GetPlanLogOptions holds optional parameters for GetPlanLog
 type GetPlanLogOptions struct {
 	// Strip ANSI escape codes.
-	Clean  bool
-	Filter map[string]string
+	Clean bool
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Download plan file in machine-readable format with sanitized sensitive values.
@@ -162,9 +166,9 @@ func (c *Client) GetSanitizedJsonOutputRaw(ctx context.Context, plan string, opt
 		if opts.Format != "" {
 			params.Set("format", opts.Format)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -197,5 +201,7 @@ func (c *Client) GetSanitizedJsonOutput(ctx context.Context, plan string, opts *
 type GetSanitizedJsonOutputOptions struct {
 	// Format of the response.
 	Format string
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

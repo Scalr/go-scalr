@@ -24,6 +24,16 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ProviderConfiguration operations
+const (
+	FilterAccount               = "filter[account]"                // The provider configuration account filter.
+	FilterEnvironment           = "filter[environment]"            // The provider configuration environment filter.
+	FilterName                  = "filter[name]"                   // The provider configuration name filter.
+	FilterProviderConfiguration = "filter[provider-configuration]" // The ID(s) of provider configuration(s).
+	FilterProviderName          = "filter[provider-name]"          // The provider configuration type filter.
+	FilterStatus                = "filter[status]"                 // The provider configuration status filter.
+)
+
 // Create a new Provider configuration.
 func (c *Client) CreateProviderConfigurationRaw(ctx context.Context, req *schemas.ProviderConfigurationRequest) (*client.Response, error) {
 	path := "/provider-configurations"
@@ -93,9 +103,9 @@ func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfig
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -136,7 +146,9 @@ func (c *Client) GetProviderConfiguration(ctx context.Context, providerConfigura
 type GetProviderConfigurationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Provider configurations by various filters.
@@ -159,9 +171,9 @@ func (c *Client) ListProviderConfigurationsRaw(ctx context.Context, opts *ListPr
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -363,7 +375,9 @@ type ListProviderConfigurationsOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates attributes of an existing Provider configuration.

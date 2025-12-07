@@ -132,9 +132,9 @@ func (c *Client) ListProviderConfigurationParametersRaw(ctx context.Context, pro
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -330,7 +330,9 @@ type ListProviderConfigurationParametersOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint allows updates to attributes of an existing Provider configuration parameters.

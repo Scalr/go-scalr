@@ -24,6 +24,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for DatadogIntegration operations
+const (
+	FilterAccount = "filter[account]" // The ID of the Account
+)
+
 // This endpoint creates Datadog integrations.
 func (c *Client) CreateDatadogIntegrationRaw(ctx context.Context, req *schemas.DatadogIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/datadog"
@@ -131,9 +136,9 @@ func (c *Client) ListDatadogIntegrationsRaw(ctx context.Context, opts *ListDatad
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -330,8 +335,10 @@ type ListDatadogIntegrationsOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates Datadog integrations.

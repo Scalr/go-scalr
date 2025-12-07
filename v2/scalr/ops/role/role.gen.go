@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Role operations
+const (
+	FilterAccount = "filter[account]" // The account filter.
+	FilterName    = "filter[name]"    // The role name filter.
+	FilterRole    = "filter[role]"    // The role filter.
+)
+
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) role.
 func (c *Client) CreateRoleRaw(ctx context.Context, req *schemas.RoleRequest, opts *CreateRoleOptions) (*client.Response, error) {
 	path := "/roles"
@@ -33,9 +40,9 @@ func (c *Client) CreateRoleRaw(ctx context.Context, req *schemas.RoleRequest, op
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,7 +85,9 @@ func (c *Client) CreateRole(ctx context.Context, req *schemas.RoleRequest, opts 
 type CreateRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
@@ -114,9 +123,9 @@ func (c *Client) GetRoleRaw(ctx context.Context, role string, opts *GetRoleOptio
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -157,7 +166,9 @@ func (c *Client) GetRole(ctx context.Context, role string, opts *GetRoleOptions)
 type GetRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) roles.
@@ -182,9 +193,9 @@ func (c *Client) GetRolesRaw(ctx context.Context, opts *GetRolesOptions) (*clien
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -385,8 +396,10 @@ type GetRolesOptions struct {
 	// Query string
 	Query string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
@@ -399,9 +412,9 @@ func (c *Client) UpdateRoleRaw(ctx context.Context, role string, req *schemas.Ro
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -444,5 +457,7 @@ func (c *Client) UpdateRole(ctx context.Context, role string, req *schemas.RoleR
 type UpdateRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

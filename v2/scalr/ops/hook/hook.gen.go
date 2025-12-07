@@ -24,6 +24,14 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Hook operations
+const (
+	FilterHook        = "filter[hook]"         // The ID(s) of the Hook(s).
+	FilterName        = "filter[name]"         // The Hook name filter.
+	FilterStatus      = "filter[status]"       // The status of the Hook. Possible values: 'pending', 'active', 'errored'.
+	FilterVcsProvider = "filter[vcs-provider]" // The ID of the VCS provider
+)
+
 // Creates a Hook from a VCS repository. The repository is cloned asynchronously, and the specified folder is archived and uploaded to the Blob storage.
 func (c *Client) CreateHookRaw(ctx context.Context, req *schemas.HookRequest) (*client.Response, error) {
 	path := "/hooks"
@@ -95,9 +103,9 @@ func (c *Client) GetHookRaw(ctx context.Context, hook string, opts *GetHookOptio
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -140,7 +148,9 @@ type GetHookOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of hooks by various filters.
@@ -167,9 +177,9 @@ func (c *Client) ListHooksRaw(ctx context.Context, opts *ListHooksOptions) (*cli
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -373,7 +383,9 @@ type ListHooksOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Triggers a resync of the Hook.

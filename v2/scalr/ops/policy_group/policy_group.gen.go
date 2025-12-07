@@ -24,6 +24,18 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for PolicyGroup operations
+const (
+	FilterEnvironment     = "filter[environment]"      // The environment ID to list policy check results for.
+	FilterName            = "filter[name]"             // The policy group name filter.
+	FilterPolicyGroup     = "filter[policy-group]"     // Filter by policy group id
+	FilterResult          = "filter[result]"           // Filter results by status.
+	FilterSoftwareVersion = "filter[software-version]" // The ID of the software version
+	FilterTerragruntUnit  = "filter[terragrunt-unit]"  // The unit path filter. Example: `filter[unit_path]=vpc`
+	FilterVcsProvider     = "filter[vcs-provider]"     // The ID of the VCS provider
+	FilterWorkspace       = "filter[workspace]"        // The workspace ID to list policy check results for.
+)
+
 // Create a new [policy group](/docs/policy-governance#open-policy-agent) in the account.
 func (c *Client) CreatePolicyGroupRaw(ctx context.Context, req *schemas.PolicyGroupRequest, opts *CreatePolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups"
@@ -33,9 +45,9 @@ func (c *Client) CreatePolicyGroupRaw(ctx context.Context, req *schemas.PolicyGr
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,7 +90,9 @@ func (c *Client) CreatePolicyGroup(ctx context.Context, req *schemas.PolicyGroup
 type CreatePolicyGroupOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) CreatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
@@ -166,9 +180,9 @@ func (c *Client) GetPolicyGroupRaw(ctx context.Context, policyGroup string, opts
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -209,7 +223,9 @@ func (c *Client) GetPolicyGroup(ctx context.Context, policyGroup string, opts *G
 type GetPolicyGroupOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [policy groups](/docs/policy-governance#open-policy-agent).
@@ -236,9 +252,9 @@ func (c *Client) ListPolicyGroupsRaw(ctx context.Context, opts *ListPolicyGroups
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -442,7 +458,9 @@ type ListPolicyGroupsOptions struct {
 	PageSize int
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) ListPullRequestPolicyCheckResultsRaw(ctx context.Context, policyGroup string, opts *ListPullRequestPolicyCheckResultsOptions) (*client.Response, error) {
@@ -477,9 +495,9 @@ func (c *Client) ListPullRequestPolicyCheckResultsRaw(ctx context.Context, polic
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -686,7 +704,9 @@ type ListPullRequestPolicyCheckResultsOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates a [policy group](/docs/policy-governance#open-policy-agent) by ID.
@@ -699,9 +719,9 @@ func (c *Client) UpdatePolicyGroupRaw(ctx context.Context, policyGroup string, r
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -744,7 +764,9 @@ func (c *Client) UpdatePolicyGroup(ctx context.Context, policyGroup string, req 
 type UpdatePolicyGroupOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) UpdatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {

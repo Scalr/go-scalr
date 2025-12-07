@@ -26,6 +26,16 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+{{if .FilterKeys -}}
+// Filter key constants for {{ .ResourceName }} operations
+const (
+{{- range .FilterKeys}}
+	{{.Name}} = "{{.Key}}"{{if .Description}}  // {{.Description}}{{end}}
+{{- end}}
+)
+
+{{end -}}
+
 {{range .Operations -}}
 {{if .Description}}// {{ .Description }}
 {{end -}}
@@ -65,9 +75,9 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 		{{end -}}
 		{{end -}}
 		{{end -}}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -341,7 +351,9 @@ type {{ .Name }}Options struct {
 	{{.GoName}} {{.Type}}
 	{{end -}}
 	{{end -}}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 {{end}}
 

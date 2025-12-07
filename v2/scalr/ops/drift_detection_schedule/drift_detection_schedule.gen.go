@@ -31,9 +31,9 @@ func (c *Client) CreateDriftDetectionScheduleRaw(ctx context.Context, req *schem
 	if opts != nil {
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -76,7 +76,9 @@ func (c *Client) CreateDriftDetectionSchedule(ctx context.Context, req *schemas.
 type CreateDriftDetectionScheduleOptions struct {
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteDriftDetectionScheduleRaw(ctx context.Context, driftDetectionSchedule string) (*client.Response, error) {

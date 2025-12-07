@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ModuleVersion operations
+const (
+	FilterModule  = "filter[module]"  // Filter module versions by module
+	FilterStatus  = "filter[status]"  // Filter module versions by status
+	FilterVersion = "filter[version]" // Filter module versions by semantic version
+)
+
 // Show details of a specific terraform module version.
 func (c *Client) GetModuleVersionRaw(ctx context.Context, moduleVersion string, opts *GetModuleVersionOptions) (*client.Response, error) {
 	path := "/module-versions/{module_version}"
@@ -34,9 +41,9 @@ func (c *Client) GetModuleVersionRaw(ctx context.Context, moduleVersion string, 
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -77,7 +84,9 @@ func (c *Client) GetModuleVersion(ctx context.Context, moduleVersion string, opt
 type GetModuleVersionOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists versions of a particular module. The query parameter `filter[module]` with Module ID is required.
@@ -100,9 +109,9 @@ func (c *Client) ListModuleVersionsRaw(ctx context.Context, opts *ListModuleVers
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -304,7 +313,9 @@ type ListModuleVersionsOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Trigger resync of the Module Version associated with the `relationships.vcs-revision`. Only modules associated with a VCS can be resynchronized.

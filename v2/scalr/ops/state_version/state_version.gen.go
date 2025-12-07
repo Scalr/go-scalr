@@ -25,6 +25,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for StateVersion operations
+const (
+	FilterRun       = "filter[run]"
+	FilterWorkspace = "filter[workspace]"
+)
+
 // Create a state version and set it as the current state version for the given workspace.
 func (c *Client) CreateStateVersionRaw(ctx context.Context, req *schemas.StateVersionRequest) (*client.Response, error) {
 	path := "/state-versions"
@@ -176,9 +182,9 @@ func (c *Client) ListStateVersionsRaw(ctx context.Context, opts *ListStateVersio
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -376,6 +382,8 @@ type ListStateVersionsOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

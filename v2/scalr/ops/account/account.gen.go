@@ -25,6 +25,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Account operations
+const (
+	FilterName = "filter[name]" // The account name filter.
+)
+
 // This endpoint adds provided [users](users.html#the-user-resource) to those who can log in to the account via password, even when SSO is enforced.
 func (c *Client) AddSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
@@ -99,9 +104,9 @@ func (c *Client) GetAccountRaw(ctx context.Context, account string, opts *GetAcc
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -142,7 +147,9 @@ func (c *Client) GetAccount(ctx context.Context, account string, opts *GetAccoun
 type GetAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) GetAccountsRaw(ctx context.Context, opts *GetAccountsOptions) (*client.Response, error) {
@@ -161,9 +168,9 @@ func (c *Client) GetAccountsRaw(ctx context.Context, opts *GetAccountsOptions) (
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -362,7 +369,9 @@ type GetAccountsOptions struct {
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) GetMetricsRaw(ctx context.Context, account string) (*client.Response, error) {
@@ -403,9 +412,9 @@ func (c *Client) ListSsoBypassUsersRaw(ctx context.Context, account string, opts
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -589,7 +598,9 @@ type ListSsoBypassUsersOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint completely replaces the list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced, with a provided list.

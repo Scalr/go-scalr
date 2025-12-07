@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for TerraformResourceInstanceUsage operations
+const (
+	FilterIsActive        = "filter[is-active]"         // Filter by terraform resource usage status.
+	FilterIsDuplicate     = "filter[is-duplicate]"      // Filter duplicate resources usage.
+	FilterTfResourceUsage = "filter[tf-resource-usage]" // Filter by terraform resource usage.
+)
+
 // This endpoint lists terraform resource instances usage.
 func (c *Client) ListTerraformResourceInstancesUsageRaw(ctx context.Context, opts *ListTerraformResourceInstancesUsageOptions) (*client.Response, error) {
 	path := "/reports/resource-usage"
@@ -52,9 +59,9 @@ func (c *Client) ListTerraformResourceInstancesUsageRaw(ctx context.Context, opt
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -260,5 +267,7 @@ type ListTerraformResourceInstancesUsageOptions struct {
 	Fields map[string]interface{}
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

@@ -24,6 +24,16 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for SoftwareVersion operations
+const (
+	FilterDeprecated      = "filter[deprecated]"       // Filter software versions by deprecation flag.
+	FilterLatest          = "filter[latest]"           // Filter software versions by latest.
+	FilterSoftwareType    = "filter[software-type]"    // Filter software versions by software type.
+	FilterSoftwareVersion = "filter[software-version]" // Filter software versions by id.
+	FilterStatus          = "filter[status]"           // Filter software versions by status.
+	FilterVersion         = "filter[version]"          // Filter software versions by semversion.
+)
+
 // Show details of a specific software version.
 func (c *Client) GetSoftwareVersionRaw(ctx context.Context, softwareVersion string) (*client.Response, error) {
 	path := "/software-versions/{software_version}"
@@ -76,9 +86,9 @@ func (c *Client) ListSoftwareVersionsRaw(ctx context.Context, opts *ListSoftware
 		}
 		// Handle parameter: Fields (map[string]interface{})
 		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -268,5 +278,7 @@ type ListSoftwareVersionsOptions struct {
 	Sort []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
-	Filter map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

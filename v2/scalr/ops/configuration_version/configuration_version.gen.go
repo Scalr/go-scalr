@@ -25,6 +25,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ConfigurationVersion operations
+const (
+	FilterWorkspace = "filter[workspace]" // The ID of the workspace to list configurations from.
+)
+
 // Create the new configuration version for specific workspace
 func (c *Client) CreateConfigurationVersionRaw(ctx context.Context, req *schemas.ConfigurationVersionRequest) (*client.Response, error) {
 	path := "/configuration-versions"
@@ -98,9 +103,9 @@ func (c *Client) GetConfigurationVersionRaw(ctx context.Context, configurationVe
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -141,7 +146,9 @@ func (c *Client) GetConfigurationVersion(ctx context.Context, configurationVersi
 type GetConfigurationVersionOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) GetConfigurationVersionsRaw(ctx context.Context, opts *GetConfigurationVersionsOptions) (*client.Response, error) {
@@ -158,9 +165,9 @@ func (c *Client) GetConfigurationVersionsRaw(ctx context.Context, opts *GetConfi
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -357,5 +364,7 @@ type GetConfigurationVersionsOptions struct {
 	PageSize int
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
