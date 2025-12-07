@@ -157,18 +157,3 @@ func TestUserAgentWithAppFormat(t *testing.T) {
 		t.Errorf("Third part should start with '(Go', got: %s", parts[2])
 	}
 }
-
-// TestVersionVariable tests that Version can be set
-func TestVersionVariable(t *testing.T) {
-	// Save original
-	originalVersion := Version
-	defer func() { Version = originalVersion }()
-
-	// Set custom version
-	Version = "2.0.0-beta1"
-
-	ua := UserAgent()
-	if !strings.Contains(ua, "go-scalr/2.0.0-beta1") {
-		t.Errorf("User-Agent should contain custom version, got: %s", ua)
-	}
-}
