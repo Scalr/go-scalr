@@ -95,6 +95,8 @@ type VcsProvidersListOptions struct {
 
 	// Filter by vcs-type
 	VcsType *VcsType `url:"filter[vcs-type],omitempty"`
+	// Filter by name
+	Name *string `url:"filter[name],omitempty"`
 
 	// Scope filters.
 	Environment *string `url:"filter[environment],omitempty"`
