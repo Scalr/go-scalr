@@ -89,6 +89,41 @@ func (c *Client) AddWorkspaceTags(ctx context.Context, workspace string, req []s
 	return nil
 }
 
+// Add a workspace to the current user's favorites.
+func (c *Client) AddWorkspaceToFavoritesRaw(ctx context.Context, workspace string) (*client.Response, error) {
+	path := "/workspaces/{workspace}/actions/favorite"
+	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Add a workspace to the current user's favorites.
+func (c *Client) AddWorkspaceToFavorites(ctx context.Context, workspace string) (*schemas.Workspace, error) {
+	resp, err := c.AddWorkspaceToFavoritesRaw(ctx, workspace)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.Workspace        `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
+}
+
 // Workspaces represent a unit of infrastructure managed by terraform. To create a workspace you must pass `name` attribute and `environment` relationship. A workspace might be linked to a VCS repository, so that any git push will trigger a terraform Run in the workspace.
 func (c *Client) CreateWorkspaceRaw(ctx context.Context, req *schemas.WorkspaceRequest) (*client.Response, error) {
 	path := "/workspaces"
@@ -312,6 +347,10 @@ func (c *Client) GetWorkspacesRaw(ctx context.Context, opts *GetWorkspacesOption
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
+		// Handle parameter: SortFavoriteFirst (string)
+		if opts.SortFavoriteFirst != "" {
+			params.Set("sort[favorite-first]", opts.SortFavoriteFirst)
+		}
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
@@ -519,6 +558,8 @@ type GetWorkspacesOptions struct {
 	PageSize int
 	// Query string, search by id, name.
 	Query string
+	// When set to 'true', favorite workspaces are shown first, followed by non-favorites. Both groups respect the main sort order.
+	SortFavoriteFirst string
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
@@ -949,6 +990,41 @@ func (c *Client) LockWorkspaceRaw(ctx context.Context, workspace string, req *sc
 // This endpoint locks a workspace.
 func (c *Client) LockWorkspace(ctx context.Context, workspace string, req *schemas.Reason) (*schemas.Workspace, error) {
 	resp, err := c.LockWorkspaceRaw(ctx, workspace, req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.Workspace        `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
+}
+
+// Remove a workspace from the current user's favorites.
+func (c *Client) RemoveWorkspaceFromFavoritesRaw(ctx context.Context, workspace string) (*client.Response, error) {
+	path := "/workspaces/{workspace}/actions/unfavorite"
+	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Remove a workspace from the current user's favorites.
+func (c *Client) RemoveWorkspaceFromFavorites(ctx context.Context, workspace string) (*schemas.Workspace, error) {
+	resp, err := c.RemoveWorkspaceFromFavoritesRaw(ctx, workspace)
 	if err != nil {
 		return nil, err
 	}

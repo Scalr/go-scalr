@@ -689,6 +689,29 @@ type ListPullRequestPolicyCheckResultsOptions struct {
 	Filter map[string]string
 }
 
+// This endpoint resyncs a [policy group](/docs/policy-governance#open-policy-agent).
+func (c *Client) ResyncPolicyGroupRaw(ctx context.Context, policyGroup string) (*client.Response, error) {
+	path := "/policy-groups/{policy_group}/actions/resync"
+	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint resyncs a [policy group](/docs/policy-governance#open-policy-agent).
+func (c *Client) ResyncPolicyGroup(ctx context.Context, policyGroup string) error {
+	resp, err := c.ResyncPolicyGroupRaw(ctx, policyGroup)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 // This endpoint updates a [policy group](/docs/policy-governance#open-policy-agent) by ID.
 func (c *Client) UpdatePolicyGroupRaw(ctx context.Context, policyGroup string, req *schemas.PolicyGroupRequest, opts *UpdatePolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"

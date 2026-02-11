@@ -21,16 +21,14 @@ const (
 	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
 )
 
-// WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns
-// Indicates if runs have to be queued automatically when a new configuration version is uploaded. `skip_first` - after the very first configuration version is uploaded into the workspace the run will not be triggered. But the following configurations will do. This is the default behavior. `on_create_only` - single run will be triggered only when the workspace is created and the first configuration version is uploaded. Subsequent configurations will not trigger runs. `always` - runs will be triggered automatically on every upload of the configuration version. `never` - configuration versions are uploaded into the workspace, but runs will not be triggered.
-type WorkspaceAutoQueueRuns string
+// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
+// The IaC platform of this workspace.
+type WorkspaceIacPlatform string
 
-// WorkspaceAutoQueueRuns constants
+// WorkspaceIacPlatform constants
 const (
-	WorkspaceAutoQueueRunsAlways       WorkspaceAutoQueueRuns = "always"
-	WorkspaceAutoQueueRunsNever        WorkspaceAutoQueueRuns = "never"
-	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
-	WorkspaceAutoQueueRunsOnCreateOnly WorkspaceAutoQueueRuns = "on_create_only"
+	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
+	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
 )
 
 // WorkspaceEnvironmentType represents the type for WorkspaceEnvironmentType
@@ -46,14 +44,16 @@ const (
 	WorkspaceEnvironmentTypeUnmapped    WorkspaceEnvironmentType = "unmapped"
 )
 
-// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
-// The IaC platform of this workspace.
-type WorkspaceIacPlatform string
+// WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns
+// Indicates if runs have to be queued automatically when a new configuration version is uploaded. `skip_first` - after the very first configuration version is uploaded into the workspace the run will not be triggered. But the following configurations will do. This is the default behavior. `on_create_only` - single run will be triggered only when the workspace is created and the first configuration version is uploaded. Subsequent configurations will not trigger runs. `always` - runs will be triggered automatically on every upload of the configuration version. `never` - configuration versions are uploaded into the workspace, but runs will not be triggered.
+type WorkspaceAutoQueueRuns string
 
-// WorkspaceIacPlatform constants
+// WorkspaceAutoQueueRuns constants
 const (
-	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
-	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
+	WorkspaceAutoQueueRunsAlways       WorkspaceAutoQueueRuns = "always"
+	WorkspaceAutoQueueRunsNever        WorkspaceAutoQueueRuns = "never"
+	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
+	WorkspaceAutoQueueRunsOnCreateOnly WorkspaceAutoQueueRuns = "on_create_only"
 )
 
 // WorkspaceExecutionMode represents the type for WorkspaceExecutionMode
@@ -114,6 +114,8 @@ type WorkspaceAttributes struct {
 	EnvironmentType WorkspaceEnvironmentType `json:"environment-type"`
 	// Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
 	ExecutionMode WorkspaceExecutionMode `json:"execution-mode"`
+	// Indicates whether the workspace is marked as favorite by the current user.
+	Favorite bool `json:"favorite"`
 	// Indicates whether `force run` should automatically apply to latest run. Default `false`.
 	ForceLatestRun bool `json:"force-latest-run"`
 	// Indicates whether the workspace's current state version contains terraform resources.
@@ -158,7 +160,7 @@ type WorkspaceRelationships struct {
 	ConfigurationVersion *ConfigurationVersion `json:"configuration-version"`
 	// The user, who has triggered the run.
 	CreatedBy *User `json:"created-by"`
-	// Currently executing Run.
+	// The latest non-dry Run in this workspace.
 	CurrentRun *Run `json:"current-run"`
 	// The drift report for the workspace.
 	DriftReport *DriftReport `json:"drift-report"`
@@ -166,7 +168,7 @@ type WorkspaceRelationships struct {
 	Environment *Environment `json:"environment"`
 	// The configuration version of the latest non-dry Run in this workspace.
 	LatestConfigurationVersion *ConfigurationVersion `json:"latest-configuration-version"`
-	// Latest finished Run.
+	// The latest non-dry Run in this workspace (deprecated, same as current).
 	LatestRun   *Run  `json:"latest-run"`
 	LockedBy    *User `json:"locked-by"`
 	LockedByRun *Run  `json:"locked-by-run"`

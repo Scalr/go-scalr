@@ -211,7 +211,7 @@ type DownloadPolicyInputOptions struct {
 	Filter map[string]string
 }
 
-// Cancel all previous runs in pending or waiting for confirmation statuses.
+// Cancel all previous runs in pending or waiting for confirmation statuses. If the workspace is locked by a finished run, the lock will be automatically removed to allow the forced run to proceed.
 func (c *Client) ForceRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/force"
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
@@ -225,7 +225,7 @@ func (c *Client) ForceRunRaw(ctx context.Context, run string, req *schemas.Comme
 	return &client.Response{Response: httpResp}, nil
 }
 
-// Cancel all previous runs in pending or waiting for confirmation statuses.
+// Cancel all previous runs in pending or waiting for confirmation statuses. If the workspace is locked by a finished run, the lock will be automatically removed to allow the forced run to proceed.
 func (c *Client) ForceRun(ctx context.Context, run string, req *schemas.Comment) error {
 	resp, err := c.ForceRunRaw(ctx, run, req)
 	if err != nil {
