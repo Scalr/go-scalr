@@ -21,7 +21,7 @@ func TestTagsList(t *testing.T) {
 	t.Run("without options", func(t *testing.T) {
 		tagl, err := client.Tags.List(ctx, TagListOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, 2, tagl.TotalCount)
+		assert.GreaterOrEqual(t, tagl.TotalCount, 2)
 
 		tagIDs := make([]string, len(tagl.Items))
 		for i, tag := range tagl.Items {

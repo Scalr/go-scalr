@@ -2,8 +2,8 @@ name: go-scalr v1 default
 
 on:
   push:
-    paths:
-    - '!v2/**'
+    paths-ignore:
+    - 'v2/**'
 
 jobs:
   lint:
