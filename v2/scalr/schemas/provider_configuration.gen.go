@@ -8,6 +8,26 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
+// Provider configuration status. Can be: `active`, `errored`.
+type ProviderConfigurationStatus string
+
+// ProviderConfigurationStatus constants
+const (
+	ProviderConfigurationStatusActive  ProviderConfigurationStatus = "active"
+	ProviderConfigurationStatusErrored ProviderConfigurationStatus = "errored"
+)
+
+// ProviderConfigurationAzurermAuthType represents the type for ProviderConfigurationAzurermAuthType
+// The type of azurerm credentials, available options: `client-secrets`, `oidc`.
+type ProviderConfigurationAzurermAuthType string
+
+// ProviderConfigurationAzurermAuthType constants
+const (
+	ProviderConfigurationAzurermAuthTypeClientSecrets ProviderConfigurationAzurermAuthType = "client-secrets"
+	ProviderConfigurationAzurermAuthTypeOidc          ProviderConfigurationAzurermAuthType = "oidc"
+)
+
 // ProviderConfigurationGoogleAuthType represents the type for ProviderConfigurationGoogleAuthType
 // Authentication type to access GCP.
 type ProviderConfigurationGoogleAuthType string
@@ -18,14 +38,25 @@ const (
 	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
 )
 
-// ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
-// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
-type ProviderConfigurationAwsDefaultTagsStrategy string
+// ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
+// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
+type ProviderConfigurationAwsTrustedEntityType string
 
-// ProviderConfigurationAwsDefaultTagsStrategy constants
+// ProviderConfigurationAwsTrustedEntityType constants
 const (
-	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
-	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
+	ProviderConfigurationAwsTrustedEntityTypeAwsAccount ProviderConfigurationAwsTrustedEntityType = "aws_account"
+	ProviderConfigurationAwsTrustedEntityTypeAwsService ProviderConfigurationAwsTrustedEntityType = "aws_service"
+)
+
+// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
+// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
+type ProviderConfigurationAwsCredentialsType string
+
+// ProviderConfigurationAwsCredentialsType constants
+const (
+	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
+	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
+	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
 )
 
 // ProviderConfigurationAwsAccountType represents the type for ProviderConfigurationAwsAccountType
@@ -39,45 +70,14 @@ const (
 	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
 )
 
-// ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
-// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
-type ProviderConfigurationAwsTrustedEntityType string
+// ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
+// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
+type ProviderConfigurationAwsDefaultTagsStrategy string
 
-// ProviderConfigurationAwsTrustedEntityType constants
+// ProviderConfigurationAwsDefaultTagsStrategy constants
 const (
-	ProviderConfigurationAwsTrustedEntityTypeAwsAccount ProviderConfigurationAwsTrustedEntityType = "aws_account"
-	ProviderConfigurationAwsTrustedEntityTypeAwsService ProviderConfigurationAwsTrustedEntityType = "aws_service"
-)
-
-// ProviderConfigurationAzurermAuthType represents the type for ProviderConfigurationAzurermAuthType
-// The type of azurerm credentials, available options: `client-secrets`, `oidc`.
-type ProviderConfigurationAzurermAuthType string
-
-// ProviderConfigurationAzurermAuthType constants
-const (
-	ProviderConfigurationAzurermAuthTypeClientSecrets ProviderConfigurationAzurermAuthType = "client-secrets"
-	ProviderConfigurationAzurermAuthTypeOidc          ProviderConfigurationAzurermAuthType = "oidc"
-)
-
-// ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
-// Provider configuration status. Can be: `active`, `errored`.
-type ProviderConfigurationStatus string
-
-// ProviderConfigurationStatus constants
-const (
-	ProviderConfigurationStatusActive  ProviderConfigurationStatus = "active"
-	ProviderConfigurationStatusErrored ProviderConfigurationStatus = "errored"
-)
-
-// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
-// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
-type ProviderConfigurationAwsCredentialsType string
-
-// ProviderConfigurationAwsCredentialsType constants
-const (
-	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
-	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
-	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
+	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
+	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -180,6 +180,7 @@ type ProviderConfigurationRelationships struct {
 	Owners []*Team `json:"owners"`
 	// The list of arguments for provider configurations.
 	Parameters []*ProviderConfigurationParameter `json:"parameters"`
+	Tags       []*Tag                            `json:"tags"`
 }
 
 // UnmarshalJSON implements custom unmarshalling for relationships
@@ -271,6 +272,27 @@ func (r *ProviderConfigurationRelationships) UnmarshalJSON(data []byte) error {
 			}
 		}
 	}
+	if raw, ok := temp["tags"]; ok {
+		// To-many relationship
+		var rel struct {
+			Data []struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.Tags = make([]*Tag, len(rel.Data))
+			for i, d := range rel.Data {
+				r.Tags[i] = &Tag{
+					ID:   d.ID,
+					Type: d.Type,
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -346,6 +368,22 @@ func (r *ProviderConfigurationRelationships) PopulateIncludes(included []map[str
 					var full ProviderConfigurationParameter
 					if err := json.Unmarshal(data, &full); err == nil {
 						r.Parameters[i] = &full
+					}
+				}
+			}
+		}
+	}
+	// Populate to-many relationship: Tags
+	if r.Tags != nil {
+		for i, resource := range r.Tags {
+			if resource != nil && resource.ID != "" {
+				key := resource.Type + ":" + resource.ID
+				if fullResource, ok := includedMap[key]; ok {
+					// Unmarshal the full resource
+					data, _ := json.Marshal(fullResource)
+					var full Tag
+					if err := json.Unmarshal(data, &full); err == nil {
+						r.Tags[i] = &full
 					}
 				}
 			}
@@ -451,4 +489,5 @@ type ProviderConfigurationRelationshipsRequest struct {
 	Environments *value.Value[[]Environment] `json:"environments,omitempty"`
 	// The teams, the provider configuration belongs to.
 	Owners *value.Value[[]Team] `json:"owners,omitempty"`
+	Tags   *value.Value[[]Tag]  `json:"tags,omitempty"`
 }

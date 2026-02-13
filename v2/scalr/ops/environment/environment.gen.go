@@ -56,6 +56,41 @@ func (c *Client) AddEnvironmentTags(ctx context.Context, environment string, req
 	return nil
 }
 
+// Add an environment to the current user's favorites.
+func (c *Client) AddEnvironmentToFavoritesRaw(ctx context.Context, environment string) (*client.Response, error) {
+	path := "/environments/{environment}/actions/favorite"
+	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Add an environment to the current user's favorites.
+func (c *Client) AddEnvironmentToFavorites(ctx context.Context, environment string) (*schemas.Environment, error) {
+	resp, err := c.AddEnvironmentToFavoritesRaw(ctx, environment)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.Environment      `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
+}
+
 func (c *Client) AddFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
@@ -505,6 +540,10 @@ func (c *Client) ListEnvironmentsRaw(ctx context.Context, opts *ListEnvironments
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
+		// Handle parameter: SortFavoriteFirst (string)
+		if opts.SortFavoriteFirst != "" {
+			params.Set("sort[favorite-first]", opts.SortFavoriteFirst)
+		}
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
@@ -713,6 +752,8 @@ type ListEnvironmentsOptions struct {
 	PageSize int
 	// Query string, search by id, name.
 	Query string
+	// When set to 'true', favorite environments are shown first, followed by non-favorites. Both groups respect the main sort order.
+	SortFavoriteFirst string
 	// The comma-separated list of attributes.
 	Sort []string
 	// The comma-separated list of relationship paths.
@@ -922,6 +963,78 @@ type ListFederatedEnvironmentsOptions struct {
 	Filter   map[string]string
 }
 
+// This endpoint locks an environment.
+func (c *Client) LockEnvironmentRaw(ctx context.Context, environment string, req *schemas.EnvLockReason) (*client.Response, error) {
+	path := "/environments/{environment}/actions/lock"
+	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
+
+	// Plain JSON request (not JSON:API)
+	headers := map[string]string{"Content-Type": "application/json"}
+	httpResp, err := c.httpClient.Post(ctx, path, req, headers)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint locks an environment.
+func (c *Client) LockEnvironment(ctx context.Context, environment string, req *schemas.EnvLockReason) (*schemas.Environment, error) {
+	resp, err := c.LockEnvironmentRaw(ctx, environment, req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.Environment      `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
+}
+
+// Remove an environment from the current user's favorites.
+func (c *Client) RemoveEnvironmentFromFavoritesRaw(ctx context.Context, environment string) (*client.Response, error) {
+	path := "/environments/{environment}/actions/unfavorite"
+	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Remove an environment from the current user's favorites.
+func (c *Client) RemoveEnvironmentFromFavorites(ctx context.Context, environment string) (*schemas.Environment, error) {
+	resp, err := c.RemoveEnvironmentFromFavoritesRaw(ctx, environment)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.Environment      `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
+}
+
 // This endpoint completely replaces environment's tags with provided list.
 func (c *Client) ReplaceEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
@@ -982,6 +1095,41 @@ func (c *Client) ReplaceFederatedEnvironments(ctx context.Context, environment s
 	defer resp.Body.Close()
 
 	return nil
+}
+
+// This endpoint unlocks an environment.
+func (c *Client) UnlockEnvironmentRaw(ctx context.Context, environment string) (*client.Response, error) {
+	path := "/environments/{environment}/actions/unlock"
+	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint unlocks an environment.
+func (c *Client) UnlockEnvironment(ctx context.Context, environment string) (*schemas.Environment, error) {
+	resp, err := c.UnlockEnvironmentRaw(ctx, environment)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data     schemas.Environment      `json:"data"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 func (c *Client) UpdateEnvironmentRaw(ctx context.Context, environment string, req *schemas.EnvironmentRequest, opts *UpdateEnvironmentOptions) (*client.Response, error) {

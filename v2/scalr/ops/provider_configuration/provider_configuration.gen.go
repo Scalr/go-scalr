@@ -24,6 +24,38 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// This endpoint assigns the list of [tags](/docs/tags-1) to the provider configuration.
+func (c *Client) AddProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint assigns the list of [tags](/docs/tags-1) to the provider configuration.
+func (c *Client) AddProviderConfigurationTags(ctx context.Context, providerConfiguration string, req []schemas.Tag) error {
+	resp, err := c.AddProviderConfigurationTagsRaw(ctx, providerConfiguration, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 // Create a new Provider configuration.
 func (c *Client) CreateProviderConfigurationRaw(ctx context.Context, req *schemas.ProviderConfigurationRequest) (*client.Response, error) {
 	path := "/provider-configurations"
@@ -75,6 +107,38 @@ func (c *Client) DeleteProviderConfigurationRaw(ctx context.Context, providerCon
 // The endpoint deletes a Provider configuration by ID.
 func (c *Client) DeleteProviderConfiguration(ctx context.Context, providerConfiguration string) error {
 	resp, err := c.DeleteProviderConfigurationRaw(ctx, providerConfiguration)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// This endpoint removes given [tags](/docs/tags-1) from the provider configuration.
+func (c *Client) DeleteProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Delete(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint removes given [tags](/docs/tags-1) from the provider configuration.
+func (c *Client) DeleteProviderConfigurationTags(ctx context.Context, providerConfiguration string, req []schemas.Tag) error {
+	resp, err := c.DeleteProviderConfigurationTagsRaw(ctx, providerConfiguration, req)
 	if err != nil {
 		return err
 	}
@@ -137,6 +201,208 @@ type GetProviderConfigurationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	Filter  map[string]string
+}
+
+// This endpoint returns a list of [tags](/docs/tags-1), assigned to an provider configuration.
+func (c *Client) ListProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	params := url.Values{}
+	if opts != nil {
+		if opts.PageNumber > 0 {
+			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
+		}
+		if opts.PageSize > 0 {
+			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
+		}
+	}
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint returns a list of [tags](/docs/tags-1), assigned to an provider configuration.
+func (c *Client) ListProviderConfigurationTags(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) ([]*schemas.Tag, error) {
+	resp, err := c.ListProviderConfigurationTagsRaw(ctx, providerConfiguration, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data []schemas.Tag `json:"data"`
+		Meta struct {
+			Pagination *client.Pagination `json:"pagination"`
+		} `json:"meta"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	resources := make([]*schemas.Tag, len(result.Data))
+	for i := range result.Data {
+		resources[i] = &result.Data[i]
+	}
+	return resources, nil
+}
+
+// ListProviderConfigurationTagsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
+// This is the recommended and simple way to iterate through all the results.
+//
+// The iterator automatically fetches pages as needed and handles errors inline.
+//
+// Example:
+//
+//	for item, err := range client.ProviderConfiguration.ListProviderConfigurationTagsIter(ctx, providerConfiguration, opts) {
+//	    if err != nil {
+//	        return err
+//	    }
+//	    // Process item
+//	}
+func (c *Client) ListProviderConfigurationTagsIter(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) iter.Seq2[schemas.Tag, error] {
+	return func(yield func(schemas.Tag, error) bool) {
+		// Determine page size from opts or use default
+		pageSize := 20
+		if opts != nil && opts.PageSize > 0 {
+			pageSize = opts.PageSize
+		}
+
+		pageNum := 1
+
+		for {
+			// Check context
+			if err := ctx.Err(); err != nil {
+				yield(schemas.Tag{}, err)
+				return
+			}
+
+			// Copy options and set page number
+			pageOpts := &ListProviderConfigurationTagsOptions{}
+			if opts != nil {
+				*pageOpts = *opts
+			}
+			pageOpts.PageNumber = pageNum
+			pageOpts.PageSize = pageSize
+
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListProviderConfigurationTagsRaw(ctx, providerConfiguration, pageOpts)
+			if err != nil {
+				yield(schemas.Tag{}, err)
+				return
+			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Tag `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
+
+			// Yield each item
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
+					return // Consumer requested early exit
+				}
+			}
+
+			// Check if there are more pages
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
+				break
+			}
+
+			pageNum++
+		}
+	}
+}
+
+// ListProviderConfigurationTagsPaged returns a stateful iterator with access to pagination metadata.
+// Use this when you need PageInfo(), Remaining(), or Collect() methods.
+//
+// Example:
+//
+//	iter := client.ProviderConfiguration.ListProviderConfigurationTagsPaged(ctx, providerConfiguration, opts)
+//	for iter.Next() {
+//	    item := iter.Value()
+//	    fmt.Print(iter.PageInfo()) // -> "page 2/5"
+//	    fmt.Printf("%d items remaining", iter.Remaining())
+//	}
+//	if err := iter.Err(); err != nil {
+//	    // Handle error
+//	}
+func (c *Client) ListProviderConfigurationTagsPaged(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) *client.Iterator[schemas.Tag] {
+	// Determine page size from opts or use default
+	pageSize := 20
+	if opts != nil && opts.PageSize > 0 {
+		pageSize = opts.PageSize
+	}
+
+	// Fetch function that will be called for each page
+	fetchPage := func(ctx context.Context, pageNum int) ([]*schemas.Tag, *client.Pagination, error) {
+		// Copy options and set page number
+		pageOpts := &ListProviderConfigurationTagsOptions{}
+		if opts != nil {
+			*pageOpts = *opts
+		}
+		pageOpts.PageNumber = pageNum
+		pageOpts.PageSize = pageSize
+
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListProviderConfigurationTagsRaw(ctx, providerConfiguration, pageOpts)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer resp.Body.Close()
+
+		// Decode response
+		var result struct {
+			Data []schemas.Tag `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Tag, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
+	}
+
+	return client.NewIterator[schemas.Tag](ctx, pageSize, fetchPage)
+}
+
+// ListProviderConfigurationTagsOptions holds optional parameters for ListProviderConfigurationTags
+type ListProviderConfigurationTagsOptions struct {
+	// Page number
+	PageNumber int
+	// Page size
+	PageSize int
+	Filter   map[string]string
 }
 
 // This endpoint returns a list of Provider configurations by various filters.
@@ -364,6 +630,38 @@ type ListProviderConfigurationsOptions struct {
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
 	Fields map[string]interface{}
 	Filter map[string]string
+}
+
+// This endpoint completely replaces provider configuration's tags with provided list.
+func (c *Client) ReplaceProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint completely replaces provider configuration's tags with provided list.
+func (c *Client) ReplaceProviderConfigurationTags(ctx context.Context, providerConfiguration string, req []schemas.Tag) error {
+	resp, err := c.ReplaceProviderConfigurationTagsRaw(ctx, providerConfiguration, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
 }
 
 // This endpoint updates attributes of an existing Provider configuration.

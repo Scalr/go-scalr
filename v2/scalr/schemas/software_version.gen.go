@@ -9,18 +9,6 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// SoftwareVersionStatus represents the type for SoftwareVersionStatus
-// The Docker image status.
-type SoftwareVersionStatus string
-
-// SoftwareVersionStatus constants
-const (
-	SoftwareVersionStatusPending      SoftwareVersionStatus = "pending"
-	SoftwareVersionStatusFailed       SoftwareVersionStatus = "failed"
-	SoftwareVersionStatusActive       SoftwareVersionStatus = "active"
-	SoftwareVersionStatusNotAvailable SoftwareVersionStatus = "not-available"
-)
-
 // SoftwareVersionSoftwareType represents the type for SoftwareVersionSoftwareType
 // The type of the software.
 type SoftwareVersionSoftwareType string
@@ -33,7 +21,18 @@ const (
 	SoftwareVersionSoftwareTypeOpentofu   SoftwareVersionSoftwareType = "opentofu"
 	SoftwareVersionSoftwareTypeTerragrunt SoftwareVersionSoftwareType = "terragrunt"
 	SoftwareVersionSoftwareTypeCheckov    SoftwareVersionSoftwareType = "checkov"
-	SoftwareVersionSoftwareTypeRunner     SoftwareVersionSoftwareType = "runner"
+)
+
+// SoftwareVersionStatus represents the type for SoftwareVersionStatus
+// The Docker image status.
+type SoftwareVersionStatus string
+
+// SoftwareVersionStatus constants
+const (
+	SoftwareVersionStatusPending      SoftwareVersionStatus = "pending"
+	SoftwareVersionStatusFailed       SoftwareVersionStatus = "failed"
+	SoftwareVersionStatusActive       SoftwareVersionStatus = "active"
+	SoftwareVersionStatusNotAvailable SoftwareVersionStatus = "not-available"
 )
 
 // Response version - used when unmarshalling from API responses

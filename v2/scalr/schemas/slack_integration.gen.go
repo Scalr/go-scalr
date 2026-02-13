@@ -8,17 +8,6 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// SlackIntegrationRunMode represents the type for SlackIntegrationRunMode
-// What type of runs should be reported.
-type SlackIntegrationRunMode string
-
-// SlackIntegrationRunMode constants
-const (
-	SlackIntegrationRunModeAll   SlackIntegrationRunMode = "all"
-	SlackIntegrationRunModeApply SlackIntegrationRunMode = "apply"
-	SlackIntegrationRunModeDry   SlackIntegrationRunMode = "dry"
-)
-
 // SlackIntegrationStatus represents the type for SlackIntegrationStatus
 // Status of integration.
 type SlackIntegrationStatus string
@@ -28,6 +17,17 @@ const (
 	SlackIntegrationStatusActive   SlackIntegrationStatus = "active"
 	SlackIntegrationStatusDisabled SlackIntegrationStatus = "disabled"
 	SlackIntegrationStatusFailed   SlackIntegrationStatus = "failed"
+)
+
+// SlackIntegrationRunMode represents the type for SlackIntegrationRunMode
+// What type of runs should be reported.
+type SlackIntegrationRunMode string
+
+// SlackIntegrationRunMode constants
+const (
+	SlackIntegrationRunModeAll   SlackIntegrationRunMode = "all"
+	SlackIntegrationRunModeApply SlackIntegrationRunMode = "apply"
+	SlackIntegrationRunModeDry   SlackIntegrationRunMode = "dry"
 )
 
 // Response version - used when unmarshalling from API responses

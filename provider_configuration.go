@@ -74,6 +74,7 @@ type ProviderConfiguration struct {
 	Parameters   []*ProviderConfigurationParameter `jsonapi:"relation,parameters"`
 	Environments []*Environment                    `jsonapi:"relation,environments"`
 	Owners       []*Team                           `jsonapi:"relation,owners"`
+	Tags         []*Tag                            `jsonapi:"relation,tags"`
 }
 
 // ProviderConfigurationsListOptions represents the options for listing provider configurations.
@@ -91,6 +92,7 @@ type ProviderConfigurationFilter struct {
 	ProviderName          string `url:"provider-name,omitempty"`
 	Name                  string `url:"name,omitempty"`
 	AccountID             string `url:"account,omitempty"`
+	Tag                   string `url:"tag,omitempty"`
 }
 
 // List all the provider configurations within a scalr account.
@@ -145,6 +147,7 @@ type ProviderConfigurationCreateOptions struct {
 	Account      *Account       `jsonapi:"relation,account,omitempty"`
 	Environments []*Environment `jsonapi:"relation,environments,omitempty"`
 	Owners       []*Team        `jsonapi:"relation,owners"`
+	Tags         []*Tag         `jsonapi:"relation,tags,omitempty"`
 }
 
 // Create is used to create a new provider configuration.
@@ -223,6 +226,7 @@ type ProviderConfigurationUpdateOptions struct {
 	ScalrHostname              *string                 `jsonapi:"attr,scalr-hostname"`
 	ScalrToken                 *string                 `jsonapi:"attr,scalr-token"`
 	Owners                     []*Team                 `jsonapi:"relation,owners"`
+	Tags                       []*Tag                  `jsonapi:"relation,tags"`
 }
 
 // Update an existing provider configuration.

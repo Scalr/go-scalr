@@ -8,16 +8,6 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// DriftDetectionScheduleSchedule represents the type for DriftDetectionScheduleSchedule
-// The schedule of the drift detection.
-type DriftDetectionScheduleSchedule string
-
-// DriftDetectionScheduleSchedule constants
-const (
-	DriftDetectionScheduleScheduleDaily  DriftDetectionScheduleSchedule = "daily"
-	DriftDetectionScheduleScheduleWeekly DriftDetectionScheduleSchedule = "weekly"
-)
-
 // DriftDetectionScheduleRunMode represents the type for DriftDetectionScheduleRunMode
 // The run mode of the drift detection.
 type DriftDetectionScheduleRunMode string
@@ -26,6 +16,16 @@ type DriftDetectionScheduleRunMode string
 const (
 	DriftDetectionScheduleRunModeRefreshOnly DriftDetectionScheduleRunMode = "refresh-only"
 	DriftDetectionScheduleRunModePlan        DriftDetectionScheduleRunMode = "plan"
+)
+
+// DriftDetectionScheduleSchedule represents the type for DriftDetectionScheduleSchedule
+// The schedule of the drift detection.
+type DriftDetectionScheduleSchedule string
+
+// DriftDetectionScheduleSchedule constants
+const (
+	DriftDetectionScheduleScheduleDaily  DriftDetectionScheduleSchedule = "daily"
+	DriftDetectionScheduleScheduleWeekly DriftDetectionScheduleSchedule = "weekly"
 )
 
 // Response version - used when unmarshalling from API responses

@@ -30,17 +30,6 @@ const (
 	SamlIntegrationStatusFailed   SamlIntegrationStatus = "failed"
 )
 
-// SamlIntegrationSecurityDigestAlgorithm represents the type for SamlIntegrationSecurityDigestAlgorithm
-// Algorithm that Scalr will use on digest process.
-type SamlIntegrationSecurityDigestAlgorithm string
-
-// SamlIntegrationSecurityDigestAlgorithm constants
-const (
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmldsigMoresha384 SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#sha384"
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha512      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha512"
-)
-
 // SamlIntegrationSecurityRequestedAuthnContextComparison represents the type for SamlIntegrationSecurityRequestedAuthnContextComparison
 // Allows the authn comparison parameter to be set.
 type SamlIntegrationSecurityRequestedAuthnContextComparison string
@@ -51,6 +40,17 @@ const (
 	SamlIntegrationSecurityRequestedAuthnContextComparisonMinimum SamlIntegrationSecurityRequestedAuthnContextComparison = "minimum"
 	SamlIntegrationSecurityRequestedAuthnContextComparisonBetter  SamlIntegrationSecurityRequestedAuthnContextComparison = "better"
 	SamlIntegrationSecurityRequestedAuthnContextComparisonMaximum SamlIntegrationSecurityRequestedAuthnContextComparison = "maximum"
+)
+
+// SamlIntegrationSecurityDigestAlgorithm represents the type for SamlIntegrationSecurityDigestAlgorithm
+// Algorithm that Scalr will use on digest process.
+type SamlIntegrationSecurityDigestAlgorithm string
+
+// SamlIntegrationSecurityDigestAlgorithm constants
+const (
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmldsigMoresha384 SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#sha384"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha512      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha512"
 )
 
 // SamlIntegrationSecuritySignatureAlgorithm represents the type for SamlIntegrationSecuritySignatureAlgorithm
