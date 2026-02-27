@@ -69,6 +69,7 @@ type ProviderConfiguration struct {
 	GoogleUseDefaultProject    bool                   `jsonapi:"attr,google-use-default-project"`
 	ScalrHostname              string                 `jsonapi:"attr,scalr-hostname"`
 	ScalrToken                 string                 `jsonapi:"attr,scalr-token"`
+	ApplyOnly                  bool                   `jsonapi:"attr,apply-only"`
 
 	Account      *Account                          `jsonapi:"relation,account"`
 	Parameters   []*ProviderConfigurationParameter `jsonapi:"relation,parameters"`
@@ -143,6 +144,7 @@ type ProviderConfigurationCreateOptions struct {
 	GoogleUseDefaultProject    *bool                   `jsonapi:"attr,google-use-default-project,omitempty"`
 	ScalrHostname              *string                 `jsonapi:"attr,scalr-hostname,omitempty"`
 	ScalrToken                 *string                 `jsonapi:"attr,scalr-token,omitempty"`
+	ApplyOnly                  *bool                   `jsonapi:"attr,apply-only,omitempty"`
 
 	Account      *Account       `jsonapi:"relation,account,omitempty"`
 	Environments []*Environment `jsonapi:"relation,environments,omitempty"`
