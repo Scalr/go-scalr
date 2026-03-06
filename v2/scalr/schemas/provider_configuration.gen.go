@@ -8,14 +8,46 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
-// Provider configuration status. Can be: `active`, `errored`.
-type ProviderConfigurationStatus string
+// ProviderConfigurationAwsAccountType represents the type for ProviderConfigurationAwsAccountType
+// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
+type ProviderConfigurationAwsAccountType string
 
-// ProviderConfigurationStatus constants
+// ProviderConfigurationAwsAccountType constants
 const (
-	ProviderConfigurationStatusActive  ProviderConfigurationStatus = "active"
-	ProviderConfigurationStatusErrored ProviderConfigurationStatus = "errored"
+	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
+	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
+	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
+)
+
+// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
+// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
+type ProviderConfigurationAwsCredentialsType string
+
+// ProviderConfigurationAwsCredentialsType constants
+const (
+	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
+	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
+	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
+)
+
+// ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
+// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
+type ProviderConfigurationAwsDefaultTagsStrategy string
+
+// ProviderConfigurationAwsDefaultTagsStrategy constants
+const (
+	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
+	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
+)
+
+// ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
+// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
+type ProviderConfigurationAwsTrustedEntityType string
+
+// ProviderConfigurationAwsTrustedEntityType constants
+const (
+	ProviderConfigurationAwsTrustedEntityTypeAwsAccount ProviderConfigurationAwsTrustedEntityType = "aws_account"
+	ProviderConfigurationAwsTrustedEntityTypeAwsService ProviderConfigurationAwsTrustedEntityType = "aws_service"
 )
 
 // ProviderConfigurationAzurermAuthType represents the type for ProviderConfigurationAzurermAuthType
@@ -38,46 +70,14 @@ const (
 	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
 )
 
-// ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
-// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
-type ProviderConfigurationAwsTrustedEntityType string
+// ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
+// Provider configuration status. Can be: `active`, `errored`.
+type ProviderConfigurationStatus string
 
-// ProviderConfigurationAwsTrustedEntityType constants
+// ProviderConfigurationStatus constants
 const (
-	ProviderConfigurationAwsTrustedEntityTypeAwsAccount ProviderConfigurationAwsTrustedEntityType = "aws_account"
-	ProviderConfigurationAwsTrustedEntityTypeAwsService ProviderConfigurationAwsTrustedEntityType = "aws_service"
-)
-
-// ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
-// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
-type ProviderConfigurationAwsCredentialsType string
-
-// ProviderConfigurationAwsCredentialsType constants
-const (
-	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
-	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
-	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
-)
-
-// ProviderConfigurationAwsAccountType represents the type for ProviderConfigurationAwsAccountType
-// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
-type ProviderConfigurationAwsAccountType string
-
-// ProviderConfigurationAwsAccountType constants
-const (
-	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
-	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
-	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
-)
-
-// ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
-// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
-type ProviderConfigurationAwsDefaultTagsStrategy string
-
-// ProviderConfigurationAwsDefaultTagsStrategy constants
-const (
-	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
-	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
+	ProviderConfigurationStatusActive  ProviderConfigurationStatus = "active"
+	ProviderConfigurationStatusErrored ProviderConfigurationStatus = "errored"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -104,6 +104,8 @@ func (r ProviderConfiguration) GetResourceType() string {
 
 // ProviderConfigurationAttributes holds the attributes for ProviderConfiguration (response)
 type ProviderConfigurationAttributes struct {
+	// Use this provider configuration only for the apply phase. This option is available only for built in AWS providers.
+	ApplyOnly bool `json:"apply-only"`
 	// AWS access key. This option is required with the `access_keys` credential type.
 	AwsAccessKey *string `json:"aws-access-key"`
 	// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
@@ -421,6 +423,8 @@ func (r ProviderConfigurationRequest) GetResourceType() string {
 
 // ProviderConfigurationAttributesRequest holds the attributes for ProviderConfiguration (request)
 type ProviderConfigurationAttributesRequest struct {
+	// Use this provider configuration only for the apply phase. This option is available only for built in AWS providers.
+	ApplyOnly *value.Value[bool] `json:"apply-only,omitempty"`
 	// AWS access key. This option is required with the `access_keys` credential type.
 	AwsAccessKey *value.Value[string] `json:"aws-access-key,omitempty"`
 	// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.

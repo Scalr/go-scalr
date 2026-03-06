@@ -8,17 +8,6 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// IdentityProviderVerificationStatus represents the type for IdentityProviderVerificationStatus
-// Represents the verification status with the external IdP (SAML/LDAP only)
-type IdentityProviderVerificationStatus string
-
-// IdentityProviderVerificationStatus constants
-const (
-	IdentityProviderVerificationStatusPending IdentityProviderVerificationStatus = "pending"
-	IdentityProviderVerificationStatusSuccess IdentityProviderVerificationStatus = "success"
-	IdentityProviderVerificationStatusRunning IdentityProviderVerificationStatus = "running"
-)
-
 // IdentityProviderIdpType represents the type for IdentityProviderIdpType
 // The IdP type. Can be one of `scalr`, `ldap`, or `saml`.
 type IdentityProviderIdpType string
@@ -28,6 +17,17 @@ const (
 	IdentityProviderIdpTypeScalr IdentityProviderIdpType = "scalr"
 	IdentityProviderIdpTypeLdap  IdentityProviderIdpType = "ldap"
 	IdentityProviderIdpTypeSaml  IdentityProviderIdpType = "saml"
+)
+
+// IdentityProviderVerificationStatus represents the type for IdentityProviderVerificationStatus
+// Represents the verification status with the external IdP (SAML/LDAP only)
+type IdentityProviderVerificationStatus string
+
+// IdentityProviderVerificationStatus constants
+const (
+	IdentityProviderVerificationStatusPending IdentityProviderVerificationStatus = "pending"
+	IdentityProviderVerificationStatusSuccess IdentityProviderVerificationStatus = "success"
+	IdentityProviderVerificationStatusRunning IdentityProviderVerificationStatus = "running"
 )
 
 // Response version - used when unmarshalling from API responses
