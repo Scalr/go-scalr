@@ -374,6 +374,11 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 			return data.Attributes[i].Name < data.Attributes[j].Name
 		})
 
+		// Sort enum types by name for consistent output
+		sort.Slice(data.EnumTypes, func(i, j int) bool {
+			return data.EnumTypes[i].Name < data.EnumTypes[j].Name
+		})
+
 		// Sort nested structs by name for consistent output
 		sort.Slice(data.NestedStructs, func(i, j int) bool {
 			return data.NestedStructs[i].Name < data.NestedStructs[j].Name
