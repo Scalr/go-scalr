@@ -8,6 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// PermissionApplicableScopes represents the type for PermissionApplicableScopes
+
+type PermissionApplicableScopes string
+
+// PermissionApplicableScopes constants
+const (
+	PermissionApplicableScopesAccount     PermissionApplicableScopes = "account"
+	PermissionApplicableScopesEnvironment PermissionApplicableScopes = "environment"
+	PermissionApplicableScopesWorkspace   PermissionApplicableScopes = "workspace"
+)
+
 // Response version - used when unmarshalling from API responses
 // The ability to perform an action on an object, enabling the corresponding functionality in the UI and API. e.g. `workspaces:create`, `vcs-providers:read`. The ID of a permission consist of two parts separated with `:` (colon): * Resource type in a plural form. * Action name. Generally the actions are CRUD, but some objects have specific actions, such as `runs:cancel`. If an `*` (asterisk) is used instead of the action name in the permission it means the permission allows all actions for the specified resource type. For example `workspaces:*` allows all actions with workspaces. An asterisk can be also used instead of the resource type. For example permission `*:read` gives read access to all resources. `*:*` - gives access to everything. Use [List Permissions](permissions.html#list-permissions) to obtain all possible permissions.
 type Permission struct {
@@ -32,7 +43,7 @@ func (r Permission) GetResourceType() string {
 // PermissionAttributes holds the attributes for Permission (response)
 type PermissionAttributes struct {
 	// Scope identities, this permission could be applied to in an [access policy](access-policies.html).
-	ApplicableScopes []string `json:"applicable-scopes"`
+	ApplicableScopes []PermissionApplicableScopes `json:"applicable-scopes"`
 	// Permission description.
 	Description *string `json:"description"`
 }
@@ -67,7 +78,7 @@ func (r PermissionRequest) GetResourceType() string {
 // PermissionAttributesRequest holds the attributes for Permission (request)
 type PermissionAttributesRequest struct {
 	// Scope identities, this permission could be applied to in an [access policy](access-policies.html).
-	ApplicableScopes *value.Value[[]string] `json:"applicable-scopes,omitempty"`
+	ApplicableScopes *value.Value[[]PermissionApplicableScopes] `json:"applicable-scopes,omitempty"`
 	// Permission description.
 	Description *value.Value[string] `json:"description,omitempty"`
 }
