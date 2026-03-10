@@ -33,6 +33,7 @@ const (
 	SlackIntegrationEventRunApprovalRequired string = "run_approval_required"
 	SlackIntegrationEventRunSuccess          string = "run_success"
 	SlackIntegrationEventRunErrored          string = "run_errored"
+	SlackIntegrationEventDriftDetected       string = "drift_detected"
 )
 
 // SlackIntegration represents a Scalr IACP slack integration.
