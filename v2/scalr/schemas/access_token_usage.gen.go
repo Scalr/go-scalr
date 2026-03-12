@@ -9,6 +9,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// AccessTokenUsageOwnerStatus represents the type for AccessTokenUsageOwnerStatus
+
+type AccessTokenUsageOwnerStatus string
+
+// AccessTokenUsageOwnerStatus constants
+const (
+	AccessTokenUsageOwnerStatusActive   AccessTokenUsageOwnerStatus = "Active"
+	AccessTokenUsageOwnerStatusInactive AccessTokenUsageOwnerStatus = "Inactive"
+	AccessTokenUsageOwnerStatusPending  AccessTokenUsageOwnerStatus = "Pending"
+)
+
 // AccessTokenUsageOwnerType represents the type for AccessTokenUsageOwnerType
 
 type AccessTokenUsageOwnerType string
@@ -53,9 +64,10 @@ type AccessTokenUsageAttributes struct {
 	// The time when the token was last used.
 	LastUsedAt *time.Time `json:"last-used-at"`
 	// The name of the token.
-	Name       *string                   `json:"name"`
-	OwnerEmail string                    `json:"owner-email"`
-	OwnerType  AccessTokenUsageOwnerType `json:"owner-type"`
+	Name        *string                     `json:"name"`
+	OwnerEmail  string                      `json:"owner-email"`
+	OwnerStatus AccessTokenUsageOwnerStatus `json:"owner-status"`
+	OwnerType   AccessTokenUsageOwnerType   `json:"owner-type"`
 }
 
 // Request version - used when marshalling for API requests
@@ -98,7 +110,8 @@ type AccessTokenUsageAttributesRequest struct {
 	// The time when the token was last used.
 	LastUsedAt *value.Value[time.Time] `json:"last-used-at,omitempty"`
 	// The name of the token.
-	Name       *value.Value[string]                    `json:"name,omitempty"`
-	OwnerEmail *value.Value[string]                    `json:"owner-email,omitempty"`
-	OwnerType  *value.Value[AccessTokenUsageOwnerType] `json:"owner-type,omitempty"`
+	Name        *value.Value[string]                      `json:"name,omitempty"`
+	OwnerEmail  *value.Value[string]                      `json:"owner-email,omitempty"`
+	OwnerStatus *value.Value[AccessTokenUsageOwnerStatus] `json:"owner-status,omitempty"`
+	OwnerType   *value.Value[AccessTokenUsageOwnerType]   `json:"owner-type,omitempty"`
 }

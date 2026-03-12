@@ -8,6 +8,19 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// HookEnvironmentLinkEvents represents the type for HookEnvironmentLinkEvents
+
+type HookEnvironmentLinkEvents string
+
+// HookEnvironmentLinkEvents constants
+const (
+	HookEnvironmentLinkEventsPreInit   HookEnvironmentLinkEvents = "pre-init"
+	HookEnvironmentLinkEventsPrePlan   HookEnvironmentLinkEvents = "pre-plan"
+	HookEnvironmentLinkEventsPostPlan  HookEnvironmentLinkEvents = "post-plan"
+	HookEnvironmentLinkEventsPreApply  HookEnvironmentLinkEvents = "pre-apply"
+	HookEnvironmentLinkEventsPostApply HookEnvironmentLinkEvents = "post-apply"
+)
+
 // Response version - used when unmarshalling from API responses
 // Represents the link between a hook and an environment.
 type HookEnvironmentLink struct {
@@ -33,7 +46,7 @@ func (r HookEnvironmentLink) GetResourceType() string {
 // HookEnvironmentLinkAttributes holds the attributes for HookEnvironmentLink (response)
 type HookEnvironmentLinkAttributes struct {
 	// The list of events the hook is enabled for.
-	Events []string `json:"events"`
+	Events []HookEnvironmentLinkEvents `json:"events"`
 }
 
 // HookEnvironmentLinkRelationships holds the relationships for HookEnvironmentLink (response)
@@ -229,7 +242,7 @@ func (r HookEnvironmentLinkRequest) GetResourceType() string {
 // HookEnvironmentLinkAttributesRequest holds the attributes for HookEnvironmentLink (request)
 type HookEnvironmentLinkAttributesRequest struct {
 	// The list of events the hook is enabled for.
-	Events *value.Value[[]string] `json:"events,omitempty"`
+	Events *value.Value[[]HookEnvironmentLinkEvents] `json:"events,omitempty"`
 }
 
 // HookEnvironmentLinkRelationshipsRequest holds the relationships for HookEnvironmentLink (request)

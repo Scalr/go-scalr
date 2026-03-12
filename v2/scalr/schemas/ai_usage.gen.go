@@ -9,6 +9,15 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// AiUsageModel represents the type for AiUsageModel
+// The AI model name used to process the request.
+type AiUsageModel string
+
+// AiUsageModel constants
+const (
+	AiUsageModelClaude AiUsageModel = "claude"
+)
+
 // AiUsageRequestType represents the type for AiUsageRequestType
 // The type of the AI action request.
 type AiUsageRequestType string
@@ -17,15 +26,6 @@ type AiUsageRequestType string
 const (
 	AiUsageRequestTypeExplain   AiUsageRequestType = "explain"
 	AiUsageRequestTypeSummarize AiUsageRequestType = "summarize"
-)
-
-// AiUsageModel represents the type for AiUsageModel
-// The AI model name used to process the request.
-type AiUsageModel string
-
-// AiUsageModel constants
-const (
-	AiUsageModelClaude AiUsageModel = "claude"
 )
 
 // Response version - used when unmarshalling from API responses

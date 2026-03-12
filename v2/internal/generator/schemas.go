@@ -325,8 +325,20 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 				// Request type: value.Value handles null, so inner type doesn't need pointer
 				// value.Value already provides tri-state: unset/null/set
 				requestType = "*value.Value[" + requestStructName + "]"
+			} else if attrRef.Value.Type.Is("array") && attrRef.Value.Items != nil && attrRef.Value.Items.Value != nil && len(attrRef.Value.Items.Value.Enum) > 0 {
+				// Array of enum
+				enumTypeName := name + strcase.ToCamel(attrName)
+				enumType := g.buildEnumType(enumTypeName, attrRef.Value.Items.Value)
+				data.EnumTypes = append(data.EnumTypes, enumType)
+				sliceType := "[]" + enumTypeName
+				if attrRef.Value.Nullable {
+					responseType = "*" + sliceType
+				} else {
+					responseType = sliceType
+				}
+				requestType = "*value.Value[[]" + enumTypeName + "]"
 			} else {
-				// Check if this is an enum field
+				// Check if this is a scalar enum field
 				var enumTypeName string
 				if len(attrRef.Value.Enum) > 0 {
 					enumTypeName = name + strcase.ToCamel(attrName)
@@ -372,6 +384,11 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 		// Sort attributes by name for consistent output
 		sort.Slice(data.Attributes, func(i, j int) bool {
 			return data.Attributes[i].Name < data.Attributes[j].Name
+		})
+
+		// Sort enum types by name for consistent output
+		sort.Slice(data.EnumTypes, func(i, j int) bool {
+			return data.EnumTypes[i].Name < data.EnumTypes[j].Name
 		})
 
 		// Sort nested structs by name for consistent output

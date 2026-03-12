@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"iter"
 	"net/url"
 	"strings"
@@ -201,6 +202,64 @@ type GetProviderConfigurationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	Filter  map[string]string
+}
+
+// Returns a list of workspaces that use the given provider configuration.
+func (c *Client) GetProviderConfigurationWorkspaceUsageRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationWorkspaceUsageOptions) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/workspaces-usage"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	params := url.Values{}
+	if opts != nil {
+		if opts.PageNumber > 0 {
+			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
+		}
+		if opts.PageSize > 0 {
+			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		if len(opts.Sort) > 0 {
+			params.Set("sort", strings.Join(opts.Sort, ","))
+		}
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
+		}
+	}
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Returns a list of workspaces that use the given provider configuration.
+func (c *Client) GetProviderConfigurationWorkspaceUsage(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationWorkspaceUsageOptions) (string, error) {
+	resp, err := c.GetProviderConfigurationWorkspaceUsageRaw(ctx, providerConfiguration, opts)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+	return string(bodyBytes), nil
+}
+
+// GetProviderConfigurationWorkspaceUsageOptions holds optional parameters for GetProviderConfigurationWorkspaceUsage
+type GetProviderConfigurationWorkspaceUsageOptions struct {
+	// Page number
+	PageNumber int
+	// Page size
+	PageSize int
+	// The comma-separated list of attributes.
+	Sort   []string
+	Filter map[string]string
 }
 
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an provider configuration.

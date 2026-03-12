@@ -21,14 +21,16 @@ const (
 	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
 )
 
-// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
-// The IaC platform of this workspace.
-type WorkspaceIacPlatform string
+// WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns
+// Indicates if runs have to be queued automatically when a new configuration version is uploaded. `skip_first` - after the very first configuration version is uploaded into the workspace the run will not be triggered. But the following configurations will do. This is the default behavior. `on_create_only` - single run will be triggered only when the workspace is created and the first configuration version is uploaded. Subsequent configurations will not trigger runs. `always` - runs will be triggered automatically on every upload of the configuration version. `never` - configuration versions are uploaded into the workspace, but runs will not be triggered.
+type WorkspaceAutoQueueRuns string
 
-// WorkspaceIacPlatform constants
+// WorkspaceAutoQueueRuns constants
 const (
-	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
-	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
+	WorkspaceAutoQueueRunsAlways       WorkspaceAutoQueueRuns = "always"
+	WorkspaceAutoQueueRunsNever        WorkspaceAutoQueueRuns = "never"
+	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
+	WorkspaceAutoQueueRunsOnCreateOnly WorkspaceAutoQueueRuns = "on_create_only"
 )
 
 // WorkspaceEnvironmentType represents the type for WorkspaceEnvironmentType
@@ -44,18 +46,6 @@ const (
 	WorkspaceEnvironmentTypeUnmapped    WorkspaceEnvironmentType = "unmapped"
 )
 
-// WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns
-// Indicates if runs have to be queued automatically when a new configuration version is uploaded. `skip_first` - after the very first configuration version is uploaded into the workspace the run will not be triggered. But the following configurations will do. This is the default behavior. `on_create_only` - single run will be triggered only when the workspace is created and the first configuration version is uploaded. Subsequent configurations will not trigger runs. `always` - runs will be triggered automatically on every upload of the configuration version. `never` - configuration versions are uploaded into the workspace, but runs will not be triggered.
-type WorkspaceAutoQueueRuns string
-
-// WorkspaceAutoQueueRuns constants
-const (
-	WorkspaceAutoQueueRunsAlways       WorkspaceAutoQueueRuns = "always"
-	WorkspaceAutoQueueRunsNever        WorkspaceAutoQueueRuns = "never"
-	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
-	WorkspaceAutoQueueRunsOnCreateOnly WorkspaceAutoQueueRuns = "on_create_only"
-)
-
 // WorkspaceExecutionMode represents the type for WorkspaceExecutionMode
 // Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
 type WorkspaceExecutionMode string
@@ -64,6 +54,16 @@ type WorkspaceExecutionMode string
 const (
 	WorkspaceExecutionModeRemote WorkspaceExecutionMode = "remote"
 	WorkspaceExecutionModeLocal  WorkspaceExecutionMode = "local"
+)
+
+// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
+// The IaC platform of this workspace.
+type WorkspaceIacPlatform string
+
+// WorkspaceIacPlatform constants
+const (
+	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
+	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
 )
 
 // Response version - used when unmarshalling from API responses
