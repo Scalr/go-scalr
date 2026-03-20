@@ -80,7 +80,7 @@ func TestAgentPoolsCreate(t *testing.T) {
 			Name:           String("test-provider-pool-" + randomString(t)),
 			VcsEnabled:     Bool(true),
 			WebhookEnabled: Bool(true),
-			WebhookUrl:     String("http://example.com"),
+			WebhookUrl:     String("https://example.com"),
 			WebhookHeaders: []*AgentPoolHeader{
 				{
 					Name:      "Authorization",
