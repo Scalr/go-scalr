@@ -269,6 +269,8 @@ func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts
 
 	params := url.Values{}
 	if opts != nil {
+		// Handle parameter: TrackAccess (bool)
+		params.Set("track_access", fmt.Sprintf("%t", opts.TrackAccess))
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
@@ -315,6 +317,8 @@ func (c *Client) GetEnvironment(ctx context.Context, environment string, opts *G
 
 // GetEnvironmentOptions holds optional parameters for GetEnvironment
 type GetEnvironmentOptions struct {
+	// Track environment access by the user
+	TrackAccess bool
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.

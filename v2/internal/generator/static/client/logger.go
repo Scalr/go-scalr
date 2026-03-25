@@ -89,22 +89,6 @@ func DebugLogger() Logger {
 	return NewSlogLogger(os.Stderr, slog.LevelDebug)
 }
 
-// sanitizeHeaders removes sensitive information from headers
-func sanitizeHeaders(headers map[string][]string) map[string]string {
-	sanitized := make(map[string]string)
-	for k, v := range headers {
-		if len(v) > 0 {
-			// Sanitize authorization header
-			if k == "Authorization" {
-				sanitized[k] = "[REDACTED]"
-			} else {
-				sanitized[k] = v[0]
-			}
-		}
-	}
-	return sanitized
-}
-
 // sanitizeURL removes query parameters that might contain sensitive data
 func sanitizeURL(url string) string {
 	// For now, return as-is. Can be used to add sanitization logic later.
