@@ -113,6 +113,10 @@ func (c *Client) GetPlanLogRaw(ctx context.Context, plan string, opts *GetPlanLo
 	if opts != nil {
 		// Handle parameter: Clean (bool)
 		params.Set("clean", fmt.Sprintf("%t", opts.Clean))
+		// Handle parameter: Format (string)
+		if opts.Format != "" {
+			params.Set("format", opts.Format)
+		}
 		// Add filters
 		for k, v := range opts.Filter {
 			params.Set("filter["+k+"]", v)
@@ -147,7 +151,9 @@ func (c *Client) GetPlanLog(ctx context.Context, plan string, opts *GetPlanLogOp
 // GetPlanLogOptions holds optional parameters for GetPlanLog
 type GetPlanLogOptions struct {
 	// Strip ANSI escape codes.
-	Clean  bool
+	Clean bool
+	// Format of the response.
+	Format string
 	Filter map[string]string
 }
 

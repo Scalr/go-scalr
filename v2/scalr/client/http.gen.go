@@ -288,7 +288,6 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 		c.logger.Debug("Sending HTTP request",
 			"method", method,
 			"path", path,
-			"headers", sanitizeHeaders(req.Header),
 		)
 
 		resp, err := c.httpClient.Do(req)
