@@ -36,8 +36,14 @@ type EnvironmentAttributes struct {
 	// Date/Time the environment was created.
 	CreatedAt      time.Time `json:"created-at"`
 	CreatedByEmail *string   `json:"created-by-email"`
+	// Indicates whether the environment is marked as favorite by the current user.
+	Favorite bool `json:"favorite"`
 	// Allow all current and future environments to have access to this environment.
 	IsFederatedToAccount bool `json:"is-federated-to-account"`
+	// The reason (if any) that the environment has been locked.
+	LockReason *string `json:"lock-reason"`
+	// Whether the environment is locked. If locked runs won't be queued to execute.
+	Locked bool `json:"locked"`
 	// Enable masking of the sensitive console output.
 	MaskSensitiveOutput bool `json:"mask-sensitive-output"`
 	// The name of the environment.
@@ -48,6 +54,8 @@ type EnvironmentAttributes struct {
 	// Indicates if the remote backend configuration can be overridden on the workspace level.
 	RemoteBackendOverridable bool   `json:"remote-backend-overridable"`
 	Status                   string `json:"status"`
+	// Date/Time when the environment was last updated.
+	UpdatedAt *time.Time `json:"updated-at"`
 }
 
 // EnvironmentRelationships holds the relationships for Environment (response)
@@ -62,12 +70,16 @@ type EnvironmentRelationships struct {
 	DefaultWorkspaceAgentPool *AgentPool `json:"default-workspace-agent-pool"`
 	// The drift detection schedules for this environment
 	DriftDetectionSchedules []*DriftDetectionSchedule `json:"drift-detection-schedules"`
-	PolicyGroups            []*PolicyGroup            `json:"policy-groups"`
+	// The user that locked this environment.
+	LockedBy     *User          `json:"locked-by"`
+	PolicyGroups []*PolicyGroup `json:"policy-groups"`
 	// Provider configurations available for this environment.
 	ProviderConfigurations []*ProviderConfiguration `json:"provider-configurations"`
 	// The storage profile for this environment. If not set, the account's default storage profile will be used.
 	StorageProfile *StorageProfile `json:"storage-profile"`
 	Tags           []*Tag          `json:"tags"`
+	// The last user that updated this environment.
+	UpdatedBy *User `json:"updated-by"`
 }
 
 // UnmarshalJSON implements custom unmarshalling for relationships
@@ -174,6 +186,24 @@ func (r *EnvironmentRelationships) UnmarshalJSON(data []byte) error {
 			}
 		}
 	}
+	if raw, ok := temp["locked-by"]; ok {
+		// To-one relationship
+		var rel struct {
+			Data *struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.LockedBy = &User{
+				ID:   rel.Data.ID,
+				Type: rel.Data.Type,
+			}
+		}
+	}
 	if raw, ok := temp["policy-groups"]; ok {
 		// To-many relationship
 		var rel struct {
@@ -252,6 +282,24 @@ func (r *EnvironmentRelationships) UnmarshalJSON(data []byte) error {
 					ID:   d.ID,
 					Type: d.Type,
 				}
+			}
+		}
+	}
+	if raw, ok := temp["updated-by"]; ok {
+		// To-one relationship
+		var rel struct {
+			Data *struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.UpdatedBy = &User{
+				ID:   rel.Data.ID,
+				Type: rel.Data.Type,
 			}
 		}
 	}
@@ -343,6 +391,18 @@ func (r *EnvironmentRelationships) PopulateIncludes(included []map[string]interf
 			}
 		}
 	}
+	// Populate to-one relationship: LockedBy
+	if r.LockedBy != nil && r.LockedBy.ID != "" {
+		key := r.LockedBy.Type + ":" + r.LockedBy.ID
+		if fullResource, ok := includedMap[key]; ok {
+			// Unmarshal the full resource
+			data, _ := json.Marshal(fullResource)
+			var full User
+			if err := json.Unmarshal(data, &full); err == nil {
+				r.LockedBy = &full
+			}
+		}
+	}
 	// Populate to-many relationship: PolicyGroups
 	if r.PolicyGroups != nil {
 		for i, resource := range r.PolicyGroups {
@@ -400,6 +460,18 @@ func (r *EnvironmentRelationships) PopulateIncludes(included []map[string]interf
 						r.Tags[i] = &full
 					}
 				}
+			}
+		}
+	}
+	// Populate to-one relationship: UpdatedBy
+	if r.UpdatedBy != nil && r.UpdatedBy.ID != "" {
+		key := r.UpdatedBy.Type + ":" + r.UpdatedBy.ID
+		if fullResource, ok := includedMap[key]; ok {
+			// Unmarshal the full resource
+			data, _ := json.Marshal(fullResource)
+			var full User
+			if err := json.Unmarshal(data, &full); err == nil {
+				r.UpdatedBy = &full
 			}
 		}
 	}

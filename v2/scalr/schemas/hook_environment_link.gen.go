@@ -8,17 +8,17 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// HookEnvironmentLinkEventsItem represents the type for HookEnvironmentLinkEventsItem
+// HookEnvironmentLinkEvents represents the type for HookEnvironmentLinkEvents
 
-type HookEnvironmentLinkEventsItem string
+type HookEnvironmentLinkEvents string
 
-// HookEnvironmentLinkEventsItem constants
+// HookEnvironmentLinkEvents constants
 const (
-	HookEnvironmentLinkEventsItemPostApply HookEnvironmentLinkEventsItem = "post-apply"
-	HookEnvironmentLinkEventsItemPostPlan  HookEnvironmentLinkEventsItem = "post-plan"
-	HookEnvironmentLinkEventsItemPreApply  HookEnvironmentLinkEventsItem = "pre-apply"
-	HookEnvironmentLinkEventsItemPreInit   HookEnvironmentLinkEventsItem = "pre-init"
-	HookEnvironmentLinkEventsItemPrePlan   HookEnvironmentLinkEventsItem = "pre-plan"
+	HookEnvironmentLinkEventsPreInit   HookEnvironmentLinkEvents = "pre-init"
+	HookEnvironmentLinkEventsPrePlan   HookEnvironmentLinkEvents = "pre-plan"
+	HookEnvironmentLinkEventsPostPlan  HookEnvironmentLinkEvents = "post-plan"
+	HookEnvironmentLinkEventsPreApply  HookEnvironmentLinkEvents = "pre-apply"
+	HookEnvironmentLinkEventsPostApply HookEnvironmentLinkEvents = "post-apply"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -46,7 +46,7 @@ func (r HookEnvironmentLink) GetResourceType() string {
 // HookEnvironmentLinkAttributes holds the attributes for HookEnvironmentLink (response)
 type HookEnvironmentLinkAttributes struct {
 	// The list of events the hook is enabled for.
-	Events []HookEnvironmentLinkEventsItem `json:"events"`
+	Events []HookEnvironmentLinkEvents `json:"events"`
 }
 
 // HookEnvironmentLinkRelationships holds the relationships for HookEnvironmentLink (response)
@@ -242,7 +242,7 @@ func (r HookEnvironmentLinkRequest) GetResourceType() string {
 // HookEnvironmentLinkAttributesRequest holds the attributes for HookEnvironmentLink (request)
 type HookEnvironmentLinkAttributesRequest struct {
 	// The list of events the hook is enabled for.
-	Events *value.Value[[]HookEnvironmentLinkEventsItem] `json:"events,omitempty"`
+	Events *value.Value[[]HookEnvironmentLinkEvents] `json:"events,omitempty"`
 }
 
 // HookEnvironmentLinkRelationshipsRequest holds the relationships for HookEnvironmentLink (request)

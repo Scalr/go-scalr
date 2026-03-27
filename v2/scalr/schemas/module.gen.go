@@ -389,7 +389,11 @@ func (r ModuleRequest) GetResourceType() string {
 
 // ModuleAttributesRequest holds the attributes for Module (request)
 type ModuleAttributesRequest struct {
-	VcsRepo *value.Value[ModuleVcsRepoRequest] `json:"vcs-repo,omitempty"`
+	// The module name.
+	Name *value.Value[string] `json:"name,omitempty"`
+	// A name of a system, this module was written for. For multi-cloud modules this argument should match terraform provider name (ex: `aws` or `google`), in other cases the convention is to name it `system`
+	Provider *value.Value[string]               `json:"provider,omitempty"`
+	VcsRepo  *value.Value[ModuleVcsRepoRequest] `json:"vcs-repo,omitempty"`
 }
 
 // ModuleRelationshipsRequest holds the relationships for Module (request)

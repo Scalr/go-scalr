@@ -25,11 +25,11 @@ type AgentDriver string
 
 // AgentDriver constants
 const (
+	AgentDriverUnknown       AgentDriver = "unknown"
+	AgentDriverLocal         AgentDriver = "local"
 	AgentDriverDocker        AgentDriver = "docker"
 	AgentDriverKubernetes    AgentDriver = "kubernetes"
 	AgentDriverKubernetesJob AgentDriver = "kubernetes-job"
-	AgentDriverLocal         AgentDriver = "local"
-	AgentDriverUnknown       AgentDriver = "unknown"
 )
 
 // AgentKubernetesDriverMode represents the type for AgentKubernetesDriverMode
@@ -38,8 +38,8 @@ type AgentKubernetesDriverMode string
 
 // AgentKubernetesDriverMode constants
 const (
-	AgentKubernetesDriverModeController AgentKubernetesDriverMode = "controller"
 	AgentKubernetesDriverModeDefault    AgentKubernetesDriverMode = "default"
+	AgentKubernetesDriverModeController AgentKubernetesDriverMode = "controller"
 	AgentKubernetesDriverModeWorker     AgentKubernetesDriverMode = "worker"
 )
 
@@ -49,11 +49,11 @@ type AgentRuntime string
 
 // AgentRuntime constants
 const (
-	AgentRuntimeDocker     AgentRuntime = "docker"
-	AgentRuntimeFargate    AgentRuntime = "fargate"
-	AgentRuntimeKubernetes AgentRuntime = "kubernetes"
 	AgentRuntimeUnknown    AgentRuntime = "unknown"
+	AgentRuntimeDocker     AgentRuntime = "docker"
+	AgentRuntimeKubernetes AgentRuntime = "kubernetes"
 	AgentRuntimeVm         AgentRuntime = "vm"
+	AgentRuntimeFargate    AgentRuntime = "fargate"
 )
 
 // AgentStatus represents the type for AgentStatus
@@ -62,10 +62,10 @@ type AgentStatus string
 
 // AgentStatus constants
 const (
-	AgentStatusBusy    AgentStatus = "busy"
-	AgentStatusErrored AgentStatus = "errored"
 	AgentStatusIdle    AgentStatus = "idle"
+	AgentStatusBusy    AgentStatus = "busy"
 	AgentStatusOffline AgentStatus = "offline"
+	AgentStatusErrored AgentStatus = "errored"
 )
 
 // AgentUpgradeStatus represents the type for AgentUpgradeStatus
@@ -74,10 +74,10 @@ type AgentUpgradeStatus string
 
 // AgentUpgradeStatus constants
 const (
-	AgentUpgradeStatusHigh   AgentUpgradeStatus = "high"
+	AgentUpgradeStatusNone   AgentUpgradeStatus = "none"
 	AgentUpgradeStatusLow    AgentUpgradeStatus = "low"
 	AgentUpgradeStatusMedium AgentUpgradeStatus = "medium"
-	AgentUpgradeStatusNone   AgentUpgradeStatus = "none"
+	AgentUpgradeStatusHigh   AgentUpgradeStatus = "high"
 )
 
 // Response version - used when unmarshalling from API responses

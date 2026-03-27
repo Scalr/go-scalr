@@ -14,9 +14,9 @@ type ProviderConfigurationAwsAccountType string
 
 // ProviderConfigurationAwsAccountType constants
 const (
-	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
-	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
 	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
+	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
+	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
 )
 
 // ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
@@ -25,9 +25,9 @@ type ProviderConfigurationAwsCredentialsType string
 
 // ProviderConfigurationAwsCredentialsType constants
 const (
+	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
 	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
 	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
-	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
 )
 
 // ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
@@ -66,8 +66,8 @@ type ProviderConfigurationGoogleAuthType string
 
 // ProviderConfigurationGoogleAuthType constants
 const (
-	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
 	ProviderConfigurationGoogleAuthTypeServiceAccountKey ProviderConfigurationGoogleAuthType = "service-account-key"
+	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
 )
 
 // ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
@@ -104,6 +104,8 @@ func (r ProviderConfiguration) GetResourceType() string {
 
 // ProviderConfigurationAttributes holds the attributes for ProviderConfiguration (response)
 type ProviderConfigurationAttributes struct {
+	// Use this provider configuration only for the apply phase. This option is available only for built in AWS providers.
+	ApplyOnly bool `json:"apply-only"`
 	// AWS access key. This option is required with the `access_keys` credential type.
 	AwsAccessKey *string `json:"aws-access-key"`
 	// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
@@ -180,6 +182,7 @@ type ProviderConfigurationRelationships struct {
 	Owners []*Team `json:"owners"`
 	// The list of arguments for provider configurations.
 	Parameters []*ProviderConfigurationParameter `json:"parameters"`
+	Tags       []*Tag                            `json:"tags"`
 }
 
 // UnmarshalJSON implements custom unmarshalling for relationships
@@ -271,6 +274,27 @@ func (r *ProviderConfigurationRelationships) UnmarshalJSON(data []byte) error {
 			}
 		}
 	}
+	if raw, ok := temp["tags"]; ok {
+		// To-many relationship
+		var rel struct {
+			Data []struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.Tags = make([]*Tag, len(rel.Data))
+			for i, d := range rel.Data {
+				r.Tags[i] = &Tag{
+					ID:   d.ID,
+					Type: d.Type,
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -351,6 +375,22 @@ func (r *ProviderConfigurationRelationships) PopulateIncludes(included []map[str
 			}
 		}
 	}
+	// Populate to-many relationship: Tags
+	if r.Tags != nil {
+		for i, resource := range r.Tags {
+			if resource != nil && resource.ID != "" {
+				key := resource.Type + ":" + resource.ID
+				if fullResource, ok := includedMap[key]; ok {
+					// Unmarshal the full resource
+					data, _ := json.Marshal(fullResource)
+					var full Tag
+					if err := json.Unmarshal(data, &full); err == nil {
+						r.Tags[i] = &full
+					}
+				}
+			}
+		}
+	}
 }
 
 // Request version - used when marshalling for API requests
@@ -383,6 +423,8 @@ func (r ProviderConfigurationRequest) GetResourceType() string {
 
 // ProviderConfigurationAttributesRequest holds the attributes for ProviderConfiguration (request)
 type ProviderConfigurationAttributesRequest struct {
+	// Use this provider configuration only for the apply phase. This option is available only for built in AWS providers.
+	ApplyOnly *value.Value[bool] `json:"apply-only,omitempty"`
 	// AWS access key. This option is required with the `access_keys` credential type.
 	AwsAccessKey *value.Value[string] `json:"aws-access-key,omitempty"`
 	// The type of AWS account, available options: `regular`, `gov-cloud`, `cn-cloud`.
@@ -451,4 +493,5 @@ type ProviderConfigurationRelationshipsRequest struct {
 	Environments *value.Value[[]Environment] `json:"environments,omitempty"`
 	// The teams, the provider configuration belongs to.
 	Owners *value.Value[[]Team] `json:"owners,omitempty"`
+	Tags   *value.Value[[]Tag]  `json:"tags,omitempty"`
 }

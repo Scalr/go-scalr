@@ -4,6 +4,7 @@ package schemas
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
@@ -43,6 +44,8 @@ func (r AccountUser) GetResourceType() string {
 
 // AccountUserAttributes holds the attributes for AccountUser (response)
 type AccountUserAttributes struct {
+	// The UTC timestamp when the user logged in to the account.
+	LastLoginAt *time.Time `json:"last-login-at"`
 	// The relation status. Can be: `Active`, `Inactive`, `Pending`.
 	Status AccountUserStatus `json:"status"`
 }
@@ -211,6 +214,8 @@ func (r AccountUserRequest) GetResourceType() string {
 
 // AccountUserAttributesRequest holds the attributes for AccountUser (request)
 type AccountUserAttributesRequest struct {
+	// The UTC timestamp when the user logged in to the account.
+	LastLoginAt *value.Value[time.Time] `json:"last-login-at,omitempty"`
 	// The relation status. Can be: `Active`, `Inactive`, `Pending`.
 	Status *value.Value[AccountUserStatus] `json:"status,omitempty"`
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"iter"
 	"net/url"
 	"strings"
@@ -24,15 +25,37 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
-// Filter key constants for ProviderConfiguration operations
-const (
-	FilterAccount               = "filter[account]"                // The provider configuration account filter.
-	FilterEnvironment           = "filter[environment]"            // The provider configuration environment filter.
-	FilterName                  = "filter[name]"                   // The provider configuration name filter.
-	FilterProviderConfiguration = "filter[provider-configuration]" // The ID(s) of provider configuration(s).
-	FilterProviderName          = "filter[provider-name]"          // The provider configuration type filter.
-	FilterStatus                = "filter[status]"                 // The provider configuration status filter.
-)
+// This endpoint assigns the list of [tags](/docs/tags-1) to the provider configuration.
+func (c *Client) AddProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint assigns the list of [tags](/docs/tags-1) to the provider configuration.
+func (c *Client) AddProviderConfigurationTags(ctx context.Context, providerConfiguration string, req []schemas.Tag) error {
+	resp, err := c.AddProviderConfigurationTagsRaw(ctx, providerConfiguration, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
 
 // Create a new Provider configuration.
 func (c *Client) CreateProviderConfigurationRaw(ctx context.Context, req *schemas.ProviderConfigurationRequest) (*client.Response, error) {
@@ -93,6 +116,38 @@ func (c *Client) DeleteProviderConfiguration(ctx context.Context, providerConfig
 	return nil
 }
 
+// This endpoint removes given [tags](/docs/tags-1) from the provider configuration.
+func (c *Client) DeleteProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Delete(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint removes given [tags](/docs/tags-1) from the provider configuration.
+func (c *Client) DeleteProviderConfigurationTags(ctx context.Context, providerConfiguration string, req []schemas.Tag) error {
+	resp, err := c.DeleteProviderConfigurationTagsRaw(ctx, providerConfiguration, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 // Show details of a specific Provider configuration.
 func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
@@ -103,13 +158,9 @@ func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfig
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Sparse fieldsets
-		for resourceType, fields := range opts.Fields {
-			params.Set("fields["+resourceType+"]", fields)
-		}
-		// Add filters (keys should be full parameter names like "filter[account]")
-		for k, v := range opts.Filters {
-			params.Set(k, v)
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
 		}
 	}
 	if len(params) > 0 {
@@ -150,11 +201,267 @@ func (c *Client) GetProviderConfiguration(ctx context.Context, providerConfigura
 type GetProviderConfigurationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// Fields specifies which attributes to return for each resource type.
-	Fields map[string]string
-	// Filters maps filter keys to their values.
-	// Use the Filter* constants defined in this package.
-	Filters map[string]string
+	Filter  map[string]string
+}
+
+// Returns a list of workspaces that use the given provider configuration.
+func (c *Client) GetProviderConfigurationWorkspaceUsageRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationWorkspaceUsageOptions) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/workspaces-usage"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	params := url.Values{}
+	if opts != nil {
+		if opts.PageNumber > 0 {
+			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
+		}
+		if opts.PageSize > 0 {
+			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		if len(opts.Sort) > 0 {
+			params.Set("sort", strings.Join(opts.Sort, ","))
+		}
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
+		}
+	}
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Returns a list of workspaces that use the given provider configuration.
+func (c *Client) GetProviderConfigurationWorkspaceUsage(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationWorkspaceUsageOptions) (string, error) {
+	resp, err := c.GetProviderConfigurationWorkspaceUsageRaw(ctx, providerConfiguration, opts)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+	return string(bodyBytes), nil
+}
+
+// GetProviderConfigurationWorkspaceUsageOptions holds optional parameters for GetProviderConfigurationWorkspaceUsage
+type GetProviderConfigurationWorkspaceUsageOptions struct {
+	// Page number
+	PageNumber int
+	// Page size
+	PageSize int
+	// The comma-separated list of attributes.
+	Sort   []string
+	Filter map[string]string
+}
+
+// This endpoint returns a list of [tags](/docs/tags-1), assigned to an provider configuration.
+func (c *Client) ListProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	params := url.Values{}
+	if opts != nil {
+		if opts.PageNumber > 0 {
+			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
+		}
+		if opts.PageSize > 0 {
+			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
+		}
+	}
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint returns a list of [tags](/docs/tags-1), assigned to an provider configuration.
+func (c *Client) ListProviderConfigurationTags(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) ([]*schemas.Tag, error) {
+	resp, err := c.ListProviderConfigurationTagsRaw(ctx, providerConfiguration, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data []schemas.Tag `json:"data"`
+		Meta struct {
+			Pagination *client.Pagination `json:"pagination"`
+		} `json:"meta"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	resources := make([]*schemas.Tag, len(result.Data))
+	for i := range result.Data {
+		resources[i] = &result.Data[i]
+	}
+	return resources, nil
+}
+
+// ListProviderConfigurationTagsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
+// This is the recommended and simple way to iterate through all the results.
+//
+// The iterator automatically fetches pages as needed and handles errors inline.
+//
+// Example:
+//
+//	for item, err := range client.ProviderConfiguration.ListProviderConfigurationTagsIter(ctx, providerConfiguration, opts) {
+//	    if err != nil {
+//	        return err
+//	    }
+//	    // Process item
+//	}
+func (c *Client) ListProviderConfigurationTagsIter(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) iter.Seq2[schemas.Tag, error] {
+	return func(yield func(schemas.Tag, error) bool) {
+		// Determine page size from opts or use default
+		pageSize := 20
+		if opts != nil && opts.PageSize > 0 {
+			pageSize = opts.PageSize
+		}
+
+		pageNum := 1
+
+		for {
+			// Check context
+			if err := ctx.Err(); err != nil {
+				yield(schemas.Tag{}, err)
+				return
+			}
+
+			// Copy options and set page number
+			pageOpts := &ListProviderConfigurationTagsOptions{}
+			if opts != nil {
+				*pageOpts = *opts
+			}
+			pageOpts.PageNumber = pageNum
+			pageOpts.PageSize = pageSize
+
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListProviderConfigurationTagsRaw(ctx, providerConfiguration, pageOpts)
+			if err != nil {
+				yield(schemas.Tag{}, err)
+				return
+			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.Tag `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
+
+			// Yield each item
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
+					return // Consumer requested early exit
+				}
+			}
+
+			// Check if there are more pages
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
+				break
+			}
+
+			pageNum++
+		}
+	}
+}
+
+// ListProviderConfigurationTagsPaged returns a stateful iterator with access to pagination metadata.
+// Use this when you need PageInfo(), Remaining(), or Collect() methods.
+//
+// Example:
+//
+//	iter := client.ProviderConfiguration.ListProviderConfigurationTagsPaged(ctx, providerConfiguration, opts)
+//	for iter.Next() {
+//	    item := iter.Value()
+//	    fmt.Print(iter.PageInfo()) // -> "page 2/5"
+//	    fmt.Printf("%d items remaining", iter.Remaining())
+//	}
+//	if err := iter.Err(); err != nil {
+//	    // Handle error
+//	}
+func (c *Client) ListProviderConfigurationTagsPaged(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) *client.Iterator[schemas.Tag] {
+	// Determine page size from opts or use default
+	pageSize := 20
+	if opts != nil && opts.PageSize > 0 {
+		pageSize = opts.PageSize
+	}
+
+	// Fetch function that will be called for each page
+	fetchPage := func(ctx context.Context, pageNum int) ([]*schemas.Tag, *client.Pagination, error) {
+		// Copy options and set page number
+		pageOpts := &ListProviderConfigurationTagsOptions{}
+		if opts != nil {
+			*pageOpts = *opts
+		}
+		pageOpts.PageNumber = pageNum
+		pageOpts.PageSize = pageSize
+
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListProviderConfigurationTagsRaw(ctx, providerConfiguration, pageOpts)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer resp.Body.Close()
+
+		// Decode response
+		var result struct {
+			Data []schemas.Tag `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.Tag, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
+	}
+
+	return client.NewIterator[schemas.Tag](ctx, pageSize, fetchPage)
+}
+
+// ListProviderConfigurationTagsOptions holds optional parameters for ListProviderConfigurationTags
+type ListProviderConfigurationTagsOptions struct {
+	// Page number
+	PageNumber int
+	// Page size
+	PageSize int
+	Filter   map[string]string
 }
 
 // This endpoint returns a list of Provider configurations by various filters.
@@ -175,13 +482,11 @@ func (c *Client) ListProviderConfigurationsRaw(ctx context.Context, opts *ListPr
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Sparse fieldsets
-		for resourceType, fields := range opts.Fields {
-			params.Set("fields["+resourceType+"]", fields)
-		}
-		// Add filters (keys should be full parameter names like "filter[account]")
-		for k, v := range opts.Filters {
-			params.Set(k, v)
+		// Handle parameter: Fields (map[string]interface{})
+		// Complex type map[string]interface{} - skip for now
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
 		}
 	}
 	if len(params) > 0 {
@@ -381,11 +686,41 @@ type ListProviderConfigurationsOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// Fields specifies which attributes to return for each resource type.
-	Fields map[string]string
-	// Filters maps filter keys to their values.
-	// Use the Filter* constants defined in this package.
-	Filters map[string]string
+	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
+	Fields map[string]interface{}
+	Filter map[string]string
+}
+
+// This endpoint completely replaces provider configuration's tags with provided list.
+func (c *Client) ReplaceProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
+	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint completely replaces provider configuration's tags with provided list.
+func (c *Client) ReplaceProviderConfigurationTags(ctx context.Context, providerConfiguration string, req []schemas.Tag) error {
+	resp, err := c.ReplaceProviderConfigurationTagsRaw(ctx, providerConfiguration, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
 }
 
 // This endpoint updates attributes of an existing Provider configuration.

@@ -2,8 +2,8 @@ name: go-scalr v1 default
 
 on:
   push:
-    paths:
-    - '!v2/**'
+    paths-ignore:
+    - 'v2/**'
 
 jobs:
   lint:
@@ -98,7 +98,7 @@ jobs:
           no_segment: true
           agent_pool_id: ${{ vars.TACO_APOOL_ID }}
           working_directory: fatmouse
-          secrets_bucket: tacobell-secrets
+          secrets_bucket: scalr-tacobell-secrets
 
       - name: Get Scalr Hostname
         shell: bash
@@ -119,14 +119,6 @@ jobs:
           TEST_ARM_TENANT_ID: ${{ secrets.TEST_ARM_TENANT_ID }}
           TEST_ARM_SUBSCRIPTION_ID: ${{ secrets.TEST_ARM_SUBSCRIPTION_ID }}
         run: make test
-
-      - name: Install goveralls
-        run: go install github.com/mattn/goveralls@latest
-
-      - name: Send Coverage
-        env:
-          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: goveralls -coverprofile=covprofile -service=github
 
       - name: Delete Container
         id: delete

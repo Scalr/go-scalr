@@ -9,6 +9,15 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ModuleVersionIsForbiddenBy represents the type for ModuleVersionIsForbiddenBy
+// Indicates the source of the restriction.
+type ModuleVersionIsForbiddenBy string
+
+// ModuleVersionIsForbiddenBy constants
+const (
+	ModuleVersionIsForbiddenByTofuTest ModuleVersionIsForbiddenBy = "tofu_test"
+)
+
 // ModuleVersionStatus represents the type for ModuleVersionStatus
 // The module version's current status. Initial status: * `not_uploaded` - Module version has been created, however the code has not been uploaded. Transitional statuses: * `pending` - Module version has been created and is currently synchronizing. * `pending_delete` - Module version has been deleted from the repository and pending deletion from the registry. Ending statuses: * `ok` - Module version has been created and the code has been uploaded. * `errored` - Module version has been created, however its synchronization has failed. Attribute `error-message` contains the details.
 type ModuleVersionStatus string
@@ -56,6 +65,8 @@ type ModuleVersionAttributes struct {
 	ErrorMessage *string `json:"error-message"`
 	// Input Variables.
 	Inputs *[]interface{} `json:"inputs"`
+	// Indicates the source of the restriction.
+	IsForbiddenBy *ModuleVersionIsForbiddenBy `json:"is-forbidden-by"`
 	// Module version marked as root will allow the [creation of workspaces](../../module.html#deployable-modules) directly from the registry, as well as standard module usage.
 	IsRootModule bool `json:"is-root-module"`
 	// Output Values.

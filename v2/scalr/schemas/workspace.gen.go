@@ -66,6 +66,16 @@ const (
 	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
 )
 
+// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
+// The IaC platform of this workspace.
+type WorkspaceIacPlatform string
+
+// WorkspaceIacPlatform constants
+const (
+	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
+	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
+)
+
 // Response version - used when unmarshalling from API responses
 // A Workspace is where Terraform runs are performed for a specific configuration, and where the resulting state file(s) are stored. Workspaces belong to environments and can have `variables` configured to provide inputs to the configuration, authenticate providers etc. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[workspaces]`: * module
 type Workspace struct {
@@ -114,6 +124,8 @@ type WorkspaceAttributes struct {
 	EnvironmentType WorkspaceEnvironmentType `json:"environment-type"`
 	// Which execution mode to use. Valid values are `remote` and `local`. When set to `local`, the workspace will be used for state storage only.
 	ExecutionMode WorkspaceExecutionMode `json:"execution-mode"`
+	// Indicates whether the workspace is marked as favorite by the current user.
+	Favorite bool `json:"favorite"`
 	// Indicates whether `force run` should automatically apply to latest run. Default `false`.
 	ForceLatestRun bool `json:"force-latest-run"`
 	// Indicates whether the workspace's current state version contains terraform resources.
@@ -158,7 +170,7 @@ type WorkspaceRelationships struct {
 	ConfigurationVersion *ConfigurationVersion `json:"configuration-version"`
 	// The user, who has triggered the run.
 	CreatedBy *User `json:"created-by"`
-	// Currently executing Run.
+	// The latest non-dry Run in this workspace.
 	CurrentRun *Run `json:"current-run"`
 	// The drift report for the workspace.
 	DriftReport *DriftReport `json:"drift-report"`
@@ -166,7 +178,7 @@ type WorkspaceRelationships struct {
 	Environment *Environment `json:"environment"`
 	// The configuration version of the latest non-dry Run in this workspace.
 	LatestConfigurationVersion *ConfigurationVersion `json:"latest-configuration-version"`
-	// Latest finished Run.
+	// The latest non-dry Run in this workspace (deprecated, same as current).
 	LatestRun   *Run  `json:"latest-run"`
 	LockedBy    *User `json:"locked-by"`
 	LockedByRun *Run  `json:"locked-by-run"`

@@ -34,13 +34,13 @@ type VcsProviderVcsType string
 
 // VcsProviderVcsType constants
 const (
-	VcsProviderVcsTypeAzureDevOpsServices VcsProviderVcsType = "azure_dev_ops_services"
+	VcsProviderVcsTypeGithub              VcsProviderVcsType = "github"
+	VcsProviderVcsTypeGitlab              VcsProviderVcsType = "gitlab"
 	VcsProviderVcsTypeBitbucket           VcsProviderVcsType = "bitbucket"
 	VcsProviderVcsTypeBitbucketEnterprise VcsProviderVcsType = "bitbucket_enterprise"
-	VcsProviderVcsTypeGithub              VcsProviderVcsType = "github"
-	VcsProviderVcsTypeGithubEnterprise    VcsProviderVcsType = "github_enterprise"
-	VcsProviderVcsTypeGitlab              VcsProviderVcsType = "gitlab"
 	VcsProviderVcsTypeGitlabEnterprise    VcsProviderVcsType = "gitlab_enterprise"
+	VcsProviderVcsTypeGithubEnterprise    VcsProviderVcsType = "github_enterprise"
+	VcsProviderVcsTypeAzureDevOpsServices VcsProviderVcsType = "azure_dev_ops_services"
 )
 
 // Response version - used when unmarshalling from API responses

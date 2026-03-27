@@ -8,16 +8,16 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// SlackIntegrationEventsItem represents the type for SlackIntegrationEventsItem
+// SlackIntegrationEvents represents the type for SlackIntegrationEvents
 
-type SlackIntegrationEventsItem string
+type SlackIntegrationEvents string
 
-// SlackIntegrationEventsItem constants
+// SlackIntegrationEvents constants
 const (
-	SlackIntegrationEventsItemDriftDetected       SlackIntegrationEventsItem = "drift_detected"
-	SlackIntegrationEventsItemRunApprovalRequired SlackIntegrationEventsItem = "run_approval_required"
-	SlackIntegrationEventsItemRunErrored          SlackIntegrationEventsItem = "run_errored"
-	SlackIntegrationEventsItemRunSuccess          SlackIntegrationEventsItem = "run_success"
+	SlackIntegrationEventsRunApprovalRequired SlackIntegrationEvents = "run_approval_required"
+	SlackIntegrationEventsRunSuccess          SlackIntegrationEvents = "run_success"
+	SlackIntegrationEventsRunErrored          SlackIntegrationEvents = "run_errored"
+	SlackIntegrationEventsDriftDetected       SlackIntegrationEvents = "drift_detected"
 )
 
 // SlackIntegrationRunMode represents the type for SlackIntegrationRunMode
@@ -71,7 +71,7 @@ type SlackIntegrationAttributes struct {
 	// Message from service that points to nature of a problem
 	ErrMessage *string `json:"err-message"`
 	// Events for which to get notifications.
-	Events []SlackIntegrationEventsItem `json:"events"`
+	Events []SlackIntegrationEvents `json:"events"`
 	// Whether to notify about success or failure from the apply step only
 	IsApplyOnly bool `json:"is-apply-only"`
 	// Name of Slack integration
@@ -291,7 +291,7 @@ type SlackIntegrationAttributesRequest struct {
 	// A Slack channel ID to which to send messages.
 	ChannelId *value.Value[string] `json:"channel-id,omitempty"`
 	// Events for which to get notifications.
-	Events *value.Value[[]SlackIntegrationEventsItem] `json:"events,omitempty"`
+	Events *value.Value[[]SlackIntegrationEvents] `json:"events,omitempty"`
 	// Whether to notify about success or failure from the apply step only
 	IsApplyOnly *value.Value[bool] `json:"is-apply-only,omitempty"`
 	// Name of Slack integration
