@@ -40,6 +40,16 @@ const (
 	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
 )
 
+// ProviderConfigurationAwsServiceCredentialsSource represents the type for ProviderConfigurationAwsServiceCredentialsSource
+// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+type ProviderConfigurationAwsServiceCredentialsSource string
+
+// ProviderConfigurationAwsServiceCredentialsSource constants
+const (
+	ProviderConfigurationAwsServiceCredentialsSourceEc2InstanceMetadata ProviderConfigurationAwsServiceCredentialsSource = "Ec2InstanceMetadata"
+	ProviderConfigurationAwsServiceCredentialsSourceEcsContainer        ProviderConfigurationAwsServiceCredentialsSource = "EcsContainer"
+)
+
 // ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
 // Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
 type ProviderConfigurationAwsTrustedEntityType string
@@ -124,6 +134,8 @@ type ProviderConfigurationAttributes struct {
 	AwsRoleArn *string `json:"aws-role-arn"`
 	// AWS secret key. This option is required with the `access_keys` credential type.
 	AwsSecretKey *string `json:"aws-secret-key"`
+	// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+	AwsServiceCredentialsSource *ProviderConfigurationAwsServiceCredentialsSource `json:"aws-service-credentials-source"`
 	// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
 	AwsTrustedEntityType *ProviderConfigurationAwsTrustedEntityType `json:"aws-trusted-entity-type"`
 	// The value of the aud claim for the identity token.
@@ -156,6 +168,8 @@ type ProviderConfigurationAttributes struct {
 	GoogleUseDefaultProject *bool `json:"google-use-default-project"`
 	// The canonical name of the workload identity provider.
 	GoogleWorkloadProviderName *string `json:"google-workload-provider-name"`
+	// Indicates whether the provider configuration can be used in module tests.
+	IsAllowedInModuleTest bool `json:"is-allowed-in-module-test"`
 	// Determines if a provider configuration is custom. Note: custom provider configurations do not support built-in features like exporting as shell variables or on-save validation. Provider configuration will be validated during the run only.
 	IsCustom *bool `json:"is-custom"`
 	// Indicates whether the provider configuration can be used in any workspace of the account without directly linking it to the environment.
@@ -443,6 +457,8 @@ type ProviderConfigurationAttributesRequest struct {
 	AwsRoleArn *value.Value[string] `json:"aws-role-arn,omitempty"`
 	// AWS secret key. This option is required with the `access_keys` credential type.
 	AwsSecretKey *value.Value[string] `json:"aws-secret-key,omitempty"`
+	// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+	AwsServiceCredentialsSource *value.Value[ProviderConfigurationAwsServiceCredentialsSource] `json:"aws-service-credentials-source,omitempty"`
 	// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
 	AwsTrustedEntityType *value.Value[ProviderConfigurationAwsTrustedEntityType] `json:"aws-trusted-entity-type,omitempty"`
 	// The value of the aud claim for the identity token.
@@ -471,6 +487,8 @@ type ProviderConfigurationAttributesRequest struct {
 	GoogleUseDefaultProject *value.Value[bool] `json:"google-use-default-project,omitempty"`
 	// The canonical name of the workload identity provider.
 	GoogleWorkloadProviderName *value.Value[string] `json:"google-workload-provider-name,omitempty"`
+	// Indicates whether the provider configuration can be used in module tests.
+	IsAllowedInModuleTest *value.Value[bool] `json:"is-allowed-in-module-test,omitempty"`
 	// Determines if a provider configuration is custom. Note: custom provider configurations do not support built-in features like exporting as shell variables or on-save validation. Provider configuration will be validated during the run only.
 	IsCustom *value.Value[bool] `json:"is-custom,omitempty"`
 	// Indicates whether the provider configuration can be used in any workspace of the account without directly linking it to the environment.
