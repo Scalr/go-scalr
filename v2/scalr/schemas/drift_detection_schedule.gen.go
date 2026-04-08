@@ -14,8 +14,8 @@ type DriftDetectionScheduleRunMode string
 
 // DriftDetectionScheduleRunMode constants
 const (
-	DriftDetectionScheduleRunModeRefreshOnly DriftDetectionScheduleRunMode = "refresh-only"
 	DriftDetectionScheduleRunModePlan        DriftDetectionScheduleRunMode = "plan"
+	DriftDetectionScheduleRunModeRefreshOnly DriftDetectionScheduleRunMode = "refresh-only"
 )
 
 // DriftDetectionScheduleSchedule represents the type for DriftDetectionScheduleSchedule
@@ -170,16 +170,42 @@ type DriftDetectionScheduleRelationshipsRequest struct {
 	Environment *value.Value[Environment] `json:"environment,omitempty"`
 }
 
+// DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem represents the type for DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem
+
+type DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem string
+
+// DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem constants
+const (
+	DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItemDevelopment DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem = "development"
+	DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItemProduction  DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem = "production"
+	DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItemStaging     DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem = "staging"
+	DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItemTesting     DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem = "testing"
+	DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItemUnmapped    DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem = "unmapped"
+)
+
 // The workspace filters to monitor for drift.
 type DriftDetectionScheduleWorkspaceFilters struct {
-	EnvironmentTypes []string `json:"environment-types"`
-	NamePatterns     []string `json:"name-patterns"`
-	Tags             []string `json:"tags"`
+	EnvironmentTypes []DriftDetectionScheduleWorkspaceFiltersEnvironmentTypesItem `json:"environment-types"`
+	NamePatterns     []string                                                     `json:"name-patterns"`
+	Tags             []string                                                     `json:"tags"`
 }
+
+// DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem represents the type for DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem
+
+type DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem string
+
+// DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem constants
+const (
+	DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItemDevelopment DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem = "development"
+	DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItemProduction  DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem = "production"
+	DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItemStaging     DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem = "staging"
+	DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItemTesting     DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem = "testing"
+	DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItemUnmapped    DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem = "unmapped"
+)
 
 // The workspace filters to monitor for drift. (for requests)
 type DriftDetectionScheduleWorkspaceFiltersRequest struct {
-	EnvironmentTypes *value.Value[[]string] `json:"environment-types,omitempty"`
-	NamePatterns     *value.Value[[]string] `json:"name-patterns,omitempty"`
-	Tags             *value.Value[[]string] `json:"tags,omitempty"`
+	EnvironmentTypes *value.Value[[]DriftDetectionScheduleWorkspaceFiltersRequestEnvironmentTypesItem] `json:"environment-types,omitempty"`
+	NamePatterns     *value.Value[[]string]                                                            `json:"name-patterns,omitempty"`
+	Tags             *value.Value[[]string]                                                            `json:"tags,omitempty"`
 }

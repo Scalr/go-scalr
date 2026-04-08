@@ -31,8 +31,11 @@ const (
 	FilterAgentPool                 = "filter[agent-pool]"                  // The ID(s) of the Agent Pool.
 	FilterCreatedBy                 = "filter[created-by]"                  // The ID of the User who created this workspace
 	FilterDeletionProtectionEnabled = "filter[deletion-protection-enabled]" // Deletion protection enabled filter
+	FilterDriftDetectionEnabled     = "filter[drift-detection-enabled]"     // Is drift detection enabled
 	FilterEnvironment               = "filter[environment]"                 // The ID of the Environment
+	FilterEnvironmentName           = "filter[environment][name]"           // The name of the Environment
 	FilterEnvironmentType           = "filter[environment-type]"            // Workspace environment type
+	FilterFavorite                  = "filter[favorite]"                    // Filter workspaces by favorite status. Set to 'true' to show only favorites, 'false' to exclude favorites.
 	FilterFederatedByEnv            = "filter[federated-by-env]"            // The ID of the Environment that gives access to workspaces through federation.
 	FilterFederatedToEnv            = "filter[federated-to-env]"            // The ID of the Environment that got access to workspaces through federation.
 	FilterHasResources              = "filter[has-resources]"               // Has resources filter

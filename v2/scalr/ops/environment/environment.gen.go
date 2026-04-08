@@ -28,6 +28,7 @@ func New(httpClient *client.HTTPClient) *Client {
 const (
 	FilterAccount        = "filter[account]"         // The ID of the Account
 	FilterEnvironment    = "filter[environment]"     // The ID of the Environment
+	FilterFavorite       = "filter[favorite]"        // Filter environments by favorite status. Set to 'true' to show only favorites, 'false' to exclude favorites.
 	FilterLatestRunDate  = "filter[latest-run-date]" // Filter by latest run date. Example: `filter[latest-run-date]=between:2022-01-01T00:00:00Z,2022-02-01T00:00:00Z`
 	FilterName           = "filter[name]"            // The environment name filter.
 	FilterPolicyGroup    = "filter[policy-group]"    // The ID of the Policy Group.

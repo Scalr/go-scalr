@@ -25,6 +25,18 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ProviderConfiguration operations
+const (
+	FilterAccount               = "filter[account]"                // The provider configuration account filter.
+	FilterEnvironment           = "filter[environment]"            // The provider configuration environment filter.
+	FilterName                  = "filter[name]"                   // The provider configuration name filter.
+	FilterProviderConfiguration = "filter[provider-configuration]" // The ID(s) of provider configuration(s).
+	FilterProviderName          = "filter[provider-name]"          // The provider configuration type filter.
+	FilterStatus                = "filter[status]"                 // The provider configuration status filter.
+	FilterTag                   = "filter[tag]"                    // Filter provider configurations by tags
+	FilterWorkspaceName         = "filter[workspace][name]"        // Filter provider configuration usage by workspace name.
+)
+
 // This endpoint assigns the list of [tags](/docs/tags-1) to the provider configuration.
 func (c *Client) AddProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
@@ -158,9 +170,13 @@ func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfig
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -201,7 +217,11 @@ func (c *Client) GetProviderConfiguration(ctx context.Context, providerConfigura
 type GetProviderConfigurationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Returns a list of workspaces that use the given provider configuration.
@@ -220,9 +240,13 @@ func (c *Client) GetProviderConfigurationWorkspaceUsageRaw(ctx context.Context, 
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -258,8 +282,12 @@ type GetProviderConfigurationWorkspaceUsageOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an provider configuration.
@@ -275,9 +303,13 @@ func (c *Client) ListProviderConfigurationTagsRaw(ctx context.Context, providerC
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -461,7 +493,11 @@ type ListProviderConfigurationTagsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Provider configurations by various filters.
@@ -482,11 +518,13 @@ func (c *Client) ListProviderConfigurationsRaw(ctx context.Context, opts *ListPr
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -686,9 +724,11 @@ type ListProviderConfigurationsOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint completely replaces provider configuration's tags with provided list.

@@ -8,13 +8,13 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// AgentPoolFeatures represents the type for AgentPoolFeatures
+// AgentPoolFeaturesItem represents the type for AgentPoolFeaturesItem
 
-type AgentPoolFeatures string
+type AgentPoolFeaturesItem string
 
-// AgentPoolFeatures constants
+// AgentPoolFeaturesItem constants
 const (
-	AgentPoolFeaturesRelay AgentPoolFeatures = "relay"
+	AgentPoolFeaturesItemRelay AgentPoolFeaturesItem = "relay"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -44,7 +44,7 @@ type AgentPoolAttributes struct {
 	// Default agent pool for the entire account. Used by a workspace if no default pool is set at the environment level and no other pool is explicitly linked at the workspace level.
 	Default bool `json:"default"`
 	// The features enabled for all agents in the agent pool.
-	Features []AgentPoolFeatures `json:"features"`
+	Features []AgentPoolFeaturesItem `json:"features"`
 	// Indicates whether the pool is used by any workspace.
 	InUse bool `json:"in-use"`
 	// Indicates whether the pool is managed by Scalr.

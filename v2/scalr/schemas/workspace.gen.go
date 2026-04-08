@@ -66,16 +66,6 @@ const (
 	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
 )
 
-// WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
-// The IaC platform of this workspace.
-type WorkspaceIacPlatform string
-
-// WorkspaceIacPlatform constants
-const (
-	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
-	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
-)
-
 // Response version - used when unmarshalling from API responses
 // A Workspace is where Terraform runs are performed for a specific configuration, and where the resulting state file(s) are stored. Workspaces belong to environments and can have `variables` configured to provide inputs to the configuration, authenticate providers etc. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[workspaces]`: * module
 type Workspace struct {

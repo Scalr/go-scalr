@@ -8,15 +8,15 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// PermissionApplicableScopes represents the type for PermissionApplicableScopes
+// PermissionApplicableScopesItem represents the type for PermissionApplicableScopesItem
 
-type PermissionApplicableScopes string
+type PermissionApplicableScopesItem string
 
-// PermissionApplicableScopes constants
+// PermissionApplicableScopesItem constants
 const (
-	PermissionApplicableScopesAccount     PermissionApplicableScopes = "account"
-	PermissionApplicableScopesEnvironment PermissionApplicableScopes = "environment"
-	PermissionApplicableScopesWorkspace   PermissionApplicableScopes = "workspace"
+	PermissionApplicableScopesItemAccount     PermissionApplicableScopesItem = "account"
+	PermissionApplicableScopesItemEnvironment PermissionApplicableScopesItem = "environment"
+	PermissionApplicableScopesItemWorkspace   PermissionApplicableScopesItem = "workspace"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -43,7 +43,7 @@ func (r Permission) GetResourceType() string {
 // PermissionAttributes holds the attributes for Permission (response)
 type PermissionAttributes struct {
 	// Scope identities, this permission could be applied to in an [access policy](access-policies.html).
-	ApplicableScopes []PermissionApplicableScopes `json:"applicable-scopes"`
+	ApplicableScopes []PermissionApplicableScopesItem `json:"applicable-scopes"`
 	// Permission description.
 	Description *string `json:"description"`
 }
@@ -78,7 +78,7 @@ func (r PermissionRequest) GetResourceType() string {
 // PermissionAttributesRequest holds the attributes for Permission (request)
 type PermissionAttributesRequest struct {
 	// Scope identities, this permission could be applied to in an [access policy](access-policies.html).
-	ApplicableScopes *value.Value[[]PermissionApplicableScopes] `json:"applicable-scopes,omitempty"`
+	ApplicableScopes *value.Value[[]PermissionApplicableScopesItem] `json:"applicable-scopes,omitempty"`
 	// Permission description.
 	Description *value.Value[string] `json:"description,omitempty"`
 }

@@ -29,6 +29,7 @@ const (
 	FilterAccount     = "filter[account]"      // The account filter
 	FilterAgentPool   = "filter[agent-pool]"   // The agent pool filter
 	FilterEnvironment = "filter[environment]"  // The environment filter
+	FilterName        = "filter[name]"         // Filter by VCS name
 	FilterVcsProvider = "filter[vcs-provider]" // The ID of the VCS provider. Multiple values are allowed through COMMA `,`
 	FilterVcsType     = "filter[vcs-type]"     // Filter by VCS type
 )

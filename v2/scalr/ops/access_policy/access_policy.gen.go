@@ -28,7 +28,9 @@ func New(httpClient *client.HTTPClient) *Client {
 const (
 	FilterAccessPolicy   = "filter[access-policy]"   // Access Policy filter.
 	FilterAccount        = "filter[account]"         // Account filter
+	FilterConditions     = "filter[conditions]"      // Conditions filter
 	FilterEnvironment    = "filter[environment]"     // Environment filter
+	FilterRole           = "filter[role]"            // Role filter
 	FilterServiceAccount = "filter[service-account]" // Service account filter
 	FilterTeam           = "filter[team]"            // Team filter
 	FilterUser           = "filter[user]"            // User filter

@@ -26,8 +26,9 @@ func New(httpClient *client.HTTPClient) *Client {
 
 // Filter key constants for AccessTokenUsage operations
 const (
-	FilterCreatedAt = "filter[created-at]" // Filter tokens by creation date.
-	FilterIsExpired = "filter[is-expired]" // Returns tokens by expiration status
+	FilterCreatedAt  = "filter[created-at]"   // Filter tokens by creation date.
+	FilterIsExpired  = "filter[is-expired]"   // Returns tokens by expiration status
+	FilterUserStatus = "filter[user][status]" // Filter tokens by owner identity status (user or service account). Allowed values: Active, Inactive.
 )
 
 // This endpoint returns a list of access token usage on the account.

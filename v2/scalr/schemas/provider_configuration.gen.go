@@ -14,9 +14,9 @@ type ProviderConfigurationAwsAccountType string
 
 // ProviderConfigurationAwsAccountType constants
 const (
-	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
-	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
 	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
+	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
+	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
 )
 
 // ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
@@ -25,9 +25,9 @@ type ProviderConfigurationAwsCredentialsType string
 
 // ProviderConfigurationAwsCredentialsType constants
 const (
-	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
 	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
 	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
+	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
 )
 
 // ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
@@ -66,8 +66,8 @@ type ProviderConfigurationGoogleAuthType string
 
 // ProviderConfigurationGoogleAuthType constants
 const (
-	ProviderConfigurationGoogleAuthTypeServiceAccountKey ProviderConfigurationGoogleAuthType = "service-account-key"
 	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
+	ProviderConfigurationGoogleAuthTypeServiceAccountKey ProviderConfigurationGoogleAuthType = "service-account-key"
 )
 
 // ProviderConfigurationStatus represents the type for ProviderConfigurationStatus

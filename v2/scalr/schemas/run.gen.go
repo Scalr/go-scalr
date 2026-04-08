@@ -15,8 +15,8 @@ type RunIacPlatform string
 
 // RunIacPlatform constants
 const (
-	RunIacPlatformTerraform RunIacPlatform = "terraform"
 	RunIacPlatformOpentofu  RunIacPlatform = "opentofu"
+	RunIacPlatformTerraform RunIacPlatform = "terraform"
 )
 
 // RunStatus represents the type for RunStatus
@@ -25,34 +25,34 @@ type RunStatus string
 
 // RunStatus constants
 const (
-	RunStatusPending            RunStatus = "pending"
-	RunStatusPrePlanQueued      RunStatus = "pre_plan_queued"
-	RunStatusPrePlanRunning     RunStatus = "pre_plan_running"
-	RunStatusPrePlanFinished    RunStatus = "pre_plan_finished"
-	RunStatusPlanQueued         RunStatus = "plan_queued"
-	RunStatusPlanning           RunStatus = "planning"
-	RunStatusPlanned            RunStatus = "planned"
-	RunStatusConfirmed          RunStatus = "confirmed"
-	RunStatusDiscarded          RunStatus = "discarded"
-	RunStatusPlannedAndFinished RunStatus = "planned_and_finished"
-	RunStatusPlannedAndSaved    RunStatus = "planned_and_saved"
-	RunStatusPostPlanRunning    RunStatus = "post_plan_running"
-	RunStatusPostPlanFinished   RunStatus = "post_plan_finished"
-	RunStatusCostEstimating     RunStatus = "cost_estimating"
-	RunStatusCostEstimated      RunStatus = "cost_estimated"
-	RunStatusPolicyChecking     RunStatus = "policy_checking"
-	RunStatusPolicyOverride     RunStatus = "policy_override"
-	RunStatusPolicyChecked      RunStatus = "policy_checked"
-	RunStatusPreApplyQueued     RunStatus = "pre_apply_queued"
-	RunStatusPreApplyRunning    RunStatus = "pre_apply_running"
-	RunStatusPreApplyFinished   RunStatus = "pre_apply_finished"
+	RunStatusApplied            RunStatus = "applied"
 	RunStatusApplyQueued        RunStatus = "apply_queued"
 	RunStatusApplying           RunStatus = "applying"
-	RunStatusApplied            RunStatus = "applied"
-	RunStatusPostApplyRunning   RunStatus = "post_apply_running"
-	RunStatusPostApplyFinished  RunStatus = "post_apply_finished"
-	RunStatusErrored            RunStatus = "errored"
 	RunStatusCanceled           RunStatus = "canceled"
+	RunStatusConfirmed          RunStatus = "confirmed"
+	RunStatusCostEstimated      RunStatus = "cost_estimated"
+	RunStatusCostEstimating     RunStatus = "cost_estimating"
+	RunStatusDiscarded          RunStatus = "discarded"
+	RunStatusErrored            RunStatus = "errored"
+	RunStatusPending            RunStatus = "pending"
+	RunStatusPlanQueued         RunStatus = "plan_queued"
+	RunStatusPlanned            RunStatus = "planned"
+	RunStatusPlannedAndFinished RunStatus = "planned_and_finished"
+	RunStatusPlannedAndSaved    RunStatus = "planned_and_saved"
+	RunStatusPlanning           RunStatus = "planning"
+	RunStatusPolicyChecked      RunStatus = "policy_checked"
+	RunStatusPolicyChecking     RunStatus = "policy_checking"
+	RunStatusPolicyOverride     RunStatus = "policy_override"
+	RunStatusPostApplyFinished  RunStatus = "post_apply_finished"
+	RunStatusPostApplyRunning   RunStatus = "post_apply_running"
+	RunStatusPostPlanFinished   RunStatus = "post_plan_finished"
+	RunStatusPostPlanRunning    RunStatus = "post_plan_running"
+	RunStatusPreApplyFinished   RunStatus = "pre_apply_finished"
+	RunStatusPreApplyQueued     RunStatus = "pre_apply_queued"
+	RunStatusPreApplyRunning    RunStatus = "pre_apply_running"
+	RunStatusPrePlanFinished    RunStatus = "pre_plan_finished"
+	RunStatusPrePlanQueued      RunStatus = "pre_plan_queued"
+	RunStatusPrePlanRunning     RunStatus = "pre_plan_running"
 )
 
 // Response version - used when unmarshalling from API responses
