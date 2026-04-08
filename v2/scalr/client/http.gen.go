@@ -5,11 +5,14 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"math/rand"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -301,6 +304,18 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
+			// Context cancellation/deadline is never retryable — return immediately.
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			if !isRetryableNetworkError(err) {
+				c.logger.Error("Non-retryable network error",
+					"error", err,
+					"method", method,
+					"path", path,
+				)
+				return nil, fmt.Errorf("request failed: %w", err)
+			}
 			lastErr = err
 			c.logger.Error("HTTP request failed",
 				"error", err,
@@ -450,6 +465,34 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 	}
 
 	return nil, fmt.Errorf("request failed after %d retries", c.retryMax)
+}
+
+// isRetryableNetworkError returns true if the error is a transient network condition
+// worth retrying. Permanent failures (DNS not found, TLS certificate errors) return
+// false so the caller gets an immediate result instead of waiting through backoff.
+func isRetryableNetworkError(err error) bool {
+	// Context cancellation/deadline exceeded is never retryable.
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	// DNS errors: only retry if the resolver itself says it's temporary.
+	// A not-found or authoritative NXDOMAIN will never succeed on retry.
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return dnsErr.Temporary()
+	}
+	// TLS certificate errors are permanent — retrying won't fix an invalid cert.
+	var certInvalid x509.CertificateInvalidError
+	if errors.As(err, &certInvalid) {
+		return false
+	}
+	var unknownAuth x509.UnknownAuthorityError
+	if errors.As(err, &unknownAuth) {
+		return false
+	}
+	// All other network errors (connection reset, brief timeout, etc.) are
+	// treated as transient and worth retrying.
+	return true
 }
 
 // parseRetryAfter parses the Retry-After header value and returns the duration to wait.

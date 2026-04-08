@@ -2,9 +2,11 @@ package client
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -821,4 +823,83 @@ func (m *MockLogger) Warn(msg string, keysAndValues ...interface{}) {
 
 func (m *MockLogger) Error(msg string, keysAndValues ...interface{}) {
 	m.logs = append(m.logs, LogEntry{"Error", msg, keysAndValues})
+}
+
+// TestIsRetryableNetworkError tests the network error classifier.
+func TestIsRetryableNetworkError(t *testing.T) {
+	tests := []struct {
+		name      string
+		err       error
+		retryable bool
+	}{
+		{
+			name:      "context canceled",
+			err:       context.Canceled,
+			retryable: false,
+		},
+		{
+			name:      "context deadline exceeded",
+			err:       context.DeadlineExceeded,
+			retryable: false,
+		},
+		{
+			name:      "DNS not found",
+			err:       &net.DNSError{IsNotFound: true},
+			retryable: false,
+		},
+		{
+			name:      "DNS temporary",
+			err:       &net.DNSError{IsTemporary: true},
+			retryable: true,
+		},
+		{
+			name:      "x509 certificate invalid",
+			err:       x509.CertificateInvalidError{},
+			retryable: false,
+		},
+		{
+			name:      "x509 unknown authority",
+			err:       x509.UnknownAuthorityError{},
+			retryable: false,
+		},
+		{
+			name:      "generic error is retryable",
+			err:       errors.New("connection reset by peer"),
+			retryable: true,
+		},
+		{
+			name:      "wrapped context canceled",
+			err:       &net.OpError{Err: context.Canceled},
+			retryable: false,
+		},
+		{
+			name:      "wrapped DNS not found",
+			err:       &net.OpError{Err: &net.DNSError{IsNotFound: true}},
+			retryable: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isRetryableNetworkError(tt.err)
+			if got != tt.retryable {
+				t.Errorf("isRetryableNetworkError(%v) = %v, want %v", tt.err, got, tt.retryable)
+			}
+		})
+	}
+}
+
+// TestHTTPClientNonRetryableDNSError verifies that a permanent DNS error does not
+// trigger retries — the client should fail immediately.
+func TestHTTPClientNonRetryableDNSError(t *testing.T) {
+	// Use an invalid domain that will produce a permanent DNS failure.
+	client := NewHTTPClient("http://this.hostname.does.not.exist.invalid", "token",
+		WithRetryMax(5),
+		WithTimeout(5*time.Second),
+		withSleepFunc(func(time.Duration) { t.Error("sleep called — retry happened unexpectedly") }),
+	)
+	_, err := client.Get(context.Background(), "/test", nil)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
 }
