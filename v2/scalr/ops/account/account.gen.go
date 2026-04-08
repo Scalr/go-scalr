@@ -265,7 +265,6 @@ func (c *Client) GetAccountsIter(ctx context.Context, opts *GetAccountsOptions) 
 				yield(schemas.Account{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -275,8 +274,10 @@ func (c *Client) GetAccountsIter(ctx context.Context, opts *GetAccountsOptions) 
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Account{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Account{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -510,7 +511,6 @@ func (c *Client) ListSsoBypassUsersIter(ctx context.Context, account string, opt
 				yield(schemas.User{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -520,8 +520,10 @@ func (c *Client) ListSsoBypassUsersIter(ctx context.Context, account string, opt
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

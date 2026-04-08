@@ -207,7 +207,6 @@ func (c *Client) ListModuleVersionsIter(ctx context.Context, opts *ListModuleVer
 				yield(schemas.ModuleVersion{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -217,8 +216,10 @@ func (c *Client) ListModuleVersionsIter(ctx context.Context, opts *ListModuleVer
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ModuleVersion{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ModuleVersion{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

@@ -356,7 +356,6 @@ func (c *Client) ListPolicyGroupsIter(ctx context.Context, opts *ListPolicyGroup
 				yield(schemas.PolicyGroup{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -366,8 +365,10 @@ func (c *Client) ListPolicyGroupsIter(ctx context.Context, opts *ListPolicyGroup
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.PolicyGroup{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.PolicyGroup{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -600,7 +601,6 @@ func (c *Client) ListPullRequestPolicyCheckResultsIter(ctx context.Context, poli
 				yield(schemas.PolicyCheckResult{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -610,8 +610,10 @@ func (c *Client) ListPullRequestPolicyCheckResultsIter(ctx context.Context, poli
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.PolicyCheckResult{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.PolicyCheckResult{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

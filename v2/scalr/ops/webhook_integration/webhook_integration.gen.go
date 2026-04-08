@@ -287,7 +287,6 @@ func (c *Client) ListWebhookIntegrationsIter(ctx context.Context, opts *ListWebh
 				yield(schemas.WebhookIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -297,8 +296,10 @@ func (c *Client) ListWebhookIntegrationsIter(ctx context.Context, opts *ListWebh
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.WebhookIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.WebhookIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

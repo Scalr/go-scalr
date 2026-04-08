@@ -238,7 +238,6 @@ func (c *Client) ListTagsIter(ctx context.Context, opts *ListTagsOptions) iter.S
 				yield(schemas.Tag{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -248,8 +247,10 @@ func (c *Client) ListTagsIter(ctx context.Context, opts *ListTagsOptions) iter.S
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

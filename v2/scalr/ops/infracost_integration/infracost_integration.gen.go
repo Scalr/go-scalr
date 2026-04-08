@@ -292,7 +292,6 @@ func (c *Client) ListInfracostIntegrationsIter(ctx context.Context, opts *ListIn
 				yield(schemas.InfracostIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -302,8 +301,10 @@ func (c *Client) ListInfracostIntegrationsIter(ctx context.Context, opts *ListIn
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.InfracostIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.InfracostIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

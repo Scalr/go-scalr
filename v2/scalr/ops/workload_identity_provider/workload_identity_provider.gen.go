@@ -238,7 +238,6 @@ func (c *Client) ListWorkloadIdentityProvidersIter(ctx context.Context, opts *Li
 				yield(schemas.WorkloadIdentityProvider{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -248,8 +247,10 @@ func (c *Client) ListWorkloadIdentityProvidersIter(ctx context.Context, opts *Li
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.WorkloadIdentityProvider{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.WorkloadIdentityProvider{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

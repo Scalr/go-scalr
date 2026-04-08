@@ -239,7 +239,6 @@ func (c *Client) GetAccountUsersIter(ctx context.Context, opts *GetAccountUsersO
 				yield(schemas.AccountUser{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -249,8 +248,10 @@ func (c *Client) GetAccountUsersIter(ctx context.Context, opts *GetAccountUsersO
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccountUser{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccountUser{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -544,7 +545,6 @@ func (c *Client) GetUsersIter(ctx context.Context, opts *GetUsersOptions) iter.S
 				yield(schemas.User{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -554,8 +554,10 @@ func (c *Client) GetUsersIter(ctx context.Context, opts *GetUsersOptions) iter.S
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -733,7 +735,7 @@ type InviteUserToAccountOptions struct {
 	Filters map[string]string
 }
 
-// The endpoint removes all user access policies and team bindings associated with the account.
+// Removes a user from the account. This revokes all access policies and team memberships associated with the account for that user.
 func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, user string) (*client.Response, error) {
 	path := "/accounts/{account}/actions/remove/{user}"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
@@ -746,7 +748,7 @@ func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, u
 	return &client.Response{Response: httpResp}, nil
 }
 
-// The endpoint removes all user access policies and team bindings associated with the account.
+// Removes a user from the account. This revokes all access policies and team memberships associated with the account for that user.
 func (c *Client) RemoveUserFromAccount(ctx context.Context, account string, user string) error {
 	resp, err := c.RemoveUserFromAccountRaw(ctx, account, user)
 	if err != nil {

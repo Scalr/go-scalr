@@ -233,7 +233,6 @@ func (c *Client) ListSamlIntegrationsIter(ctx context.Context, opts *ListSamlInt
 				yield(schemas.SamlIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -243,8 +242,10 @@ func (c *Client) ListSamlIntegrationsIter(ctx context.Context, opts *ListSamlInt
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.SamlIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.SamlIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

@@ -286,7 +286,6 @@ func (c *Client) ListCheckovIntegrationsIter(ctx context.Context, opts *ListChec
 				yield(schemas.CheckovIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -296,8 +295,10 @@ func (c *Client) ListCheckovIntegrationsIter(ctx context.Context, opts *ListChec
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.CheckovIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.CheckovIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

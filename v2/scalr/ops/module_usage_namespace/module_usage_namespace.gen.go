@@ -145,7 +145,6 @@ func (c *Client) ListModuleUsageNamespacesIter(ctx context.Context, opts *ListMo
 				yield(schemas.ModuleUsageNamespace{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -155,8 +154,10 @@ func (c *Client) ListModuleUsageNamespacesIter(ctx context.Context, opts *ListMo
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ModuleUsageNamespace{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ModuleUsageNamespace{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

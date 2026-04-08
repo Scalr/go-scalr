@@ -483,7 +483,6 @@ func (c *Client) GetWorkspacesIter(ctx context.Context, opts *GetWorkspacesOptio
 				yield(schemas.Workspace{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -493,8 +492,10 @@ func (c *Client) GetWorkspacesIter(ctx context.Context, opts *GetWorkspacesOptio
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -709,7 +710,6 @@ func (c *Client) ListRemoteStateConsumersIter(ctx context.Context, workspace str
 				yield(schemas.Workspace{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -719,8 +719,10 @@ func (c *Client) ListRemoteStateConsumersIter(ctx context.Context, workspace str
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -919,7 +921,6 @@ func (c *Client) ListWorkspaceTagsIter(ctx context.Context, workspace string, op
 				yield(schemas.Tag{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -929,8 +930,10 @@ func (c *Client) ListWorkspaceTagsIter(ctx context.Context, workspace string, op
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

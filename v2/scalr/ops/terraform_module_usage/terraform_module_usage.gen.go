@@ -283,7 +283,6 @@ func (c *Client) ListTerraformModuleUsagesIter(ctx context.Context, opts *ListTe
 				yield(schemas.TerraformModuleUsage{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -293,8 +292,10 @@ func (c *Client) ListTerraformModuleUsagesIter(ctx context.Context, opts *ListTe
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.TerraformModuleUsage{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.TerraformModuleUsage{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

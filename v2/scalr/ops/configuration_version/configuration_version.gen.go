@@ -264,7 +264,6 @@ func (c *Client) GetConfigurationVersionsIter(ctx context.Context, opts *GetConf
 				yield(schemas.ConfigurationVersion{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -274,8 +273,10 @@ func (c *Client) GetConfigurationVersionsIter(ctx context.Context, opts *GetConf
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ConfigurationVersion{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ConfigurationVersion{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

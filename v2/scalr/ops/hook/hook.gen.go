@@ -271,7 +271,6 @@ func (c *Client) ListHooksIter(ctx context.Context, opts *ListHooksOptions) iter
 				yield(schemas.Hook{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -281,8 +280,10 @@ func (c *Client) ListHooksIter(ctx context.Context, opts *ListHooksOptions) iter
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Hook{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Hook{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

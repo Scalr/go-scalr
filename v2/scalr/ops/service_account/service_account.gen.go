@@ -460,7 +460,6 @@ func (c *Client) GetServiceAccountsIter(ctx context.Context, opts *GetServiceAcc
 				yield(schemas.ServiceAccount{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -470,8 +469,10 @@ func (c *Client) GetServiceAccountsIter(ctx context.Context, opts *GetServiceAcc
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ServiceAccount{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ServiceAccount{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -697,7 +698,6 @@ func (c *Client) ListAssumeServiceAccountPoliciesIter(ctx context.Context, opts 
 				yield(schemas.AssumeServiceAccountPolicy{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -707,8 +707,10 @@ func (c *Client) ListAssumeServiceAccountPoliciesIter(ctx context.Context, opts 
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AssumeServiceAccountPolicy{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AssumeServiceAccountPolicy{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

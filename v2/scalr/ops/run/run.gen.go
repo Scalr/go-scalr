@@ -451,7 +451,6 @@ func (c *Client) GetRunsIter(ctx context.Context, opts *GetRunsOptions) iter.Seq
 				yield(schemas.Run{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -461,8 +460,10 @@ func (c *Client) GetRunsIter(ctx context.Context, opts *GetRunsOptions) iter.Seq
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -689,7 +690,6 @@ func (c *Client) GetRunsQueueIter(ctx context.Context, opts *GetRunsQueueOptions
 				yield(schemas.Run{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -699,8 +699,10 @@ func (c *Client) GetRunsQueueIter(ctx context.Context, opts *GetRunsQueueOptions
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

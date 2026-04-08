@@ -273,7 +273,6 @@ func (c *Client) ListVcsProvidersIter(ctx context.Context, opts *ListVcsProvider
 				yield(schemas.VcsProvider{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -283,8 +282,10 @@ func (c *Client) ListVcsProvidersIter(ctx context.Context, opts *ListVcsProvider
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.VcsProvider{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.VcsProvider{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

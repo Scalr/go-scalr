@@ -300,7 +300,6 @@ func (c *Client) GetTeamsIter(ctx context.Context, opts *GetTeamsOptions) iter.S
 				yield(schemas.Team{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -310,8 +309,10 @@ func (c *Client) GetTeamsIter(ctx context.Context, opts *GetTeamsOptions) iter.S
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Team{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Team{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -421,7 +422,7 @@ type GetTeamsOptions struct {
 	Filters map[string]string
 }
 
-// Update a team's attributes or users. The endpoint can be used to add or remove users from a team.
+// Update a team's attributes or users. The endpoint can be used to add or remove users from a team. If the account uses an external identity provider without SCIM provisioning, team membership cannot be managed via this endpoint - the “users“ relationship will be ignored. Use SCIM or manage team membership directly in the identity provider.
 func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*client.Response, error) {
 	path := "/teams/{team}"
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
@@ -453,7 +454,7 @@ func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.Te
 	return &client.Response{Response: httpResp}, nil
 }
 
-// Update a team's attributes or users. The endpoint can be used to add or remove users from a team.
+// Update a team's attributes or users. The endpoint can be used to add or remove users from a team. If the account uses an external identity provider without SCIM provisioning, team membership cannot be managed via this endpoint - the “users“ relationship will be ignored. Use SCIM or manage team membership directly in the identity provider.
 func (c *Client) UpdateTeam(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*schemas.Team, error) {
 	resp, err := c.UpdateTeamRaw(ctx, team, req, opts)
 	if err != nil {

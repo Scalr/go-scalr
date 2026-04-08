@@ -458,7 +458,6 @@ func (c *Client) ListAccessTokensIter(ctx context.Context, opts *ListAccessToken
 				yield(schemas.AccessToken{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -468,8 +467,10 @@ func (c *Client) ListAccessTokensIter(ctx context.Context, opts *ListAccessToken
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -694,7 +695,6 @@ func (c *Client) ListAgentPoolAccessTokensIter(ctx context.Context, agentPool st
 				yield(schemas.AccessToken{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -704,8 +704,10 @@ func (c *Client) ListAgentPoolAccessTokensIter(ctx context.Context, agentPool st
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -932,7 +934,6 @@ func (c *Client) ListServiceAccountAccessTokensIter(ctx context.Context, service
 				yield(schemas.AccessToken{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -942,8 +943,10 @@ func (c *Client) ListServiceAccountAccessTokensIter(ctx context.Context, service
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

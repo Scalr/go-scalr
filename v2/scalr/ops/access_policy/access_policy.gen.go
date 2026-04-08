@@ -239,7 +239,6 @@ func (c *Client) GetAccessPoliciesIter(ctx context.Context, opts *GetAccessPolic
 				yield(schemas.AccessPolicy{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -249,8 +248,10 @@ func (c *Client) GetAccessPoliciesIter(ctx context.Context, opts *GetAccessPolic
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessPolicy{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessPolicy{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

@@ -27,14 +27,15 @@ func New(httpClient *client.HTTPClient) *Client {
 
 // Filter key constants for ProviderConfiguration operations
 const (
-	FilterAccount               = "filter[account]"                // The provider configuration account filter.
-	FilterEnvironment           = "filter[environment]"            // The provider configuration environment filter.
-	FilterName                  = "filter[name]"                   // The provider configuration name filter.
-	FilterProviderConfiguration = "filter[provider-configuration]" // The ID(s) of provider configuration(s).
-	FilterProviderName          = "filter[provider-name]"          // The provider configuration type filter.
-	FilterStatus                = "filter[status]"                 // The provider configuration status filter.
-	FilterTag                   = "filter[tag]"                    // Filter provider configurations by tags
-	FilterWorkspaceName         = "filter[workspace][name]"        // Filter provider configuration usage by workspace name.
+	FilterAccount               = "filter[account]"                   // The provider configuration account filter.
+	FilterEnvironment           = "filter[environment]"               // The provider configuration environment filter.
+	FilterIsAllowedInModuleTest = "filter[is-allowed-in-module-test]" // Filter provider configurations allowed for use in module tests.
+	FilterName                  = "filter[name]"                      // The provider configuration name filter.
+	FilterProviderConfiguration = "filter[provider-configuration]"    // The ID(s) of provider configuration(s).
+	FilterProviderName          = "filter[provider-name]"             // The provider configuration type filter.
+	FilterStatus                = "filter[status]"                    // The provider configuration status filter.
+	FilterTag                   = "filter[tag]"                       // Filter provider configurations by tags
+	FilterWorkspaceName         = "filter[workspace][name]"           // Filter provider configuration usage by workspace name.
 )
 
 // This endpoint assigns the list of [tags](/docs/tags-1) to the provider configuration.
@@ -393,7 +394,6 @@ func (c *Client) ListProviderConfigurationTagsIter(ctx context.Context, provider
 				yield(schemas.Tag{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -403,8 +403,10 @@ func (c *Client) ListProviderConfigurationTagsIter(ctx context.Context, provider
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -612,7 +614,6 @@ func (c *Client) ListProviderConfigurationsIter(ctx context.Context, opts *ListP
 				yield(schemas.ProviderConfiguration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -622,8 +623,10 @@ func (c *Client) ListProviderConfigurationsIter(ctx context.Context, opts *ListP
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ProviderConfiguration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ProviderConfiguration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 

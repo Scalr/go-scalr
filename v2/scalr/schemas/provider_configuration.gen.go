@@ -156,6 +156,8 @@ type ProviderConfigurationAttributes struct {
 	GoogleUseDefaultProject *bool `json:"google-use-default-project"`
 	// The canonical name of the workload identity provider.
 	GoogleWorkloadProviderName *string `json:"google-workload-provider-name"`
+	// Indicates whether the provider configuration can be used in module tests.
+	IsAllowedInModuleTest bool `json:"is-allowed-in-module-test"`
 	// Determines if a provider configuration is custom. Note: custom provider configurations do not support built-in features like exporting as shell variables or on-save validation. Provider configuration will be validated during the run only.
 	IsCustom *bool `json:"is-custom"`
 	// Indicates whether the provider configuration can be used in any workspace of the account without directly linking it to the environment.
@@ -471,6 +473,8 @@ type ProviderConfigurationAttributesRequest struct {
 	GoogleUseDefaultProject *value.Value[bool] `json:"google-use-default-project,omitempty"`
 	// The canonical name of the workload identity provider.
 	GoogleWorkloadProviderName *value.Value[string] `json:"google-workload-provider-name,omitempty"`
+	// Indicates whether the provider configuration can be used in module tests.
+	IsAllowedInModuleTest *value.Value[bool] `json:"is-allowed-in-module-test,omitempty"`
 	// Determines if a provider configuration is custom. Note: custom provider configurations do not support built-in features like exporting as shell variables or on-save validation. Provider configuration will be validated during the run only.
 	IsCustom *value.Value[bool] `json:"is-custom,omitempty"`
 	// Indicates whether the provider configuration can be used in any workspace of the account without directly linking it to the environment.
