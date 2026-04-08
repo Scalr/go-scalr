@@ -9,6 +9,8 @@ generate: ## Generate public API client from OpenAPI spec
 	@go run ./cmd/scalr-gen \
 		--spec=../../fatmouse/taco/openapi/openapi-public.yml \
 		--package=scalr
+	@go build ./scalr/...
+	@echo "✓ Generated code compiles"
 
 test: ## Run tests
 	@echo "Running tests..."

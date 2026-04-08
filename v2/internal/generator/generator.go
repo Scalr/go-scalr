@@ -116,8 +116,7 @@ func (g *Generator) formatCode(dir string) error {
 
 		formatted, err := imports.Process(path, content, nil)
 		if err != nil {
-			log.Printf("Warning: failed to format %s: %v", path, err)
-			return nil // Don't fail on format errors
+			return fmt.Errorf("syntax error in generated file %s: %w", filepath.Base(path), err)
 		}
 
 		return os.WriteFile(path, formatted, info.Mode())
