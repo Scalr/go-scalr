@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -211,19 +212,27 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 
 	var lastErr error
 	var lastStatusCode int
+	var retryAfter time.Duration // populated from Retry-After header on 429 responses
 
 	for attempt := 0; attempt <= c.retryMax; attempt++ {
 		if attempt > 0 {
-			// Exponential backoff with jitter: base * 2^attempt + jitter
-			// e.g., attempt 1: 1-2s, attempt 2: 2-4s, attempt 3: 4-8s
-			base := time.Second
-			maxBackoff := base * time.Duration(math.Pow(2, float64(attempt)))
-			jitter := time.Duration(rand.Int63n(int64(maxBackoff)))
-			backoff := maxBackoff + jitter
+			var backoff time.Duration
+			if retryAfter > 0 {
+				// Honour the server's requested delay
+				backoff = retryAfter
+				retryAfter = 0
+			} else {
+				// Exponential backoff with jitter: base * 2^attempt + jitter
+				// e.g., attempt 1: 1-2s, attempt 2: 2-4s, attempt 3: 4-8s
+				base := time.Second
+				maxBackoff := base * time.Duration(math.Pow(2, float64(attempt)))
+				jitter := time.Duration(rand.Int63n(int64(maxBackoff)))
+				backoff = maxBackoff + jitter
 
-			// Cap backoff at 32 seconds
-			if backoff > 32*time.Second {
-				backoff = 32*time.Second + time.Duration(rand.Int63n(int64(time.Second)))
+				// Cap backoff at 32 seconds
+				if backoff > 32*time.Second {
+					backoff = 32*time.Second + time.Duration(rand.Int63n(int64(time.Second)))
+				}
 			}
 
 			// Log retry attempt
@@ -309,14 +318,15 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 
 		if c.shouldRetry(resp.StatusCode) {
 			lastStatusCode = resp.StatusCode
-			_ = resp.Body.Close() // Ignore error on retry
 
 			if resp.StatusCode == 429 {
+				retryAfter = parseRetryAfter(resp.Header.Get("Retry-After"))
 				c.logger.Warn("Rate limit encountered",
 					"method", method,
 					"path", path,
 					"status", 429,
 					"willRetry", true,
+					"retryAfter", retryAfter.String(),
 				)
 			} else if resp.StatusCode >= 500 {
 				c.logger.Warn("Server error encountered",
@@ -327,6 +337,7 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 				)
 			}
 
+			_ = resp.Body.Close()
 			lastErr = fmt.Errorf("request failed with status %d", resp.StatusCode)
 			continue
 		}
@@ -437,6 +448,27 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 	}
 
 	return nil, fmt.Errorf("request failed after %d retries", c.retryMax)
+}
+
+// parseRetryAfter parses the Retry-After header value and returns the duration to wait.
+// Supports both integer (seconds) and HTTP-date formats per RFC 7231.
+// Returns 0 if the header is absent, malformed, or in the past.
+func parseRetryAfter(header string) time.Duration {
+	if header == "" {
+		return 0
+	}
+	// Try integer format first (number of seconds)
+	if secs, err := strconv.Atoi(header); err == nil && secs > 0 {
+		return time.Duration(secs) * time.Second
+	}
+	// Try HTTP-date format
+	if t, err := http.ParseTime(header); err == nil {
+		d := time.Until(t)
+		if d > 0 {
+			return d
+		}
+	}
+	return 0
 }
 
 func (c *HTTPClient) shouldRetry(statusCode int) bool {

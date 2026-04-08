@@ -354,6 +354,72 @@ func TestHTTPClientRetryOn429(t *testing.T) {
 	}
 }
 
+// TestParseRetryAfter tests the Retry-After header parser.
+func TestParseRetryAfter(t *testing.T) {
+	tests := []struct {
+		name     string
+		header   string
+		expected time.Duration
+	}{
+		{name: "empty header", header: "", expected: 0},
+		{name: "integer seconds", header: "30", expected: 30 * time.Second},
+		{name: "one second", header: "1", expected: time.Second},
+		{name: "zero seconds", header: "0", expected: 0},
+		{name: "negative integer", header: "-5", expected: 0},
+		{name: "invalid string", header: "soon", expected: 0},
+		{name: "past HTTP-date", header: "Thu, 01 Jan 1970 00:00:00 GMT", expected: 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseRetryAfter(tt.header)
+			if got != tt.expected {
+				t.Errorf("parseRetryAfter(%q) = %v, want %v", tt.header, got, tt.expected)
+			}
+		})
+	}
+
+	t.Run("future HTTP-date", func(t *testing.T) {
+		future := time.Now().Add(10 * time.Second).UTC().Format(http.TimeFormat)
+		got := parseRetryAfter(future)
+		if got <= 0 || got > 11*time.Second {
+			t.Errorf("parseRetryAfter(future date) = %v, expected ~10s", got)
+		}
+	})
+}
+
+// TestHTTPClientRetryAfterHeader verifies that the Retry-After header value is used
+// as the sleep duration instead of exponential backoff when present on a 429 response.
+func TestHTTPClientRetryAfterHeader(t *testing.T) {
+	attempts := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts++
+		if attempts < 2 {
+			w.Header().Set("Retry-After", "42")
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": {}}`))
+	}))
+	defer server.Close()
+
+	var sleptFor time.Duration
+	client := NewHTTPClient(server.URL, "test-token",
+		WithRetryMax(3),
+		withSleepFunc(func(d time.Duration) { sleptFor = d }),
+	)
+	resp, err := client.Get(context.Background(), "/test", nil)
+	if err != nil {
+		t.Fatalf("Get() error: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if sleptFor != 42*time.Second {
+		t.Errorf("sleep duration = %v, want 42s (from Retry-After header)", sleptFor)
+	}
+}
+
 // TestHTTPClientRetryOn5xx tests retry logic for 5xx responses (when enabled)
 func TestHTTPClientRetryOn5xx(t *testing.T) {
 	attempts := 0
