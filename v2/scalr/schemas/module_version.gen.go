@@ -64,7 +64,7 @@ type ModuleVersionAttributes struct {
 	// This field contains the error description, when this module version's status is `errored`.
 	ErrorMessage *string `json:"error-message"`
 	// Input Variables.
-	Inputs *[]interface{} `json:"inputs"`
+	Inputs *[]json.RawMessage `json:"inputs"`
 	// Indicates the source of the restriction.
 	IsForbiddenBy *ModuleVersionIsForbiddenBy `json:"is-forbidden-by"`
 	// Module version marked as root will allow the [creation of workspaces](../../module.html#deployable-modules) directly from the registry, as well as standard module usage.

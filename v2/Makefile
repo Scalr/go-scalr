@@ -14,8 +14,8 @@ generate: ## Generate public API client from OpenAPI spec
 
 test: ## Run tests
 	@echo "Running tests..."
-	@go test -v $(TESTARGS) ./internal/...
+	@go test -race -v $(TESTARGS) ./internal/...
 
 lint: ## Run linter
 	@echo "Running linter..."
-	@golangci-lint run internal/... || true
+	@golangci-lint run internal/...

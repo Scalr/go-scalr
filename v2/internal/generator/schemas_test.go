@@ -502,3 +502,80 @@ func TestTypeEnumExtraction(t *testing.T) {
 		})
 	}
 }
+
+// TestResolveAnyOf tests the anyOf resolution logic covering all three rules.
+func TestResolveAnyOf(t *testing.T) {
+	g := &Generator{}
+
+	stringType := &openapi3.Types{"string"}
+
+	tests := []struct {
+		name     string
+		variants openapi3.SchemaRefs
+		expected string
+	}{
+		{
+			name:     "empty variants",
+			variants: openapi3.SchemaRefs{},
+			expected: "interface{}",
+		},
+		{
+			name: "all plain strings → string",
+			variants: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Type: stringType}},
+				{Value: &openapi3.Schema{Type: stringType}},
+			},
+			expected: "string",
+		},
+		{
+			name: "string enum + bare string → string",
+			variants: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "MyEnum", Type: stringType, Enum: []interface{}{"a", "b"}}},
+				{Value: &openapi3.Schema{Type: stringType}},
+			},
+			expected: "string",
+		},
+		{
+			name: "named non-string schemas → json.RawMessage",
+			variants: openapi3.SchemaRefs{
+				{Ref: "#/components/schemas/RegistryInputOptional", Value: &openapi3.Schema{}},
+				{Ref: "#/components/schemas/RegistryInputRequired", Value: &openapi3.Schema{}},
+			},
+			expected: "json.RawMessage",
+		},
+		{
+			name: "mixed primitives → interface{}",
+			variants: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
+				{Value: &openapi3.Schema{Type: &openapi3.Types{"integer"}}},
+				{Value: &openapi3.Schema{Type: &openapi3.Types{"boolean"}}},
+			},
+			expected: "interface{}",
+		},
+		{
+			name: "string mixed with object → interface{}",
+			variants: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
+				{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}}},
+			},
+			expected: "interface{}",
+		},
+		{
+			name: "named schema mixed with unnamed → interface{}",
+			variants: openapi3.SchemaRefs{
+				{Ref: "#/components/schemas/SomeSchema", Value: &openapi3.Schema{}},
+				{Value: &openapi3.Schema{Type: stringType}},
+			},
+			expected: "interface{}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := g.resolveAnyOf(tt.variants)
+			if got != tt.expected {
+				t.Errorf("resolveAnyOf() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+}

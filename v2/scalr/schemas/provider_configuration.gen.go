@@ -165,7 +165,7 @@ type ProviderConfigurationAttributes struct {
 	// The name of a Scalr provider configuration. This field is unique for the account.
 	Name string `json:"name"`
 	// The name of a Terraform provider.
-	ProviderName interface{} `json:"provider-name"`
+	ProviderName string `json:"provider-name"`
 	// The Scalr hostname which should be used.
 	ScalrHostname *string `json:"scalr-hostname"`
 	// The Scalr token which should be used.
@@ -482,7 +482,7 @@ type ProviderConfigurationAttributesRequest struct {
 	// The name of a Scalr provider configuration. This field is unique for the account.
 	Name *value.Value[string] `json:"name,omitempty"`
 	// The name of a Terraform provider.
-	ProviderName *value.Value[interface{}] `json:"provider-name,omitempty"`
+	ProviderName *value.Value[string] `json:"provider-name,omitempty"`
 	// The Scalr hostname which should be used.
 	ScalrHostname *value.Value[string] `json:"scalr-hostname,omitempty"`
 	// The Scalr token which should be used.

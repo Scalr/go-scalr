@@ -889,6 +889,53 @@ func TestIsRetryableNetworkError(t *testing.T) {
 	}
 }
 
+// TestHTTPClientClose verifies that Close() does not panic and drains idle connections.
+func TestHTTPClientClose(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": {}}`))
+	}))
+	defer server.Close()
+
+	c := NewHTTPClient(server.URL, "token", WithRetryMax(0))
+	resp, err := c.Get(context.Background(), "/test", nil)
+	if err != nil {
+		t.Fatalf("Get() error: %v", err)
+	}
+	_ = resp.Body.Close()
+
+	// Close must not panic; idle connection should be released.
+	c.Close()
+}
+
+// TestHTTPClientMultiError verifies that all JSON:API errors are joined into the
+// returned error, not just the first one.
+func TestHTTPClientMultiError(t *testing.T) {
+	body := `{"errors":[{"title":"first","detail":"d1"},{"title":"second","detail":"d2"}]}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, _ = w.Write([]byte(body))
+	}))
+	defer server.Close()
+
+	c := NewHTTPClient(server.URL, "token", WithRetryMax(0))
+	_, err := c.Get(context.Background(), "/test", nil)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	msg := err.Error()
+	if !strings.Contains(msg, "first") || !strings.Contains(msg, "second") {
+		t.Errorf("expected both errors in message, got: %s", msg)
+	}
+
+	// Underlying errors should be accessible as *JSONAPIError via errors.As
+	var apiErr *JSONAPIError
+	if !errors.As(err, &apiErr) {
+		t.Error("expected to find *JSONAPIError via errors.As")
+	}
+}
+
 // TestHTTPClientNonRetryableDNSError verifies that a permanent DNS error does not
 // trigger retries — the client should fail immediately.
 func TestHTTPClientNonRetryableDNSError(t *testing.T) {

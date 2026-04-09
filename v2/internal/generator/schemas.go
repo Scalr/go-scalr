@@ -636,6 +636,54 @@ func (g *Generator) parseRelationship(name string, schema *openapi3.Schema) Rela
 	return rel
 }
 
+// resolveAnyOf maps an anyOf variant list to a Go type using three rules:
+//
+//  1. All variants are string-typed (including string enums) → "string"
+//     Handles patterns like `anyOf: [SomeEnum, string]` where the enum is
+//     a documentation constraint on a string field.
+//
+//  2. All variants are named $ref schemas → "json.RawMessage"
+//     Preserves the raw JSON so callers can unmarshal into whichever
+//     concrete schema they need. This mirrors how go-github handles
+//     polymorphic event payloads.
+//
+//  3. Everything else (mixed primitives, external data) → "interface{}"
+func (g *Generator) resolveAnyOf(variants openapi3.SchemaRefs) string {
+	if len(variants) == 0 {
+		return "interface{}"
+	}
+
+	allStrings := true
+	allRefs := true
+
+	for _, ref := range variants {
+		if ref == nil || ref.Value == nil {
+			allStrings = false
+			allRefs = false
+			continue
+		}
+		if !ref.Value.Type.Is("string") {
+			allStrings = false
+		}
+		// A variant is a named component schema when it was declared as a $ref
+		// (e.g. $ref: '#/components/schemas/RegistryInputOptional'). kin-openapi
+		// stores the original ref string in SchemaRef.Ref; Title is only set when
+		// the schema definition itself has an explicit "title:" field.
+		if ref.Ref == "" {
+			allRefs = false
+		}
+	}
+
+	switch {
+	case allStrings:
+		return "string"
+	case allRefs:
+		return "json.RawMessage"
+	default:
+		return "interface{}"
+	}
+}
+
 // schemaToGoType converts OpenAPI schema type to Go type
 func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 	if schema.Title != "" {
@@ -645,6 +693,15 @@ func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 			return "*" + schema.Title
 		}
 		return schema.Title
+	}
+
+	// Handle anyOf before the type switch.
+	if len(schema.AnyOf) > 0 {
+		result := g.resolveAnyOf(schema.AnyOf)
+		if schema.Nullable {
+			return "*" + result
+		}
+		return result
 	}
 
 	var baseType string

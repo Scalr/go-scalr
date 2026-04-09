@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -138,6 +139,12 @@ func NewHTTPClient(baseURL, token string, opts ...HTTPClientOption) *HTTPClient 
 	client.httpClient.Timeout = client.timeout
 
 	return client
+}
+
+// Close releases idle connections held by the underlying transport.
+// Call this when the client is no longer needed to free resources promptly.
+func (c *HTTPClient) Close() {
+	c.httpClient.CloseIdleConnections()
 }
 
 // WithHeader creates a new HTTPClient with an additional default header
@@ -388,8 +395,14 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 			var underlyingErr error
 			message := string(bodyBytes)
 			if err := json.Unmarshal(bodyBytes, &doc); err == nil && len(doc.Errors) > 0 {
-				underlyingErr = doc.Errors[0]
-				message = doc.Errors[0].Error()
+				msgs := make([]string, len(doc.Errors))
+				errs := make([]error, len(doc.Errors))
+				for i, e := range doc.Errors {
+					msgs[i] = e.Error()
+					errs[i] = e
+				}
+				message = strings.Join(msgs, "; ")
+				underlyingErr = errors.Join(errs...)
 			}
 
 			c.logger.Error("HTTP request returned error",
