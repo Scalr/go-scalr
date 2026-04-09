@@ -113,12 +113,18 @@ func withSleepFunc(fn func(time.Duration)) HTTPClientOption {
 
 // NewHTTPClient creates a new HTTP client
 func NewHTTPClient(baseURL, token string, opts ...HTTPClientOption) *HTTPClient {
+	// Clone the default transport and raise MaxIdleConnsPerHost to match MaxIdleConns.
+	// Because this client talks to a single host, the default cap of 2 idle connections per host
+	// would cause connection thrashing under concurrent use.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.MaxIdleConnsPerHost = transport.MaxIdleConns
+
 	client := &HTTPClient{
 		baseURL:        baseURL,
 		token:          token,
 		retryMax:       5,
 		timeout:        30 * time.Second,
-		httpClient:     &http.Client{},
+		httpClient:     &http.Client{Transport: transport},
 		defaultHeaders: make(map[string]string),
 		logger:         NewNoOpLogger(), // Default: no logging
 		userAgent:      UserAgent(),     // Default User-Agent
