@@ -112,6 +112,9 @@ type ModuleCreateOptions struct {
 	//// For internal use only!
 	ID string `jsonapi:"primary,modules"`
 
+	Name     *string `jsonapi:"attr,name,omitempty"`
+	Provider *string `jsonapi:"attr,provider,omitempty"`
+
 	// Settings for the module VCS repository.
 	VCSRepo *ModuleVCSRepo `jsonapi:"attr,vcs-repo"`
 
