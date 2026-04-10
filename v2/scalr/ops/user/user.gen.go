@@ -682,7 +682,7 @@ type InviteUserToAccountOptions struct {
 	Filter  map[string]string
 }
 
-// The endpoint removes all user access policies and team bindings associated with the account.
+// Removes a user from the account. This revokes all access policies and team memberships associated with the account for that user.
 func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, user string) (*client.Response, error) {
 	path := "/accounts/{account}/actions/remove/{user}"
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
@@ -695,7 +695,7 @@ func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, u
 	return &client.Response{Response: httpResp}, nil
 }
 
-// The endpoint removes all user access policies and team bindings associated with the account.
+// Removes a user from the account. This revokes all access policies and team memberships associated with the account for that user.
 func (c *Client) RemoveUserFromAccount(ctx context.Context, account string, user string) error {
 	resp, err := c.RemoveUserFromAccountRaw(ctx, account, user)
 	if err != nil {

@@ -19,6 +19,16 @@ const (
 	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
 )
 
+// ProviderConfigurationAwsCredentialsSource represents the type for ProviderConfigurationAwsCredentialsSource
+// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+type ProviderConfigurationAwsCredentialsSource string
+
+// ProviderConfigurationAwsCredentialsSource constants
+const (
+	ProviderConfigurationAwsCredentialsSourceEc2InstanceMetadata ProviderConfigurationAwsCredentialsSource = "Ec2InstanceMetadata"
+	ProviderConfigurationAwsCredentialsSourceEcsContainer        ProviderConfigurationAwsCredentialsSource = "EcsContainer"
+)
+
 // ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
 // The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
 type ProviderConfigurationAwsCredentialsType string
@@ -38,16 +48,6 @@ type ProviderConfigurationAwsDefaultTagsStrategy string
 const (
 	ProviderConfigurationAwsDefaultTagsStrategySkip   ProviderConfigurationAwsDefaultTagsStrategy = "skip"
 	ProviderConfigurationAwsDefaultTagsStrategyUpdate ProviderConfigurationAwsDefaultTagsStrategy = "update"
-)
-
-// ProviderConfigurationAwsServiceCredentialsSource represents the type for ProviderConfigurationAwsServiceCredentialsSource
-// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
-type ProviderConfigurationAwsServiceCredentialsSource string
-
-// ProviderConfigurationAwsServiceCredentialsSource constants
-const (
-	ProviderConfigurationAwsServiceCredentialsSourceEc2InstanceMetadata ProviderConfigurationAwsServiceCredentialsSource = "Ec2InstanceMetadata"
-	ProviderConfigurationAwsServiceCredentialsSourceEcsContainer        ProviderConfigurationAwsServiceCredentialsSource = "EcsContainer"
 )
 
 // ProviderConfigurationAwsTrustedEntityType represents the type for ProviderConfigurationAwsTrustedEntityType
@@ -122,6 +122,8 @@ type ProviderConfigurationAttributes struct {
 	AwsAccountType *ProviderConfigurationAwsAccountType `json:"aws-account-type"`
 	// The value of the aud claim for the identity token.
 	AwsAudience *string `json:"aws-audience"`
+	// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+	AwsCredentialsSource *ProviderConfigurationAwsCredentialsSource `json:"aws-credentials-source"`
 	// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
 	AwsCredentialsType *ProviderConfigurationAwsCredentialsType `json:"aws-credentials-type"`
 	// Default tags to be applied to all resources created by this provider configuration.
@@ -134,8 +136,6 @@ type ProviderConfigurationAttributes struct {
 	AwsRoleArn *string `json:"aws-role-arn"`
 	// AWS secret key. This option is required with the `access_keys` credential type.
 	AwsSecretKey *string `json:"aws-secret-key"`
-	// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
-	AwsServiceCredentialsSource *ProviderConfigurationAwsServiceCredentialsSource `json:"aws-service-credentials-source"`
 	// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
 	AwsTrustedEntityType *ProviderConfigurationAwsTrustedEntityType `json:"aws-trusted-entity-type"`
 	// The value of the aud claim for the identity token.
@@ -445,6 +445,8 @@ type ProviderConfigurationAttributesRequest struct {
 	AwsAccountType *value.Value[ProviderConfigurationAwsAccountType] `json:"aws-account-type,omitempty"`
 	// The value of the aud claim for the identity token.
 	AwsAudience *value.Value[string] `json:"aws-audience,omitempty"`
+	// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+	AwsCredentialsSource *value.Value[ProviderConfigurationAwsCredentialsSource] `json:"aws-credentials-source,omitempty"`
 	// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
 	AwsCredentialsType *value.Value[ProviderConfigurationAwsCredentialsType] `json:"aws-credentials-type,omitempty"`
 	// Default tags to be applied to all resources created by this provider configuration.
@@ -457,8 +459,6 @@ type ProviderConfigurationAttributesRequest struct {
 	AwsRoleArn *value.Value[string] `json:"aws-role-arn,omitempty"`
 	// AWS secret key. This option is required with the `access_keys` credential type.
 	AwsSecretKey *value.Value[string] `json:"aws-secret-key,omitempty"`
-	// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
-	AwsServiceCredentialsSource *value.Value[ProviderConfigurationAwsServiceCredentialsSource] `json:"aws-service-credentials-source,omitempty"`
 	// Trusted entity type, available options: `aws_account`, `aws_service`. This option is required with the `role_delegation` credential type.
 	AwsTrustedEntityType *value.Value[ProviderConfigurationAwsTrustedEntityType] `json:"aws-trusted-entity-type,omitempty"`
 	// The value of the aud claim for the identity token.
