@@ -209,7 +209,12 @@ type QueryParam struct {
 }
 
 // parseOperation parses an OpenAPI operation
-func (g *Generator) parseOperation(path, method string, op *openapi3.Operation, doc *openapi3.T, resourceName string) Operation {
+func (g *Generator) parseOperation(
+	path, method string,
+	op *openapi3.Operation,
+	doc *openapi3.T,
+	resourceName string,
+) Operation {
 	operation := Operation{
 		Name:        strcase.ToCamel(op.OperationID),
 		Method:      strings.ToUpper(method),
@@ -266,7 +271,13 @@ func (g *Generator) parseOperation(path, method string, op *openapi3.Operation, 
 	// Check if has request body and extract request type
 	if op.RequestBody != nil && op.RequestBody.Value != nil {
 		operation.HasBody = true
-		reqType, isRelationship, usesPlainJSON := g.getRequestBodyType(op.RequestBody.Value, doc, resourceName, path, method)
+		reqType, isRelationship, usesPlainJSON := g.getRequestBodyType(
+			op.RequestBody.Value,
+			doc,
+			resourceName,
+			path,
+			method,
+		)
 		operation.RequestType = reqType
 		operation.IsRelationshipOp = isRelationship
 		operation.UsesPlainJSON = usesPlainJSON
@@ -361,7 +372,8 @@ func (g *Generator) getResponseType(resp *openapi3.Response, doc *openapi3.T, pa
 					return "[]*schemas." + itemType, false
 				}
 				// Fallback: try schema name-based detection for edge cases
-				if strings.Contains(documentSchemaName, "Relationship") && strings.HasSuffix(documentSchemaName, "ListingDocument") {
+				if strings.Contains(documentSchemaName, "Relationship") &&
+					strings.HasSuffix(documentSchemaName, "ListingDocument") {
 					schemaName := strings.TrimSuffix(documentSchemaName, "FieldsetsListingDocument")
 					if schemaRef := doc.Components.Schemas[schemaName]; schemaRef != nil {
 						return "[]*schemas." + schemaName, false
@@ -410,7 +422,11 @@ func (g *Generator) getResponseType(resp *openapi3.Response, doc *openapi3.T, pa
 
 // getRequestBodyType extracts the request body type from a request body
 // Returns (requestType, isRelationshipOp, usesPlainJSON)
-func (g *Generator) getRequestBodyType(reqBody *openapi3.RequestBody, doc *openapi3.T, resourceName, path, method string) (string, bool, bool) {
+func (g *Generator) getRequestBodyType(
+	reqBody *openapi3.RequestBody,
+	doc *openapi3.T,
+	resourceName, path, method string,
+) (string, bool, bool) {
 	// Check if this is a relationship endpoint (path contains /relationships/)
 	isRelationshipEndpoint := strings.Contains(path, "/relationships/")
 
@@ -548,7 +564,8 @@ func (g *Generator) schemaHasRelationships(resp *openapi3.Response, doc *openapi
 				if schemaRef.Value != nil {
 					// Check if schema has a relationships property
 					if schemaRef.Value.Properties != nil {
-						if relProp := schemaRef.Value.Properties["relationships"]; relProp != nil && relProp.Value != nil {
+						if relProp := schemaRef.Value.Properties["relationships"]; relProp != nil &&
+							relProp.Value != nil {
 							// Has relationships property - check if it's not empty
 							return len(relProp.Value.Properties) > 0
 						}

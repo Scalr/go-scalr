@@ -182,26 +182,51 @@ func (c *HTTPClient) Get(ctx context.Context, path string, headers map[string]st
 }
 
 // Post performs a POST request
-func (c *HTTPClient) Post(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) Post(
+	ctx context.Context,
+	path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	return c.do(ctx, "POST", path, body, headers)
 }
 
 // Patch performs a PATCH request
-func (c *HTTPClient) Patch(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) Patch(
+	ctx context.Context,
+	path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	return c.do(ctx, "PATCH", path, body, headers)
 }
 
 // Put performs a PUT request
-func (c *HTTPClient) Put(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) Put(
+	ctx context.Context,
+	path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	return c.do(ctx, "PUT", path, body, headers)
 }
 
 // Delete performs a DELETE request
-func (c *HTTPClient) Delete(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) Delete(
+	ctx context.Context,
+	path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	return c.do(ctx, "DELETE", path, body, headers)
 }
 
-func (c *HTTPClient) do(ctx context.Context, method, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) do(
+	ctx context.Context,
+	method, path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	// Apply per-request timeout via context so all deadline errors are
 	// context.DeadlineExceeded regardless of whether the limit came from
 	// WithTimeout or an external context.
