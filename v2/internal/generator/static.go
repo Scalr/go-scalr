@@ -44,7 +44,7 @@ func (g *Generator) generateStatic(outputDir string) error {
 			return nil
 		}
 
-		dstPath = dstPath + ".gen.go"
+		dstPath += ".gen.go"
 
 		content, err := staticFiles.ReadFile(path)
 		if err != nil {

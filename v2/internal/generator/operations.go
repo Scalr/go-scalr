@@ -85,7 +85,7 @@ func (g *Generator) generateOperations(doc *openapi3.T, outputDir string) error 
 		data := ResourceClientData{
 			PackageName:    strcase.ToSnake(resource),
 			ResourceName:   resource,
-			ApiPackageName: g.pkgName,
+			APIPackageName: g.pkgName,
 			Operations:     ops,
 			FilterKeys:     allFilterKeys,
 		}
@@ -134,7 +134,7 @@ func (g *Generator) generateOperations(doc *openapi3.T, outputDir string) error 
 		data := ResourceClientData{
 			PackageName:    "misc",
 			ResourceName:   "Misc",
-			ApiPackageName: g.pkgName,
+			APIPackageName: g.pkgName,
 			Operations:     standaloneOps,
 			FilterKeys:     allFilterKeys,
 		}
@@ -156,7 +156,7 @@ func (g *Generator) generateOperations(doc *openapi3.T, outputDir string) error 
 type ResourceClientData struct {
 	PackageName    string
 	ResourceName   string
-	ApiPackageName string
+	APIPackageName string
 	Operations     []Operation
 	FilterKeys     []FilterKey
 }

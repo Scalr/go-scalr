@@ -107,16 +107,17 @@ func TestOperationNaming(t *testing.T) {
 			parts := strings.Split(tt.operationID, "")
 
 			// Simple transformation: convert WorkspaceList -> ListWorkspaces
-			if strings.HasSuffix(tt.operationID, "List") {
+			switch {
+			case strings.HasSuffix(tt.operationID, "List"):
 				resource := strings.TrimSuffix(tt.operationID, "List")
 				name = "List" + resource + "s" // Pluralize
-			} else if strings.HasSuffix(tt.operationID, "Get") {
+			case strings.HasSuffix(tt.operationID, "Get"):
 				name = "Get" + strings.TrimSuffix(tt.operationID, "Get")
-			} else if strings.HasSuffix(tt.operationID, "Create") {
+			case strings.HasSuffix(tt.operationID, "Create"):
 				name = "Create" + strings.TrimSuffix(tt.operationID, "Create")
-			} else if strings.HasSuffix(tt.operationID, "Update") {
+			case strings.HasSuffix(tt.operationID, "Update"):
 				name = "Update" + strings.TrimSuffix(tt.operationID, "Update")
-			} else if strings.HasSuffix(tt.operationID, "Delete") {
+			case strings.HasSuffix(tt.operationID, "Delete"):
 				name = "Delete" + strings.TrimSuffix(tt.operationID, "Delete")
 			}
 

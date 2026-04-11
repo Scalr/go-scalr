@@ -12,8 +12,8 @@ import (
 	"net/url"
 	"strings"
 	
-	"github.com/scalr/go-scalr/v2/{{ .ApiPackageName }}/client"
-	"github.com/scalr/go-scalr/v2/{{ .ApiPackageName }}/schemas"
+	"github.com/scalr/go-scalr/v2/{{ .APIPackageName }}/client"
+	"github.com/scalr/go-scalr/v2/{{ .APIPackageName }}/schemas"
 )
 
 // Client provides access to {{ .ResourceName }} operations

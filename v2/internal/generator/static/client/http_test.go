@@ -276,7 +276,7 @@ func TestHTTPClientDeleteWithBody(t *testing.T) {
 
 // TestHTTPClient401Error tests 401 Unauthorized responses
 func TestHTTPClient401Error(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte(`{"errors": [{"title": "Unauthorized", "detail": "Invalid token"}]}`))
 	}))
@@ -301,7 +301,7 @@ func TestHTTPClient401Error(t *testing.T) {
 
 // TestHTTPClient404Error tests 404 Not Found responses
 func TestHTTPClient404Error(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(`{"errors": [{"title": "Not Found"}]}`))
 	}))
@@ -327,7 +327,7 @@ func TestHTTPClient404Error(t *testing.T) {
 // TestHTTPClientRetryOn429 tests retry logic for 429 responses
 func TestHTTPClientRetryOn429(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		if attempts < 3 {
 			w.WriteHeader(http.StatusTooManyRequests)
@@ -394,7 +394,7 @@ func TestParseRetryAfter(t *testing.T) {
 // as the sleep duration instead of exponential backoff when present on a 429 response.
 func TestHTTPClientRetryAfterHeader(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		if attempts < 2 {
 			w.Header().Set("Retry-After", "42")
@@ -425,7 +425,7 @@ func TestHTTPClientRetryAfterHeader(t *testing.T) {
 // TestHTTPClientRetryOn5xx tests retry logic for 5xx responses (when enabled)
 func TestHTTPClientRetryOn5xx(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		if attempts < 2 {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -459,7 +459,7 @@ func TestHTTPClientRetryOn5xx(t *testing.T) {
 // TestHTTPClientNoRetryOn5xxByDefault tests that 5xx doesn't retry by default
 func TestHTTPClientNoRetryOn5xxByDefault(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(`{"errors": [{"title": "Server Error"}]}`))
@@ -481,7 +481,7 @@ func TestHTTPClientNoRetryOn5xxByDefault(t *testing.T) {
 // TestHTTPClientMaxRetriesExhausted tests behavior when max retries are exhausted
 func TestHTTPClientMaxRetriesExhausted(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		w.WriteHeader(http.StatusTooManyRequests)
 	}))
@@ -513,7 +513,7 @@ func TestHTTPClientMaxRetriesExhausted(t *testing.T) {
 // TestTooManyRequestsErrorRetryAfter verifies that RetryAfter is populated
 // from the Retry-After header when retries are exhausted.
 func TestTooManyRequestsErrorRetryAfter(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Retry-After", "60")
 		w.WriteHeader(http.StatusTooManyRequests)
 	}))
@@ -539,7 +539,7 @@ func TestTooManyRequestsErrorRetryAfter(t *testing.T) {
 
 // TestHTTPClientContextCancellation tests context cancellation
 func TestHTTPClientContextCancellation(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		time.Sleep(100 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -563,7 +563,7 @@ func TestHTTPClientContextCancellation(t *testing.T) {
 // TestWithTimeoutProducesContextError verifies that WithTimeout causes a
 // context.DeadlineExceeded error (not an opaque url.Error) on timeout.
 func TestWithTimeoutProducesContextError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		time.Sleep(200 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -610,7 +610,7 @@ func TestHTTPClientCustomHeaders(t *testing.T) {
 
 // TestHTTPClientLogger tests logging integration
 func TestHTTPClientLogger(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"data": {}}`))
 	}))
@@ -942,7 +942,7 @@ func TestIsRetryableNetworkError(t *testing.T) {
 
 // TestHTTPClientClose verifies that Close() does not panic and drains idle connections.
 func TestHTTPClientClose(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"data": {}}`))
 	}))
@@ -963,7 +963,7 @@ func TestHTTPClientClose(t *testing.T) {
 // returned error, not just the first one.
 func TestHTTPClientMultiError(t *testing.T) {
 	body := `{"errors":[{"title":"first","detail":"d1"},{"title":"second","detail":"d2"}]}`
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		_, _ = w.Write([]byte(body))
 	}))

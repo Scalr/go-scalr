@@ -233,7 +233,7 @@ func sanitizeGoName(name string) string {
 	name = strcase.ToLowerCamel(name)
 	// Escape Go reserved words
 	if IsGoReservedWord(name) {
-		name = name + "_"
+		name += "_"
 	}
 	return name
 }

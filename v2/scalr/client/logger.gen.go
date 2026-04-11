@@ -76,9 +76,16 @@ func NewNoOpLogger() *NoOpLogger {
 	return &NoOpLogger{}
 }
 
+// Debug implements Logger.
 func (l *NoOpLogger) Debug(_ string, _ ...interface{}) {}
-func (l *NoOpLogger) Info(_ string, _ ...interface{})  {}
-func (l *NoOpLogger) Warn(_ string, _ ...interface{})  {}
+
+// Info implements Logger.
+func (l *NoOpLogger) Info(_ string, _ ...interface{}) {}
+
+// Warn implements Logger.
+func (l *NoOpLogger) Warn(_ string, _ ...interface{}) {}
+
+// Error implements Logger.
 func (l *NoOpLogger) Error(_ string, _ ...interface{}) {}
 
 // DefaultLogger returns the default logger (writes to stderr at Info level)

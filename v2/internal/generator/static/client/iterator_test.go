@@ -17,7 +17,7 @@ func TestIteratorBasic(t *testing.T) {
 		{ptr("item5"), ptr("item6")},
 	}
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, pageNum int) ([]*string, *Pagination, error) {
 		if pageNum < 1 || pageNum > len(pages) {
 			return nil, nil, nil
 		}
@@ -66,7 +66,7 @@ func TestIteratorBasic(t *testing.T) {
 func TestIteratorEmpty(t *testing.T) {
 	ctx := context.Background()
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, _ int) ([]*string, *Pagination, error) {
 		return []*string{}, &Pagination{CurrentPage: 1, TotalPages: 1}, nil
 	}
 
@@ -86,7 +86,7 @@ func TestIteratorError(t *testing.T) {
 	ctx := context.Background()
 	expectedErr := errors.New("fetch failed")
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, _ int) ([]*string, *Pagination, error) {
 		return nil, nil, expectedErr
 	}
 
@@ -96,7 +96,7 @@ func TestIteratorError(t *testing.T) {
 		t.Error("Next() should return false on error")
 	}
 
-	if iter.Err() != expectedErr {
+	if !errors.Is(iter.Err(), expectedErr) {
 		t.Errorf("Err() = %v, want %v", iter.Err(), expectedErr)
 	}
 }
@@ -105,7 +105,7 @@ func TestIteratorError(t *testing.T) {
 func TestIteratorContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, _ int) ([]*string, *Pagination, error) {
 		return []*string{ptr("item1"), ptr("item2")}, &Pagination{CurrentPage: 1, TotalPages: 1}, nil
 	}
 
@@ -124,7 +124,7 @@ func TestIteratorContextCancellation(t *testing.T) {
 		t.Error("Next() should fail after context cancellation")
 	}
 
-	if iter.Err() != context.Canceled {
+	if !errors.Is(iter.Err(), context.Canceled) {
 		t.Errorf("Err() = %v, want %v", iter.Err(), context.Canceled)
 	}
 }
@@ -138,7 +138,7 @@ func TestIteratorPageInfo(t *testing.T) {
 		{ptr("item3"), ptr("item4")},
 	}
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, pageNum int) ([]*string, *Pagination, error) {
 		if pageNum < 1 || pageNum > len(pages) {
 			return nil, nil, nil
 		}
@@ -207,7 +207,7 @@ func TestIteratorRemaining(t *testing.T) {
 		{ptr("item4"), ptr("item5"), ptr("item6")},
 	}
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, pageNum int) ([]*string, *Pagination, error) {
 		if pageNum < 1 || pageNum > len(pages) {
 			return nil, nil, nil
 		}
@@ -271,7 +271,7 @@ func TestIteratorCollect(t *testing.T) {
 		{ptr("item3"), ptr("item4")},
 	}
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, pageNum int) ([]*string, *Pagination, error) {
 		if pageNum < 1 || pageNum > len(pages) {
 			return nil, nil, nil
 		}
@@ -313,7 +313,7 @@ func TestIteratorCollectWithError(t *testing.T) {
 	ctx := context.Background()
 	expectedErr := errors.New("fetch error")
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, pageNum int) ([]*string, *Pagination, error) {
 		if pageNum == 2 {
 			return nil, nil, expectedErr
 		}
@@ -323,7 +323,7 @@ func TestIteratorCollectWithError(t *testing.T) {
 	iter := NewIterator(ctx, 1, fetchPage)
 
 	_, err := iter.Collect()
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("Collect() error = %v, want %v", err, expectedErr)
 	}
 }
@@ -332,7 +332,7 @@ func TestIteratorCollectWithError(t *testing.T) {
 func TestIteratorValuePanic(t *testing.T) {
 	ctx := context.Background()
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, _ int) ([]*string, *Pagination, error) {
 		return []*string{ptr("item1")}, &Pagination{CurrentPage: 1, TotalPages: 1}, nil
 	}
 
@@ -352,7 +352,7 @@ func TestIteratorValuePanic(t *testing.T) {
 func TestIteratorValuePanicAfterEnd(t *testing.T) {
 	ctx := context.Background()
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, _ int) ([]*string, *Pagination, error) {
 		return []*string{ptr("item1")}, &Pagination{CurrentPage: 1, TotalPages: 1}, nil
 	}
 
@@ -419,7 +419,7 @@ func TestPageInfoString(t *testing.T) {
 func TestIteratorSinglePage(t *testing.T) {
 	ctx := context.Background()
 
-	fetchPage := func(ctx context.Context, pageNum int) ([]*string, *Pagination, error) {
+	fetchPage := func(_ context.Context, pageNum int) ([]*string, *Pagination, error) {
 		if pageNum != 1 {
 			return nil, nil, nil
 		}

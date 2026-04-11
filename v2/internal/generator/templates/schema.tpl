@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"time"
 	
-	"github.com/scalr/go-scalr/v2/{{ .ApiPackageName }}/value"
+	"github.com/scalr/go-scalr/v2/{{ .APIPackageName }}/value"
 )
 
 {{range .EnumTypes}}

@@ -217,7 +217,7 @@ func extractTypeName(schema *openapi3.Schema) string {
 
 // SchemaData holds template data for a schema
 type SchemaData struct {
-	ApiPackageName       string
+	APIPackageName       string
 	Name                 string
 	TypeName             string // JSON:API type name (e.g., "workspaces")
 	Description          string
@@ -285,7 +285,7 @@ type Relationship struct {
 // buildSchemaData builds template data from OpenAPI schema
 func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLevelSchemas map[string]bool) SchemaData {
 	data := SchemaData{
-		ApiPackageName: g.pkgName,
+		APIPackageName: g.pkgName,
 		Name:           name,
 		TypeName:       extractTypeName(schema),
 		Description:    cleanDescription(schema.Description),
@@ -734,16 +734,17 @@ func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 	if schema.Type.Is("array") {
 		if schema.Items != nil {
 			// Check if items has a $ref
-			if schema.Items.Ref != "" {
+			switch {
+			case schema.Items.Ref != "":
 				// Extract schema name from $ref
 				parts := strings.Split(schema.Items.Ref, "/")
 				schemaName := parts[len(parts)-1]
 				baseType = "[]" + schemaName
-			} else if schema.Items.Value != nil {
+			case schema.Items.Value != nil:
 				// Otherwise recursively process the items schema
 				itemType := g.schemaToGoType(schema.Items.Value)
 				baseType = "[]" + itemType
-			} else {
+			default:
 				baseType = "[]interface{}"
 			}
 		} else {
@@ -887,7 +888,7 @@ func (g *Generator) generateSimpleSchema(name string, schema *openapi3.Schema, o
 	filePath := filepath.Join(outputDir, fileName)
 
 	// Build the struct fields
-	var fields []string
+	fields := make([]string, 0, len(schema.Properties))
 	hasID := false
 	hasType := false
 	var typeEnum string

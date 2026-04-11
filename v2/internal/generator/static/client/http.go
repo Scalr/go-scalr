@@ -31,12 +31,13 @@ type HTTPClient struct {
 	sleepFunc         func(time.Duration) // For testing - allows mocking sleep
 }
 
+// HTTPClientOption is a functional option for configuring an HTTPClient.
 type HTTPClientOption func(*HTTPClient)
 
 // WithRetryMax sets the maximum number of retries. Default: 5
-func WithRetryMax(max int) HTTPClientOption {
+func WithRetryMax(n int) HTTPClientOption {
 	return func(c *HTTPClient) {
-		c.retryMax = max
+		c.retryMax = n
 	}
 }
 
@@ -115,6 +116,7 @@ func NewHTTPClient(baseURL, token string, opts ...HTTPClientOption) *HTTPClient 
 	// Clone the default transport and raise MaxIdleConnsPerHost to match MaxIdleConns.
 	// Because this client talks to a single host, the default cap of 2 idle connections per host
 	// would cause connection thrashing under concurrent use.
+	//nolint:forcetypeassert // DefaultTransport is always *http.Transport; this is a well-known Go idiom.
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.MaxIdleConnsPerHost = transport.MaxIdleConns
 
