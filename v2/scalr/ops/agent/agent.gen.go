@@ -34,6 +34,9 @@ const (
 // This endpoint deletes an agent by ID. Only `offline` or `errored` agents can be removed from the pool. Offline or errored agents will be removed automatically after 4 hours of inactivity.
 func (c *Client) DeleteAgentRaw(ctx context.Context, agent string) (*client.Response, error) {
 	path := "/agents/{agent}"
+	if agent == "" {
+		return nil, fmt.Errorf("agent must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent}", url.PathEscape(agent))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -57,6 +60,9 @@ func (c *Client) DeleteAgent(ctx context.Context, agent string) error {
 // Show details of a specific agent.
 func (c *Client) GetAgentRaw(ctx context.Context, agent string, opts *GetAgentOptions) (*client.Response, error) {
 	path := "/agents/{agent}"
+	if agent == "" {
+		return nil, fmt.Errorf("agent must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent}", url.PathEscape(agent))
 
 	params := url.Values{}

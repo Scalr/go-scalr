@@ -39,6 +39,9 @@ const (
 // This endpoint assigns the list of [tags](/docs/tags-1) to the environment.
 func (c *Client) AddEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -71,6 +74,9 @@ func (c *Client) AddEnvironmentTags(ctx context.Context, environment string, req
 // Add an environment to the current user's favorites.
 func (c *Client) AddEnvironmentToFavoritesRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}/actions/favorite"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -105,6 +111,9 @@ func (c *Client) AddEnvironmentToFavorites(ctx context.Context, environment stri
 
 func (c *Client) AddFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -195,6 +204,9 @@ type CreateEnvironmentOptions struct {
 
 func (c *Client) DeleteEnvironmentRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -217,6 +229,9 @@ func (c *Client) DeleteEnvironment(ctx context.Context, environment string) erro
 // This endpoint removes given [tags](/docs/tags-1) from the environment.
 func (c *Client) DeleteEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -249,6 +264,9 @@ func (c *Client) DeleteEnvironmentTags(ctx context.Context, environment string, 
 // This endpoint removes provided environments from a list of federated one for a given environment.
 func (c *Client) DeleteFederatedEnvironmentRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -281,6 +299,9 @@ func (c *Client) DeleteFederatedEnvironment(ctx context.Context, environment str
 // Show details of a specific environment.
 func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts *GetEnvironmentOptions) (*client.Response, error) {
 	path := "/environments/{environment}"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	params := url.Values{}
@@ -349,6 +370,9 @@ type GetEnvironmentOptions struct {
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an environment.
 func (c *Client) ListEnvironmentTagsRaw(ctx context.Context, environment string, opts *ListEnvironmentTagsOptions) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	params := url.Values{}
@@ -803,6 +827,9 @@ type ListEnvironmentsOptions struct {
 
 func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment string, opts *ListFederatedEnvironmentsOptions) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	params := url.Values{}
@@ -1013,6 +1040,9 @@ type ListFederatedEnvironmentsOptions struct {
 // This endpoint locks an environment.
 func (c *Client) LockEnvironmentRaw(ctx context.Context, environment string, req *schemas.EnvLockReason) (*client.Response, error) {
 	path := "/environments/{environment}/actions/lock"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// Plain JSON request (not JSON:API)
@@ -1050,6 +1080,9 @@ func (c *Client) LockEnvironment(ctx context.Context, environment string, req *s
 // Remove an environment from the current user's favorites.
 func (c *Client) RemoveEnvironmentFromFavoritesRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}/actions/unfavorite"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -1085,6 +1118,9 @@ func (c *Client) RemoveEnvironmentFromFavorites(ctx context.Context, environment
 // This endpoint completely replaces environment's tags with provided list.
 func (c *Client) ReplaceEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -1116,6 +1152,9 @@ func (c *Client) ReplaceEnvironmentTags(ctx context.Context, environment string,
 
 func (c *Client) ReplaceFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -1147,6 +1186,9 @@ func (c *Client) ReplaceFederatedEnvironments(ctx context.Context, environment s
 // This endpoint unlocks an environment.
 func (c *Client) UnlockEnvironmentRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}/actions/unlock"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -1181,6 +1223,9 @@ func (c *Client) UnlockEnvironment(ctx context.Context, environment string) (*sc
 
 func (c *Client) UpdateEnvironmentRaw(ctx context.Context, environment string, req *schemas.EnvironmentRequest, opts *UpdateEnvironmentOptions) (*client.Response, error) {
 	path := "/environments/{environment}"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	params := url.Values{}

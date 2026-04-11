@@ -71,6 +71,9 @@ func (c *Client) CreateSshKey(ctx context.Context, req *schemas.SSHKeyRequest) (
 // The endpoint deletes an SSH key by ID.
 func (c *Client) DeleteSshKeyRaw(ctx context.Context, accountSshKey string) (*client.Response, error) {
 	path := "/ssh-keys/{account_ssh_key}"
+	if accountSshKey == "" {
+		return nil, fmt.Errorf("accountSshKey must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -94,6 +97,9 @@ func (c *Client) DeleteSshKey(ctx context.Context, accountSshKey string) error {
 // Show details of a specific SSH key.
 func (c *Client) GetSshKeyRaw(ctx context.Context, accountSshKey string) (*client.Response, error) {
 	path := "/ssh-keys/{account_ssh_key}"
+	if accountSshKey == "" {
+		return nil, fmt.Errorf("accountSshKey must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -362,6 +368,9 @@ type ListSshKeysOptions struct {
 // This endpoint allows updates to attributes of an existing SSH key.
 func (c *Client) UpdateSshKeyRaw(ctx context.Context, accountSshKey string, req *schemas.SSHKeyRequest) (*client.Response, error) {
 	path := "/ssh-keys/{account_ssh_key}"
+	if accountSshKey == "" {
+		return nil, fmt.Errorf("accountSshKey must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
 
 	// Wrap request in JSON:API envelope

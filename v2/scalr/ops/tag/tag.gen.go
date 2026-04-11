@@ -70,6 +70,9 @@ func (c *Client) CreateTag(ctx context.Context, req *schemas.TagRequest) (*schem
 // The endpoint deletes tag by ID.
 func (c *Client) DeleteTagRaw(ctx context.Context, tag string) (*client.Response, error) {
 	path := "/tags/{tag}"
+	if tag == "" {
+		return nil, fmt.Errorf("tag must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -93,6 +96,9 @@ func (c *Client) DeleteTag(ctx context.Context, tag string) error {
 // Show details of a specific tag.
 func (c *Client) GetTagRaw(ctx context.Context, tag string) (*client.Response, error) {
 	path := "/tags/{tag}"
+	if tag == "" {
+		return nil, fmt.Errorf("tag must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -361,6 +367,9 @@ type ListTagsOptions struct {
 // This endpoint updates tag by ID.
 func (c *Client) UpdateTagRaw(ctx context.Context, tag string, req *schemas.TagRequest) (*client.Response, error) {
 	path := "/tags/{tag}"
+	if tag == "" {
+		return nil, fmt.Errorf("tag must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
 
 	// Wrap request in JSON:API envelope

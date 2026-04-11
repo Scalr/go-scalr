@@ -100,6 +100,9 @@ type CreateTeamOptions struct {
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
 func (c *Client) DeleteTeamRaw(ctx context.Context, team string) (*client.Response, error) {
 	path := "/teams/{team}"
+	if team == "" {
+		return nil, fmt.Errorf("team must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -123,6 +126,9 @@ func (c *Client) DeleteTeam(ctx context.Context, team string) error {
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
 func (c *Client) GetTeamRaw(ctx context.Context, team string, opts *GetTeamOptions) (*client.Response, error) {
 	path := "/teams/{team}"
+	if team == "" {
+		return nil, fmt.Errorf("team must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
 	params := url.Values{}
@@ -425,6 +431,9 @@ type GetTeamsOptions struct {
 // Update a team's attributes or users. The endpoint can be used to add or remove users from a team. If the account uses an external identity provider without SCIM provisioning, team membership cannot be managed via this endpoint - the “users“ relationship will be ignored. Use SCIM or manage team membership directly in the identity provider.
 func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*client.Response, error) {
 	path := "/teams/{team}"
+	if team == "" {
+		return nil, fmt.Errorf("team must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
 	params := url.Values{}

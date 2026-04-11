@@ -4,6 +4,7 @@ package schemas
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
@@ -49,7 +50,7 @@ func (r Apply) GetResourceType() string {
 // ApplyAttributes holds the attributes for Apply (response)
 type ApplyAttributes struct {
 	// Apply execution details.
-	ExecutionDetails map[string]interface{} `json:"execution-details"`
+	ExecutionDetails map[string]string `json:"execution-details"`
 	// The number of resources added.
 	ResourceAdditions *int `json:"resource-additions"`
 	// The number of resources updated.
@@ -59,7 +60,7 @@ type ApplyAttributes struct {
 	// The Apply's current status. Transient states: * `pending` - Apply has been created but not yet `queued`. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Apply canceled in some way. * `errored` - An error occurred during the apply. See `output` for details. * `finished` - Apply completed successfully. * `unreachable` - Apply will not be run.
 	Status ApplyStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+	StatusTimestamps map[string]time.Time `json:"status-timestamps"`
 }
 
 // ApplyLinks holds the resource links for Apply (response only).
@@ -99,7 +100,7 @@ func (r ApplyRequest) GetResourceType() string {
 // ApplyAttributesRequest holds the attributes for Apply (request)
 type ApplyAttributesRequest struct {
 	// Apply execution details.
-	ExecutionDetails *value.Value[map[string]interface{}] `json:"execution-details,omitempty"`
+	ExecutionDetails *value.Value[map[string]string] `json:"execution-details,omitempty"`
 	// The number of resources added.
 	ResourceAdditions *value.Value[int] `json:"resource-additions,omitempty"`
 	// The number of resources updated.
@@ -109,5 +110,5 @@ type ApplyAttributesRequest struct {
 	// The Apply's current status. Transient states: * `pending` - Apply has been created but not yet `queued`. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Apply canceled in some way. * `errored` - An error occurred during the apply. See `output` for details. * `finished` - Apply completed successfully. * `unreachable` - Apply will not be run.
 	Status *value.Value[ApplyStatus] `json:"status,omitempty"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps *value.Value[map[string]interface{}] `json:"status-timestamps,omitempty"`
+	StatusTimestamps *value.Value[map[string]time.Time] `json:"status-timestamps,omitempty"`
 }

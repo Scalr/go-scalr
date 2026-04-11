@@ -85,6 +85,9 @@ type CreateDriftDetectionScheduleOptions struct {
 
 func (c *Client) DeleteDriftDetectionScheduleRaw(ctx context.Context, driftDetectionSchedule string) (*client.Response, error) {
 	path := "/drift-detection-schedules/{drift_detection_schedule}"
+	if driftDetectionSchedule == "" {
+		return nil, fmt.Errorf("driftDetectionSchedule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{drift_detection_schedule}", url.PathEscape(driftDetectionSchedule))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -106,6 +109,9 @@ func (c *Client) DeleteDriftDetectionSchedule(ctx context.Context, driftDetectio
 
 func (c *Client) GetDriftDetectionScheduleRaw(ctx context.Context, driftDetectionSchedule string) (*client.Response, error) {
 	path := "/drift-detection-schedules/{drift_detection_schedule}"
+	if driftDetectionSchedule == "" {
+		return nil, fmt.Errorf("driftDetectionSchedule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{drift_detection_schedule}", url.PathEscape(driftDetectionSchedule))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -139,6 +145,9 @@ func (c *Client) GetDriftDetectionSchedule(ctx context.Context, driftDetectionSc
 
 func (c *Client) UpdateDriftDetectionScheduleRaw(ctx context.Context, driftDetectionSchedule string, req *schemas.DriftDetectionScheduleRequest) (*client.Response, error) {
 	path := "/drift-detection-schedules/{drift_detection_schedule}"
+	if driftDetectionSchedule == "" {
+		return nil, fmt.Errorf("driftDetectionSchedule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{drift_detection_schedule}", url.PathEscape(driftDetectionSchedule))
 
 	// Wrap request in JSON:API envelope

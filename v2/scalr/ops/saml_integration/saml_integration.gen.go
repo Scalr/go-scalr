@@ -69,6 +69,9 @@ func (c *Client) CreateSamlIntegration(ctx context.Context, req *schemas.SamlInt
 // Delete SAML Integration.
 func (c *Client) DeleteSamlIntegrationRaw(ctx context.Context, samlIntegration string) (*client.Response, error) {
 	path := "/integrations/saml/{saml_integration}"
+	if samlIntegration == "" {
+		return nil, fmt.Errorf("samlIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -92,6 +95,9 @@ func (c *Client) DeleteSamlIntegration(ctx context.Context, samlIntegration stri
 // Show details of a specific SAML Integration.
 func (c *Client) GetSamlIntegrationRaw(ctx context.Context, samlIntegration string) (*client.Response, error) {
 	path := "/integrations/saml/{saml_integration}"
+	if samlIntegration == "" {
+		return nil, fmt.Errorf("samlIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -354,6 +360,9 @@ type ListSamlIntegrationsOptions struct {
 // Update SAML Integration.
 func (c *Client) UpdateSamlIntegrationRaw(ctx context.Context, samlIntegration string, req *schemas.SamlIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/saml/{saml_integration}"
+	if samlIntegration == "" {
+		return nil, fmt.Errorf("samlIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
 
 	// Wrap request in JSON:API envelope

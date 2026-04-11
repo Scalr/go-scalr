@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Show details of a specific Terraform Apply stage.
 func (c *Client) GetApplyRaw(ctx context.Context, apply string) (*client.Response, error) {
 	path := "/applies/{apply}"
+	if apply == "" {
+		return nil, fmt.Errorf("apply must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{apply}", url.PathEscape(apply))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -58,6 +61,9 @@ func (c *Client) GetApply(ctx context.Context, apply string) (*schemas.Apply, er
 // Download the raw output of the terraform apply stage.
 func (c *Client) GetApplyLogRaw(ctx context.Context, apply string, opts *GetApplyLogOptions) (*client.Response, error) {
 	path := "/applies/{apply}/output"
+	if apply == "" {
+		return nil, fmt.Errorf("apply must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{apply}", url.PathEscape(apply))
 
 	params := url.Values{}

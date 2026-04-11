@@ -103,6 +103,9 @@ type CreateAgentPoolOptions struct {
 // This endpoint deletes an [agent pool](/docs/agent-pools) by ID.
 func (c *Client) DeleteAgentPoolRaw(ctx context.Context, agentPool string) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -126,6 +129,9 @@ func (c *Client) DeleteAgentPool(ctx context.Context, agentPool string) error {
 // Show details of a specific [agent pool](/docs/agent-pools).
 func (c *Client) GetAgentPoolRaw(ctx context.Context, agentPool string, opts *GetAgentPoolOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	params := url.Values{}
@@ -422,6 +428,9 @@ type GetAgentPoolsOptions struct {
 // This endpoint updates an [agent pool](/docs/agent-pools) by ID.
 func (c *Client) UpdateAgentPoolRaw(ctx context.Context, agentPool string, req *schemas.AgentPoolRequest, opts *UpdateAgentPoolOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	params := url.Values{}

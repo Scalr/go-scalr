@@ -61,6 +61,9 @@ func (c *Client) CreateRunTrigger(ctx context.Context, req *schemas.RunTriggerRe
 
 func (c *Client) DeleteRunTriggerRaw(ctx context.Context, runTrigger string) (*client.Response, error) {
 	path := "/run-triggers/{run_trigger}"
+	if runTrigger == "" {
+		return nil, fmt.Errorf("runTrigger must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_trigger}", url.PathEscape(runTrigger))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -83,6 +86,9 @@ func (c *Client) DeleteRunTrigger(ctx context.Context, runTrigger string) error 
 // Show details of a specific trigger.
 func (c *Client) GetRunTriggerRaw(ctx context.Context, runTrigger string, opts *GetRunTriggerOptions) (*client.Response, error) {
 	path := "/run-triggers/{run_trigger}"
+	if runTrigger == "" {
+		return nil, fmt.Errorf("runTrigger must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_trigger}", url.PathEscape(runTrigger))
 
 	params := url.Values{}

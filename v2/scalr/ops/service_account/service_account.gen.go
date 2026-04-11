@@ -40,6 +40,9 @@ const (
 // Create an assume service account policy.
 func (c *Client) CreateAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, req *schemas.AssumeServiceAccountPolicyRequest, opts *CreateAssumeServiceAccountPolicyOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
 	params := url.Values{}
@@ -171,7 +174,13 @@ type CreateServiceAccountOptions struct {
 // The endpoint deletes an assume service account policy by ID.
 func (c *Client) DeleteAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies/{assume_service_account_policy}"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
+	if assumeServiceAccountPolicy == "" {
+		return nil, fmt.Errorf("assumeServiceAccountPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{assume_service_account_policy}", url.PathEscape(assumeServiceAccountPolicy))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -195,6 +204,9 @@ func (c *Client) DeleteAssumeServiceAccountPolicy(ctx context.Context, serviceAc
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
 func (c *Client) DeleteServiceAccountRaw(ctx context.Context, serviceAccount string) (*client.Response, error) {
 	path := "/service-accounts/{service_account}"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -218,7 +230,13 @@ func (c *Client) DeleteServiceAccount(ctx context.Context, serviceAccount string
 // Get an assume service account policy.
 func (c *Client) GetAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, opts *GetAssumeServiceAccountPolicyOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies/{assume_service_account_policy}"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
+	if assumeServiceAccountPolicy == "" {
+		return nil, fmt.Errorf("assumeServiceAccountPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{assume_service_account_policy}", url.PathEscape(assumeServiceAccountPolicy))
 
 	params := url.Values{}
@@ -283,6 +301,9 @@ type GetAssumeServiceAccountPolicyOptions struct {
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
 func (c *Client) GetServiceAccountRaw(ctx context.Context, serviceAccount string, opts *GetServiceAccountOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
 	params := url.Values{}
@@ -823,7 +844,13 @@ type ListAssumeServiceAccountPoliciesOptions struct {
 // Update an assume service account policy.
 func (c *Client) UpdateAssumeServiceAccountPolicyRaw(ctx context.Context, serviceAccount string, assumeServiceAccountPolicy string, req *schemas.AssumeServiceAccountPolicyRequest, opts *UpdateAssumeServiceAccountPolicyOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/assume-policies/{assume_service_account_policy}"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
+	if assumeServiceAccountPolicy == "" {
+		return nil, fmt.Errorf("assumeServiceAccountPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{assume_service_account_policy}", url.PathEscape(assumeServiceAccountPolicy))
 
 	params := url.Values{}
@@ -890,6 +917,9 @@ type UpdateAssumeServiceAccountPolicyOptions struct {
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) service account by ID.
 func (c *Client) UpdateServiceAccountRaw(ctx context.Context, serviceAccount string, req *schemas.ServiceAccountRequest, opts *UpdateServiceAccountOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
 	params := url.Values{}

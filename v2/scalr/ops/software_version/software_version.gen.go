@@ -37,6 +37,9 @@ const (
 // Show details of a specific software version.
 func (c *Client) GetSoftwareVersionRaw(ctx context.Context, softwareVersion string) (*client.Response, error) {
 	path := "/software-versions/{software_version}"
+	if softwareVersion == "" {
+		return nil, fmt.Errorf("softwareVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{software_version}", url.PathEscape(softwareVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

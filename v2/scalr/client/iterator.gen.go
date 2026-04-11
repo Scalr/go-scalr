@@ -154,6 +154,9 @@ func (it *Iterator[T]) Remaining() int {
 
 	yielded := (it.currentPage-1)*it.pageSize + it.index
 	remaining := it.totalCount - yielded
+	if remaining < 0 {
+		remaining = 0
+	}
 
 	return remaining
 }

@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Download JSON formatted execution plan.
 func (c *Client) GetJsonOutputRaw(ctx context.Context, plan string, opts *GetJsonOutputOptions) (*client.Response, error) {
 	path := "/plans/{plan}/json-output"
+	if plan == "" {
+		return nil, fmt.Errorf("plan must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{plan}", url.PathEscape(plan))
 
 	params := url.Values{}
@@ -84,6 +87,9 @@ type GetJsonOutputOptions struct {
 // Show details of a specific Terraform Plan stage.
 func (c *Client) GetPlanRaw(ctx context.Context, plan string) (*client.Response, error) {
 	path := "/plans/{plan}"
+	if plan == "" {
+		return nil, fmt.Errorf("plan must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{plan}", url.PathEscape(plan))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -115,6 +121,9 @@ func (c *Client) GetPlan(ctx context.Context, plan string) (*schemas.Plan, error
 // Download the raw output of the terraform plan stage.
 func (c *Client) GetPlanLogRaw(ctx context.Context, plan string, opts *GetPlanLogOptions) (*client.Response, error) {
 	path := "/plans/{plan}/output"
+	if plan == "" {
+		return nil, fmt.Errorf("plan must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{plan}", url.PathEscape(plan))
 
 	params := url.Values{}
@@ -176,6 +185,9 @@ type GetPlanLogOptions struct {
 // Download plan file in machine-readable format with sanitized sensitive values.
 func (c *Client) GetSanitizedJsonOutputRaw(ctx context.Context, plan string, opts *GetSanitizedJsonOutputOptions) (*client.Response, error) {
 	path := "/plans/{plan}/sanitized-json-output"
+	if plan == "" {
+		return nil, fmt.Errorf("plan must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{plan}", url.PathEscape(plan))
 
 	params := url.Values{}

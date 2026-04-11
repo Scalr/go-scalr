@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Attach a Provider configuration to the workspace.
 func (c *Client) CreateProviderConfigurationLinkRaw(ctx context.Context, workspace string, req *schemas.ProviderConfigurationLinkRequest) (*client.Response, error) {
 	path := "/workspaces/{workspace}/provider-configuration-links"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Wrap request in JSON:API envelope
@@ -64,6 +67,9 @@ func (c *Client) CreateProviderConfigurationLink(ctx context.Context, workspace 
 // The endpoint deletes a Provider configuration workspace link by ID.
 func (c *Client) DeleteProviderConfigurationWorkspaceLinkRaw(ctx context.Context, providerConfigurationLink string) (*client.Response, error) {
 	path := "/provider-configuration-links/{provider_configuration_link}"
+	if providerConfigurationLink == "" {
+		return nil, fmt.Errorf("providerConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_link}", url.PathEscape(providerConfigurationLink))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -87,6 +93,9 @@ func (c *Client) DeleteProviderConfigurationWorkspaceLink(ctx context.Context, p
 // Show details of a specific Provider configuration link.
 func (c *Client) GetProviderConfigurationLinkRaw(ctx context.Context, providerConfigurationLink string) (*client.Response, error) {
 	path := "/provider-configuration-links/{provider_configuration_link}"
+	if providerConfigurationLink == "" {
+		return nil, fmt.Errorf("providerConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_link}", url.PathEscape(providerConfigurationLink))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -122,6 +131,9 @@ func (c *Client) GetProviderConfigurationLink(ctx context.Context, providerConfi
 // This endpoint returns a list of Provider configuration links or configurations that are used during the workspace runs.
 func (c *Client) ListProviderConfigurationLinksRaw(ctx context.Context, workspace string, opts *ListProviderConfigurationLinksOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}/provider-configuration-links"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	params := url.Values{}
@@ -355,6 +367,9 @@ type ListProviderConfigurationLinksOptions struct {
 // This endpoint allows updates to attributes of an existing Provider configuration link.
 func (c *Client) UpdateProviderConfigurationLinkRaw(ctx context.Context, providerConfigurationLink string, req *schemas.ProviderConfigurationLinkRequest) (*client.Response, error) {
 	path := "/provider-configuration-links/{provider_configuration_link}"
+	if providerConfigurationLink == "" {
+		return nil, fmt.Errorf("providerConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_link}", url.PathEscape(providerConfigurationLink))
 
 	// Wrap request in JSON:API envelope

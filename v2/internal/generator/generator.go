@@ -55,8 +55,8 @@ func (g *Generator) Generate(specPath string) error {
 	}
 
 	log.Printf("Preparing output directory: %s", g.outputDir)
-	if err := os.RemoveAll(g.outputDir); err != nil {
-		return fmt.Errorf("failed to clean output directory: %w", err)
+	if err := g.cleanGeneratedFiles(g.outputDir); err != nil {
+		return fmt.Errorf("failed to clean generated files: %w", err)
 	}
 
 	if err := os.MkdirAll(g.outputDir, 0755); err != nil {
@@ -120,6 +120,23 @@ func (g *Generator) formatCode(dir string) error {
 		}
 
 		return os.WriteFile(path, formatted, info.Mode())
+	})
+}
+
+// cleanGeneratedFiles removes all *.gen.go files under dir without touching
+// anything else. Safe to call even if dir does not exist yet.
+func (g *Generator) cleanGeneratedFiles(dir string) error {
+	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, ".gen.go") {
+			return os.Remove(path)
+		}
+		return nil
 	})
 }
 

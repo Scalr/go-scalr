@@ -62,7 +62,7 @@ type ConfigurationVersionAttributes struct {
 	// The Configuration version's current status. * `pending` - waiting for the configuration files to upload. * `uploaded` - upload successful. At this point if the `auto-queue-runs: true` the new run should be `queued`. * `errored` - uploaded files post processing failed. Attribute `error-message` contains the details.
 	Status ConfigurationVersionStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+	StatusTimestamps map[string]time.Time `json:"status-timestamps"`
 }
 
 // ConfigurationVersionRelationships holds the relationships for ConfigurationVersion (response)

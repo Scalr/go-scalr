@@ -79,6 +79,9 @@ func (c *Client) CreateModule(ctx context.Context, req *schemas.ModuleRequest) (
 // This endpoint removes the module from the registry.
 func (c *Client) DeleteModuleRaw(ctx context.Context, module string) (*client.Response, error) {
 	path := "/modules/{module}"
+	if module == "" {
+		return nil, fmt.Errorf("module must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -102,6 +105,9 @@ func (c *Client) DeleteModule(ctx context.Context, module string) error {
 // Show details of a specific terraform module.
 func (c *Client) GetModuleRaw(ctx context.Context, module string, opts *GetModuleOptions) (*client.Response, error) {
 	path := "/modules/{module}"
+	if module == "" {
+		return nil, fmt.Errorf("module must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	params := url.Values{}
@@ -166,6 +172,9 @@ type GetModuleOptions struct {
 // Returns the changelog content for the module.
 func (c *Client) GetModuleChangelogRaw(ctx context.Context, module string) (*client.Response, error) {
 	path := "/modules/{module}/changelog"
+	if module == "" {
+		return nil, fmt.Errorf("module must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -431,6 +440,9 @@ type ListModulesOptions struct {
 // Trigger resync of the Module associated with the VCS repository.
 func (c *Client) ResyncModuleRaw(ctx context.Context, module string, req *schemas.ModuleResyncRequest) (*client.Response, error) {
 	path := "/modules/{module}/actions/resync"
+	if module == "" {
+		return nil, fmt.Errorf("module must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	// Plain JSON request (not JSON:API)

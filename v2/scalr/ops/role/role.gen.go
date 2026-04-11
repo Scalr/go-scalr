@@ -99,6 +99,9 @@ type CreateRoleOptions struct {
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
 func (c *Client) DeleteRoleRaw(ctx context.Context, role string) (*client.Response, error) {
 	path := "/roles/{role}"
+	if role == "" {
+		return nil, fmt.Errorf("role must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -122,6 +125,9 @@ func (c *Client) DeleteRole(ctx context.Context, role string) error {
 // The endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
 func (c *Client) GetRoleRaw(ctx context.Context, role string, opts *GetRoleOptions) (*client.Response, error) {
 	path := "/roles/{role}"
+	if role == "" {
+		return nil, fmt.Errorf("role must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
 	params := url.Values{}
@@ -424,6 +430,9 @@ type GetRolesOptions struct {
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
 func (c *Client) UpdateRoleRaw(ctx context.Context, role string, req *schemas.RoleRequest, opts *UpdateRoleOptions) (*client.Response, error) {
 	path := "/roles/{role}"
+	if role == "" {
+		return nil, fmt.Errorf("role must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
 	params := url.Values{}

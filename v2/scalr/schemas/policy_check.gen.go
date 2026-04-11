@@ -4,6 +4,7 @@ package schemas
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
@@ -56,7 +57,7 @@ type PolicyCheckAttributes struct {
 	// The Policy checks's current status. Transient states: * `pending` - The initial status of a policy check once it has been created. * `queued` - The policy check has been queued, awaiting backend service capacity to run terraform. * `running` - The policy check is running. * `soft_failed` Policy check has finished, and run hasn't passed policy with the `soft` level. User having `policy-checks:override` permission can override the policy check decision, and push this run next to apply. Final states: * `canceled` - The policy check has been canceled. * `errored` - The policy check has finished with an error. Attribute `error-message` contains the details. * `hard_failed` - Run hasn't passed policy with the `hard` level. * `overridden` - The policy check `soft_failed` status has been overridden. * `passed` - Run has successfully passed all configured policies. * `unreachable` - The policy check will not run.
 	Status PolicyCheckStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+	StatusTimestamps map[string]time.Time `json:"status-timestamps"`
 }
 
 // PolicyCheckLinks holds the resource links for PolicyCheck (response only).
@@ -100,7 +101,7 @@ type PolicyCheckAttributesRequest struct {
 	// The Policy checks's current status. Transient states: * `pending` - The initial status of a policy check once it has been created. * `queued` - The policy check has been queued, awaiting backend service capacity to run terraform. * `running` - The policy check is running. * `soft_failed` Policy check has finished, and run hasn't passed policy with the `soft` level. User having `policy-checks:override` permission can override the policy check decision, and push this run next to apply. Final states: * `canceled` - The policy check has been canceled. * `errored` - The policy check has finished with an error. Attribute `error-message` contains the details. * `hard_failed` - Run hasn't passed policy with the `hard` level. * `overridden` - The policy check `soft_failed` status has been overridden. * `passed` - Run has successfully passed all configured policies. * `unreachable` - The policy check will not run.
 	Status *value.Value[PolicyCheckStatus] `json:"status,omitempty"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps *value.Value[map[string]interface{}] `json:"status-timestamps,omitempty"`
+	StatusTimestamps *value.Value[map[string]time.Time] `json:"status-timestamps,omitempty"`
 }
 
 // OPA policy decision.

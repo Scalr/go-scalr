@@ -69,6 +69,9 @@ func (c *Client) CreateHookEnvironmentLink(ctx context.Context, req *schemas.Hoo
 // Delete a hook-environment link.
 func (c *Client) DeleteHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
+	if hookEnvironmentLink == "" {
+		return nil, fmt.Errorf("hookEnvironmentLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -92,6 +95,9 @@ func (c *Client) DeleteHookEnvironmentLink(ctx context.Context, hookEnvironmentL
 // Get a hook-environment link.
 func (c *Client) GetHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string, opts *GetHookEnvironmentLinkOptions) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
+	if hookEnvironmentLink == "" {
+		return nil, fmt.Errorf("hookEnvironmentLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
 	params := url.Values{}
@@ -394,6 +400,9 @@ type ListHookEnvironmentLinksOptions struct {
 // Update a hook-environment link.
 func (c *Client) UpdateHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string, req *schemas.HookEnvironmentLinkRequest) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
+	if hookEnvironmentLink == "" {
+		return nil, fmt.Errorf("hookEnvironmentLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
 	// Wrap request in JSON:API envelope

@@ -34,6 +34,9 @@ const (
 // Show details of a specific terraform module version.
 func (c *Client) GetModuleVersionRaw(ctx context.Context, moduleVersion string, opts *GetModuleVersionOptions) (*client.Response, error) {
 	path := "/module-versions/{module_version}"
+	if moduleVersion == "" {
+		return nil, fmt.Errorf("moduleVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_version}", url.PathEscape(moduleVersion))
 
 	params := url.Values{}
@@ -330,6 +333,9 @@ type ListModuleVersionsOptions struct {
 // Trigger resync of the Module Version associated with the `relationships.vcs-revision`. Only modules associated with a VCS can be resynchronized.
 func (c *Client) ResyncModuleVersionRaw(ctx context.Context, moduleVersion string) (*client.Response, error) {
 	path := "/module-versions/{module_version}/actions/resync"
+	if moduleVersion == "" {
+		return nil, fmt.Errorf("moduleVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_version}", url.PathEscape(moduleVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

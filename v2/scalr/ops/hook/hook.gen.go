@@ -71,6 +71,9 @@ func (c *Client) CreateHook(ctx context.Context, req *schemas.HookRequest) (*sch
 // Deletes a specific hook by its ID.
 func (c *Client) DeleteHookRaw(ctx context.Context, hook string) (*client.Response, error) {
 	path := "/hooks/{hook}"
+	if hook == "" {
+		return nil, fmt.Errorf("hook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -94,6 +97,9 @@ func (c *Client) DeleteHook(ctx context.Context, hook string) error {
 // Retrieves details of a specific hook by its ID.
 func (c *Client) GetHookRaw(ctx context.Context, hook string, opts *GetHookOptions) (*client.Response, error) {
 	path := "/hooks/{hook}"
+	if hook == "" {
+		return nil, fmt.Errorf("hook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	params := url.Values{}
@@ -396,6 +402,9 @@ type ListHooksOptions struct {
 // Triggers a resync of the Hook.
 func (c *Client) ResyncHookRaw(ctx context.Context, hook string) (*client.Response, error) {
 	path := "/hooks/{hook}/actions/resync"
+	if hook == "" {
+		return nil, fmt.Errorf("hook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -419,6 +428,9 @@ func (c *Client) ResyncHook(ctx context.Context, hook string) error {
 // Updates a specific hook by its ID.
 func (c *Client) UpdateHookRaw(ctx context.Context, hook string, req *schemas.HookRequest) (*client.Response, error) {
 	path := "/hooks/{hook}"
+	if hook == "" {
+		return nil, fmt.Errorf("hook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	// Wrap request in JSON:API envelope

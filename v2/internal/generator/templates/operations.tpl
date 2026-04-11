@@ -42,6 +42,9 @@ const (
 func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{.GoName}} {{.Type}}{{end}}{{if .HasBody}}, req {{.RequestType}}{{end}}{{if .QueryParams}}, opts *{{ .Name }}Options{{end}}) (*client.Response, error) {
 	path := "{{ .Path }}"
 	{{range .PathParameters -}}
+	if {{.GoName}} == "" {
+		return nil, fmt.Errorf("{{.GoName}} must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{{`{`}}{{.Name}}{{`}`}}", url.PathEscape({{.GoName}}))
 	{{end}}
 	

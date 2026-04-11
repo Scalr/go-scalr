@@ -68,6 +68,9 @@ func (c *Client) CreateRunScheduleRule(ctx context.Context, req *schemas.RunSche
 
 func (c *Client) DeleteRunScheduleRuleRaw(ctx context.Context, runScheduleRule string) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
+	if runScheduleRule == "" {
+		return nil, fmt.Errorf("runScheduleRule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -90,6 +93,9 @@ func (c *Client) DeleteRunScheduleRule(ctx context.Context, runScheduleRule stri
 // Show details of a specific run schedule rule.
 func (c *Client) GetRunScheduleRuleRaw(ctx context.Context, runScheduleRule string, opts *GetRunScheduleRuleOptions) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
+	if runScheduleRule == "" {
+		return nil, fmt.Errorf("runScheduleRule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
 	params := url.Values{}
@@ -381,6 +387,9 @@ type ListScheduleRulesOptions struct {
 // Updates a specific run schedule rule based on the provided rule ID, schedule mode, and schedule. It validates the cron expression and raises an error if it's invalid.
 func (c *Client) UpdateRunScheduleRuleRaw(ctx context.Context, runScheduleRule string, req *schemas.RunScheduleRuleRequest) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
+	if runScheduleRule == "" {
+		return nil, fmt.Errorf("runScheduleRule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
 	// Wrap request in JSON:API envelope

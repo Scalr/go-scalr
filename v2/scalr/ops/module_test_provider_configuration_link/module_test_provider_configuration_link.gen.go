@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Attach a Provider Configuration to the Module Test Configuration.
 func (c *Client) CreateModuleTestProviderConfigurationLinkRaw(ctx context.Context, testConfiguration string, req *schemas.ModuleTestProviderConfigurationLinkRequest) (*client.Response, error) {
 	path := "/test-configurations/{test_configuration}/provider-configuration-links"
+	if testConfiguration == "" {
+		return nil, fmt.Errorf("testConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{test_configuration}", url.PathEscape(testConfiguration))
 
 	// Wrap request in JSON:API envelope
@@ -64,6 +67,9 @@ func (c *Client) CreateModuleTestProviderConfigurationLink(ctx context.Context, 
 // The endpoint deletes a Module Test Provider Configuration Link by ID.
 func (c *Client) DeleteModuleTestProviderConfigurationLinkRaw(ctx context.Context, moduleTestProviderConfigurationLink string) (*client.Response, error) {
 	path := "/module-test-provider-configuration-links/{module_test_provider_configuration_link}"
+	if moduleTestProviderConfigurationLink == "" {
+		return nil, fmt.Errorf("moduleTestProviderConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_test_provider_configuration_link}", url.PathEscape(moduleTestProviderConfigurationLink))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -87,6 +93,9 @@ func (c *Client) DeleteModuleTestProviderConfigurationLink(ctx context.Context, 
 // Show details of a specific Module Test Provider Configuration Link.
 func (c *Client) GetModuleTestProviderConfigurationLinkRaw(ctx context.Context, moduleTestProviderConfigurationLink string, opts *GetModuleTestProviderConfigurationLinkOptions) (*client.Response, error) {
 	path := "/module-test-provider-configuration-links/{module_test_provider_configuration_link}"
+	if moduleTestProviderConfigurationLink == "" {
+		return nil, fmt.Errorf("moduleTestProviderConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_test_provider_configuration_link}", url.PathEscape(moduleTestProviderConfigurationLink))
 
 	params := url.Values{}
@@ -151,6 +160,9 @@ type GetModuleTestProviderConfigurationLinkOptions struct {
 // This endpoint returns a list of Provider Configuration links to Module Test Configurations.
 func (c *Client) ListModuleTestProviderConfigurationLinksRaw(ctx context.Context, testConfiguration string, opts *ListModuleTestProviderConfigurationLinksOptions) (*client.Response, error) {
 	path := "/test-configurations/{test_configuration}/provider-configuration-links"
+	if testConfiguration == "" {
+		return nil, fmt.Errorf("testConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{test_configuration}", url.PathEscape(testConfiguration))
 
 	params := url.Values{}
@@ -379,6 +391,9 @@ type ListModuleTestProviderConfigurationLinksOptions struct {
 // This endpoint allows updates to attributes of an existing Module Test Provider Configuration Link.
 func (c *Client) UpdateModuleTestProviderConfigurationLinkRaw(ctx context.Context, moduleTestProviderConfigurationLink string, req *schemas.ModuleTestProviderConfigurationLinkRequest) (*client.Response, error) {
 	path := "/module-test-provider-configuration-links/{module_test_provider_configuration_link}"
+	if moduleTestProviderConfigurationLink == "" {
+		return nil, fmt.Errorf("moduleTestProviderConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_test_provider_configuration_link}", url.PathEscape(moduleTestProviderConfigurationLink))
 
 	// Wrap request in JSON:API envelope

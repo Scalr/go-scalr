@@ -67,6 +67,9 @@ func (c *Client) CreateDatadogIntegration(ctx context.Context, req *schemas.Data
 
 func (c *Client) DeleteDatadogIntegrationRaw(ctx context.Context, datadogIntegration string) (*client.Response, error) {
 	path := "/integrations/datadog/{datadog_integration}"
+	if datadogIntegration == "" {
+		return nil, fmt.Errorf("datadogIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -89,6 +92,9 @@ func (c *Client) DeleteDatadogIntegration(ctx context.Context, datadogIntegratio
 // Show details of a specific Datadog Integration.
 func (c *Client) GetDatadogIntegrationRaw(ctx context.Context, datadogIntegration string) (*client.Response, error) {
 	path := "/integrations/datadog/{datadog_integration}"
+	if datadogIntegration == "" {
+		return nil, fmt.Errorf("datadogIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -351,6 +357,9 @@ type ListDatadogIntegrationsOptions struct {
 // This endpoint updates Datadog integrations.
 func (c *Client) UpdateDatadogIntegrationsRaw(ctx context.Context, datadogIntegration string, req *schemas.DatadogIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/datadog/{datadog_integration}"
+	if datadogIntegration == "" {
+		return nil, fmt.Errorf("datadogIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
 
 	// Wrap request in JSON:API envelope

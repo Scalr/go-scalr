@@ -136,7 +136,10 @@ func NewHTTPClient(baseURL, token string, opts ...HTTPClientOption) *HTTPClient 
 		opt(client)
 	}
 
-	client.httpClient.Timeout = client.timeout
+	// Do NOT set httpClient.Timeout — we apply the timeout as a per-request
+	// context deadline inside do() so that all timeout errors are uniformly
+	// context.DeadlineExceeded rather than the opaque url.Error that
+	// http.Client.Timeout produces.
 
 	return client
 }
@@ -199,6 +202,15 @@ func (c *HTTPClient) Delete(ctx context.Context, path string, body interface{}, 
 }
 
 func (c *HTTPClient) do(ctx context.Context, method, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+	// Apply per-request timeout via context so all deadline errors are
+	// context.DeadlineExceeded regardless of whether the limit came from
+	// WithTimeout or an external context.
+	if c.timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.timeout)
+		defer cancel()
+	}
+
 	url := c.baseURL + path
 
 	// Log request start
@@ -208,9 +220,12 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 		"url", sanitizeURL(url),
 	)
 
+	// Marshal the body once; retries reuse the same bytes.
+	var marshaledBody []byte
 	var bodyReader io.Reader
 	if body != nil {
-		bodyBytes, err := json.Marshal(body)
+		var err error
+		marshaledBody, err = json.Marshal(body)
 		if err != nil {
 			c.logger.Error("Failed to marshal request body",
 				"error", err,
@@ -219,18 +234,19 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 			)
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)
 		}
-		bodyReader = bytes.NewReader(bodyBytes)
+		bodyReader = bytes.NewReader(marshaledBody)
 
 		c.logger.Debug("Request body prepared",
 			"method", method,
 			"path", path,
-			"bodySize", len(bodyBytes),
+			"bodySize", len(marshaledBody),
 		)
 	}
 
 	var lastErr error
 	var lastStatusCode int
-	var retryAfter time.Duration // populated from Retry-After header on 429 responses
+	var retryAfter time.Duration     // backoff for next retry
+	var lastRetryAfter time.Duration // most recent Retry-After from server (for final error)
 
 	for attempt := 0; attempt <= c.retryMax; attempt++ {
 		if attempt > 0 {
@@ -276,10 +292,9 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 			// Sleep (can be mocked in tests)
 			c.sleepFunc(backoff)
 
-			// Reset body reader for retry
-			if body != nil {
-				bodyBytes, _ := json.Marshal(body)
-				bodyReader = bytes.NewReader(bodyBytes)
+			// Reset body reader for retry (reuse already-marshaled bytes)
+			if marshaledBody != nil {
+				bodyReader = bytes.NewReader(marshaledBody)
 			}
 		}
 
@@ -351,6 +366,9 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 
 			if resp.StatusCode == 429 {
 				retryAfter = parseRetryAfter(resp.Header.Get("Retry-After"))
+				if retryAfter > 0 {
+					lastRetryAfter = retryAfter
+				}
 				c.logger.Warn("Rate limit encountered",
 					"method", method,
 					"path", path,
@@ -375,7 +393,7 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 		if resp.StatusCode >= 400 {
 			defer func() { _ = resp.Body.Close() }()
 
-			bodyBytes, err := io.ReadAll(resp.Body)
+			bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1 MiB cap
 			if err != nil {
 				c.logger.Error("Failed to read error response body",
 					"error", err,
@@ -478,6 +496,14 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 		"lastError", lastErr,
 		"lastStatus", lastStatusCode,
 	)
+
+	// Return a typed TooManyRequestsError so callers can inspect RetryAfter.
+	if lastStatusCode == 429 {
+		return nil, &TooManyRequestsError{
+			StatusCode: 429,
+			RetryAfter: lastRetryAfter,
+		}
+	}
 
 	if lastErr != nil {
 		return nil, fmt.Errorf("request failed after %d retries: %w", c.retryMax, lastErr)

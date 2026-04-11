@@ -33,6 +33,9 @@ const (
 // This endpoint returns instance of provider usage.
 func (c *Client) GetProviderUsageRaw(ctx context.Context, providerUsage string, opts *GetProviderUsageOptions) (*client.Response, error) {
 	path := "/reports/providers/{provider_usage}"
+	if providerUsage == "" {
+		return nil, fmt.Errorf("providerUsage must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_usage}", url.PathEscape(providerUsage))
 
 	params := url.Values{}

@@ -104,6 +104,9 @@ type CreateVariableOptions struct {
 
 func (c *Client) DeleteVariableRaw(ctx context.Context, var_ string) (*client.Response, error) {
 	path := "/vars/{var}"
+	if var_ == "" {
+		return nil, fmt.Errorf("var_ must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{var}", url.PathEscape(var_))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -126,6 +129,9 @@ func (c *Client) DeleteVariable(ctx context.Context, var_ string) error {
 // Show details of a specific variable. For `sensitive: true` variables, their actual `value` is not exposed, and `null` returned instead.
 func (c *Client) GetVariableRaw(ctx context.Context, var_ string, opts *GetVariableOptions) (*client.Response, error) {
 	path := "/vars/{var}"
+	if var_ == "" {
+		return nil, fmt.Errorf("var_ must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{var}", url.PathEscape(var_))
 
 	params := url.Values{}
@@ -421,6 +427,9 @@ type GetVariablesOptions struct {
 
 func (c *Client) UpdateVariableRaw(ctx context.Context, var_ string, req *schemas.VariableRequest, opts *UpdateVariableOptions) (*client.Response, error) {
 	path := "/vars/{var}"
+	if var_ == "" {
+		return nil, fmt.Errorf("var_ must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{var}", url.PathEscape(var_))
 
 	params := url.Values{}

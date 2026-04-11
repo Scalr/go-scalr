@@ -500,8 +500,40 @@ func TestHTTPClientMaxRetriesExhausted(t *testing.T) {
 		t.Errorf("Expected 3 attempts (1 initial + 2 retries), got %d", attempts)
 	}
 
-	if !strings.Contains(err.Error(), "after 2 retries") {
-		t.Errorf("Error should mention retries, got: %v", err)
+	// After exhausting retries on 429, the caller gets a typed TooManyRequestsError.
+	var tooManyErr *TooManyRequestsError
+	if !errors.As(err, &tooManyErr) {
+		t.Errorf("Expected *TooManyRequestsError after exhausted 429 retries, got %T: %v", err, err)
+	}
+	if !errors.Is(err, ErrTooManyRequests) {
+		t.Error("Error should match ErrTooManyRequests sentinel")
+	}
+}
+
+// TestTooManyRequestsErrorRetryAfter verifies that RetryAfter is populated
+// from the Retry-After header when retries are exhausted.
+func TestTooManyRequestsErrorRetryAfter(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Retry-After", "60")
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+
+	c := NewHTTPClient(server.URL, "token",
+		WithRetryMax(1),
+		withSleepFunc(func(time.Duration) {}),
+	)
+	_, err := c.Get(context.Background(), "/test", nil)
+
+	var tooManyErr *TooManyRequestsError
+	if !errors.As(err, &tooManyErr) {
+		t.Fatalf("Expected *TooManyRequestsError, got %T: %v", err, err)
+	}
+	if tooManyErr.RetryAfter != 60*time.Second {
+		t.Errorf("RetryAfter = %v, want 60s", tooManyErr.RetryAfter)
+	}
+	if !strings.Contains(err.Error(), "retry after") {
+		t.Errorf("Error message should mention retry after, got: %s", err.Error())
 	}
 }
 
@@ -525,6 +557,25 @@ func TestHTTPClientContextCancellation(t *testing.T) {
 
 	if !errors.Is(err, context.Canceled) {
 		t.Errorf("Expected context.Canceled, got: %v", err)
+	}
+}
+
+// TestWithTimeoutProducesContextError verifies that WithTimeout causes a
+// context.DeadlineExceeded error (not an opaque url.Error) on timeout.
+func TestWithTimeoutProducesContextError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(200 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	c := NewHTTPClient(server.URL, "token", WithTimeout(50*time.Millisecond), WithRetryMax(0))
+	_, err := c.Get(context.Background(), "/test", nil)
+	if err == nil {
+		t.Fatal("expected timeout error, got nil")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("expected context.DeadlineExceeded, got %T: %v", err, err)
 	}
 }
 

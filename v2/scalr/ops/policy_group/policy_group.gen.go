@@ -103,6 +103,9 @@ type CreatePolicyGroupOptions struct {
 
 func (c *Client) CreatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -134,6 +137,9 @@ func (c *Client) CreatePolicyGroupEnvironments(ctx context.Context, policyGroup 
 // This endpoint deletes a [policy group](/docs/policy-governance#open-policy-agent) by ID. Only an unused policy group (that is not linked to any environment) can be removed.
 func (c *Client) DeletePolicyGroupRaw(ctx context.Context, policyGroup string) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -156,7 +162,13 @@ func (c *Client) DeletePolicyGroup(ctx context.Context, policyGroup string) erro
 
 func (c *Client) DeletePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, environment string) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments/{environment}"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -179,6 +191,9 @@ func (c *Client) DeletePolicyGroupEnvironments(ctx context.Context, policyGroup 
 // Show details of a specific [policy group](/docs/policy-governance#open-policy-agent).
 func (c *Client) GetPolicyGroupRaw(ctx context.Context, policyGroup string, opts *GetPolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	params := url.Values{}
@@ -480,6 +495,9 @@ type ListPolicyGroupsOptions struct {
 
 func (c *Client) ListPullRequestPolicyCheckResultsRaw(ctx context.Context, policyGroup string, opts *ListPullRequestPolicyCheckResultsOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/pull-request-policy-check-results"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	params := url.Values{}
@@ -730,6 +748,9 @@ type ListPullRequestPolicyCheckResultsOptions struct {
 // This endpoint resyncs a [policy group](/docs/policy-governance#open-policy-agent).
 func (c *Client) ResyncPolicyGroupRaw(ctx context.Context, policyGroup string) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/actions/resync"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -753,6 +774,9 @@ func (c *Client) ResyncPolicyGroup(ctx context.Context, policyGroup string) erro
 // This endpoint updates a [policy group](/docs/policy-governance#open-policy-agent) by ID.
 func (c *Client) UpdatePolicyGroupRaw(ctx context.Context, policyGroup string, req *schemas.PolicyGroupRequest, opts *UpdatePolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	params := url.Values{}
@@ -818,6 +842,9 @@ type UpdatePolicyGroupOptions struct {
 
 func (c *Client) UpdatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	// This is a relationship operation - convert resources to relationship identifiers

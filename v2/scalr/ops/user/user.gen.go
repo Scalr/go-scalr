@@ -103,6 +103,9 @@ type CreateUserOptions struct {
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
 func (c *Client) DeleteUserRaw(ctx context.Context, user string) (*client.Response, error) {
 	path := "/users/{user}"
+	if user == "" {
+		return nil, fmt.Errorf("user must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -364,6 +367,9 @@ type GetAccountUsersOptions struct {
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
 func (c *Client) GetUserRaw(ctx context.Context, user string, opts *GetUserOptions) (*client.Response, error) {
 	path := "/users/{user}"
+	if user == "" {
+		return nil, fmt.Errorf("user must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
 	params := url.Values{}
@@ -672,6 +678,9 @@ type GetUsersOptions struct {
 // Invite the user to the account by adding it to the account teams and/or creating access policies within the account. If the user with a specified email does not exist - a new one will be created. The new user will be in the 'pending' status until the first login to the account. This is the preferred way to create users.
 func (c *Client) InviteUserToAccountRaw(ctx context.Context, account string, req *schemas.UserInviteRequest, opts *InviteUserToAccountOptions) (*client.Response, error) {
 	path := "/accounts/{account}/actions/invite"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	params := url.Values{}
@@ -738,7 +747,13 @@ type InviteUserToAccountOptions struct {
 // Removes a user from the account. This revokes all access policies and team memberships associated with the account for that user.
 func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, user string) (*client.Response, error) {
 	path := "/accounts/{account}/actions/remove/{user}"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
+	if user == "" {
+		return nil, fmt.Errorf("user must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -762,6 +777,9 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, account string, user
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
 func (c *Client) UpdateUserRaw(ctx context.Context, user string, req *schemas.UserRequest, opts *UpdateUserOptions) (*client.Response, error) {
 	path := "/users/{user}"
+	if user == "" {
+		return nil, fmt.Errorf("user must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
 	params := url.Values{}

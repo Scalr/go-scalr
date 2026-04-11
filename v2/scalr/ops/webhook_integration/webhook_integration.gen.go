@@ -95,6 +95,9 @@ type CreateWebhookIntegrationOptions struct {
 // The endpoint deletes webhook by ID.
 func (c *Client) DeleteWebhookIntegrationRaw(ctx context.Context, webhook string) (*client.Response, error) {
 	path := "/integrations/webhooks/{webhook}"
+	if webhook == "" {
+		return nil, fmt.Errorf("webhook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{webhook}", url.PathEscape(webhook))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -118,6 +121,9 @@ func (c *Client) DeleteWebhookIntegration(ctx context.Context, webhook string) e
 // Show details of a specific webhook.
 func (c *Client) GetWebhookIntegrationRaw(ctx context.Context, webhook string, opts *GetWebhookIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/webhooks/{webhook}"
+	if webhook == "" {
+		return nil, fmt.Errorf("webhook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{webhook}", url.PathEscape(webhook))
 
 	params := url.Values{}
@@ -410,6 +416,9 @@ type ListWebhookIntegrationsOptions struct {
 // This endpoint updates webhook by ID.
 func (c *Client) UpdateWebhookIntegrationRaw(ctx context.Context, webhook string, req *schemas.WebhookIntegrationRequest, opts *UpdateWebhookIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/webhooks/{webhook}"
+	if webhook == "" {
+		return nil, fmt.Errorf("webhook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{webhook}", url.PathEscape(webhook))
 
 	params := url.Values{}

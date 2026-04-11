@@ -97,6 +97,9 @@ type CreateInfracostIntegrationOptions struct {
 
 func (c *Client) DeleteInfracostIntegrationRaw(ctx context.Context, infracostIntegration string) (*client.Response, error) {
 	path := "/integrations/infracost/{infracost_integration}"
+	if infracostIntegration == "" {
+		return nil, fmt.Errorf("infracostIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{infracost_integration}", url.PathEscape(infracostIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -119,6 +122,9 @@ func (c *Client) DeleteInfracostIntegration(ctx context.Context, infracostIntegr
 // Show details of a specific Infracost Integration.
 func (c *Client) GetInfracostIntegrationRaw(ctx context.Context, infracostIntegration string, opts *GetInfracostIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/infracost/{infracost_integration}"
+	if infracostIntegration == "" {
+		return nil, fmt.Errorf("infracostIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{infracost_integration}", url.PathEscape(infracostIntegration))
 
 	params := url.Values{}
@@ -415,6 +421,9 @@ type ListInfracostIntegrationsOptions struct {
 // This endpoint updates Infracost integration.
 func (c *Client) UpdateInfracostIntegrationRaw(ctx context.Context, infracostIntegration string, req *schemas.InfracostIntegrationRequest, opts *UpdateInfracostIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/infracost/{infracost_integration}"
+	if infracostIntegration == "" {
+		return nil, fmt.Errorf("infracostIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{infracost_integration}", url.PathEscape(infracostIntegration))
 
 	params := url.Values{}

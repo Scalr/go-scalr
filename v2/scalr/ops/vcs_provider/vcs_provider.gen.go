@@ -73,6 +73,9 @@ func (c *Client) CreateVcsProvider(ctx context.Context, req *schemas.VcsProvider
 // The endpoint deletes a VCS provider by ID.
 func (c *Client) DeleteVcsProviderRaw(ctx context.Context, vcsProvider string) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
+	if vcsProvider == "" {
+		return nil, fmt.Errorf("vcsProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -96,6 +99,9 @@ func (c *Client) DeleteVcsProvider(ctx context.Context, vcsProvider string) erro
 // Show details of a specific VCS provider.
 func (c *Client) GetVcsProviderRaw(ctx context.Context, vcsProvider string, opts *GetVcsProviderOptions) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
+	if vcsProvider == "" {
+		return nil, fmt.Errorf("vcsProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
 	params := url.Values{}
@@ -398,6 +404,9 @@ type ListVcsProvidersOptions struct {
 // This endpoint allows updates to attributes of an existing VCS provider.
 func (c *Client) UpdateVcsProviderRaw(ctx context.Context, vcsProvider string, req *schemas.VcsProviderRequest) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
+	if vcsProvider == "" {
+		return nil, fmt.Errorf("vcsProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
 	// Wrap request in JSON:API envelope

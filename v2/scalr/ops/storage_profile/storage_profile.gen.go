@@ -66,6 +66,9 @@ func (c *Client) CreateStorageProfile(ctx context.Context, req *schemas.StorageP
 // Delete a storage profile. The operation is only allowed if the storage profile is not being used by any blobs and is not set as default.
 func (c *Client) DeleteStorageProfileRaw(ctx context.Context, storageProfile string) (*client.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
+	if storageProfile == "" {
+		return nil, fmt.Errorf("storageProfile must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -89,6 +92,9 @@ func (c *Client) DeleteStorageProfile(ctx context.Context, storageProfile string
 // Get storage profile by id.
 func (c *Client) GetStorageProfileRaw(ctx context.Context, storageProfile string) (*client.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
+	if storageProfile == "" {
+		return nil, fmt.Errorf("storageProfile must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -341,6 +347,9 @@ type ListStorageProfilesOptions struct {
 // Update an existing storage profile. The operation is only allowed if the storage profile is not being used by any blobs.
 func (c *Client) UpdateStorageProfileRaw(ctx context.Context, storageProfile string, req *schemas.StorageProfileRequest) (*client.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
+	if storageProfile == "" {
+		return nil, fmt.Errorf("storageProfile must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
 
 	// Wrap request in JSON:API envelope

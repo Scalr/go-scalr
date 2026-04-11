@@ -70,6 +70,9 @@ func (c *Client) CreateStateVersion(ctx context.Context, req *schemas.StateVersi
 // Fetch the current state version for the given workspace. This state version will be the input state when running terraform operations.
 func (c *Client) GetCurrentStateVersionRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/current-state-version"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -105,6 +108,9 @@ func (c *Client) GetCurrentStateVersion(ctx context.Context, workspace string) (
 // Show details of a specific state version.
 func (c *Client) GetStateVersionRaw(ctx context.Context, stateVersion string) (*client.Response, error) {
 	path := "/state-versions/{state_version}"
+	if stateVersion == "" {
+		return nil, fmt.Errorf("stateVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{state_version}", url.PathEscape(stateVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -140,6 +146,9 @@ func (c *Client) GetStateVersion(ctx context.Context, stateVersion string) (*sch
 // Download the `terraform.tfstate`
 func (c *Client) GetStateVersionDownloadRaw(ctx context.Context, stateVersion string) (*client.Response, error) {
 	path := "/state-versions/{state_version}/download"
+	if stateVersion == "" {
+		return nil, fmt.Errorf("stateVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{state_version}", url.PathEscape(stateVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

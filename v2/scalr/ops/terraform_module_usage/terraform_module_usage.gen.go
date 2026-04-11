@@ -36,6 +36,9 @@ const (
 // This endpoint returns instance of module usage.
 func (c *Client) GetModuleUsageRaw(ctx context.Context, moduleUsage string, opts *GetModuleUsageOptions) (*client.Response, error) {
 	path := "/reports/modules/{module_usage}"
+	if moduleUsage == "" {
+		return nil, fmt.Errorf("moduleUsage must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_usage}", url.PathEscape(moduleUsage))
 
 	params := url.Values{}

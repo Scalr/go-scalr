@@ -5,6 +5,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 // Sentinel errors for common HTTP status codes to use in errors.Is() checks
@@ -129,21 +130,27 @@ func (e *UnprocessableEntityError) Error() string {
 func (e *UnprocessableEntityError) Unwrap() error        { return e.Err }
 func (e *UnprocessableEntityError) Is(target error) bool { return target == ErrUnprocessableEntity }
 
-// TooManyRequestsError represents a 429 Too Many Requests response
+// TooManyRequestsError represents a 429 Too Many Requests response.
+// RetryAfter is populated when the server sent a Retry-After header;
+// zero means the server did not specify a delay.
 type TooManyRequestsError struct {
 	Message    string
 	StatusCode int
+	RetryAfter time.Duration // from Retry-After header; zero if absent
 	Err        error
 }
 
 func (e *TooManyRequestsError) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("too many requests: %s", e.Err.Error())
-	}
+	base := "too many requests"
 	if e.Message != "" {
-		return fmt.Sprintf("too many requests: %s", e.Message)
+		base = fmt.Sprintf("too many requests: %s", e.Message)
+	} else if e.Err != nil {
+		base = fmt.Sprintf("too many requests: %s", e.Err.Error())
 	}
-	return "too many requests"
+	if e.RetryAfter > 0 {
+		return fmt.Sprintf("%s (retry after %s)", base, e.RetryAfter)
+	}
+	return base
 }
 
 func (e *TooManyRequestsError) Unwrap() error        { return e.Err }

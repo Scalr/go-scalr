@@ -69,6 +69,9 @@ func (c *Client) CreateConfigurationVersion(ctx context.Context, req *schemas.Co
 // Download tar.gz archive with terraform configuration templates.
 func (c *Client) DownloadConfigurationVersionRaw(ctx context.Context, configurationVersion string) (*client.Response, error) {
 	path := "/configuration-versions/{configuration_version}/download"
+	if configurationVersion == "" {
+		return nil, fmt.Errorf("configurationVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{configuration_version}", url.PathEscape(configurationVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -96,6 +99,9 @@ func (c *Client) DownloadConfigurationVersion(ctx context.Context, configuration
 // Show details of a specific Configuration Version.
 func (c *Client) GetConfigurationVersionRaw(ctx context.Context, configurationVersion string, opts *GetConfigurationVersionOptions) (*client.Response, error) {
 	path := "/configuration-versions/{configuration_version}"
+	if configurationVersion == "" {
+		return nil, fmt.Errorf("configurationVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{configuration_version}", url.PathEscape(configurationVersion))
 
 	params := url.Values{}

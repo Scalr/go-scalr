@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // This endpoint returns instance of AI usage.
 func (c *Client) GetAiUsageRaw(ctx context.Context, aiUsage string, opts *GetAiUsageOptions) (*client.Response, error) {
 	path := "/reports/ai-usage/{ai_usage}"
+	if aiUsage == "" {
+		return nil, fmt.Errorf("aiUsage must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{ai_usage}", url.PathEscape(aiUsage))
 
 	params := url.Values{}

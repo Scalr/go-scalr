@@ -26,6 +26,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Show details of a specific OPA policy.
 func (c *Client) GetPolicyRaw(ctx context.Context, policy string) (*client.Response, error) {
 	path := "/policies/{policy}"
+	if policy == "" {
+		return nil, fmt.Errorf("policy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy}", url.PathEscape(policy))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

@@ -33,6 +33,9 @@ const (
 // This endpoint returns instance of resource usage.
 func (c *Client) GetResourceUsageRaw(ctx context.Context, resourceUsage string, opts *GetResourceUsageOptions) (*client.Response, error) {
 	path := "/reports/resources/{resource_usage}"
+	if resourceUsage == "" {
+		return nil, fmt.Errorf("resourceUsage must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{resource_usage}", url.PathEscape(resourceUsage))
 
 	params := url.Values{}

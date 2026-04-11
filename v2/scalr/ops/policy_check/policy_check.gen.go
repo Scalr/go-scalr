@@ -26,6 +26,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Show details of a specific Terraform policy check stage.
 func (c *Client) GetPolicyCheckRaw(ctx context.Context, policyCheck string) (*client.Response, error) {
 	path := "/policy-checks/{policy_check}"
+	if policyCheck == "" {
+		return nil, fmt.Errorf("policyCheck must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_check}", url.PathEscape(policyCheck))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -57,6 +60,9 @@ func (c *Client) GetPolicyCheck(ctx context.Context, policyCheck string) (*schem
 // Download the raw output of the OPA policy check stage.
 func (c *Client) GetPolicyChecksLogRaw(ctx context.Context, policyCheck string, opts *GetPolicyChecksLogOptions) (*client.Response, error) {
 	path := "/policy-checks/{policy_check}/output"
+	if policyCheck == "" {
+		return nil, fmt.Errorf("policyCheck must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_check}", url.PathEscape(policyCheck))
 
 	params := url.Values{}
@@ -108,6 +114,9 @@ type GetPolicyChecksLogOptions struct {
 // List policy checks for a specific run.
 func (c *Client) ListPolicyChecksRaw(ctx context.Context, run string) (*client.Response, error) {
 	path := "/runs/{run}/policy-checks"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -146,6 +155,9 @@ func (c *Client) ListPolicyChecks(ctx context.Context, run string) ([]*schemas.P
 // This endpoint overrides a soft-mandatory policy.
 func (c *Client) OverridePolicyRaw(ctx context.Context, policyCheck string) (*client.Response, error) {
 	path := "/policy-checks/{policy_check}/actions/override"
+	if policyCheck == "" {
+		return nil, fmt.Errorf("policyCheck must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_check}", url.PathEscape(policyCheck))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

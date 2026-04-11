@@ -46,6 +46,9 @@ const (
 // Interrupt a run that is currently planning or applying. Performing a cancel is roughly equivalent to hitting `ctrl+c` during a Terraform plan or apply on the CLI. The running Terraform process is sent an `INT` signal, which instructs Terraform to end its work and wrap up in the safest way possible.
 func (c *Client) CancelRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/cancel"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
@@ -71,6 +74,9 @@ func (c *Client) CancelRun(ctx context.Context, run string, req *schemas.Comment
 // Apply a run that is paused waiting for confirmation after a plan. This includes runs in the `planned` and `policy_checked` states. This action is only required for runs that can't be auto-applied.
 func (c *Client) ConfirmRunRaw(ctx context.Context, run string, req *schemas.ConfirmRequest) (*client.Response, error) {
 	path := "/runs/{run}/actions/apply"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
@@ -166,6 +172,9 @@ type CreateRunOptions struct {
 // Skip any remaining work on runs that are paused waiting for confirmation or priority. This includes runs in the `pending`, `planned`, `policy_checked` and `policy_override` states.
 func (c *Client) DiscardRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/discard"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
@@ -191,6 +200,9 @@ func (c *Client) DiscardRun(ctx context.Context, run string, req *schemas.Commen
 // Get a Zip archive with policy check input data generated for a given run. See [Policy Input](https://docs.scalr.io/docs/policy-as-code) data structure.
 func (c *Client) DownloadPolicyInputRaw(ctx context.Context, run string, opts *DownloadPolicyInputOptions) (*client.Response, error) {
 	path := "/runs/{run}/policy-input"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	params := url.Values{}
@@ -248,6 +260,9 @@ type DownloadPolicyInputOptions struct {
 // Cancel all previous runs in pending or waiting for confirmation statuses. If the workspace is locked by a finished run, the lock will be automatically removed to allow the forced run to proceed.
 func (c *Client) ForceRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/force"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
@@ -273,6 +288,9 @@ func (c *Client) ForceRun(ctx context.Context, run string, req *schemas.Comment)
 // Show details of a specific run.
 func (c *Client) GetRunRaw(ctx context.Context, run string, opts *GetRunOptions) (*client.Response, error) {
 	path := "/runs/{run}"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	params := url.Values{}

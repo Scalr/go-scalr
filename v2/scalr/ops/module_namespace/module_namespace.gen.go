@@ -69,6 +69,9 @@ func (c *Client) CreateModuleNamespace(ctx context.Context, req *schemas.ModuleN
 // Delete a module namespace.
 func (c *Client) DeleteModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*client.Response, error) {
 	path := "/module-namespaces/{module_namespace}"
+	if moduleNamespace == "" {
+		return nil, fmt.Errorf("moduleNamespace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -92,6 +95,9 @@ func (c *Client) DeleteModuleNamespace(ctx context.Context, moduleNamespace stri
 // Show details of a specific module namespace.
 func (c *Client) GetModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*client.Response, error) {
 	path := "/module-namespaces/{module_namespace}"
+	if moduleNamespace == "" {
+		return nil, fmt.Errorf("moduleNamespace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -354,6 +360,9 @@ type ListModuleNamespacesOptions struct {
 // Update an existing module namespace.
 func (c *Client) UpdateModuleNamespaceRaw(ctx context.Context, moduleNamespace string, req *schemas.ModuleNamespaceRequest) (*client.Response, error) {
 	path := "/module-namespaces/{module_namespace}"
+	if moduleNamespace == "" {
+		return nil, fmt.Errorf("moduleNamespace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
 
 	// Wrap request in JSON:API envelope

@@ -781,10 +781,11 @@ func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 	case schema.Type.Is("boolean"):
 		baseType = "bool"
 	case schema.Type.Is("object"):
-		// For nested objects, use interface{} or map
-		if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
-			baseType = "map[string]interface{}"
+		if schema.AdditionalProperties.Schema != nil && schema.AdditionalProperties.Schema.Value != nil {
+			// additionalProperties: <schema> — typed map
+			baseType = "map[string]" + g.schemaToGoType(schema.AdditionalProperties.Schema.Value)
 		} else {
+			// additionalProperties: true  or plain object without properties
 			baseType = "map[string]interface{}"
 		}
 	default:

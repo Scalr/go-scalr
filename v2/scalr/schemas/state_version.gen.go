@@ -42,11 +42,11 @@ type StateVersionAttributes struct {
 	// The MD5 hash of the terraform.tfstate.
 	Md5 string `json:"md5"`
 	// The list of modules.
-	Modules map[string]interface{} `json:"modules"`
+	Modules map[string]map[string]int `json:"modules"`
 	// The list of output values.
 	Outputs *[]map[string]interface{} `json:"outputs"`
 	// The list of providers.
-	Providers map[string]interface{} `json:"providers"`
+	Providers map[string]map[string]int `json:"providers"`
 	// The list of resources.
 	Resources []map[string]interface{} `json:"resources"`
 	// The serial of the state version which must match the `serial` value from the `terraform.tfstate`.

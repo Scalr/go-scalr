@@ -68,6 +68,9 @@ func (c *Client) CreateSlackIntegration(ctx context.Context, req *schemas.SlackI
 // This endpoint deletes Slack integration.
 func (c *Client) DeleteSlackIntegrationRaw(ctx context.Context, slackIntegration string) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
+	if slackIntegration == "" {
+		return nil, fmt.Errorf("slackIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -91,6 +94,9 @@ func (c *Client) DeleteSlackIntegration(ctx context.Context, slackIntegration st
 // Show details of a specific Slack integration.
 func (c *Client) GetSlackIntegrationRaw(ctx context.Context, slackIntegration string, opts *GetSlackIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
+	if slackIntegration == "" {
+		return nil, fmt.Errorf("slackIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
 	params := url.Values{}
@@ -387,6 +393,9 @@ type ListSlackIntegrationsOptions struct {
 // This endpoint updates Slack integration.
 func (c *Client) UpdateSlackIntegrationRaw(ctx context.Context, slackIntegration string, req *schemas.SlackIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
+	if slackIntegration == "" {
+		return nil, fmt.Errorf("slackIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
 	// Wrap request in JSON:API envelope

@@ -41,6 +41,9 @@ const (
 // This endpoint assigns the list of [tags](/docs/tags-1) to the provider configuration.
 func (c *Client) AddProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -109,6 +112,9 @@ func (c *Client) CreateProviderConfiguration(ctx context.Context, req *schemas.P
 // The endpoint deletes a Provider configuration by ID.
 func (c *Client) DeleteProviderConfigurationRaw(ctx context.Context, providerConfiguration string) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -132,6 +138,9 @@ func (c *Client) DeleteProviderConfiguration(ctx context.Context, providerConfig
 // This endpoint removes given [tags](/docs/tags-1) from the provider configuration.
 func (c *Client) DeleteProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -164,6 +173,9 @@ func (c *Client) DeleteProviderConfigurationTags(ctx context.Context, providerCo
 // Show details of a specific Provider configuration.
 func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	params := url.Values{}
@@ -228,6 +240,9 @@ type GetProviderConfigurationOptions struct {
 // Returns a list of workspaces that use the given provider configuration.
 func (c *Client) GetProviderConfigurationWorkspaceUsageRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationWorkspaceUsageOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/workspaces-usage"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	params := url.Values{}
@@ -294,6 +309,9 @@ type GetProviderConfigurationWorkspaceUsageOptions struct {
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an provider configuration.
 func (c *Client) ListProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	params := url.Values{}
@@ -737,6 +755,9 @@ type ListProviderConfigurationsOptions struct {
 // This endpoint completely replaces provider configuration's tags with provided list.
 func (c *Client) ReplaceProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -769,6 +790,9 @@ func (c *Client) ReplaceProviderConfigurationTags(ctx context.Context, providerC
 // This endpoint updates attributes of an existing Provider configuration.
 func (c *Client) UpdateProviderConfigurationRaw(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationRequest) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// Wrap request in JSON:API envelope

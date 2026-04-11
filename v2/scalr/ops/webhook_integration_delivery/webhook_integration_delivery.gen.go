@@ -39,6 +39,9 @@ const (
 // This endpoint returns a single webhook integration delivery.
 func (c *Client) GetWebhookIntegrationDeliveryRaw(ctx context.Context, webhookDelivery string, opts *GetWebhookIntegrationDeliveryOptions) (*client.Response, error) {
 	path := "/integrations/webhook-deliveries/{webhook_delivery}"
+	if webhookDelivery == "" {
+		return nil, fmt.Errorf("webhookDelivery must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{webhook_delivery}", url.PathEscape(webhookDelivery))
 
 	params := url.Values{}

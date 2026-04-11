@@ -126,6 +126,9 @@ type CreateAccessTokenOptions struct {
 // This endpoint creates agent pool's access token.
 func (c *Client) CreateAgentPoolTokenRaw(ctx context.Context, agentPool string, req *schemas.AccessTokenRequest, opts *CreateAgentPoolTokenOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}/access-tokens"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	params := url.Values{}
@@ -192,6 +195,9 @@ type CreateAgentPoolTokenOptions struct {
 // This endpoint creates service account's access token.
 func (c *Client) CreateServiceAccountTokenRaw(ctx context.Context, serviceAccount string, req *schemas.AccessTokenRequest, opts *CreateServiceAccountTokenOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/access-tokens"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
 	params := url.Values{}
@@ -258,6 +264,9 @@ type CreateServiceAccountTokenOptions struct {
 // Delete an access token by ID.
 func (c *Client) DeleteAccessTokenRaw(ctx context.Context, accessToken string) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
+	if accessToken == "" {
+		return nil, fmt.Errorf("accessToken must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -281,6 +290,9 @@ func (c *Client) DeleteAccessToken(ctx context.Context, accessToken string) erro
 // Get an access token by ID.
 func (c *Client) GetAccessTokenRaw(ctx context.Context, accessToken string, opts *GetAccessTokenOptions) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
+	if accessToken == "" {
+		return nil, fmt.Errorf("accessToken must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
 	params := url.Values{}
@@ -582,6 +594,9 @@ type ListAccessTokensOptions struct {
 
 func (c *Client) ListAgentPoolAccessTokensRaw(ctx context.Context, agentPool string, opts *ListAgentPoolAccessTokensOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}/access-tokens"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	params := url.Values{}
@@ -820,6 +835,9 @@ type ListAgentPoolAccessTokensOptions struct {
 // This endpoint lists service account's access tokens.
 func (c *Client) ListServiceAccountAccessTokensRaw(ctx context.Context, serviceAccount string, opts *ListServiceAccountAccessTokensOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/access-tokens"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
 	params := url.Values{}
@@ -1059,6 +1077,9 @@ type ListServiceAccountAccessTokensOptions struct {
 // Update an access token by ID.
 func (c *Client) UpdateAccessTokenRaw(ctx context.Context, accessToken string, req *schemas.AccessTokenRequest, opts *UpdateAccessTokenOptions) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
+	if accessToken == "" {
+		return nil, fmt.Errorf("accessToken must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
 	params := url.Values{}

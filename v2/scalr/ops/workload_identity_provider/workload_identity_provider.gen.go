@@ -70,6 +70,9 @@ func (c *Client) CreateWorkloadIdentityProvider(ctx context.Context, req *schema
 // The endpoint deletes a Workload identity provider by ID.
 func (c *Client) DeleteWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string) (*client.Response, error) {
 	path := "/workload-identity-providers/{workload_identity_provider}"
+	if workloadIdentityProvider == "" {
+		return nil, fmt.Errorf("workloadIdentityProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -93,6 +96,9 @@ func (c *Client) DeleteWorkloadIdentityProvider(ctx context.Context, workloadIde
 // Get Workload Identity Provider.
 func (c *Client) GetWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string) (*client.Response, error) {
 	path := "/workload-identity-providers/{workload_identity_provider}"
+	if workloadIdentityProvider == "" {
+		return nil, fmt.Errorf("workloadIdentityProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -361,6 +367,9 @@ type ListWorkloadIdentityProvidersOptions struct {
 // This endpoint updates attributes of an existing Workload Identity Provider.
 func (c *Client) UpdateWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string, req *schemas.WorkloadIdentityProviderRequest) (*client.Response, error) {
 	path := "/workload-identity-providers/{workload_identity_provider}"
+	if workloadIdentityProvider == "" {
+		return nil, fmt.Errorf("workloadIdentityProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
 
 	// Wrap request in JSON:API envelope

@@ -33,6 +33,9 @@ const (
 // This endpoint adds provided [users](users.html#the-user-resource) to those who can log in to the account via password, even when SSO is enforced.
 func (c *Client) AddSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -65,6 +68,9 @@ func (c *Client) AddSsoBypassUsers(ctx context.Context, account string, req []sc
 // This endpoint removes given [users](users.html#the-user-resource) from the list of those who can log in to the account via password, even when SSO is enforced.
 func (c *Client) DeleteSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -97,6 +103,9 @@ func (c *Client) DeleteSsoBypassUsers(ctx context.Context, account string, req [
 // Show details of a specific account.
 func (c *Client) GetAccountRaw(ctx context.Context, account string, opts *GetAccountOptions) (*client.Response, error) {
 	path := "/accounts/{account}"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	params := url.Values{}
@@ -385,6 +394,9 @@ type GetAccountsOptions struct {
 
 func (c *Client) GetMetricsRaw(ctx context.Context, account string) (*client.Response, error) {
 	path := "/accounts/{account}/metrics"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -411,6 +423,9 @@ func (c *Client) GetMetrics(ctx context.Context, account string) (string, error)
 // This endpoint returns a list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced.
 func (c *Client) ListSsoBypassUsersRaw(ctx context.Context, account string, opts *ListSsoBypassUsersOptions) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	params := url.Values{}
@@ -622,6 +637,9 @@ type ListSsoBypassUsersOptions struct {
 // This endpoint completely replaces the list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced, with a provided list.
 func (c *Client) ReplaceSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -653,6 +671,9 @@ func (c *Client) ReplaceSsoBypassUsers(ctx context.Context, account string, req 
 
 func (c *Client) UpdateAccountRaw(ctx context.Context, account string, req *schemas.AccountRequest) (*client.Response, error) {
 	path := "/accounts/{account}"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// Wrap request in JSON:API envelope

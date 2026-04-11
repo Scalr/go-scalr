@@ -104,6 +104,9 @@ type CreateAccessPolicyOptions struct {
 
 func (c *Client) DeleteAccessPolicyRaw(ctx context.Context, accessPolicy string) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
+	if accessPolicy == "" {
+		return nil, fmt.Errorf("accessPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -364,6 +367,9 @@ type GetAccessPoliciesOptions struct {
 // The endpoint returns [IAM](https://docs.scalr.io/docs/identity-and-access-management) access policy by ID.
 func (c *Client) GetAccessPolicyRaw(ctx context.Context, accessPolicy string, opts *GetAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
+	if accessPolicy == "" {
+		return nil, fmt.Errorf("accessPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
 	params := url.Values{}
@@ -427,6 +433,9 @@ type GetAccessPolicyOptions struct {
 
 func (c *Client) UpdateAccessPolicyRaw(ctx context.Context, accessPolicy string, req *schemas.AccessPolicyRequest, opts *UpdateAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
+	if accessPolicy == "" {
+		return nil, fmt.Errorf("accessPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
 	params := url.Values{}

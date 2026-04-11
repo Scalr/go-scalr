@@ -91,6 +91,9 @@ type CreateCheckovIntegrationOptions struct {
 
 func (c *Client) DeleteCheckovIntegrationRaw(ctx context.Context, integration string) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
+	if integration == "" {
+		return nil, fmt.Errorf("integration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -113,6 +116,9 @@ func (c *Client) DeleteCheckovIntegration(ctx context.Context, integration strin
 // Show details of a specific Checkov Integration.
 func (c *Client) GetCheckovIntegrationRaw(ctx context.Context, integration string, opts *GetCheckovIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
+	if integration == "" {
+		return nil, fmt.Errorf("integration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
 	params := url.Values{}
@@ -408,6 +414,9 @@ type ListCheckovIntegrationsOptions struct {
 
 func (c *Client) ResyncCheckovIntegrationRaw(ctx context.Context, integration string) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}/actions/resync"
+	if integration == "" {
+		return nil, fmt.Errorf("integration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -430,6 +439,9 @@ func (c *Client) ResyncCheckovIntegration(ctx context.Context, integration strin
 // This endpoint updates Checkov integration.
 func (c *Client) UpdateCheckovIntegrationRaw(ctx context.Context, integration string, req *schemas.CheckovIntegrationRequest, opts *UpdateCheckovIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
+	if integration == "" {
+		return nil, fmt.Errorf("integration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
 	params := url.Values{}

@@ -37,6 +37,9 @@ const (
 // List policy check results for a specific policy group check. Required permission: policy_groups:read
 func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupCheck string, opts *GetPolicyGroupCheckResultsOptions) (*client.Response, error) {
 	path := "/policy-group-checks/{policy_group_check}/policy-check-results"
+	if policyGroupCheck == "" {
+		return nil, fmt.Errorf("policyGroupCheck must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group_check}", url.PathEscape(policyGroupCheck))
 
 	params := url.Values{}

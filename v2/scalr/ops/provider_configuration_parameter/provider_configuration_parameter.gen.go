@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Create a new Provider configuration parameter.
 func (c *Client) CreateProviderConfigurationParameterRaw(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationParameterRequest) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/parameters"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// Wrap request in JSON:API envelope
@@ -64,6 +67,9 @@ func (c *Client) CreateProviderConfigurationParameter(ctx context.Context, provi
 // The endpoint deletes a Provider configuration parameter by ID.
 func (c *Client) DeleteProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*client.Response, error) {
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
+	if providerConfigurationParameter == "" {
+		return nil, fmt.Errorf("providerConfigurationParameter must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -87,6 +93,9 @@ func (c *Client) DeleteProviderConfigurationParameter(ctx context.Context, provi
 // Show details of a specific Provider configuration parameter.
 func (c *Client) GetProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*client.Response, error) {
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
+	if providerConfigurationParameter == "" {
+		return nil, fmt.Errorf("providerConfigurationParameter must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -122,6 +131,9 @@ func (c *Client) GetProviderConfigurationParameter(ctx context.Context, provider
 // This endpoint returns a list of Provider configuration parameters for specific provider configuration.
 func (c *Client) ListProviderConfigurationParametersRaw(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationParametersOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/parameters"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	params := url.Values{}
@@ -345,6 +357,9 @@ type ListProviderConfigurationParametersOptions struct {
 // This endpoint allows updates to attributes of an existing Provider configuration parameters.
 func (c *Client) UpdateProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string, req *schemas.ProviderConfigurationParameterRequest) (*client.Response, error) {
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
+	if providerConfigurationParameter == "" {
+		return nil, fmt.Errorf("providerConfigurationParameter must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
 
 	// Wrap request in JSON:API envelope

@@ -67,6 +67,9 @@ func (c *Client) CreateAwsEventBridgeIntegration(ctx context.Context, req *schem
 
 func (c *Client) DeleteAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
+	if awsEventBridgeIntegration == "" {
+		return nil, fmt.Errorf("awsEventBridgeIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -89,6 +92,9 @@ func (c *Client) DeleteAwsEventBridgeIntegration(ctx context.Context, awsEventBr
 // Show details of a specific AWS EventBridge integration.
 func (c *Client) GetAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
+	if awsEventBridgeIntegration == "" {
+		return nil, fmt.Errorf("awsEventBridgeIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -351,6 +357,9 @@ type ListAwsEventBridgeIntegrationsOptions struct {
 // This endpoint updates AWS EventBridge integrations.
 func (c *Client) UpdateAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string, req *schemas.AWSEventBridgeIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
+	if awsEventBridgeIntegration == "" {
+		return nil, fmt.Errorf("awsEventBridgeIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
 
 	// Wrap request in JSON:API envelope
