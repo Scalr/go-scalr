@@ -10,10 +10,21 @@ linters:
     - prealloc        # Pre-allocate slices where length is known
     - revive          # Naming conventions, godoc, shadowed builtins
     - unconvert       # Remove unnecessary type conversions
-
   exclusions:
     rules:
       # Error-path tests return (nil, err) — the response body is nil, nothing to close.
       - path: _test\.go
         linters:
           - bodyclose
+
+formatters:
+  enable:
+    - golines
+    - goimports
+  settings:
+    golines:
+      max-len: 120
+      tab-len: 4
+    goimports:
+      local-prefixes:
+        - github.com/scalr/go-scalr/v2
