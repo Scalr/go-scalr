@@ -28,6 +28,7 @@ type Module struct {
 	Type          string              `json:"type"`
 	Attributes    ModuleAttributes    `json:"attributes"`
 	Relationships ModuleRelationships `json:"relationships"`
+	Links         *ModuleLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -357,6 +358,11 @@ func (r *ModuleRelationships) PopulateIncludes(included []map[string]interface{}
 			}
 		}
 	}
+}
+
+// ModuleLinks holds the resource links for Module (response only).
+type ModuleLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

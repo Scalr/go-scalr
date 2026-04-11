@@ -28,6 +28,8 @@ type CostEstimate struct {
 	ID         string                 `json:"id"`
 	Type       string                 `json:"type"`
 	Attributes CostEstimateAttributes `json:"attributes"`
+
+	Links *CostEstimateLinks `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -63,6 +65,15 @@ type CostEstimateAttributes struct {
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
 	// The number of resources in the terraform plan that were excluded from the estimation.
 	UnmatchedResourcesCount *int `json:"unmatched-resources-count"`
+}
+
+// CostEstimateLinks holds the resource links for CostEstimate (response only).
+type CostEstimateLinks struct {
+	// Link to download the cost breakdown [JSON formatted output](https://www.infracost.io/docs/multi_project/report/#examples).
+	Breakdown *string `json:"breakdown"`
+	// Link to download the raw output of the cost estimation.
+	Output *string `json:"output"`
+	Self   string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

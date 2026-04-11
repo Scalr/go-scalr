@@ -73,6 +73,7 @@ type Workspace struct {
 	Type          string                 `json:"type"`
 	Attributes    WorkspaceAttributes    `json:"attributes"`
 	Relationships WorkspaceRelationships `json:"relationships"`
+	Links         *WorkspaceLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -732,6 +733,11 @@ func (r *WorkspaceRelationships) PopulateIncludes(included []map[string]interfac
 			}
 		}
 	}
+}
+
+// WorkspaceLinks holds the resource links for Workspace (response only).
+type WorkspaceLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

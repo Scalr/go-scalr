@@ -27,6 +27,7 @@ type Hook struct {
 	Type          string            `json:"type"`
 	Attributes    HookAttributes    `json:"attributes"`
 	Relationships HookRelationships `json:"relationships"`
+	Links         *HookLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -295,6 +296,11 @@ func (r *HookRelationships) PopulateIncludes(included []map[string]interface{}) 
 			}
 		}
 	}
+}
+
+// HookLinks holds the resource links for Hook (response only).
+type HookLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

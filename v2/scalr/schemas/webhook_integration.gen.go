@@ -16,6 +16,7 @@ type WebhookIntegration struct {
 	Type          string                          `json:"type"`
 	Attributes    WebhookIntegrationAttributes    `json:"attributes"`
 	Relationships WebhookIntegrationRelationships `json:"relationships"`
+	Links         *WebhookIntegrationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -197,6 +198,11 @@ func (r *WebhookIntegrationRelationships) PopulateIncludes(included []map[string
 			}
 		}
 	}
+}
+
+// WebhookIntegrationLinks holds the resource links for WebhookIntegration (response only).
+type WebhookIntegrationLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

@@ -31,6 +31,8 @@ type PolicyCheck struct {
 	ID         string                `json:"id"`
 	Type       string                `json:"type"`
 	Attributes PolicyCheckAttributes `json:"attributes"`
+
+	Links *PolicyCheckLinks `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -55,6 +57,12 @@ type PolicyCheckAttributes struct {
 	Status PolicyCheckStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+}
+
+// PolicyCheckLinks holds the resource links for PolicyCheck (response only).
+type PolicyCheckLinks struct {
+	// Link to download the policy check raw output.
+	Output string `json:"output"`
 }
 
 // Request version - used when marshalling for API requests

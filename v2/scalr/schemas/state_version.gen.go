@@ -16,6 +16,7 @@ type StateVersion struct {
 	Type          string                    `json:"type"`
 	Attributes    StateVersionAttributes    `json:"attributes"`
 	Relationships StateVersionRelationships `json:"relationships"`
+	Links         *StateVersionLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -216,6 +217,13 @@ func (r *StateVersionRelationships) PopulateIncludes(included []map[string]inter
 			}
 		}
 	}
+}
+
+// StateVersionLinks holds the resource links for StateVersion (response only).
+type StateVersionLinks struct {
+	// The URL to download the `terraform.tfstate`.
+	Download *string `json:"download"`
+	Self     string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

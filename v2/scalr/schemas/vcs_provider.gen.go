@@ -50,6 +50,7 @@ type VcsProvider struct {
 	Type          string                   `json:"type"`
 	Attributes    VcsProviderAttributes    `json:"attributes"`
 	Relationships VcsProviderRelationships `json:"relationships"`
+	Links         *VcsProviderLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -236,6 +237,11 @@ func (r *VcsProviderRelationships) PopulateIncludes(included []map[string]interf
 			}
 		}
 	}
+}
+
+// VcsProviderLinks holds the resource links for VcsProvider (response only).
+type VcsProviderLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

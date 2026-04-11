@@ -29,6 +29,8 @@ type Plan struct {
 	ID         string         `json:"id"`
 	Type       string         `json:"type"`
 	Attributes PlanAttributes `json:"attributes"`
+
+	Links *PlanLinks `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -60,6 +62,15 @@ type PlanAttributes struct {
 	Status PlanStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+}
+
+// PlanLinks holds the resource links for Plan (response only).
+type PlanLinks struct {
+	// URL to retrieve the JSON execution plan
+	JsonOutput *string `json:"json-output"`
+	// Link to download the raw output of the terraform plan.
+	Output *string `json:"output"`
+	Self   string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

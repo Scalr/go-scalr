@@ -38,6 +38,7 @@ type ModuleVersion struct {
 	Type          string                     `json:"type"`
 	Attributes    ModuleVersionAttributes    `json:"attributes"`
 	Relationships ModuleVersionRelationships `json:"relationships"`
+	Links         *ModuleVersionLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -177,6 +178,13 @@ func (r *ModuleVersionRelationships) PopulateIncludes(included []map[string]inte
 			}
 		}
 	}
+}
+
+// ModuleVersionLinks holds the resource links for ModuleVersion (response only).
+type ModuleVersionLinks struct {
+	// The URL to download the tar.gz archive with module version source code.
+	Download *string `json:"download"`
+	Self     string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

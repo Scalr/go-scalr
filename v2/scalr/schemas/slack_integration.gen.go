@@ -49,6 +49,7 @@ type SlackIntegration struct {
 	Type          string                        `json:"type"`
 	Attributes    SlackIntegrationAttributes    `json:"attributes"`
 	Relationships SlackIntegrationRelationships `json:"relationships"`
+	Links         *SlackIntegrationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -256,6 +257,11 @@ func (r *SlackIntegrationRelationships) PopulateIncludes(included []map[string]i
 			}
 		}
 	}
+}
+
+// SlackIntegrationLinks holds the resource links for SlackIntegration (response only).
+type SlackIntegrationLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

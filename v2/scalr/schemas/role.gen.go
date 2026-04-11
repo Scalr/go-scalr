@@ -15,6 +15,7 @@ type Role struct {
 	Type          string            `json:"type"`
 	Attributes    RoleAttributes    `json:"attributes"`
 	Relationships RoleRelationships `json:"relationships"`
+	Links         *RoleLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -143,6 +144,11 @@ func (r *RoleRelationships) PopulateIncludes(included []map[string]interface{}) 
 			}
 		}
 	}
+}
+
+// RoleLinks holds the resource links for Role (response only).
+type RoleLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

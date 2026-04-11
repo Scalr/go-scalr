@@ -27,6 +27,7 @@ type ConfigurationVersion struct {
 	Type          string                            `json:"type"`
 	Attributes    ConfigurationVersionAttributes    `json:"attributes"`
 	Relationships ConfigurationVersionRelationships `json:"relationships"`
+	Links         *ConfigurationVersionLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -160,6 +161,13 @@ func (r *ConfigurationVersionRelationships) PopulateIncludes(included []map[stri
 			}
 		}
 	}
+}
+
+// ConfigurationVersionLinks holds the resource links for ConfigurationVersion (response only).
+type ConfigurationVersionLinks struct {
+	Self string `json:"self"`
+	// URL for terraform configuration templates upload, that could be used to `PUT` a tar.gz archive of a local workspace directory. Available only in the create `configuration-versions` response.
+	Upload *string `json:"upload"`
 }
 
 // Request version - used when marshalling for API requests

@@ -71,6 +71,7 @@ type SamlIntegration struct {
 	Type          string                       `json:"type"`
 	Attributes    SamlIntegrationAttributes    `json:"attributes"`
 	Relationships SamlIntegrationRelationships `json:"relationships"`
+	Links         *SamlIntegrationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -258,6 +259,11 @@ func (r *SamlIntegrationRelationships) PopulateIncludes(included []map[string]in
 			}
 		}
 	}
+}
+
+// SamlIntegrationLinks holds the resource links for SamlIntegration (response only).
+type SamlIntegrationLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

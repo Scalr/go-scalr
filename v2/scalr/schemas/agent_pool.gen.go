@@ -24,6 +24,7 @@ type AgentPool struct {
 	Type          string                 `json:"type"`
 	Attributes    AgentPoolAttributes    `json:"attributes"`
 	Relationships AgentPoolRelationships `json:"relationships"`
+	Links         *AgentPoolLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -315,6 +316,11 @@ func (r *AgentPoolRelationships) PopulateIncludes(included []map[string]interfac
 			}
 		}
 	}
+}
+
+// AgentPoolLinks holds the resource links for AgentPool (response only).
+type AgentPoolLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

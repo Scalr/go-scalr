@@ -29,6 +29,8 @@ type Apply struct {
 	ID         string          `json:"id"`
 	Type       string          `json:"type"`
 	Attributes ApplyAttributes `json:"attributes"`
+
+	Links *ApplyLinks `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -58,6 +60,13 @@ type ApplyAttributes struct {
 	Status ApplyStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
 	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+}
+
+// ApplyLinks holds the resource links for Apply (response only).
+type ApplyLinks struct {
+	// URL to download the apply output.
+	Output *string `json:"output"`
+	Self   string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

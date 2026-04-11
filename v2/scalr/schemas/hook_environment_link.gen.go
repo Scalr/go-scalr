@@ -28,6 +28,7 @@ type HookEnvironmentLink struct {
 	Type          string                           `json:"type"`
 	Attributes    HookEnvironmentLinkAttributes    `json:"attributes"`
 	Relationships HookEnvironmentLinkRelationships `json:"relationships"`
+	Links         *HookEnvironmentLinkLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -209,6 +210,11 @@ func (r *HookEnvironmentLinkRelationships) PopulateIncludes(included []map[strin
 			}
 		}
 	}
+}
+
+// HookEnvironmentLinkLinks holds the resource links for HookEnvironmentLink (response only).
+type HookEnvironmentLinkLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

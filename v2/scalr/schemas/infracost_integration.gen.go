@@ -26,6 +26,7 @@ type InfracostIntegration struct {
 	Type          string                            `json:"type"`
 	Attributes    InfracostIntegrationAttributes    `json:"attributes"`
 	Relationships InfracostIntegrationRelationships `json:"relationships"`
+	Links         *InfracostIntegrationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -126,6 +127,11 @@ func (r *InfracostIntegrationRelationships) PopulateIncludes(included []map[stri
 			}
 		}
 	}
+}
+
+// InfracostIntegrationLinks holds the resource links for InfracostIntegration (response only).
+type InfracostIntegrationLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

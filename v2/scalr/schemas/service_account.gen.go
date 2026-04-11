@@ -26,6 +26,7 @@ type ServiceAccount struct {
 	Type          string                      `json:"type"`
 	Attributes    ServiceAccountAttributes    `json:"attributes"`
 	Relationships ServiceAccountRelationships `json:"relationships"`
+	Links         *ServiceAccountLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -189,6 +190,11 @@ func (r *ServiceAccountRelationships) PopulateIncludes(included []map[string]int
 			}
 		}
 	}
+}
+
+// ServiceAccountLinks holds the resource links for ServiceAccount (response only).
+type ServiceAccountLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

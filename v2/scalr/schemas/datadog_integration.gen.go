@@ -26,6 +26,7 @@ type DatadogIntegration struct {
 	Type          string                          `json:"type"`
 	Attributes    DatadogIntegrationAttributes    `json:"attributes"`
 	Relationships DatadogIntegrationRelationships `json:"relationships"`
+	Links         *DatadogIntegrationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -119,6 +120,11 @@ func (r *DatadogIntegrationRelationships) PopulateIncludes(included []map[string
 			}
 		}
 	}
+}
+
+// DatadogIntegrationLinks holds the resource links for DatadogIntegration (response only).
+type DatadogIntegrationLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

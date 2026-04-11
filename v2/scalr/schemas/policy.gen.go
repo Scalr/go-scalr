@@ -26,6 +26,7 @@ type Policy struct {
 	Type          string              `json:"type"`
 	Attributes    PolicyAttributes    `json:"attributes"`
 	Relationships PolicyRelationships `json:"relationships"`
+	Links         *PolicyLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -115,6 +116,11 @@ func (r *PolicyRelationships) PopulateIncludes(included []map[string]interface{}
 			}
 		}
 	}
+}
+
+// PolicyLinks holds the resource links for Policy (response only).
+type PolicyLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

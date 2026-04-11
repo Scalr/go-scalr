@@ -16,6 +16,7 @@ type AccessToken struct {
 	Type          string                   `json:"type"`
 	Attributes    AccessTokenAttributes    `json:"attributes"`
 	Relationships AccessTokenRelationships `json:"relationships"`
+	Links         *AccessTokenLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -115,6 +116,11 @@ func (r *AccessTokenRelationships) PopulateIncludes(included []map[string]interf
 			}
 		}
 	}
+}
+
+// AccessTokenLinks holds the resource links for AccessToken (response only).
+type AccessTokenLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

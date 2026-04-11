@@ -87,6 +87,7 @@ type Agent struct {
 	Type          string             `json:"type"`
 	Attributes    AgentAttributes    `json:"attributes"`
 	Relationships AgentRelationships `json:"relationships"`
+	Links         *AgentLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -196,6 +197,11 @@ func (r *AgentRelationships) PopulateIncludes(included []map[string]interface{})
 			}
 		}
 	}
+}
+
+// AgentLinks holds the resource links for Agent (response only).
+type AgentLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

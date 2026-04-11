@@ -14,6 +14,8 @@ type VcsRevision struct {
 	ID         string                `json:"id"`
 	Type       string                `json:"type"`
 	Attributes VcsRevisionAttributes `json:"attributes"`
+
+	Links *VcsRevisionLinks `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -38,6 +40,11 @@ type VcsRevisionAttributes struct {
 	CommitUrl      *string `json:"commit-url"`
 	RepositoryId   string  `json:"repository-id"`
 	SenderUsername *string `json:"sender-username"`
+}
+
+// VcsRevisionLinks holds the resource links for VcsRevision (response only).
+type VcsRevisionLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

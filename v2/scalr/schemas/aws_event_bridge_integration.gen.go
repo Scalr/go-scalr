@@ -27,6 +27,7 @@ type AWSEventBridgeIntegration struct {
 	Type          string                                 `json:"type"`
 	Attributes    AWSEventBridgeIntegrationAttributes    `json:"attributes"`
 	Relationships AWSEventBridgeIntegrationRelationships `json:"relationships"`
+	Links         *AWSEventBridgeIntegrationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -124,6 +125,11 @@ func (r *AWSEventBridgeIntegrationRelationships) PopulateIncludes(included []map
 			}
 		}
 	}
+}
+
+// AWSEventBridgeIntegrationLinks holds the resource links for AWSEventBridgeIntegration (response only).
+type AWSEventBridgeIntegrationLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

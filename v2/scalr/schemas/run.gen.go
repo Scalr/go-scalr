@@ -62,6 +62,7 @@ type Run struct {
 	Type          string           `json:"type"`
 	Attributes    RunAttributes    `json:"attributes"`
 	Relationships RunRelationships `json:"relationships"`
+	Links         *RunLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -597,6 +598,11 @@ func (r *RunRelationships) PopulateIncludes(included []map[string]interface{}) {
 			}
 		}
 	}
+}
+
+// RunLinks holds the resource links for Run (response only).
+type RunLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

@@ -223,6 +223,8 @@ type SchemaData struct {
 	Description          string
 	Attributes           []Attribute
 	Relationships        []Relationship
+	LinksFields          []NestedField // non-nil = generate typed ${Name}Links struct
+	LinksIsMap           bool          // true = use map[string]string (generic links)
 	NestedStructs        []NestedStruct
 	RequestNestedStructs []NestedStruct
 	EnumTypes            []EnumType
@@ -435,6 +437,29 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 		sort.Slice(data.Relationships, func(i, j int) bool {
 			return data.Relationships[i].Name < data.Relationships[j].Name
 		})
+	}
+
+	// Process links (response-only — never included in request structs)
+	if linksRef := schema.Properties["links"]; linksRef != nil && linksRef.Value != nil {
+		linksSchema := linksRef.Value
+		if len(linksSchema.Properties) > 0 {
+			for fieldName, fieldRef := range linksSchema.Properties {
+				if fieldRef == nil || fieldRef.Value == nil {
+					continue
+				}
+				data.LinksFields = append(data.LinksFields, NestedField{
+					Name:        strcase.ToCamel(fieldName),
+					JSONName:    fieldName,
+					Type:        g.schemaToGoType(fieldRef.Value),
+					Description: cleanDescription(fieldRef.Value.Description),
+				})
+			}
+			sort.Slice(data.LinksFields, func(i, j int) bool {
+				return data.LinksFields[i].Name < data.LinksFields[j].Name
+			})
+		} else if linksSchema.AdditionalProperties.Has != nil {
+			data.LinksIsMap = true
+		}
 	}
 
 	return data
