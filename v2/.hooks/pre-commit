@@ -1,0 +1,8 @@
+#!/bin/sh
+# Pre-commit hook: lint changed Go files in v2/.
+# Install via: make install-hooks
+set -e
+
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT/v2"
+make fmt

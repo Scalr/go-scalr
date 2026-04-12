@@ -1,4 +1,5 @@
-.PHONY: build generate test lint fmt
+.PHONY: build generate test lint fmt install-hooks install-tools
+GOLANGCI_LINT_VERSION := v2.5.0
 
 build: ## Build the generator
 	@echo "Building generator..."
@@ -23,3 +24,12 @@ lint: ## Run linter
 fmt: ## Run formatter
 	@echo "Formatting code..."
 	@golangci-lint fmt cmd/... internal/...
+
+install-tools: ## Install required development tools (run once after cloning)
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
+		| sh -s -- -b "$(shell go env GOPATH)/bin" $(GOLANGCI_LINT_VERSION)
+	@echo "✓ golangci-lint $(GOLANGCI_LINT_VERSION) installed"
+
+install-hooks: ## Install git pre-commit hook (run once after cloning)
+	@git config core.hooksPath "$(CURDIR)/.hooks"
+	@echo "✓ Git hooks installed ($(CURDIR)/.hooks)"
