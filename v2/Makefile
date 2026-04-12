@@ -7,6 +7,7 @@ build: ## Build the generator
 	@echo "✓ Built bin/scalr-gen"
 
 generate: ## Generate public API client from OpenAPI spec
+	# When developing, we expect the `fatmouse` and `go-scalr` repositories to be next to each other.
 	@go run ./cmd/scalr-gen \
 		--spec=../../fatmouse/taco/openapi/openapi-public.yml \
 		--package=scalr
@@ -14,6 +15,9 @@ generate: ## Generate public API client from OpenAPI spec
 	@echo "✓ Generated code compiles"
 
 test: ## Run tests
+	# E.g. `TESTARGS="-run TestFoo" make test`
+	# Use `-args -update` to refresh e2e golden files:
+	# `TESTARGS="-run TestE2EGenerate -args -update" make test`
 	@echo "Running tests..."
 	@go test -race -v $(TESTARGS) ./internal/...
 

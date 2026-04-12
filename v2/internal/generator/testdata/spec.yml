@@ -1,0 +1,174 @@
+openapi: "3.0.3"
+info:
+  title: Test API
+  version: "1.0.0"
+servers:
+  - url: "https://{Hostname}/api/test/v1"
+    variables:
+      Hostname:
+        default: test.example.com
+
+paths:
+  /widgets:
+    get:
+      operationId: list-widgets
+      x-resource: Widget
+      summary: List widgets.
+      parameters:
+        - name: filter[name]
+          in: query
+          description: Filter by name.
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name, -name, priority, -priority]
+        - name: page[number]
+          in: query
+          schema:
+            type: integer
+        - name: page[size]
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/WidgetListingDocument'
+    post:
+      operationId: create-widget
+      x-resource: Widget
+      summary: Create a widget.
+      requestBody:
+        required: true
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/WidgetDocument'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/WidgetDocument'
+
+  /widgets/{widget}:
+    get:
+      operationId: get-widget
+      x-resource: Widget
+      summary: Get a widget.
+      parameters:
+        - name: widget
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/WidgetDocument'
+    patch:
+      operationId: update-widget
+      x-resource: Widget
+      summary: Update a widget.
+      parameters:
+        - name: widget
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/WidgetDocument'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/WidgetDocument'
+    delete:
+      operationId: delete-widget
+      x-resource: Widget
+      summary: Delete a widget.
+      parameters:
+        - name: widget
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content.
+
+components:
+  schemas:
+    Widget:
+      type: object
+      description: A widget resource.
+      properties:
+        type:
+          type: string
+          enum: [widgets]
+        id:
+          type: string
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Widget name.
+            label:
+              type: string
+              nullable: true
+              description: Optional display label.
+            priority:
+              type: integer
+              description: Execution priority.
+        relationships:
+          type: object
+          properties:
+            account:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/AccountRelationship'
+
+    AccountRelationship:
+      type: object
+      description: Account resource identifier.
+      properties:
+        type:
+          type: string
+          enum: [accounts]
+        id:
+          type: string
+      required:
+        - type
+        - id
+
+    WidgetDocument:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Widget'
+
+    WidgetListingDocument:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
