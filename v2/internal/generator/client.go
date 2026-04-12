@@ -5,13 +5,15 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/iancoleman/strcase"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"text/template"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/iancoleman/strcase"
 )
 
 //go:embed templates/client.tpl
