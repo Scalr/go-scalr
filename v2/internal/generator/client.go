@@ -5,7 +5,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
