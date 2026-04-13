@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Attach a Provider Configuration to the Module Test Configuration.
 func (c *Client) CreateModuleTestProviderConfigurationLinkRaw(ctx context.Context, testConfiguration string, req *schemas.ModuleTestProviderConfigurationLinkRequest) (*client.Response, error) {
 	path := "/test-configurations/{test_configuration}/provider-configuration-links"
+	if testConfiguration == "" {
+		return nil, fmt.Errorf("testConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{test_configuration}", url.PathEscape(testConfiguration))
 
 	// Wrap request in JSON:API envelope
@@ -64,6 +67,9 @@ func (c *Client) CreateModuleTestProviderConfigurationLink(ctx context.Context, 
 // The endpoint deletes a Module Test Provider Configuration Link by ID.
 func (c *Client) DeleteModuleTestProviderConfigurationLinkRaw(ctx context.Context, moduleTestProviderConfigurationLink string) (*client.Response, error) {
 	path := "/module-test-provider-configuration-links/{module_test_provider_configuration_link}"
+	if moduleTestProviderConfigurationLink == "" {
+		return nil, fmt.Errorf("moduleTestProviderConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_test_provider_configuration_link}", url.PathEscape(moduleTestProviderConfigurationLink))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -87,6 +93,9 @@ func (c *Client) DeleteModuleTestProviderConfigurationLink(ctx context.Context, 
 // Show details of a specific Module Test Provider Configuration Link.
 func (c *Client) GetModuleTestProviderConfigurationLinkRaw(ctx context.Context, moduleTestProviderConfigurationLink string, opts *GetModuleTestProviderConfigurationLinkOptions) (*client.Response, error) {
 	path := "/module-test-provider-configuration-links/{module_test_provider_configuration_link}"
+	if moduleTestProviderConfigurationLink == "" {
+		return nil, fmt.Errorf("moduleTestProviderConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_test_provider_configuration_link}", url.PathEscape(moduleTestProviderConfigurationLink))
 
 	params := url.Values{}
@@ -94,9 +103,13 @@ func (c *Client) GetModuleTestProviderConfigurationLinkRaw(ctx context.Context, 
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -137,12 +150,19 @@ func (c *Client) GetModuleTestProviderConfigurationLink(ctx context.Context, mod
 type GetModuleTestProviderConfigurationLinkOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Provider Configuration links to Module Test Configurations.
 func (c *Client) ListModuleTestProviderConfigurationLinksRaw(ctx context.Context, testConfiguration string, opts *ListModuleTestProviderConfigurationLinksOptions) (*client.Response, error) {
 	path := "/test-configurations/{test_configuration}/provider-configuration-links"
+	if testConfiguration == "" {
+		return nil, fmt.Errorf("testConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{test_configuration}", url.PathEscape(testConfiguration))
 
 	params := url.Values{}
@@ -156,9 +176,13 @@ func (c *Client) ListModuleTestProviderConfigurationLinksRaw(ctx context.Context
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -246,7 +270,6 @@ func (c *Client) ListModuleTestProviderConfigurationLinksIter(ctx context.Contex
 				yield(schemas.ModuleTestProviderConfigurationLink{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -256,8 +279,10 @@ func (c *Client) ListModuleTestProviderConfigurationLinksIter(ctx context.Contex
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ModuleTestProviderConfigurationLink{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ModuleTestProviderConfigurationLink{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -356,12 +381,19 @@ type ListModuleTestProviderConfigurationLinksOptions struct {
 	PageSize int
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint allows updates to attributes of an existing Module Test Provider Configuration Link.
 func (c *Client) UpdateModuleTestProviderConfigurationLinkRaw(ctx context.Context, moduleTestProviderConfigurationLink string, req *schemas.ModuleTestProviderConfigurationLinkRequest) (*client.Response, error) {
 	path := "/module-test-provider-configuration-links/{module_test_provider_configuration_link}"
+	if moduleTestProviderConfigurationLink == "" {
+		return nil, fmt.Errorf("moduleTestProviderConfigurationLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_test_provider_configuration_link}", url.PathEscape(moduleTestProviderConfigurationLink))
 
 	// Wrap request in JSON:API envelope
