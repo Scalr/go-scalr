@@ -26,6 +26,13 @@ const (
 	AwsDefaultTagsStrategyUpdate AwsDefaultTagsStrategy = "update"
 )
 
+type AwsCredentialsSource string
+
+const (
+	AwsCredentialsSourceEc2InstanceMetadata AwsCredentialsSource = "Ec2InstanceMetadata"
+	AwsCredentialsSourceEcsContainer        AwsCredentialsSource = "EcsContainer"
+)
+
 // providerConfigurations implements ProviderConfigurations.
 type providerConfigurations struct {
 	client *Client
@@ -55,6 +62,7 @@ type ProviderConfiguration struct {
 	AwsAudience                string                 `jsonapi:"attr,aws-audience"`
 	AwsDefaultTags             *map[string]string     `jsonapi:"attr,aws-default-tags"`
 	AwsDefaultTagsStrategy     AwsDefaultTagsStrategy `jsonapi:"attr,aws-default-tags-strategy"`
+	AwsCredentialsSource       AwsCredentialsSource   `jsonapi:"attr,aws-credentials-source"`
 	AzurermClientId            string                 `jsonapi:"attr,azurerm-client-id"`
 	AzurermClientSecret        string                 `jsonapi:"attr,azurerm-client-secret"`
 	AzurermSubscriptionId      string                 `jsonapi:"attr,azurerm-subscription-id"`
@@ -130,6 +138,7 @@ type ProviderConfigurationCreateOptions struct {
 	AwsExternalId              *string                 `jsonapi:"attr,aws-external-id"`
 	AwsDefaultTags             *map[string]string      `jsonapi:"attr,aws-default-tags,omitempty"`
 	AwsDefaultTagsStrategy     *AwsDefaultTagsStrategy `jsonapi:"attr,aws-default-tags-strategy,omitempty"`
+	AwsCredentialsSource       *AwsCredentialsSource   `jsonapi:"attr,aws-credentials-source,omitempty"`
 	AzurermClientId            *string                 `jsonapi:"attr,azurerm-client-id,omitempty"`
 	AzurermClientSecret        *string                 `jsonapi:"attr,azurerm-client-secret,omitempty"`
 	AzurermSubscriptionId      *string                 `jsonapi:"attr,azurerm-subscription-id,omitempty"`
@@ -213,6 +222,7 @@ type ProviderConfigurationUpdateOptions struct {
 	AwsAudience                *string                 `jsonapi:"attr,aws-audience"`
 	AwsDefaultTags             *map[string]string      `jsonapi:"attr,aws-default-tags"`
 	AwsDefaultTagsStrategy     *AwsDefaultTagsStrategy `jsonapi:"attr,aws-default-tags-strategy"`
+	AwsCredentialsSource       *AwsCredentialsSource   `jsonapi:"attr,aws-credentials-source"`
 	AzurermAuthType            *string                 `jsonapi:"attr,azurerm-auth-type"`
 	AzurermAudience            *string                 `jsonapi:"attr,azurerm-audience"`
 	AzurermClientId            *string                 `jsonapi:"attr,azurerm-client-id"`
