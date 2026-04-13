@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"iter"
 	"net/url"
 	"strings"
@@ -137,6 +138,33 @@ type GetModuleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	Filter  map[string]string
+}
+
+// Returns the changelog content for the module.
+func (c *Client) GetModuleChangelogRaw(ctx context.Context, module string) (*client.Response, error) {
+	path := "/modules/{module}/changelog"
+	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Returns the changelog content for the module.
+func (c *Client) GetModuleChangelog(ctx context.Context, module string) (string, error) {
+	resp, err := c.GetModuleChangelogRaw(ctx, module)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+	return string(bodyBytes), nil
 }
 
 // This endpoint lists modules by various filters. To list modules accessible from a certain environment, `filter[environment]` has to be specified. Modules from the account which this environment belongs as well as globally published modules will be listed as well. To list modules accessible from a certain account, `filter[account]` has to be specified. Modules published globally will be listed as well. To list modules accessible globally, both `filter[account]=null` and `filter[environment]=null` have to be specified. If no filters were specified, all modules which the user has read access to will be listed.
