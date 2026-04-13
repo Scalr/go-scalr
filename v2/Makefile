@@ -1,4 +1,9 @@
 .PHONY: build generate test lint fmt install-hooks install-tools
+
+SPEC_PATH ?= ../../fatmouse/taco/openapi/openapi-public.yml
+# During development we expect the `fatmouse` and `go-scalr` repositories to be next to each other.
+# Override SPEC_PATH to use another spec location: `SPEC_PATH=openapi-public.yml make generate`
+
 GOLANGCI_LINT_VERSION := v2.5.0
 
 build: ## Build the generator
@@ -7,9 +12,8 @@ build: ## Build the generator
 	@echo "✓ Built bin/scalr-gen"
 
 generate: ## Generate public API client from OpenAPI spec
-	# When developing, we expect the `fatmouse` and `go-scalr` repositories to be next to each other.
 	@go run ./cmd/scalr-gen \
-		--spec=../../fatmouse/taco/openapi/openapi-public.yml \
+		--spec=$(SPEC_PATH) \
 		--package=scalr
 	@go build ./scalr/...
 	@echo "✓ Generated code compiles"

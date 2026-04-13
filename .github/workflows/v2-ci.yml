@@ -2,13 +2,27 @@ name: V2 CI
 
 on:
   push:
+    branches:
+      - master
     paths:
-    - 'v2/**'
+      - v2/**
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+    branches:
+      - master
+    paths:
+      - v2/**
 
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    if: github.event.action != 'labeled' && github.event.action != 'unlabeled'
 
     steps:
       - name: Checkout
@@ -31,6 +45,7 @@ jobs:
   tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    if: github.event.action != 'labeled' && github.event.action != 'unlabeled'
     defaults:
       run:
         working-directory: v2
@@ -48,3 +63,28 @@ jobs:
 
       - name: Run Unit Tests
         run: make test
+
+  version-guard:
+    name: Version guard
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.actor != 'github-actions[bot]' &&
+      !contains(github.event.pull_request.labels.*.name, 'bypass-version-guard')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check version files not manually modified
+        run: |
+          if ! git diff --quiet origin/master...HEAD -- \
+              v2/.version.yml \
+              v2/internal/generator/static/client/version.go; then
+            echo "::error:: Version files must only be modified by the release workflow."
+            echo "If this is intentional, add the 'bypass-version-guard' label to the PR."
+            exit 1
+          fi
+          echo "Ok"
+          exit 0
