@@ -1,4 +1,4 @@
-name: go-scalr v1 default
+name: [v1] Default
 
 on:
   push:
