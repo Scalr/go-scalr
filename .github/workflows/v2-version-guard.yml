@@ -1,4 +1,4 @@
-name: [v2] Version guard
+name: 'v2 / Version guard'
 
 on:
   pull_request:

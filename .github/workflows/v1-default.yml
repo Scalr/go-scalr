@@ -1,4 +1,4 @@
-name: [v1] Default
+name: 'v1 / Default'
 
 on:
   push:
