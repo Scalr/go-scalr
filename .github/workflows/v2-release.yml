@@ -420,31 +420,20 @@ jobs:
             PRERELEASE_FLAG="--prerelease"
           fi
 
-          # Write release notes to a temp file to avoid shell injection from multi-line git log.
+          # Write release notes to a temp file to avoid shell injection from multiline $GIT_CHANGELOG.
           NOTES_FILE=$(mktemp)
-          cat > "$NOTES_FILE" <<NOTES_EOF
-# go-scalr ${TAG}
-
-Auto-generated Go client for Scalr API.
-
-## Installation
-
-\`\`\`bash
-go get github.com/Scalr/go-scalr/v2@${TAG}
-\`\`\`
-
-## Version Information
-
-| Field | Value |
-|-------|-------|
-| Client Version | \`${TAG}\` |
-| API Version | \`${API_VERSION}\` |
-| Spec SHA256 | \`${SPEC_SHA}\` |
-
-## Changelog
-
-${GIT_CHANGELOG}
-NOTES_EOF
+          {
+            printf '# go-scalr %s\n\n' "$TAG"
+            printf 'Auto-generated Go client for Scalr API.\n\n'
+            printf '## Installation\n\n'
+            printf '```bash\ngo get github.com/Scalr/go-scalr/v2@%s\n```\n\n' "$TAG"
+            printf '## Version Information\n\n'
+            printf '| Field | Value |\n|-------|-------|\n'
+            printf '| Client Version | `%s` |\n' "$TAG"
+            printf '| API Version | `%s` |\n' "$API_VERSION"
+            printf '| Spec SHA256 | `%s` |\n\n' "$SPEC_SHA"
+            printf '## Changelog\n\n%s\n' "$GIT_CHANGELOG"
+          } > "$NOTES_FILE"
 
           gh release create "$TAG" \
             --title "go-scalr ${TAG}" \
