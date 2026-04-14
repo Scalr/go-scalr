@@ -344,45 +344,38 @@ jobs:
         if: needs.check.outputs.pr_mode == 'true'
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
+          HAS_BREAKING: ${{ needs.check.outputs.has_breaking }}
+          API_CHANGELOG: ${{ needs.check.outputs.api_changelog }}
         run: |
-          HAS_BREAKING="${{ needs.check.outputs.has_breaking }}"
           VERSION="${{ steps.version.outputs.version }}"
           API_VERSION="${{ steps.version.outputs.api_version }}"
+          PRERELEASE="${{ steps.version.outputs.prerelease }}"
+          ACTOR="${{ github.actor }}"
 
           if [ "$HAS_BREAKING" = "true" ]; then
             TITLE="Release: v${VERSION} (BREAKING — API ${API_VERSION})"
             LABEL_FLAGS="--label release --label breaking-change"
-            WARNING="> [!WARNING]
-          > **Breaking API changes detected.** Review the changelog below before merging."
+            WARNING=$'> [!WARNING]\n> **Breaking API changes detected.** Review the changelog below before merging.'
           else
             TITLE="Release: v${VERSION} (API ${API_VERSION})"
             LABEL_FLAGS="--label release"
             WARNING=""
           fi
 
-          BODY="## Release v${VERSION}
-
-          **Client Version:** \`v${VERSION}\`
-          **API Version:** \`${API_VERSION}\`
-          **Pre-release:** \`${{ steps.version.outputs.prerelease }}\`
-
-          ${WARNING}
-
-          ### API Changelog
-
-          \`\`\`
-          ${{ needs.check.outputs.api_changelog }}
-          \`\`\`
-
-          ---
-          Triggered by *@${{ github.actor }}*".
+          # Write body to a temp file to avoid shell injection from multi-line changelog content.
+          BODY_FILE=$(mktemp)
+          printf '## Release v%s\n\n**Client Version:** `v%s`\n**API Version:** `%s`\n**Pre-release:** `%s`\n\n%s\n\n### API Changelog\n\n```\n%s\n```\n\n---\nTriggered by *@%s*\n' \
+            "$VERSION" "$VERSION" "$API_VERSION" "$PRERELEASE" "$WARNING" "$API_CHANGELOG" "$ACTOR" \
+            > "$BODY_FILE"
 
           gh pr create \
             --base master \
             --head "release/v${VERSION}" \
             --title "$TITLE" \
-            --body "$BODY" \
+            --body-file "$BODY_FILE" \
             $LABEL_FLAGS
+
+          rm -f "$BODY_FILE"
 
       # Automatic release mode ------------------------------------------------
 
@@ -416,6 +409,7 @@ jobs:
         if: needs.check.outputs.pr_mode == 'false'
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
+          GIT_CHANGELOG: ${{ steps.changelog.outputs.body }}
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           VERSION="${{ steps.version.outputs.version }}"
@@ -426,32 +420,38 @@ jobs:
             PRERELEASE_FLAG="--prerelease"
           fi
 
-          NOTES="# go-scalr ${TAG}
+          # Write release notes to a temp file to avoid shell injection from multi-line git log.
+          NOTES_FILE=$(mktemp)
+          cat > "$NOTES_FILE" <<NOTES_EOF
+# go-scalr ${TAG}
 
-          Auto-generated Go client for Scalr API.
+Auto-generated Go client for Scalr API.
 
-          ## Installation
+## Installation
 
-          \`\`\`bash
-          go get github.com/Scalr/go-scalr/v2@${TAG}
-          \`\`\`
+\`\`\`bash
+go get github.com/Scalr/go-scalr/v2@${TAG}
+\`\`\`
 
-          ## Version Information
+## Version Information
 
-          | Field | Value |
-          |-------|-------|
-          | Client Version | \`${TAG}\` |
-          | API Version | \`${API_VERSION}\` |
-          | Spec SHA256 | \`${SPEC_SHA}\` |
+| Field | Value |
+|-------|-------|
+| Client Version | \`${TAG}\` |
+| API Version | \`${API_VERSION}\` |
+| Spec SHA256 | \`${SPEC_SHA}\` |
 
-          ## Changelog
+## Changelog
 
-          ${{ steps.changelog.outputs.body }}"
+${GIT_CHANGELOG}
+NOTES_EOF
 
           gh release create "$TAG" \
             --title "go-scalr ${TAG}" \
-            --notes "$NOTES" \
+            --notes-file "$NOTES_FILE" \
             $PRERELEASE_FLAG
+
+          rm -f "$NOTES_FILE"
 
       # Slack notification ------------------------------------------------
 
