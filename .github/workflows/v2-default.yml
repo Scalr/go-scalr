@@ -39,12 +39,18 @@ jobs:
           working-directory: v2
           args: --config=.golangci.yml
 
+      - name: Validate Generated Client
+        run: |
+          cd v2 && make generate
+          if [ -n "$(git status --porcelain v2/)" ]; then
+            echo "::error:: Committed generated code is out of date. Run 'make generate' and commit the result."
+            git diff --stat v2/
+            exit 1
+          fi
+
   tests:
     name: Unit Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: v2
 
     steps:
       - name: Checkout
@@ -58,5 +64,4 @@ jobs:
           cache-dependency-path: v2/go.sum
 
       - name: Run Unit Tests
-        run: make test
-
+        run: cd v2 && make test

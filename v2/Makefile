@@ -2,7 +2,8 @@
 
 SPEC_PATH ?= ../../fatmouse/taco/openapi/openapi-public.yml
 # During development we expect the `fatmouse` and `go-scalr` repositories to be next to each other.
-# Override SPEC_PATH to use another spec location: `SPEC_PATH=openapi-public.yml make generate`
+# Override SPEC_PATH to use another spec location: `SPEC_PATH=~/work/openapi-public.yml make generate`.
+# Used only when running generate locally — CI uses the committed openapi-public.yml.
 
 GOLANGCI_LINT_VERSION := v2.5.0
 
@@ -12,9 +13,11 @@ build: ## Build the generator
 	@echo "✓ Built bin/scalr-gen"
 
 generate: ## Generate public API client from OpenAPI spec
-	@go run ./cmd/scalr-gen \
-		--spec=$(SPEC_PATH) \
-		--package=scalr
+	@if [ -f "$(SPEC_PATH)" ]; then \
+		cp "$(SPEC_PATH)" openapi-public.yml && \
+		echo "✓ Updated openapi-public.yml from $(SPEC_PATH)"; \
+	fi
+	@go run ./cmd/scalr-gen --spec=openapi-public.yml --package=scalr
 	@go build ./scalr/...
 	@echo "✓ Generated code compiles"
 
