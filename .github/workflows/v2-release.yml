@@ -49,12 +49,21 @@ jobs:
           cache: true
           cache-dependency-path: v2/go.sum
 
+      - name: Sudo GitHub Token
+        id: token
+        if: inputs.fatmouse-ref != ''
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.SUDO_GHA_APP_ID }}
+          private-key: ${{ secrets.SUDO_GHA_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - name: Checkout fatmouse
         if: inputs.fatmouse-ref != ''
         uses: actions/checkout@v5
         with:
           repository: Scalr/fatmouse
-          token: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          token: ${{ steps.token.outputs.token }}
           ref: ${{ inputs.fatmouse-ref }}
           path: _fatmouse
           sparse-checkout: taco/openapi
@@ -153,10 +162,18 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Sudo GitHub Token
+        id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.SUDO_GHA_APP_ID }}
+          private-key: ${{ secrets.SUDO_GHA_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - name: Checkout go-scalr
         uses: actions/checkout@v5
         with:
-#          token: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          token: ${{ steps.token.outputs.token }}
           fetch-depth: 0
 
       - name: Setup Go
@@ -171,7 +188,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: Scalr/fatmouse
-          token: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          token: ${{ steps.token.outputs.token }}
           ref: ${{ inputs.fatmouse-ref }}
           path: _fatmouse
           sparse-checkout: taco/openapi
@@ -297,7 +314,7 @@ jobs:
       - name: Create labels if missing
         if: needs.check.outputs.pr_mode == 'true'
         env:
-          GH_TOKEN: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          GH_TOKEN: ${{ steps.token.outputs.token }}
         run: |
           gh label create "release" --color "0075ca" --description "Release PR" --force 2>/dev/null || true
           gh label create "breaking-change" --color "d93f0b" --description "Contains breaking API changes" --force 2>/dev/null || true
@@ -305,7 +322,7 @@ jobs:
       - name: Create PR
         if: needs.check.outputs.pr_mode == 'true'
         env:
-          GH_TOKEN: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          GH_TOKEN: ${{ steps.token.outputs.token }}
         run: |
           HAS_BREAKING="${{ needs.check.outputs.has_breaking }}"
           VERSION="${{ steps.version.outputs.version }}"
@@ -335,13 +352,6 @@ jobs:
           \`\`\`
           ${{ needs.check.outputs.api_changelog }}
           \`\`\`
-
-          ### Checklist
-          - [x] Generated from updated OpenAPI spec
-          - [x] Tests pass
-          - [x] Linter checks pass
-          - [ ] Manual review completed
-          - [ ] Ready to merge and tag
 
           ---
           Triggered by *@${{ github.actor }}*".
@@ -384,7 +394,7 @@ jobs:
       - name: Create GitHub Release
         if: needs.check.outputs.pr_mode == 'false'
         env:
-          GH_TOKEN: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          GH_TOKEN: ${{ steps.token.outputs.token }}
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           VERSION="${{ steps.version.outputs.version }}"
