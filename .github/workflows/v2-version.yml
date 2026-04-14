@@ -18,7 +18,7 @@ jobs:
     name: Guard
     runs-on: ubuntu-latest
     if: >-
-      github.actor != 'github-actions[bot]' &&
+      github.actor != 'sudo-github-actions[bot]' &&
       !contains(github.event.pull_request.labels.*.name, 'bypass-version-guard')
     steps:
       - name: Checkout

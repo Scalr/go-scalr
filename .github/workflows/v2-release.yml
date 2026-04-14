@@ -47,7 +47,7 @@ jobs:
         if: inputs.fatmouse-ref != ''
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.SUDO_GHA_APP_ID }}
+          client-id: ${{ vars.SUDO_GHA_APP_ID }}
           private-key: ${{ secrets.SUDO_GHA_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
@@ -187,7 +187,7 @@ jobs:
         id: token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.SUDO_GHA_APP_ID }}
+          client-id: ${{ vars.SUDO_GHA_APP_ID }}
           private-key: ${{ secrets.SUDO_GHA_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
