@@ -446,11 +446,10 @@ jobs:
 
       - name: Notify Slack — release published
         if: success() && needs.check.outputs.pr_mode == 'false'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: incoming-webhook
         uses: slackapi/slack-github-action@v3
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "channel" : "#release-sync",
@@ -467,15 +466,14 @@ jobs:
 
       - name: Notify Slack — PR created (non-breaking)
         if: success() && needs.check.outputs.pr_mode == 'true' && needs.check.outputs.has_breaking != 'true'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: incoming-webhook
         uses: slackapi/slack-github-action@v3
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "channel" : "#release-sync",
-              "text": ":pr: go-scalr release ${{ steps.version.outputs.tag }} — PR created for review",
+              "text": ":hourglass: go-scalr release ${{ steps.version.outputs.tag }} — PR created for review",
               "attachments": [{
                 "color": "#0075ca",
                 "fields": [
@@ -488,11 +486,10 @@ jobs:
 
       - name: Notify Slack — PR created (breaking changes)
         if: success() && needs.check.outputs.pr_mode == 'true' && needs.check.outputs.has_breaking == 'true'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: incoming-webhook
         uses: slackapi/slack-github-action@v3
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "channel" : "#release-sync",
@@ -509,15 +506,14 @@ jobs:
 
       - name: Notify Slack — failure
         if: failure()
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: incoming-webhook
         uses: slackapi/slack-github-action@v3
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "channel" : "#release-sync",
-              "text": "<!subteam^S043RKZ2F9C> go-scalr release failed for ${{ steps.version.outputs.tag || 'unknown version' }}",
+              "text": ":x: go-scalr release failed for ${{ steps.version.outputs.tag || 'unknown version' }}",
               "attachments": [{
                 "color": "danger",
                 "fields": [
