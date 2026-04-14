@@ -2652,133 +2652,6 @@ components:
           readOnly: true
           type: object
       type: object
-    DockerIntegration:
-      properties:
-        attributes:
-          properties:
-            error-message:
-              description: Last Docker registry connection test error message, if any.
-              nullable: true
-              readOnly: true
-              type: string
-            export-credentials:
-              default: false
-              description: Whether registry credentials should be exported into the run pipeline for OpenTofu OCI module access.
-              type: boolean
-            name:
-              description: Name of the Docker integration.
-              maxLength: 128
-              type: string
-            password:
-              description: Docker registry password or personal access token used for authentication.
-              nullable: true
-              type: string
-            registry-url:
-              description: Docker registry URL. Use the registry endpoint used by the runtime. Its normalized host[:port]
-                is used as the auth server address.
-              maxLength: 512
-              type: string
-            status:
-              description: Integration status after the latest connection test.
-              enum:
-              - active
-              - disabled
-              - failed
-              - pending
-              type: string
-            username:
-              description: Docker registry username used for authentication.
-              maxLength: 255
-              nullable: true
-              type: string
-          required:
-          - name
-          - registry-url
-          - username
-          - password
-          type: object
-        id:
-          readOnly: true
-          type: string
-        links:
-          properties:
-            self:
-              readOnly: true
-              type: string
-          readOnly: true
-          type: object
-        relationships:
-          properties:
-            account:
-              description: The account this integration belongs to.
-              properties:
-                data:
-                  nullable: true
-                  properties:
-                    id:
-                      type: string
-                    type:
-                      enum:
-                      - accounts
-                      type: string
-                  required:
-                  - type
-                  - id
-                  type: object
-              readOnly: true
-              required:
-              - data
-              type: object
-          type: object
-        type:
-          enum:
-          - docker-integrations
-          type: string
-      required:
-      - type
-      - attributes
-      type: object
-    DockerIntegrationDocument:
-      description: |-
-        JSON:API Document.
-
-        see: https://jsonapi.org/format/#document-structure
-      properties:
-        data:
-          $ref: '#/components/schemas/DockerIntegration'
-        included:
-          items:
-            type: object
-          readOnly: true
-          type: array
-        meta:
-          readOnly: true
-          type: object
-      type: object
-    DockerIntegrationListingDocument:
-      description: |-
-        JSON:API Document Listing
-
-        see: https://jsonapi.org/format/#document-structure
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/DockerIntegration'
-          type: array
-        included:
-          items:
-            type: object
-          readOnly: true
-          type: array
-        links:
-          additionalProperties:
-            type: string
-          readOnly: true
-          type: object
-        meta:
-          readOnly: true
-          type: object
-      type: object
     DriftDetectionSchedule:
       properties:
         attributes:
@@ -6026,14 +5899,6 @@ components:
             aws-audience:
               description: The value of the aud claim for the identity token.
               minLength: 1
-              nullable: true
-              type: string
-            aws-credentials-source:
-              description: 'The credential source for the initial assume-role call. Applicable when the trusted entity type
-                is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.'
-              enum:
-              - Ec2InstanceMetadata
-              - EcsContainer
               nullable: true
               type: string
             aws-credentials-type:
@@ -13639,8 +13504,8 @@ paths:
   /accounts/{account}/actions/remove/{user}:
     delete:
       description: |
-        Removes a user from the account. This revokes all access policies
-        and team memberships associated with the account for that user.
+        The endpoint removes all user access policies and team bindings
+        associated with the account.
       operationId: remove_user_from_account
       parameters:
       - description: The ID of the account.
@@ -17084,178 +16949,6 @@ paths:
       - datadog-integrations
       x-resource: DatadogIntegration
       x-service: tf-api
-  /integrations/docker:
-    get:
-      description: List Docker integrations.
-      operationId: list_docker_integrations
-      parameters:
-      - description: Page number
-        in: query
-        name: page[number]
-        required: false
-        schema:
-          type: string
-      - description: Page size
-        in: query
-        name: page[size]
-        required: false
-        schema:
-          type: string
-      - description: The comma-separated list of attributes.
-        explode: false
-        in: query
-        name: sort
-        required: false
-        schema:
-          items:
-            enum:
-            - name
-            type: string
-          type: array
-      - description: The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of
-          the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-        explode: true
-        in: query
-        name: fields
-        required: false
-        schema:
-          properties:
-            docker-integrations:
-              description: The comma-separated list of fields to return in response for DockerIntegration resource.
-              type: string
-          type: object
-        style: deepObject
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/DockerIntegrationListingDocument'
-          description: ''
-        4XX:
-          description: Client error.
-        5XX:
-          description: Server error.
-      summary: List Docker integrations
-      tags:
-      - docker-integrations
-      x-resource: DockerIntegration
-      x-service: tf-api
-    post:
-      description: Create a Docker integration.
-      operationId: create_docker_integration
-      parameters: []
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/schemas/DockerIntegrationDocument'
-      responses:
-        '201':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/DockerIntegrationDocument'
-          description: ''
-        4XX:
-          description: Client error.
-        5XX:
-          description: Server error.
-      summary: Create a Docker integration
-      tags:
-      - docker-integrations
-      x-resource: DockerIntegration
-      x-service: tf-api
-  /integrations/docker/{docker_integration}:
-    delete:
-      description: Delete a Docker integration.
-      operationId: delete_docker_integration
-      parameters:
-      - in: path
-        name: docker_integration
-        required: true
-        schema:
-          type: string
-      responses:
-        '204':
-          description: ''
-        4XX:
-          description: Client error.
-        5XX:
-          description: Server error.
-      summary: Delete a Docker integration
-      tags:
-      - docker-integrations
-      x-resource: DockerIntegration
-      x-service: tf-api
-    get:
-      description: Get a Docker integration.
-      operationId: get_docker_integration
-      parameters:
-      - in: path
-        name: docker_integration
-        required: true
-        schema:
-          type: string
-      - description: The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of
-          the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-        explode: true
-        in: query
-        name: fields
-        required: false
-        schema:
-          properties:
-            docker-integrations:
-              description: The comma-separated list of fields to return in response for DockerIntegration resource.
-              type: string
-          type: object
-        style: deepObject
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/DockerIntegrationDocument'
-          description: ''
-        4XX:
-          description: Client error.
-        5XX:
-          description: Server error.
-      summary: Get a Docker integration
-      tags:
-      - docker-integrations
-      x-resource: DockerIntegration
-      x-service: tf-api
-    patch:
-      description: Update a Docker integration.
-      operationId: update_docker_integration
-      parameters:
-      - in: path
-        name: docker_integration
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/schemas/DockerIntegrationDocument'
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/DockerIntegrationDocument'
-          description: ''
-        4XX:
-          description: Client error.
-        5XX:
-          description: Server error.
-      summary: Update a Docker integration
-      tags:
-      - docker-integrations
-      x-resource: DockerIntegration
-      x-service: tf-api
   /integrations/infracost:
     get:
       description: This endpoint returns a list of Infracost integrations.
@@ -19799,12 +19492,6 @@ paths:
       - description: 'The policy name filter. Example: `filter[policy]=workspace_name`'
         in: query
         name: filter[policy]
-        required: false
-        schema:
-          type: string
-      - description: 'The date range filter. Example: `filter[date]=between:2022-01-01T00:00:00Z,2022-02-01T00:00:00Z`'
-        in: query
-        name: filter[date]
         required: false
         schema:
           type: string
@@ -25930,9 +25617,6 @@ paths:
       description: |
         Update a team's attributes or users.
         The endpoint can be used to add or remove users from a team.
-        If the account uses an external identity provider without SCIM provisioning,
-        team membership cannot be managed via this endpoint - the ``users`` relationship
-        will be ignored. Use SCIM or manage team membership directly in the identity provider.
       operationId: update_team
       parameters:
       - in: path

@@ -26,7 +26,6 @@ func New(httpClient *client.HTTPClient) *Client {
 
 // Filter key constants for PolicyCheckResult operations
 const (
-	FilterDate           = "filter[date]"            // The date range filter. Example: `filter[date]=between:2022-01-01T00:00:00Z,2022-02-01T00:00:00Z`
 	FilterEnvironment    = "filter[environment]"     // The environment ID to list policy check results for. Example: `filter[environment]=env-123456`
 	FilterPolicy         = "filter[policy]"          // The policy name filter. Example: `filter[policy]=workspace_name`
 	FilterResult         = "filter[result]"          // The result of the policy check filter. Example: `filter[result]=hard-failed`
