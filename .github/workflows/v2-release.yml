@@ -341,6 +341,7 @@ jobs:
           gh label create "breaking-change" --color "d93f0b" --description "Contains breaking API changes" --force 2>/dev/null || true
 
       - name: Create PR
+        id: create-pr
         if: needs.check.outputs.pr_mode == 'true'
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
@@ -368,14 +369,15 @@ jobs:
             "$VERSION" "$VERSION" "$API_VERSION" "$PRERELEASE" "$WARNING" "$API_CHANGELOG" "$ACTOR" \
             > "$BODY_FILE"
 
-          gh pr create \
+          PR_URL=$(gh pr create \
             --base master \
             --head "release/v${VERSION}" \
             --title "$TITLE" \
             --body-file "$BODY_FILE" \
-            $LABEL_FLAGS
+            $LABEL_FLAGS)
 
           rm -f "$BODY_FILE"
+          echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
 
       # Automatic release mode ------------------------------------------------
 
@@ -479,7 +481,7 @@ jobs:
                 "fields": [
                   {"title": "Version", "value": "${{ steps.version.outputs.tag }}", "short": true},
                   {"title": "API Version", "value": "${{ steps.version.outputs.api_version }}", "short": true},
-                  {"title": "PRs", "value": "https://github.com/Scalr/go-scalr/pulls", "short": false}
+                  {"title": "PR", "value": "${{ steps.create-pr.outputs.pr_url }}", "short": false}
                 ]
               }]
             }
@@ -499,7 +501,7 @@ jobs:
                 "fields": [
                   {"title": "Version", "value": "${{ steps.version.outputs.tag }}", "short": true},
                   {"title": "API Version", "value": "${{ steps.version.outputs.api_version }}", "short": true},
-                  {"title": "PRs", "value": "https://github.com/Scalr/go-scalr/pulls", "short": false}
+                  {"title": "PR", "value": "${{ steps.create-pr.outputs.pr_url }}", "short": false}
                 ]
               }]
             }
