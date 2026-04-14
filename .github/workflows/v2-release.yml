@@ -1,0 +1,483 @@
+name: 'v2 / Release'
+
+on:
+  workflow_dispatch:
+    inputs:
+      fatmouse-ref:
+        description: 'Fatmouse git ref (tag/SHA) to fetch spec from. Leave empty to download from production URL.'
+        required: false
+        type: string
+      api-version:
+        description: 'Scalr API version (e.g. v2604.7.2). Informational only.'
+        required: false
+        type: string
+      force-version:
+        description: 'Override auto-bumped client version (e.g. 2.1.0). Use for generator-only releases. Skips "spec unchanged" early-exit.'
+        required: false
+        type: string
+      create-pr:
+        description: 'Create PR instead of pushing directly to master. Auto-forced on breaking changes.'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: v2-release
+  cancel-in-progress: false
+
+jobs:
+  # Early precheck: determine if a release is needed and whether there are breaking changes.
+  check:
+    name: Check Spec
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.decide.outputs.should_release }}
+      spec_changed:   ${{ steps.spec-check.outputs.spec_changed }}
+      new_sha:        ${{ steps.spec-check.outputs.new_sha }}
+      has_breaking:   ${{ steps.breaking.outputs.has_breaking }}
+      api_changelog:  ${{ steps.breaking.outputs.changelog }}
+      pr_mode:        ${{ steps.decide.outputs.pr_mode }}
+
+    steps:
+      - name: Checkout go-scalr
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'v2/.go-version'
+          cache: true
+          cache-dependency-path: v2/go.sum
+
+      - name: Checkout fatmouse
+        if: inputs.fatmouse-ref != ''
+        uses: actions/checkout@v5
+        with:
+          repository: Scalr/fatmouse
+          token: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          ref: ${{ inputs.fatmouse-ref }}
+          path: _fatmouse
+          sparse-checkout: taco/openapi
+
+      - name: Copy spec from fatmouse
+        if: inputs.fatmouse-ref != ''
+        run: cp _fatmouse/taco/openapi/openapi-public.yml v2/openapi-public.yml.new
+
+      - name: Download spec from production URL
+        if: inputs.fatmouse-ref == ''
+        run: curl -sSfL https://scalr.io/api/iacp/v3/openapi-public.yml -o v2/openapi-public.yml.new
+
+      - name: Check spec changed
+        id: spec-check
+        run: |
+          NEW_SHA=$(shasum -a 256 v2/openapi-public.yml.new | awk '{print $1}')
+          OLD_SHA=$(grep 'spec_sha256:' v2/.version.yml | sed 's/.*"\(.*\)"/\1/' | tr -d '[:space:]')
+          echo "new_sha=$NEW_SHA" >> $GITHUB_OUTPUT
+          if [ "$NEW_SHA" = "$OLD_SHA" ]; then
+            echo "spec_changed=false" >> $GITHUB_OUTPUT
+            echo "Spec unchanged (SHA: $NEW_SHA)"
+          else
+            echo "spec_changed=true" >> $GITHUB_OUTPUT
+            echo "Spec changed: $OLD_SHA → $NEW_SHA"
+          fi
+
+      - name: Install oasdiff
+        if: steps.spec-check.outputs.spec_changed == 'true'
+        run: go install github.com/tufin/oasdiff@latest
+
+      - name: Detect breaking changes
+        id: breaking
+        if: steps.spec-check.outputs.spec_changed == 'true'
+        run: |
+          CHANGELOG=$(oasdiff changelog v2/openapi-public.yml v2/openapi-public.yml.new --format text 2>&1 || true)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          set +e
+          oasdiff breaking v2/openapi-public.yml v2/openapi-public.yml.new --fail-on ERR > /dev/null 2>&1
+          EXIT=$?
+          set -e
+          if [ $EXIT -eq 0 ]; then
+            echo "has_breaking=false" >> $GITHUB_OUTPUT
+            echo "No breaking changes detected."
+          elif [ $EXIT -eq 1 ]; then
+            echo "has_breaking=true" >> $GITHUB_OUTPUT
+            echo "Breaking changes detected — release will require PR review."
+          else
+            echo "oasdiff exited with unexpected code $EXIT" >&2
+            exit $EXIT
+          fi
+
+      - name: Make release decision
+        id: decide
+        run: |
+          SPEC_CHANGED="${{ steps.spec-check.outputs.spec_changed }}"
+          FORCE_VERSION="${{ inputs.force-version }}"
+          HAS_BREAKING="${{ steps.breaking.outputs.has_breaking }}"
+          CREATE_PR="${{ inputs.create-pr }}"
+
+          if [ "$SPEC_CHANGED" = "false" ] && [ -z "$FORCE_VERSION" ]; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "Nothing to release: spec unchanged and no force-version provided."
+            exit 0
+          fi
+          echo "should_release=true" >> $GITHUB_OUTPUT
+
+          # PR mode: forced when breaking changes or when explicitly requested.
+          # Also forced when force-version is combined with an unexpected spec change
+          # (so generator-only releases do not silently contain spec changes).
+          if [ "$HAS_BREAKING" = "true" ] || \
+             [ "$CREATE_PR" = "true" ] || \
+             { [ -n "$FORCE_VERSION" ] && [ "$SPEC_CHANGED" = "true" ]; }; then
+            echo "pr_mode=true" >> $GITHUB_OUTPUT
+            if [ "$HAS_BREAKING" = "true" ]; then
+              echo "PR mode: breaking API changes detected."
+            elif [ -n "$FORCE_VERSION" ] && [ "$SPEC_CHANGED" = "true" ]; then
+              echo "PR mode: force-version with unexpected spec change — requires human review."
+            else
+              echo "PR mode: requested by user."
+            fi
+          else
+            echo "pr_mode=false" >> $GITHUB_OUTPUT
+            echo "Automatic release mode."
+          fi
+
+  release:
+    name: Release
+    needs: check
+    if: needs.check.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout go-scalr
+        uses: actions/checkout@v5
+        with:
+#          token: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'v2/.go-version'
+          cache: true
+          cache-dependency-path: v2/go.sum
+
+      - name: Checkout fatmouse
+        if: inputs.fatmouse-ref != ''
+        uses: actions/checkout@v5
+        with:
+          repository: Scalr/fatmouse
+          token: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+          ref: ${{ inputs.fatmouse-ref }}
+          path: _fatmouse
+          sparse-checkout: taco/openapi
+
+      - name: Copy spec from fatmouse
+        if: inputs.fatmouse-ref != ''
+        run: cp _fatmouse/taco/openapi/openapi-public.yml v2/openapi-public.yml.new
+
+      - name: Download spec from production URL
+        if: inputs.fatmouse-ref == ''
+        run: curl -sSfL https://scalr.io/api/iacp/v3/openapi-public.yml -o v2/openapi-public.yml.new
+
+      - name: Replace committed spec
+        if: needs.check.outputs.spec_changed == 'true'
+        run: mv v2/openapi-public.yml.new v2/openapi-public.yml
+
+      - name: Discard unused spec download
+        if: needs.check.outputs.spec_changed == 'false'
+        run: rm -f v2/openapi-public.yml.new
+
+      - name: Determine version
+        id: version
+        run: |
+          semver_bump() {
+            local ver="$1" bump="$2"
+            local base="${ver#v}"     # strip leading v
+            base="${base%%-*}"        # strip pre-release suffix
+            local major minor patch
+            IFS='.' read -r major minor patch <<< "$base"
+            case "$bump" in
+              minor) printf '%s.%s.0' "$major" "$((minor + 1))" ;;
+              patch) printf '%s.%s.%s' "$major" "$minor" "$((patch + 1))" ;;
+            esac
+          }
+
+          FORCE="${{ inputs.force-version }}"
+          if [ -n "$FORCE" ]; then
+            VERSION="${FORCE#v}"   # strip leading v
+            echo "Using force-version: $VERSION"
+          else
+            CURRENT=$(grep 'client_version:' v2/.version.yml | sed 's/.*"\(.*\)"/\1/')
+            if [ "${{ needs.check.outputs.has_breaking }}" = "true" ]; then
+              VERSION=$(semver_bump "$CURRENT" minor)
+              echo "Breaking changes — bumping minor: $CURRENT → $VERSION"
+            else
+              VERSION=$(semver_bump "$CURRENT" patch)
+              echo "Bumping patch: $CURRENT → $VERSION"
+            fi
+          fi
+
+          # Determine pre-release flag from version string.
+          if echo "$VERSION" | grep -qE '(alpha|beta|rc)'; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+          if [ -n "${{ inputs.api-version }}" ]; then
+            API_VERSION="${{ inputs.api-version }}"
+          else
+            API_VERSION=$(grep 'api_version:' v2/.version.yml | sed 's/.*"\(.*\)"/\1/')
+          fi
+          echo "api_version=$API_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update version.go
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cat > v2/internal/generator/static/client/version.go <<EOF
+          package client
+
+          // Version is the current version of the client.
+          var Version = "v${VERSION}"
+          EOF
+
+      - name: Update .version.yml
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          API_VERSION="${{ steps.version.outputs.api_version }}"
+          SPEC_SHA="${{ needs.check.outputs.new_sha }}"
+          GENERATED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          cat > v2/.version.yml <<EOF
+          client_version: "v${VERSION}"
+          api_version: "${API_VERSION}"
+          generated_at: "${GENERATED_AT}"
+          spec_sha256: "${SPEC_SHA}"
+          EOF
+
+      - name: Generate client
+        run: cd v2 && make generate
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.6.1
+          working-directory: v2
+          args: --config=.golangci.yml cmd/... internal/...
+
+      - name: Refresh e2e golden files
+        run: cd v2 && go test -run TestE2EGenerate ./internal/generator/ -args -update
+
+      - name: Run unit tests
+        run: cd v2 && make test
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit release changes
+        run: |
+          git add v2/
+          git commit -m "Release: v${{ steps.version.outputs.version }} (API ${{ steps.version.outputs.api_version }})"
+
+      # PR release mode ------------------------------------------------
+
+      - name: Push to release branch (PR mode)
+        if: needs.check.outputs.pr_mode == 'true'
+        run: git push origin "HEAD:release/v${{ steps.version.outputs.version }}"
+
+      - name: Create labels if missing
+        if: needs.check.outputs.pr_mode == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+        run: |
+          gh label create "release" --color "0075ca" --description "Release PR" --force 2>/dev/null || true
+          gh label create "breaking-change" --color "d93f0b" --description "Contains breaking API changes" --force 2>/dev/null || true
+
+      - name: Create PR
+        if: needs.check.outputs.pr_mode == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+        run: |
+          HAS_BREAKING="${{ needs.check.outputs.has_breaking }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          API_VERSION="${{ steps.version.outputs.api_version }}"
+
+          if [ "$HAS_BREAKING" = "true" ]; then
+            TITLE="Release: v${VERSION} (BREAKING — API ${API_VERSION})"
+            LABEL_FLAGS="--label release --label breaking-change"
+            WARNING="> [!WARNING]
+          > **Breaking API changes detected.** Review the changelog below before merging."
+          else
+            TITLE="Release: v${VERSION} (API ${API_VERSION})"
+            LABEL_FLAGS="--label release"
+            WARNING=""
+          fi
+
+          BODY="## Release v${VERSION}
+
+          **Client Version:** \`v${VERSION}\`
+          **API Version:** \`${API_VERSION}\`
+          **Pre-release:** \`${{ steps.version.outputs.prerelease }}\`
+
+          ${WARNING}
+
+          ### API Changelog
+
+          \`\`\`
+          ${{ needs.check.outputs.api_changelog }}
+          \`\`\`
+
+          ### Checklist
+          - [x] Generated from updated OpenAPI spec
+          - [x] Tests pass
+          - [x] Linter checks pass
+          - [ ] Manual review completed
+          - [ ] Ready to merge and tag
+
+          ---
+          Triggered by *@${{ github.actor }}*".
+
+          gh pr create \
+            --base master \
+            --head "release/v${VERSION}" \
+            --title "$TITLE" \
+            --body "$BODY" \
+            $LABEL_FLAGS
+
+      # Automatic release mode ------------------------------------------------
+
+      - name: Push to master (direct release)
+        if: needs.check.outputs.pr_mode == 'false'
+        run: git push origin HEAD:master
+
+      - name: Tag release
+        if: needs.check.outputs.pr_mode == 'false'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      # GitHub Release ------------------------------------------------
+
+      - name: Generate changelog
+        id: changelog
+        if: needs.check.outputs.pr_mode == 'false'
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 "${{ steps.version.outputs.tag }}^" 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            BODY=$(git log --pretty=format:"- %s (%h)" "$PREV_TAG..${{ steps.version.outputs.tag }}")
+          else
+            BODY="Initial release."
+          fi
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: needs.check.outputs.pr_mode == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.SUDO_GHA_APP_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          API_VERSION="${{ steps.version.outputs.api_version }}"
+          SPEC_SHA="${{ needs.check.outputs.new_sha }}"
+          PRERELEASE_FLAG=""
+          if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          NOTES="# go-scalr ${TAG}
+
+          Auto-generated Go client for Scalr API.
+
+          ## Installation
+
+          \`\`\`bash
+          go get github.com/Scalr/go-scalr/v2@${TAG}
+          \`\`\`
+
+          ## Version Information
+
+          | Field | Value |
+          |-------|-------|
+          | Client Version | \`${TAG}\` |
+          | API Version | \`${API_VERSION}\` |
+          | Spec SHA256 | \`${SPEC_SHA}\` |
+
+          ## Changelog
+
+          ${{ steps.changelog.outputs.body }}"
+
+          gh release create "$TAG" \
+            --title "go-scalr ${TAG}" \
+            --notes "$NOTES" \
+            $PRERELEASE_FLAG
+
+      # Slack notification ------------------------------------------------
+
+      - name: Notify Slack — release published
+        if: success() && needs.check.outputs.pr_mode == 'false'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":tada: go-scalr ${{ steps.version.outputs.tag }} released!",
+              "attachments": [{
+                "color": "good",
+                "fields": [
+                  {"title": "Version", "value": "${{ steps.version.outputs.tag }}", "short": true},
+                  {"title": "API Version", "value": "${{ steps.version.outputs.api_version }}", "short": true},
+                  {"title": "Release", "value": "https://github.com/Scalr/go-scalr/releases/tag/${{ steps.version.outputs.tag }}", "short": false}
+                ]
+              }]
+            }
+
+      - name: Notify Slack — PR created (breaking changes)
+        if: success() && needs.check.outputs.pr_mode == 'true' && needs.check.outputs.has_breaking == 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":warning: go-scalr ${{ steps.version.outputs.tag }} has breaking API changes — PR requires review",
+              "attachments": [{
+                "color": "warning",
+                "fields": [
+                  {"title": "Version", "value": "${{ steps.version.outputs.tag }}", "short": true},
+                  {"title": "API Version", "value": "${{ steps.version.outputs.api_version }}", "short": true},
+                  {"title": "PRs", "value": "https://github.com/Scalr/go-scalr/pulls", "short": false}
+                ]
+              }]
+            }
+
+      - name: Notify Slack — failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "<!subteam^S043RKZ2F9C> go-scalr release failed for ${{ steps.version.outputs.tag || 'unknown version' }}",
+              "attachments": [{
+                "color": "danger",
+                "fields": [
+                  {"title": "Job URL", "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}", "short": false}
+                ]
+              }]
+            }
