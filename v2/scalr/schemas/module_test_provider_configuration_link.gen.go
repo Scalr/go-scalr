@@ -15,6 +15,7 @@ type ModuleTestProviderConfigurationLink struct {
 	Type string `json:"type"`
 
 	Relationships ModuleTestProviderConfigurationLinkRelationships `json:"relationships"`
+	Links         *ModuleTestProviderConfigurationLinkLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -93,6 +94,11 @@ func (r *ModuleTestProviderConfigurationLinkRelationships) PopulateIncludes(incl
 			}
 		}
 	}
+}
+
+// ModuleTestProviderConfigurationLinkLinks holds the resource links for ModuleTestProviderConfigurationLink (response only).
+type ModuleTestProviderConfigurationLinkLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

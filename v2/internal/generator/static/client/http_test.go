@@ -2,9 +2,11 @@ package client
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -274,7 +276,7 @@ func TestHTTPClientDeleteWithBody(t *testing.T) {
 
 // TestHTTPClient401Error tests 401 Unauthorized responses
 func TestHTTPClient401Error(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte(`{"errors": [{"title": "Unauthorized", "detail": "Invalid token"}]}`))
 	}))
@@ -299,7 +301,7 @@ func TestHTTPClient401Error(t *testing.T) {
 
 // TestHTTPClient404Error tests 404 Not Found responses
 func TestHTTPClient404Error(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(`{"errors": [{"title": "Not Found"}]}`))
 	}))
@@ -325,7 +327,7 @@ func TestHTTPClient404Error(t *testing.T) {
 // TestHTTPClientRetryOn429 tests retry logic for 429 responses
 func TestHTTPClientRetryOn429(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		if attempts < 3 {
 			w.WriteHeader(http.StatusTooManyRequests)
@@ -354,10 +356,76 @@ func TestHTTPClientRetryOn429(t *testing.T) {
 	}
 }
 
+// TestParseRetryAfter tests the Retry-After header parser.
+func TestParseRetryAfter(t *testing.T) {
+	tests := []struct {
+		name     string
+		header   string
+		expected time.Duration
+	}{
+		{name: "empty header", header: "", expected: 0},
+		{name: "integer seconds", header: "30", expected: 30 * time.Second},
+		{name: "one second", header: "1", expected: time.Second},
+		{name: "zero seconds", header: "0", expected: 0},
+		{name: "negative integer", header: "-5", expected: 0},
+		{name: "invalid string", header: "soon", expected: 0},
+		{name: "past HTTP-date", header: "Thu, 01 Jan 1970 00:00:00 GMT", expected: 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseRetryAfter(tt.header)
+			if got != tt.expected {
+				t.Errorf("parseRetryAfter(%q) = %v, want %v", tt.header, got, tt.expected)
+			}
+		})
+	}
+
+	t.Run("future HTTP-date", func(t *testing.T) {
+		future := time.Now().Add(10 * time.Second).UTC().Format(http.TimeFormat)
+		got := parseRetryAfter(future)
+		if got <= 0 || got > 11*time.Second {
+			t.Errorf("parseRetryAfter(future date) = %v, expected ~10s", got)
+		}
+	})
+}
+
+// TestHTTPClientRetryAfterHeader verifies that the Retry-After header value is used
+// as the sleep duration instead of exponential backoff when present on a 429 response.
+func TestHTTPClientRetryAfterHeader(t *testing.T) {
+	attempts := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		attempts++
+		if attempts < 2 {
+			w.Header().Set("Retry-After", "42")
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": {}}`))
+	}))
+	defer server.Close()
+
+	var sleptFor time.Duration
+	client := NewHTTPClient(server.URL, "test-token",
+		WithRetryMax(3),
+		withSleepFunc(func(d time.Duration) { sleptFor = d }),
+	)
+	resp, err := client.Get(context.Background(), "/test", nil)
+	if err != nil {
+		t.Fatalf("Get() error: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if sleptFor != 42*time.Second {
+		t.Errorf("sleep duration = %v, want 42s (from Retry-After header)", sleptFor)
+	}
+}
+
 // TestHTTPClientRetryOn5xx tests retry logic for 5xx responses (when enabled)
 func TestHTTPClientRetryOn5xx(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		if attempts < 2 {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -391,7 +459,7 @@ func TestHTTPClientRetryOn5xx(t *testing.T) {
 // TestHTTPClientNoRetryOn5xxByDefault tests that 5xx doesn't retry by default
 func TestHTTPClientNoRetryOn5xxByDefault(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(`{"errors": [{"title": "Server Error"}]}`))
@@ -413,7 +481,7 @@ func TestHTTPClientNoRetryOn5xxByDefault(t *testing.T) {
 // TestHTTPClientMaxRetriesExhausted tests behavior when max retries are exhausted
 func TestHTTPClientMaxRetriesExhausted(t *testing.T) {
 	attempts := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts++
 		w.WriteHeader(http.StatusTooManyRequests)
 	}))
@@ -432,14 +500,46 @@ func TestHTTPClientMaxRetriesExhausted(t *testing.T) {
 		t.Errorf("Expected 3 attempts (1 initial + 2 retries), got %d", attempts)
 	}
 
-	if !strings.Contains(err.Error(), "after 2 retries") {
-		t.Errorf("Error should mention retries, got: %v", err)
+	// After exhausting retries on 429, the caller gets a typed TooManyRequestsError.
+	var tooManyErr *TooManyRequestsError
+	if !errors.As(err, &tooManyErr) {
+		t.Errorf("Expected *TooManyRequestsError after exhausted 429 retries, got %T: %v", err, err)
+	}
+	if !errors.Is(err, ErrTooManyRequests) {
+		t.Error("Error should match ErrTooManyRequests sentinel")
+	}
+}
+
+// TestTooManyRequestsErrorRetryAfter verifies that RetryAfter is populated
+// from the Retry-After header when retries are exhausted.
+func TestTooManyRequestsErrorRetryAfter(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Retry-After", "60")
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+
+	c := NewHTTPClient(server.URL, "token",
+		WithRetryMax(1),
+		withSleepFunc(func(time.Duration) {}),
+	)
+	_, err := c.Get(context.Background(), "/test", nil)
+
+	var tooManyErr *TooManyRequestsError
+	if !errors.As(err, &tooManyErr) {
+		t.Fatalf("Expected *TooManyRequestsError, got %T: %v", err, err)
+	}
+	if tooManyErr.RetryAfter != 60*time.Second {
+		t.Errorf("RetryAfter = %v, want 60s", tooManyErr.RetryAfter)
+	}
+	if !strings.Contains(err.Error(), "retry after") {
+		t.Errorf("Error message should mention retry after, got: %s", err.Error())
 	}
 }
 
 // TestHTTPClientContextCancellation tests context cancellation
 func TestHTTPClientContextCancellation(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		time.Sleep(100 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -457,6 +557,25 @@ func TestHTTPClientContextCancellation(t *testing.T) {
 
 	if !errors.Is(err, context.Canceled) {
 		t.Errorf("Expected context.Canceled, got: %v", err)
+	}
+}
+
+// TestWithTimeoutProducesContextError verifies that WithTimeout causes a
+// context.DeadlineExceeded error (not an opaque url.Error) on timeout.
+func TestWithTimeoutProducesContextError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(200 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	c := NewHTTPClient(server.URL, "token", WithTimeout(50*time.Millisecond), WithRetryMax(0))
+	_, err := c.Get(context.Background(), "/test", nil)
+	if err == nil {
+		t.Fatal("expected timeout error, got nil")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("expected context.DeadlineExceeded, got %T: %v", err, err)
 	}
 }
 
@@ -491,7 +610,7 @@ func TestHTTPClientCustomHeaders(t *testing.T) {
 
 // TestHTTPClientLogger tests logging integration
 func TestHTTPClientLogger(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"data": {}}`))
 	}))
@@ -755,4 +874,130 @@ func (m *MockLogger) Warn(msg string, keysAndValues ...interface{}) {
 
 func (m *MockLogger) Error(msg string, keysAndValues ...interface{}) {
 	m.logs = append(m.logs, LogEntry{"Error", msg, keysAndValues})
+}
+
+// TestIsRetryableNetworkError tests the network error classifier.
+func TestIsRetryableNetworkError(t *testing.T) {
+	tests := []struct {
+		name      string
+		err       error
+		retryable bool
+	}{
+		{
+			name:      "context canceled",
+			err:       context.Canceled,
+			retryable: false,
+		},
+		{
+			name:      "context deadline exceeded",
+			err:       context.DeadlineExceeded,
+			retryable: false,
+		},
+		{
+			name:      "DNS not found",
+			err:       &net.DNSError{IsNotFound: true},
+			retryable: false,
+		},
+		{
+			name:      "DNS temporary",
+			err:       &net.DNSError{IsTemporary: true},
+			retryable: true,
+		},
+		{
+			name:      "x509 certificate invalid",
+			err:       x509.CertificateInvalidError{},
+			retryable: false,
+		},
+		{
+			name:      "x509 unknown authority",
+			err:       x509.UnknownAuthorityError{},
+			retryable: false,
+		},
+		{
+			name:      "generic error is retryable",
+			err:       errors.New("connection reset by peer"),
+			retryable: true,
+		},
+		{
+			name:      "wrapped context canceled",
+			err:       &net.OpError{Err: context.Canceled},
+			retryable: false,
+		},
+		{
+			name:      "wrapped DNS not found",
+			err:       &net.OpError{Err: &net.DNSError{IsNotFound: true}},
+			retryable: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isRetryableNetworkError(tt.err)
+			if got != tt.retryable {
+				t.Errorf("isRetryableNetworkError(%v) = %v, want %v", tt.err, got, tt.retryable)
+			}
+		})
+	}
+}
+
+// TestHTTPClientClose verifies that Close() does not panic and drains idle connections.
+func TestHTTPClientClose(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": {}}`))
+	}))
+	defer server.Close()
+
+	c := NewHTTPClient(server.URL, "token", WithRetryMax(0))
+	resp, err := c.Get(context.Background(), "/test", nil)
+	if err != nil {
+		t.Fatalf("Get() error: %v", err)
+	}
+	_ = resp.Body.Close()
+
+	// Close must not panic; idle connection should be released.
+	c.Close()
+}
+
+// TestHTTPClientMultiError verifies that all JSON:API errors are joined into the
+// returned error, not just the first one.
+func TestHTTPClientMultiError(t *testing.T) {
+	body := `{"errors":[{"title":"first","detail":"d1"},{"title":"second","detail":"d2"}]}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, _ = w.Write([]byte(body))
+	}))
+	defer server.Close()
+
+	c := NewHTTPClient(server.URL, "token", WithRetryMax(0))
+	_, err := c.Get(context.Background(), "/test", nil)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	msg := err.Error()
+	if !strings.Contains(msg, "first") || !strings.Contains(msg, "second") {
+		t.Errorf("expected both errors in message, got: %s", msg)
+	}
+
+	// Underlying errors should be accessible as *JSONAPIError via errors.As
+	var apiErr *JSONAPIError
+	if !errors.As(err, &apiErr) {
+		t.Error("expected to find *JSONAPIError via errors.As")
+	}
+}
+
+// TestHTTPClientNonRetryableDNSError verifies that a permanent DNS error does not
+// trigger retries — the client should fail immediately.
+func TestHTTPClientNonRetryableDNSError(t *testing.T) {
+	// Use an invalid domain that will produce a permanent DNS failure.
+	client := NewHTTPClient("http://this.hostname.does.not.exist.invalid", "token",
+		WithRetryMax(5),
+		WithTimeout(5*time.Second),
+		withSleepFunc(func(time.Duration) { t.Error("sleep called — retry happened unexpectedly") }),
+	)
+	_, err := client.Get(context.Background(), "/test", nil)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
 }

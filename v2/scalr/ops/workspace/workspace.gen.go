@@ -25,9 +25,41 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Workspace operations
+const (
+	FilterAccount                   = "filter[account]"                     // The ID of the Account
+	FilterAgentPool                 = "filter[agent-pool]"                  // The ID(s) of the Agent Pool.
+	FilterCreatedBy                 = "filter[created-by]"                  // The ID of the User who created this workspace
+	FilterDeletionProtectionEnabled = "filter[deletion-protection-enabled]" // Deletion protection enabled filter
+	FilterDriftDetectionEnabled     = "filter[drift-detection-enabled]"     // Is drift detection enabled
+	FilterEnvironment               = "filter[environment]"                 // The ID of the Environment
+	FilterEnvironmentName           = "filter[environment][name]"           // The name of the Environment
+	FilterEnvironmentType           = "filter[environment-type]"            // Workspace environment type
+	FilterFavorite                  = "filter[favorite]"                    // Filter workspaces by favorite status. Set to 'true' to show only favorites, 'false' to exclude favorites.
+	FilterFederatedByEnv            = "filter[federated-by-env]"            // The ID of the Environment that gives access to workspaces through federation.
+	FilterFederatedToEnv            = "filter[federated-to-env]"            // The ID of the Environment that got access to workspaces through federation.
+	FilterHasResources              = "filter[has-resources]"               // Has resources filter
+	FilterName                      = "filter[name]"                        // Workspace name
+	FilterProviderConfiguration     = "filter[provider-configuration]"      // The ID of the Provider configuration.
+	FilterRunCreatedBy              = "filter[run][created-by]"             // Last run created by filter
+	FilterRunResourceDrifts         = "filter[run][resource-drifts]"        // Filter the workspaces by last run drifted resources count.
+	FilterRunStatus                 = "filter[run][status]"                 // Last run status
+	FilterSoftwareVersion           = "filter[software-version]"            // The ID of the Software Version
+	FilterStateConsumerOf           = "filter[state-consumer-of]"           // Filter by remote state consumer source Workspace ID.
+	FilterTag                       = "filter[tag]"                         // Filter workspaces by tags
+	FilterUpdatedAt                 = "filter[updated-at]"                  // Date of workspace modification.
+	FilterUpdatedBy                 = "filter[updated-by]"                  // The ID of the User who update this workspace
+	FilterVcsProvider               = "filter[vcs-provider]"                // The ID of the VCS provider
+	FilterVcsRepoIdentifier         = "filter[vcs-repo][identifier]"        // Filter by VCS repository
+	FilterWorkspace                 = "filter[workspace]"                   // The ID(s) of the Workspace.
+)
+
 // This endpoint adds provided workspaces to a list of allowed remote state consumers for a given workspace.
 func (c *Client) AddRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -60,6 +92,9 @@ func (c *Client) AddRemoteStateConsumers(ctx context.Context, workspace string, 
 // This endpoint assigns the list of [tags](tags.html#the-tag-resource) to the workspace.
 func (c *Client) AddWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/tags"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -92,6 +127,9 @@ func (c *Client) AddWorkspaceTags(ctx context.Context, workspace string, req []s
 // Add a workspace to the current user's favorites.
 func (c *Client) AddWorkspaceToFavoritesRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/favorite"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -163,6 +201,9 @@ func (c *Client) CreateWorkspace(ctx context.Context, req *schemas.WorkspaceRequ
 // This endpoint removes provided workspaces from a list of allowed remote state consumers for a given workspace.
 func (c *Client) DeleteRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -194,6 +235,9 @@ func (c *Client) DeleteRemoteStateConsumers(ctx context.Context, workspace strin
 
 func (c *Client) DeleteWorkspaceRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -216,6 +260,9 @@ func (c *Client) DeleteWorkspace(ctx context.Context, workspace string) error {
 // This endpoint removes given [tags](tags.html#the-tag-resource) from the workspace.
 func (c *Client) DeleteWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/tags"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -248,6 +295,9 @@ func (c *Client) DeleteWorkspaceTags(ctx context.Context, workspace string, req 
 // Show details of a specific workspace.
 func (c *Client) GetWorkspaceRaw(ctx context.Context, workspace string, opts *GetWorkspaceOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	params := url.Values{}
@@ -255,11 +305,13 @@ func (c *Client) GetWorkspaceRaw(ctx context.Context, workspace string, opts *Ge
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -300,14 +352,19 @@ func (c *Client) GetWorkspace(ctx context.Context, workspace string, opts *GetWo
 type GetWorkspaceOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of outputs from current state version run output.
 func (c *Client) GetWorkspaceOutputsRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/outputs"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -357,11 +414,13 @@ func (c *Client) GetWorkspacesRaw(ctx context.Context, opts *GetWorkspacesOption
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -448,7 +507,6 @@ func (c *Client) GetWorkspacesIter(ctx context.Context, opts *GetWorkspacesOptio
 				yield(schemas.Workspace{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -458,8 +516,10 @@ func (c *Client) GetWorkspacesIter(ctx context.Context, opts *GetWorkspacesOptio
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -564,14 +624,19 @@ type GetWorkspacesOptions struct {
 	Include []string
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of other workspaces that that were explicitly added as state consumers for given workspace.
 func (c *Client) ListRemoteStateConsumersRaw(ctx context.Context, workspace string, opts *ListRemoteStateConsumersOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	params := url.Values{}
@@ -582,9 +647,13 @@ func (c *Client) ListRemoteStateConsumersRaw(ctx context.Context, workspace stri
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -668,7 +737,6 @@ func (c *Client) ListRemoteStateConsumersIter(ctx context.Context, workspace str
 				yield(schemas.Workspace{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -678,8 +746,10 @@ func (c *Client) ListRemoteStateConsumersIter(ctx context.Context, workspace str
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Workspace{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -768,12 +838,19 @@ type ListRemoteStateConsumersOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [tags](tags.html#the-tag-resource), assigned to a workspace.
 func (c *Client) ListWorkspaceTagsRaw(ctx context.Context, workspace string, opts *ListWorkspaceTagsOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/tags"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	params := url.Values{}
@@ -784,9 +861,13 @@ func (c *Client) ListWorkspaceTagsRaw(ctx context.Context, workspace string, opt
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -870,7 +951,6 @@ func (c *Client) ListWorkspaceTagsIter(ctx context.Context, workspace string, op
 				yield(schemas.Tag{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -880,8 +960,10 @@ func (c *Client) ListWorkspaceTagsIter(ctx context.Context, workspace string, op
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -970,12 +1052,19 @@ type ListWorkspaceTagsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint locks a workspace.
 func (c *Client) LockWorkspaceRaw(ctx context.Context, workspace string, req *schemas.Reason) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/lock"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Plain JSON request (not JSON:API)
@@ -1013,6 +1102,9 @@ func (c *Client) LockWorkspace(ctx context.Context, workspace string, req *schem
 // Remove a workspace from the current user's favorites.
 func (c *Client) RemoveWorkspaceFromFavoritesRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/unfavorite"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -1048,6 +1140,9 @@ func (c *Client) RemoveWorkspaceFromFavorites(ctx context.Context, workspace str
 // This endpoint replaces a list of allowed remote state consumers for a given workspace.
 func (c *Client) ReplaceRemoteStateConsumersRaw(ctx context.Context, workspace string, req []schemas.Workspace) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/remote-state-consumers"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -1080,6 +1175,9 @@ func (c *Client) ReplaceRemoteStateConsumers(ctx context.Context, workspace stri
 // This endpoint completely replaces workspace's tags with provided list.
 func (c *Client) ReplaceWorkspaceTagsRaw(ctx context.Context, workspace string, req []schemas.Tag) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/tags"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -1112,6 +1210,9 @@ func (c *Client) ReplaceWorkspaceTags(ctx context.Context, workspace string, req
 // This endpoint triggers a Configuration Version resync for a Workspace associated with a VCS repository.
 func (c *Client) ResyncWorkspaceRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/resync"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -1146,6 +1247,9 @@ func (c *Client) ResyncWorkspace(ctx context.Context, workspace string) (*schema
 
 func (c *Client) SetScheduleRaw(ctx context.Context, workspace string, req *schemas.WorkspaceSchedule) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/set-schedule"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Plain JSON request (not JSON:API)
@@ -1182,6 +1286,9 @@ func (c *Client) SetSchedule(ctx context.Context, workspace string, req *schemas
 // This endpoint unlocks a workspace.
 func (c *Client) UnlockWorkspaceRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/unlock"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -1216,6 +1323,9 @@ func (c *Client) UnlockWorkspace(ctx context.Context, workspace string) (*schema
 
 func (c *Client) UpdateWorkspaceRaw(ctx context.Context, workspace string, req *schemas.WorkspaceRequest) (*client.Response, error) {
 	path := "/workspaces/{workspace}"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Wrap request in JSON:API envelope

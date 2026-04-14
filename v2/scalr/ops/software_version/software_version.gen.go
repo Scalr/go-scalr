@@ -24,9 +24,22 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for SoftwareVersion operations
+const (
+	FilterDeprecated      = "filter[deprecated]"       // Filter software versions by deprecation flag.
+	FilterLatest          = "filter[latest]"           // Filter software versions by latest.
+	FilterSoftwareType    = "filter[software-type]"    // Filter software versions by software type.
+	FilterSoftwareVersion = "filter[software-version]" // Filter software versions by id.
+	FilterStatus          = "filter[status]"           // Filter software versions by status.
+	FilterVersion         = "filter[version]"          // Filter software versions by semversion.
+)
+
 // Show details of a specific software version.
 func (c *Client) GetSoftwareVersionRaw(ctx context.Context, softwareVersion string) (*client.Response, error) {
 	path := "/software-versions/{software_version}"
+	if softwareVersion == "" {
+		return nil, fmt.Errorf("softwareVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{software_version}", url.PathEscape(softwareVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -74,11 +87,13 @@ func (c *Client) ListSoftwareVersionsRaw(ctx context.Context, opts *ListSoftware
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -162,7 +177,6 @@ func (c *Client) ListSoftwareVersionsIter(ctx context.Context, opts *ListSoftwar
 				yield(schemas.SoftwareVersion{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -172,8 +186,10 @@ func (c *Client) ListSoftwareVersionsIter(ctx context.Context, opts *ListSoftwar
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.SoftwareVersion{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.SoftwareVersion{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -266,7 +282,9 @@ type ListSoftwareVersionsOptions struct {
 	PageSize int
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

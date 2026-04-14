@@ -25,9 +25,17 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Account operations
+const (
+	FilterName = "filter[name]" // The account name filter.
+)
+
 // This endpoint adds provided [users](users.html#the-user-resource) to those who can log in to the account via password, even when SSO is enforced.
 func (c *Client) AddSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -60,6 +68,9 @@ func (c *Client) AddSsoBypassUsers(ctx context.Context, account string, req []sc
 // This endpoint removes given [users](users.html#the-user-resource) from the list of those who can log in to the account via password, even when SSO is enforced.
 func (c *Client) DeleteSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -92,6 +103,9 @@ func (c *Client) DeleteSsoBypassUsers(ctx context.Context, account string, req [
 // Show details of a specific account.
 func (c *Client) GetAccountRaw(ctx context.Context, account string, opts *GetAccountOptions) (*client.Response, error) {
 	path := "/accounts/{account}"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	params := url.Values{}
@@ -99,9 +113,13 @@ func (c *Client) GetAccountRaw(ctx context.Context, account string, opts *GetAcc
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -142,7 +160,11 @@ func (c *Client) GetAccount(ctx context.Context, account string, opts *GetAccoun
 type GetAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) GetAccountsRaw(ctx context.Context, opts *GetAccountsOptions) (*client.Response, error) {
@@ -159,11 +181,13 @@ func (c *Client) GetAccountsRaw(ctx context.Context, opts *GetAccountsOptions) (
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -250,7 +274,6 @@ func (c *Client) GetAccountsIter(ctx context.Context, opts *GetAccountsOptions) 
 				yield(schemas.Account{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -260,8 +283,10 @@ func (c *Client) GetAccountsIter(ctx context.Context, opts *GetAccountsOptions) 
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Account{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Account{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -360,13 +385,18 @@ type GetAccountsOptions struct {
 	PageSize int
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) GetMetricsRaw(ctx context.Context, account string) (*client.Response, error) {
 	path := "/accounts/{account}/metrics"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -393,6 +423,9 @@ func (c *Client) GetMetrics(ctx context.Context, account string) (string, error)
 // This endpoint returns a list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced.
 func (c *Client) ListSsoBypassUsersRaw(ctx context.Context, account string, opts *ListSsoBypassUsersOptions) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	params := url.Values{}
@@ -403,9 +436,13 @@ func (c *Client) ListSsoBypassUsersRaw(ctx context.Context, account string, opts
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -489,7 +526,6 @@ func (c *Client) ListSsoBypassUsersIter(ctx context.Context, account string, opt
 				yield(schemas.User{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -499,8 +535,10 @@ func (c *Client) ListSsoBypassUsersIter(ctx context.Context, account string, opt
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -589,12 +627,19 @@ type ListSsoBypassUsersOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint completely replaces the list of [users](users.html#the-user-resource) who can log in to the account via password, even when SSO is enforced, with a provided list.
 func (c *Client) ReplaceSsoBypassUsersRaw(ctx context.Context, account string, req []schemas.User) (*client.Response, error) {
 	path := "/accounts/{account}/relationships/sso-bypass-users"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -626,6 +671,9 @@ func (c *Client) ReplaceSsoBypassUsers(ctx context.Context, account string, req 
 
 func (c *Client) UpdateAccountRaw(ctx context.Context, account string, req *schemas.AccountRequest) (*client.Response, error) {
 	path := "/accounts/{account}"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	// Wrap request in JSON:API envelope

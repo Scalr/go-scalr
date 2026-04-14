@@ -25,6 +25,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ConfigurationVersion operations
+const (
+	FilterWorkspace = "filter[workspace]" // The ID of the workspace to list configurations from.
+)
+
 // Create the new configuration version for specific workspace
 func (c *Client) CreateConfigurationVersionRaw(ctx context.Context, req *schemas.ConfigurationVersionRequest) (*client.Response, error) {
 	path := "/configuration-versions"
@@ -64,6 +69,9 @@ func (c *Client) CreateConfigurationVersion(ctx context.Context, req *schemas.Co
 // Download tar.gz archive with terraform configuration templates.
 func (c *Client) DownloadConfigurationVersionRaw(ctx context.Context, configurationVersion string) (*client.Response, error) {
 	path := "/configuration-versions/{configuration_version}/download"
+	if configurationVersion == "" {
+		return nil, fmt.Errorf("configurationVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{configuration_version}", url.PathEscape(configurationVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -91,6 +99,9 @@ func (c *Client) DownloadConfigurationVersion(ctx context.Context, configuration
 // Show details of a specific Configuration Version.
 func (c *Client) GetConfigurationVersionRaw(ctx context.Context, configurationVersion string, opts *GetConfigurationVersionOptions) (*client.Response, error) {
 	path := "/configuration-versions/{configuration_version}"
+	if configurationVersion == "" {
+		return nil, fmt.Errorf("configurationVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{configuration_version}", url.PathEscape(configurationVersion))
 
 	params := url.Values{}
@@ -98,9 +109,13 @@ func (c *Client) GetConfigurationVersionRaw(ctx context.Context, configurationVe
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -141,7 +156,11 @@ func (c *Client) GetConfigurationVersion(ctx context.Context, configurationVersi
 type GetConfigurationVersionOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) GetConfigurationVersionsRaw(ctx context.Context, opts *GetConfigurationVersionsOptions) (*client.Response, error) {
@@ -158,9 +177,13 @@ func (c *Client) GetConfigurationVersionsRaw(ctx context.Context, opts *GetConfi
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -247,7 +270,6 @@ func (c *Client) GetConfigurationVersionsIter(ctx context.Context, opts *GetConf
 				yield(schemas.ConfigurationVersion{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -257,8 +279,10 @@ func (c *Client) GetConfigurationVersionsIter(ctx context.Context, opts *GetConf
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ConfigurationVersion{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ConfigurationVersion{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -357,5 +381,9 @@ type GetConfigurationVersionsOptions struct {
 	PageSize int
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

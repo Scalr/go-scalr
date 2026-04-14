@@ -15,9 +15,9 @@ type StorageProfileBackendType string
 
 // StorageProfileBackendType constants
 const (
-	StorageProfileBackendTypeGoogle  StorageProfileBackendType = "google"
 	StorageProfileBackendTypeAwsS3   StorageProfileBackendType = "aws-s3"
 	StorageProfileBackendTypeAzurerm StorageProfileBackendType = "azurerm"
+	StorageProfileBackendTypeGoogle  StorageProfileBackendType = "google"
 )
 
 // Response version - used when unmarshalling from API responses

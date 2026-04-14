@@ -24,9 +24,22 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for PolicyCheckResult operations
+const (
+	FilterDate           = "filter[date]"            // The date range filter. Example: `filter[date]=between:2022-01-01T00:00:00Z,2022-02-01T00:00:00Z`
+	FilterEnvironment    = "filter[environment]"     // The environment ID to list policy check results for. Example: `filter[environment]=env-123456`
+	FilterPolicy         = "filter[policy]"          // The policy name filter. Example: `filter[policy]=workspace_name`
+	FilterResult         = "filter[result]"          // The result of the policy check filter. Example: `filter[result]=hard-failed`
+	FilterTerragruntUnit = "filter[terragrunt-unit]" // The unit path filter. Example: `filter[unit_path]=vpc`
+	FilterWorkspace      = "filter[workspace]"       // The workspace ID to list policy check results for. Example: `filter[workspace]=ws-123456`
+)
+
 // List policy check results for a specific policy group check. Required permission: policy_groups:read
 func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupCheck string, opts *GetPolicyGroupCheckResultsOptions) (*client.Response, error) {
 	path := "/policy-group-checks/{policy_group_check}/policy-check-results"
+	if policyGroupCheck == "" {
+		return nil, fmt.Errorf("policyGroupCheck must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group_check}", url.PathEscape(policyGroupCheck))
 
 	params := url.Values{}
@@ -42,8 +55,6 @@ func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupC
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
 		if opts.PageNumber > 0 {
 			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
 		}
@@ -53,9 +64,13 @@ func (c *Client) GetPolicyGroupCheckResultsRaw(ctx context.Context, policyGroupC
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -143,7 +158,6 @@ func (c *Client) GetPolicyGroupCheckResultsIter(ctx context.Context, policyGroup
 				yield(schemas.PolicyCheckResult{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -153,8 +167,10 @@ func (c *Client) GetPolicyGroupCheckResultsIter(ctx context.Context, policyGroup
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.PolicyCheckResult{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.PolicyCheckResult{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -253,13 +269,15 @@ type GetPolicyGroupCheckResultsOptions struct {
 	Format string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
 	// Page number
 	PageNumber int
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

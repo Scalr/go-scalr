@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Role operations
+const (
+	FilterAccount = "filter[account]" // The account filter.
+	FilterName    = "filter[name]"    // The role name filter.
+	FilterRole    = "filter[role]"    // The role filter.
+)
+
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) role.
 func (c *Client) CreateRoleRaw(ctx context.Context, req *schemas.RoleRequest, opts *CreateRoleOptions) (*client.Response, error) {
 	path := "/roles"
@@ -33,9 +40,13 @@ func (c *Client) CreateRoleRaw(ctx context.Context, req *schemas.RoleRequest, op
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,12 +89,19 @@ func (c *Client) CreateRole(ctx context.Context, req *schemas.RoleRequest, opts 
 type CreateRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
 func (c *Client) DeleteRoleRaw(ctx context.Context, role string) (*client.Response, error) {
 	path := "/roles/{role}"
+	if role == "" {
+		return nil, fmt.Errorf("role must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -107,6 +125,9 @@ func (c *Client) DeleteRole(ctx context.Context, role string) error {
 // The endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
 func (c *Client) GetRoleRaw(ctx context.Context, role string, opts *GetRoleOptions) (*client.Response, error) {
 	path := "/roles/{role}"
+	if role == "" {
+		return nil, fmt.Errorf("role must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
 	params := url.Values{}
@@ -114,9 +135,13 @@ func (c *Client) GetRoleRaw(ctx context.Context, role string, opts *GetRoleOptio
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -157,7 +182,11 @@ func (c *Client) GetRole(ctx context.Context, role string, opts *GetRoleOptions)
 type GetRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) roles.
@@ -182,9 +211,13 @@ func (c *Client) GetRolesRaw(ctx context.Context, opts *GetRolesOptions) (*clien
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -272,7 +305,6 @@ func (c *Client) GetRolesIter(ctx context.Context, opts *GetRolesOptions) iter.S
 				yield(schemas.Role{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -282,8 +314,10 @@ func (c *Client) GetRolesIter(ctx context.Context, opts *GetRolesOptions) iter.S
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Role{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Role{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -385,13 +419,20 @@ type GetRolesOptions struct {
 	// Query string
 	Query string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) role by ID.
 func (c *Client) UpdateRoleRaw(ctx context.Context, role string, req *schemas.RoleRequest, opts *UpdateRoleOptions) (*client.Response, error) {
 	path := "/roles/{role}"
+	if role == "" {
+		return nil, fmt.Errorf("role must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{role}", url.PathEscape(role))
 
 	params := url.Values{}
@@ -399,9 +440,13 @@ func (c *Client) UpdateRoleRaw(ctx context.Context, role string, req *schemas.Ro
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -444,5 +489,9 @@ func (c *Client) UpdateRole(ctx context.Context, role string, req *schemas.RoleR
 type UpdateRoleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

@@ -15,6 +15,7 @@ type Tag struct {
 	Type          string           `json:"type"`
 	Attributes    TagAttributes    `json:"attributes"`
 	Relationships TagRelationships `json:"relationships"`
+	Links         *TagLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -100,6 +101,11 @@ func (r *TagRelationships) PopulateIncludes(included []map[string]interface{}) {
 			}
 		}
 	}
+}
+
+// TagLinks holds the resource links for Tag (response only).
+type TagLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

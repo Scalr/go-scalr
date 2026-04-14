@@ -24,6 +24,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ModuleUsageNamespace operations
+const (
+	FilterTfModuleNamespace = "filter[tf-module-namespace]" // The ID of the module usage namespace.
+)
+
 // This endpoint lists unique terraform module usage namespaces.
 func (c *Client) ListModuleUsageNamespacesRaw(ctx context.Context, opts *ListModuleUsageNamespacesOptions) (*client.Response, error) {
 	path := "/reports/module-namespaces"
@@ -43,14 +48,16 @@ func (c *Client) ListModuleUsageNamespacesRaw(ctx context.Context, opts *ListMod
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -138,7 +145,6 @@ func (c *Client) ListModuleUsageNamespacesIter(ctx context.Context, opts *ListMo
 				yield(schemas.ModuleUsageNamespace{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -148,8 +154,10 @@ func (c *Client) ListModuleUsageNamespacesIter(ctx context.Context, opts *ListMo
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ModuleUsageNamespace{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ModuleUsageNamespace{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -250,9 +258,11 @@ type ListModuleUsageNamespacesOptions struct {
 	PageSize int
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

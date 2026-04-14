@@ -1,3 +1,4 @@
+// Package value provides the tri-state Value[T] type for Scalr API request fields.
 package value
 
 import (

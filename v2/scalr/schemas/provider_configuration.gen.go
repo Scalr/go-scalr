@@ -14,9 +14,9 @@ type ProviderConfigurationAwsAccountType string
 
 // ProviderConfigurationAwsAccountType constants
 const (
-	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
-	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
 	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
+	ProviderConfigurationAwsAccountTypeGovCloud ProviderConfigurationAwsAccountType = "gov-cloud"
+	ProviderConfigurationAwsAccountTypeRegular  ProviderConfigurationAwsAccountType = "regular"
 )
 
 // ProviderConfigurationAwsCredentialsSource represents the type for ProviderConfigurationAwsCredentialsSource
@@ -35,9 +35,9 @@ type ProviderConfigurationAwsCredentialsType string
 
 // ProviderConfigurationAwsCredentialsType constants
 const (
-	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
 	ProviderConfigurationAwsCredentialsTypeAccessKeys     ProviderConfigurationAwsCredentialsType = "access_keys"
 	ProviderConfigurationAwsCredentialsTypeOidc           ProviderConfigurationAwsCredentialsType = "oidc"
+	ProviderConfigurationAwsCredentialsTypeRoleDelegation ProviderConfigurationAwsCredentialsType = "role_delegation"
 )
 
 // ProviderConfigurationAwsDefaultTagsStrategy represents the type for ProviderConfigurationAwsDefaultTagsStrategy
@@ -76,8 +76,8 @@ type ProviderConfigurationGoogleAuthType string
 
 // ProviderConfigurationGoogleAuthType constants
 const (
-	ProviderConfigurationGoogleAuthTypeServiceAccountKey ProviderConfigurationGoogleAuthType = "service-account-key"
 	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
+	ProviderConfigurationGoogleAuthTypeServiceAccountKey ProviderConfigurationGoogleAuthType = "service-account-key"
 )
 
 // ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
@@ -97,6 +97,7 @@ type ProviderConfiguration struct {
 	Type          string                             `json:"type"`
 	Attributes    ProviderConfigurationAttributes    `json:"attributes"`
 	Relationships ProviderConfigurationRelationships `json:"relationships"`
+	Links         *ProviderConfigurationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -177,7 +178,7 @@ type ProviderConfigurationAttributes struct {
 	// The name of a Scalr provider configuration. This field is unique for the account.
 	Name string `json:"name"`
 	// The name of a Terraform provider.
-	ProviderName interface{} `json:"provider-name"`
+	ProviderName string `json:"provider-name"`
 	// The Scalr hostname which should be used.
 	ScalrHostname *string `json:"scalr-hostname"`
 	// The Scalr token which should be used.
@@ -407,6 +408,11 @@ func (r *ProviderConfigurationRelationships) PopulateIncludes(included []map[str
 	}
 }
 
+// ProviderConfigurationLinks holds the resource links for ProviderConfiguration (response only).
+type ProviderConfigurationLinks struct {
+	Self string `json:"self"`
+}
+
 // Request version - used when marshalling for API requests
 // The configuration of provider. Provider configuration is managed on the account scope and can be linked to environments or workspaces. (for requests)
 type ProviderConfigurationRequest struct {
@@ -496,7 +502,7 @@ type ProviderConfigurationAttributesRequest struct {
 	// The name of a Scalr provider configuration. This field is unique for the account.
 	Name *value.Value[string] `json:"name,omitempty"`
 	// The name of a Terraform provider.
-	ProviderName *value.Value[interface{}] `json:"provider-name,omitempty"`
+	ProviderName *value.Value[string] `json:"provider-name,omitempty"`
 	// The Scalr hostname which should be used.
 	ScalrHostname *value.Value[string] `json:"scalr-hostname,omitempty"`
 	// The Scalr token which should be used.

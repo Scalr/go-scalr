@@ -35,6 +35,7 @@ type AiUsage struct {
 	Type          string               `json:"type"`
 	Attributes    AiUsageAttributes    `json:"attributes"`
 	Relationships AiUsageRelationships `json:"relationships"`
+	Links         *AiUsageLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -158,6 +159,12 @@ func (r *AiUsageRelationships) PopulateIncludes(included []map[string]interface{
 			}
 		}
 	}
+}
+
+// AiUsageLinks holds the resource links for AiUsage (response only).
+type AiUsageLinks struct {
+	// Link to download the run data sent to the AI.
+	Input *string `json:"input"`
 }
 
 // Request version - used when marshalling for API requests

@@ -24,9 +24,19 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ModuleVersion operations
+const (
+	FilterModule  = "filter[module]"  // Filter module versions by module
+	FilterStatus  = "filter[status]"  // Filter module versions by status
+	FilterVersion = "filter[version]" // Filter module versions by semantic version
+)
+
 // Show details of a specific terraform module version.
 func (c *Client) GetModuleVersionRaw(ctx context.Context, moduleVersion string, opts *GetModuleVersionOptions) (*client.Response, error) {
 	path := "/module-versions/{module_version}"
+	if moduleVersion == "" {
+		return nil, fmt.Errorf("moduleVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_version}", url.PathEscape(moduleVersion))
 
 	params := url.Values{}
@@ -34,9 +44,13 @@ func (c *Client) GetModuleVersionRaw(ctx context.Context, moduleVersion string, 
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -77,7 +91,11 @@ func (c *Client) GetModuleVersion(ctx context.Context, moduleVersion string, opt
 type GetModuleVersionOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists versions of a particular module. The query parameter `filter[module]` with Module ID is required.
@@ -98,11 +116,13 @@ func (c *Client) ListModuleVersionsRaw(ctx context.Context, opts *ListModuleVers
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -190,7 +210,6 @@ func (c *Client) ListModuleVersionsIter(ctx context.Context, opts *ListModuleVer
 				yield(schemas.ModuleVersion{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -200,8 +219,10 @@ func (c *Client) ListModuleVersionsIter(ctx context.Context, opts *ListModuleVer
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ModuleVersion{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ModuleVersion{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -302,14 +323,19 @@ type ListModuleVersionsOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Trigger resync of the Module Version associated with the `relationships.vcs-revision`. Only modules associated with a VCS can be resynchronized.
 func (c *Client) ResyncModuleVersionRaw(ctx context.Context, moduleVersion string) (*client.Response, error) {
 	path := "/module-versions/{module_version}/actions/resync"
+	if moduleVersion == "" {
+		return nil, fmt.Errorf("moduleVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_version}", url.PathEscape(moduleVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

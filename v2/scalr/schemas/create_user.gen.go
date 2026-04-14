@@ -27,6 +27,7 @@ type CreateUser struct {
 	Type          string                  `json:"type"`
 	Attributes    CreateUserAttributes    `json:"attributes"`
 	Relationships CreateUserRelationships `json:"relationships"`
+	Links         *CreateUserLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -125,6 +126,11 @@ func (r *CreateUserRelationships) PopulateIncludes(included []map[string]interfa
 			}
 		}
 	}
+}
+
+// CreateUserLinks holds the resource links for CreateUser (response only).
+type CreateUserLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

@@ -25,11 +25,11 @@ type AgentDriver string
 
 // AgentDriver constants
 const (
-	AgentDriverUnknown       AgentDriver = "unknown"
-	AgentDriverLocal         AgentDriver = "local"
 	AgentDriverDocker        AgentDriver = "docker"
 	AgentDriverKubernetes    AgentDriver = "kubernetes"
 	AgentDriverKubernetesJob AgentDriver = "kubernetes-job"
+	AgentDriverLocal         AgentDriver = "local"
+	AgentDriverUnknown       AgentDriver = "unknown"
 )
 
 // AgentKubernetesDriverMode represents the type for AgentKubernetesDriverMode
@@ -38,8 +38,8 @@ type AgentKubernetesDriverMode string
 
 // AgentKubernetesDriverMode constants
 const (
-	AgentKubernetesDriverModeDefault    AgentKubernetesDriverMode = "default"
 	AgentKubernetesDriverModeController AgentKubernetesDriverMode = "controller"
+	AgentKubernetesDriverModeDefault    AgentKubernetesDriverMode = "default"
 	AgentKubernetesDriverModeWorker     AgentKubernetesDriverMode = "worker"
 )
 
@@ -49,11 +49,11 @@ type AgentRuntime string
 
 // AgentRuntime constants
 const (
-	AgentRuntimeUnknown    AgentRuntime = "unknown"
 	AgentRuntimeDocker     AgentRuntime = "docker"
-	AgentRuntimeKubernetes AgentRuntime = "kubernetes"
-	AgentRuntimeVm         AgentRuntime = "vm"
 	AgentRuntimeFargate    AgentRuntime = "fargate"
+	AgentRuntimeKubernetes AgentRuntime = "kubernetes"
+	AgentRuntimeUnknown    AgentRuntime = "unknown"
+	AgentRuntimeVm         AgentRuntime = "vm"
 )
 
 // AgentStatus represents the type for AgentStatus
@@ -62,10 +62,10 @@ type AgentStatus string
 
 // AgentStatus constants
 const (
-	AgentStatusIdle    AgentStatus = "idle"
 	AgentStatusBusy    AgentStatus = "busy"
-	AgentStatusOffline AgentStatus = "offline"
 	AgentStatusErrored AgentStatus = "errored"
+	AgentStatusIdle    AgentStatus = "idle"
+	AgentStatusOffline AgentStatus = "offline"
 )
 
 // AgentUpgradeStatus represents the type for AgentUpgradeStatus
@@ -74,10 +74,10 @@ type AgentUpgradeStatus string
 
 // AgentUpgradeStatus constants
 const (
-	AgentUpgradeStatusNone   AgentUpgradeStatus = "none"
+	AgentUpgradeStatusHigh   AgentUpgradeStatus = "high"
 	AgentUpgradeStatusLow    AgentUpgradeStatus = "low"
 	AgentUpgradeStatusMedium AgentUpgradeStatus = "medium"
-	AgentUpgradeStatusHigh   AgentUpgradeStatus = "high"
+	AgentUpgradeStatusNone   AgentUpgradeStatus = "none"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -87,6 +87,7 @@ type Agent struct {
 	Type          string             `json:"type"`
 	Attributes    AgentAttributes    `json:"attributes"`
 	Relationships AgentRelationships `json:"relationships"`
+	Links         *AgentLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -196,6 +197,11 @@ func (r *AgentRelationships) PopulateIncludes(included []map[string]interface{})
 			}
 		}
 	}
+}
+
+// AgentLinks holds the resource links for Agent (response only).
+type AgentLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

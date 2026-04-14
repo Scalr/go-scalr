@@ -24,6 +24,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for DatadogIntegration operations
+const (
+	FilterAccount = "filter[account]" // The ID of the Account
+)
+
 // This endpoint creates Datadog integrations.
 func (c *Client) CreateDatadogIntegrationRaw(ctx context.Context, req *schemas.DatadogIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/datadog"
@@ -62,6 +67,9 @@ func (c *Client) CreateDatadogIntegration(ctx context.Context, req *schemas.Data
 
 func (c *Client) DeleteDatadogIntegrationRaw(ctx context.Context, datadogIntegration string) (*client.Response, error) {
 	path := "/integrations/datadog/{datadog_integration}"
+	if datadogIntegration == "" {
+		return nil, fmt.Errorf("datadogIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -84,6 +92,9 @@ func (c *Client) DeleteDatadogIntegration(ctx context.Context, datadogIntegratio
 // Show details of a specific Datadog Integration.
 func (c *Client) GetDatadogIntegrationRaw(ctx context.Context, datadogIntegration string) (*client.Response, error) {
 	path := "/integrations/datadog/{datadog_integration}"
+	if datadogIntegration == "" {
+		return nil, fmt.Errorf("datadogIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -131,9 +142,13 @@ func (c *Client) ListDatadogIntegrationsRaw(ctx context.Context, opts *ListDatad
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -221,7 +236,6 @@ func (c *Client) ListDatadogIntegrationsIter(ctx context.Context, opts *ListData
 				yield(schemas.DatadogIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -231,8 +245,10 @@ func (c *Client) ListDatadogIntegrationsIter(ctx context.Context, opts *ListData
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.DatadogIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.DatadogIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -330,13 +346,20 @@ type ListDatadogIntegrationsOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates Datadog integrations.
 func (c *Client) UpdateDatadogIntegrationsRaw(ctx context.Context, datadogIntegration string, req *schemas.DatadogIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/datadog/{datadog_integration}"
+	if datadogIntegration == "" {
+		return nil, fmt.Errorf("datadogIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{datadog_integration}", url.PathEscape(datadogIntegration))
 
 	// Wrap request in JSON:API envelope

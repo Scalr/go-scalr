@@ -24,10 +24,10 @@ type ModuleVersionStatus string
 
 // ModuleVersionStatus constants
 const (
-	ModuleVersionStatusNotUploaded   ModuleVersionStatus = "not_uploaded"
-	ModuleVersionStatusPending       ModuleVersionStatus = "pending"
-	ModuleVersionStatusOk            ModuleVersionStatus = "ok"
 	ModuleVersionStatusErrored       ModuleVersionStatus = "errored"
+	ModuleVersionStatusNotUploaded   ModuleVersionStatus = "not_uploaded"
+	ModuleVersionStatusOk            ModuleVersionStatus = "ok"
+	ModuleVersionStatusPending       ModuleVersionStatus = "pending"
 	ModuleVersionStatusPendingDelete ModuleVersionStatus = "pending_delete"
 )
 
@@ -38,6 +38,7 @@ type ModuleVersion struct {
 	Type          string                     `json:"type"`
 	Attributes    ModuleVersionAttributes    `json:"attributes"`
 	Relationships ModuleVersionRelationships `json:"relationships"`
+	Links         *ModuleVersionLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -64,7 +65,7 @@ type ModuleVersionAttributes struct {
 	// This field contains the error description, when this module version's status is `errored`.
 	ErrorMessage *string `json:"error-message"`
 	// Input Variables.
-	Inputs *[]interface{} `json:"inputs"`
+	Inputs *[]json.RawMessage `json:"inputs"`
 	// Indicates the source of the restriction.
 	IsForbiddenBy *ModuleVersionIsForbiddenBy `json:"is-forbidden-by"`
 	// Module version marked as root will allow the [creation of workspaces](../../module.html#deployable-modules) directly from the registry, as well as standard module usage.
@@ -177,6 +178,13 @@ func (r *ModuleVersionRelationships) PopulateIncludes(included []map[string]inte
 			}
 		}
 	}
+}
+
+// ModuleVersionLinks holds the resource links for ModuleVersion (response only).
+type ModuleVersionLinks struct {
+	// The URL to download the tar.gz archive with module version source code.
+	Download *string `json:"download"`
+	Self     string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

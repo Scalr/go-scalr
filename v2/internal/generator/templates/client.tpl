@@ -20,6 +20,12 @@ type Client struct {
 	{{end}}
 }
 
+// Close releases idle connections held by the client's HTTP transport.
+// Call this when the client is no longer needed.
+func (c *Client) Close() {
+	c.httpClient.Close()
+}
+
 // NewClient creates a new API client
 func NewClient({{ .ServerVariable | toLower }} string, token string, opts ...client.HTTPClientOption) *Client {
 	baseURL := "https://" + {{ .ServerVariable | toLower }} + "{{ .BasePath }}"

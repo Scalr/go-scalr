@@ -16,6 +16,7 @@ type SSHKey struct {
 	Type          string              `json:"type"`
 	Attributes    SSHKeyAttributes    `json:"attributes"`
 	Relationships SSHKeyRelationships `json:"relationships"`
+	Links         *SSHKeyLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -148,6 +149,11 @@ func (r *SSHKeyRelationships) PopulateIncludes(included []map[string]interface{}
 			}
 		}
 	}
+}
+
+// SSHKeyLinks holds the resource links for SSHKey (response only).
+type SSHKeyLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

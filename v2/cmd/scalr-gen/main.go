@@ -1,3 +1,4 @@
+// Generator entrypoint
 package main
 
 import (
@@ -87,7 +88,7 @@ func sanitizePackageName(name string) (string, error) {
 
 	// Suffix with "_pkg" if the sanitized name is a Go reserved word
 	if generator.IsGoReservedWord(sanitized) {
-		sanitized = sanitized + "_pkg"
+		sanitized += "_pkg"
 	}
 
 	if !isValidPackageName(sanitized) {

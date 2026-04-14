@@ -24,6 +24,14 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for SSHKey operations
+const (
+	FilterAccount       = "filter[account]"         // The SSH key account filter.
+	FilterAccountSshKey = "filter[account-ssh-key]" // The ID(s) of the SSH key(s).
+	FilterCreatedAt     = "filter[created-at]"      // The SSH key creation date filter.
+	FilterName          = "filter[name]"            // The SSH key name filter.
+)
+
 // Create a new SSH key.
 func (c *Client) CreateSshKeyRaw(ctx context.Context, req *schemas.SSHKeyRequest) (*client.Response, error) {
 	path := "/ssh-keys"
@@ -63,6 +71,9 @@ func (c *Client) CreateSshKey(ctx context.Context, req *schemas.SSHKeyRequest) (
 // The endpoint deletes an SSH key by ID.
 func (c *Client) DeleteSshKeyRaw(ctx context.Context, accountSshKey string) (*client.Response, error) {
 	path := "/ssh-keys/{account_ssh_key}"
+	if accountSshKey == "" {
+		return nil, fmt.Errorf("accountSshKey must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +97,9 @@ func (c *Client) DeleteSshKey(ctx context.Context, accountSshKey string) error {
 // Show details of a specific SSH key.
 func (c *Client) GetSshKeyRaw(ctx context.Context, accountSshKey string) (*client.Response, error) {
 	path := "/ssh-keys/{account_ssh_key}"
+	if accountSshKey == "" {
+		return nil, fmt.Errorf("accountSshKey must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -137,11 +151,13 @@ func (c *Client) ListSshKeysRaw(ctx context.Context, opts *ListSshKeysOptions) (
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -229,7 +245,6 @@ func (c *Client) ListSshKeysIter(ctx context.Context, opts *ListSshKeysOptions) 
 				yield(schemas.SSHKey{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -239,8 +254,10 @@ func (c *Client) ListSshKeysIter(ctx context.Context, opts *ListSshKeysOptions) 
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.SSHKey{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.SSHKey{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -341,14 +358,19 @@ type ListSshKeysOptions struct {
 	Query string
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint allows updates to attributes of an existing SSH key.
 func (c *Client) UpdateSshKeyRaw(ctx context.Context, accountSshKey string, req *schemas.SSHKeyRequest) (*client.Response, error) {
 	path := "/ssh-keys/{account_ssh_key}"
+	if accountSshKey == "" {
+		return nil, fmt.Errorf("accountSshKey must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account_ssh_key}", url.PathEscape(accountSshKey))
 
 	// Wrap request in JSON:API envelope

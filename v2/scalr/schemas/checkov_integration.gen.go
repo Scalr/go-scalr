@@ -27,6 +27,7 @@ type CheckovIntegration struct {
 	Type          string                          `json:"type"`
 	Attributes    CheckovIntegrationAttributes    `json:"attributes"`
 	Relationships CheckovIntegrationRelationships `json:"relationships"`
+	Links         *CheckovIntegrationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -164,6 +165,11 @@ func (r *CheckovIntegrationRelationships) PopulateIncludes(included []map[string
 			}
 		}
 	}
+}
+
+// CheckovIntegrationLinks holds the resource links for CheckovIntegration (response only).
+type CheckovIntegrationLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

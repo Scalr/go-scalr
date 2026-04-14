@@ -22,6 +22,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for UsageStatistic operations
+const (
+	FilterAccount = "filter[account]" // Filter data by account. This filter is applicable only for the parent control tower account. Example: `filter[account]=acc-ttpu7uslju6igv8`
+	FilterDate    = "filter[date]"    // The date filter. Example: `filter[date]=between:2022-01-01T00:00:00Z,2022-02-01T00:00:00Z`
+)
+
 // This endpoint returns billing usage statistics for an account within a period of time. Required permission: accounts:billing
 func (c *Client) ListUsageStatisticsRaw(ctx context.Context, opts *ListUsageStatisticsOptions) (*client.Response, error) {
 	path := "/usage-statistics"
@@ -36,9 +42,13 @@ func (c *Client) ListUsageStatisticsRaw(ctx context.Context, opts *ListUsageStat
 		if opts.Total != "" {
 			params.Set("total", opts.Total)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -87,6 +97,10 @@ type ListUsageStatisticsOptions struct {
 	// Breakdown by environment or workspace.
 	BreakdownBy string
 	// Summarize usage statistics by the whole period.
-	Total  string
-	Filter map[string]string
+	Total string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

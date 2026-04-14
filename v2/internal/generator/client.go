@@ -1,3 +1,4 @@
+// Package generator provides the code generator for the Scalr API client.
 package generator
 
 import (
@@ -38,7 +39,7 @@ func (g *Generator) generateClient(doc *openapi3.T, outputDir string) error {
 	}
 
 	// Convert to sorted slice
-	var resourceList []string
+	resourceList := make([]string, 0, len(resources))
 	for resource := range resources {
 		resourceList = append(resourceList, resource)
 	}
@@ -57,10 +58,12 @@ func (g *Generator) generateClient(doc *openapi3.T, outputDir string) error {
 		PreferHeader:   g.preferHeader,
 	}
 
-	tmpl, err := template.New("client").Funcs(template.FuncMap{
-		"toSnake": strcase.ToSnake,
-		"toLower": strings.ToLower,
-	}).Parse(clientTemplate)
+	tmpl, err := template.New("client").Funcs(
+		template.FuncMap{
+			"toSnake": strcase.ToSnake,
+			"toLower": strings.ToLower,
+		},
+	).Parse(clientTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %w", err)
 	}

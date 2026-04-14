@@ -16,6 +16,7 @@ type Environment struct {
 	Type          string                   `json:"type"`
 	Attributes    EnvironmentAttributes    `json:"attributes"`
 	Relationships EnvironmentRelationships `json:"relationships"`
+	Links         *EnvironmentLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -475,6 +476,11 @@ func (r *EnvironmentRelationships) PopulateIncludes(included []map[string]interf
 			}
 		}
 	}
+}
+
+// EnvironmentLinks holds the resource links for Environment (response only).
+type EnvironmentLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

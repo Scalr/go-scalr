@@ -24,6 +24,16 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for VcsProvider operations
+const (
+	FilterAccount     = "filter[account]"      // The account filter
+	FilterAgentPool   = "filter[agent-pool]"   // The agent pool filter
+	FilterEnvironment = "filter[environment]"  // The environment filter
+	FilterName        = "filter[name]"         // Filter by VCS name
+	FilterVcsProvider = "filter[vcs-provider]" // The ID of the VCS provider. Multiple values are allowed through COMMA `,`
+	FilterVcsType     = "filter[vcs-type]"     // Filter by VCS type
+)
+
 // Create a new VCS connection between Scalr and a VCS provider. VCS providers can be created at the Scalr account. Self-hosted Scalr also supports the creation of global VCS providers. If a VCS provider is created globally, all accounts within the self-hosted installation will have access to use the VCS provider. Only VCS providers with `personal_token` auth type, can be created through the API. If you need to set up `oauth2` provider, you should use Scalr [web interface](/docs/github) to do this.
 func (c *Client) CreateVcsProviderRaw(ctx context.Context, req *schemas.VcsProviderRequest) (*client.Response, error) {
 	path := "/vcs-providers"
@@ -63,6 +73,9 @@ func (c *Client) CreateVcsProvider(ctx context.Context, req *schemas.VcsProvider
 // The endpoint deletes a VCS provider by ID.
 func (c *Client) DeleteVcsProviderRaw(ctx context.Context, vcsProvider string) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
+	if vcsProvider == "" {
+		return nil, fmt.Errorf("vcsProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +99,9 @@ func (c *Client) DeleteVcsProvider(ctx context.Context, vcsProvider string) erro
 // Show details of a specific VCS provider.
 func (c *Client) GetVcsProviderRaw(ctx context.Context, vcsProvider string, opts *GetVcsProviderOptions) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
+	if vcsProvider == "" {
+		return nil, fmt.Errorf("vcsProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
 	params := url.Values{}
@@ -93,11 +109,13 @@ func (c *Client) GetVcsProviderRaw(ctx context.Context, vcsProvider string, opts
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -138,9 +156,11 @@ func (c *Client) GetVcsProvider(ctx context.Context, vcsProvider string, opts *G
 type GetVcsProviderOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of VCS providers by various filters. To list VCS providers accessible from a specific environment - `filter[environment]`, or when from a specific account - `filter[account]` has to be specified. For self-hosted Scalr there's also an option to list all VCS providers created globally - both `filter[account]=null` and `filter[environment]=null` has to be specified. If no `environment` or `account` filters were specified, all VCS providers to which a current user has read access will be returned.
@@ -165,11 +185,13 @@ func (c *Client) ListVcsProvidersRaw(ctx context.Context, opts *ListVcsProviders
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -257,7 +279,6 @@ func (c *Client) ListVcsProvidersIter(ctx context.Context, opts *ListVcsProvider
 				yield(schemas.VcsProvider{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -267,8 +288,10 @@ func (c *Client) ListVcsProvidersIter(ctx context.Context, opts *ListVcsProvider
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.VcsProvider{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.VcsProvider{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -371,14 +394,19 @@ type ListVcsProvidersOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint allows updates to attributes of an existing VCS provider.
 func (c *Client) UpdateVcsProviderRaw(ctx context.Context, vcsProvider string, req *schemas.VcsProviderRequest) (*client.Response, error) {
 	path := "/vcs-providers/{vcs_provider}"
+	if vcsProvider == "" {
+		return nil, fmt.Errorf("vcsProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{vcs_provider}", url.PathEscape(vcsProvider))
 
 	// Wrap request in JSON:API envelope

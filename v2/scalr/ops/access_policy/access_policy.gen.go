@@ -24,6 +24,19 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for AccessPolicy operations
+const (
+	FilterAccessPolicy   = "filter[access-policy]"   // Access Policy filter.
+	FilterAccount        = "filter[account]"         // Account filter
+	FilterConditions     = "filter[conditions]"      // Conditions filter
+	FilterEnvironment    = "filter[environment]"     // Environment filter
+	FilterRole           = "filter[role]"            // Role filter
+	FilterServiceAccount = "filter[service-account]" // Service account filter
+	FilterTeam           = "filter[team]"            // Team filter
+	FilterUser           = "filter[user]"            // User filter
+	FilterWorkspace      = "filter[workspace]"       // Workspace filter
+)
+
 // Grant access for a member identity to a scope identity. Access is a set of `roles`. Member identity might be one of `user`, `team`, or `service-account`. Scope identity is one of `account`, `environment`, or `workspace`. Check out [identity and access management](https://docs.scalr.io/docs/identity-and-access-management) for a detailed description of the Scalr IAM model.
 func (c *Client) CreateAccessPolicyRaw(ctx context.Context, req *schemas.AccessPolicyRequest, opts *CreateAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies"
@@ -33,9 +46,13 @@ func (c *Client) CreateAccessPolicyRaw(ctx context.Context, req *schemas.AccessP
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,11 +95,18 @@ func (c *Client) CreateAccessPolicy(ctx context.Context, req *schemas.AccessPoli
 type CreateAccessPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteAccessPolicyRaw(ctx context.Context, accessPolicy string) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
+	if accessPolicy == "" {
+		return nil, fmt.Errorf("accessPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -124,9 +148,13 @@ func (c *Client) GetAccessPoliciesRaw(ctx context.Context, opts *GetAccessPolici
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -214,7 +242,6 @@ func (c *Client) GetAccessPoliciesIter(ctx context.Context, opts *GetAccessPolic
 				yield(schemas.AccessPolicy{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -224,8 +251,10 @@ func (c *Client) GetAccessPoliciesIter(ctx context.Context, opts *GetAccessPolic
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessPolicy{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessPolicy{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -328,12 +357,19 @@ type GetAccessPoliciesOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint returns [IAM](https://docs.scalr.io/docs/identity-and-access-management) access policy by ID.
 func (c *Client) GetAccessPolicyRaw(ctx context.Context, accessPolicy string, opts *GetAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
+	if accessPolicy == "" {
+		return nil, fmt.Errorf("accessPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
 	params := url.Values{}
@@ -341,9 +377,13 @@ func (c *Client) GetAccessPolicyRaw(ctx context.Context, accessPolicy string, op
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -384,11 +424,18 @@ func (c *Client) GetAccessPolicy(ctx context.Context, accessPolicy string, opts 
 type GetAccessPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) UpdateAccessPolicyRaw(ctx context.Context, accessPolicy string, req *schemas.AccessPolicyRequest, opts *UpdateAccessPolicyOptions) (*client.Response, error) {
 	path := "/access-policies/{access_policy}"
+	if accessPolicy == "" {
+		return nil, fmt.Errorf("accessPolicy must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_policy}", url.PathEscape(accessPolicy))
 
 	params := url.Values{}
@@ -396,9 +443,13 @@ func (c *Client) UpdateAccessPolicyRaw(ctx context.Context, accessPolicy string,
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -440,5 +491,9 @@ func (c *Client) UpdateAccessPolicy(ctx context.Context, accessPolicy string, re
 type UpdateAccessPolicyOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

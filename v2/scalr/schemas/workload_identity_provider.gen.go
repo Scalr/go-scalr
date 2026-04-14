@@ -15,12 +15,12 @@ type WorkloadIdentityProviderStatus string
 
 // WorkloadIdentityProviderStatus constants
 const (
-	WorkloadIdentityProviderStatusPending                 WorkloadIdentityProviderStatus = "pending"
 	WorkloadIdentityProviderStatusActive                  WorkloadIdentityProviderStatus = "active"
-	WorkloadIdentityProviderStatusInvalidProviderSettings WorkloadIdentityProviderStatus = "invalid_provider_settings"
 	WorkloadIdentityProviderStatusFetchJwksError          WorkloadIdentityProviderStatus = "fetch_jwks_error"
-	WorkloadIdentityProviderStatusNotSupportedJwks        WorkloadIdentityProviderStatus = "not_supported_jwks"
 	WorkloadIdentityProviderStatusInternalError           WorkloadIdentityProviderStatus = "internal_error"
+	WorkloadIdentityProviderStatusInvalidProviderSettings WorkloadIdentityProviderStatus = "invalid_provider_settings"
+	WorkloadIdentityProviderStatusNotSupportedJwks        WorkloadIdentityProviderStatus = "not_supported_jwks"
+	WorkloadIdentityProviderStatusPending                 WorkloadIdentityProviderStatus = "pending"
 )
 
 // Response version - used when unmarshalling from API responses

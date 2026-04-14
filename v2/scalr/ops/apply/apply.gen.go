@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Show details of a specific Terraform Apply stage.
 func (c *Client) GetApplyRaw(ctx context.Context, apply string) (*client.Response, error) {
 	path := "/applies/{apply}"
+	if apply == "" {
+		return nil, fmt.Errorf("apply must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{apply}", url.PathEscape(apply))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -58,15 +61,22 @@ func (c *Client) GetApply(ctx context.Context, apply string) (*schemas.Apply, er
 // Download the raw output of the terraform apply stage.
 func (c *Client) GetApplyLogRaw(ctx context.Context, apply string, opts *GetApplyLogOptions) (*client.Response, error) {
 	path := "/applies/{apply}/output"
+	if apply == "" {
+		return nil, fmt.Errorf("apply must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{apply}", url.PathEscape(apply))
 
 	params := url.Values{}
 	if opts != nil {
 		// Handle parameter: Clean (bool)
 		params.Set("clean", fmt.Sprintf("%t", opts.Clean))
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -98,6 +108,10 @@ func (c *Client) GetApplyLog(ctx context.Context, apply string, opts *GetApplyLo
 // GetApplyLogOptions holds optional parameters for GetApplyLog
 type GetApplyLogOptions struct {
 	// Strip ANSI escape codes.
-	Clean  bool
-	Filter map[string]string
+	Clean bool
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

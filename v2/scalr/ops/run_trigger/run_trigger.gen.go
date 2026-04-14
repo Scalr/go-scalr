@@ -61,6 +61,9 @@ func (c *Client) CreateRunTrigger(ctx context.Context, req *schemas.RunTriggerRe
 
 func (c *Client) DeleteRunTriggerRaw(ctx context.Context, runTrigger string) (*client.Response, error) {
 	path := "/run-triggers/{run_trigger}"
+	if runTrigger == "" {
+		return nil, fmt.Errorf("runTrigger must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_trigger}", url.PathEscape(runTrigger))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -83,6 +86,9 @@ func (c *Client) DeleteRunTrigger(ctx context.Context, runTrigger string) error 
 // Show details of a specific trigger.
 func (c *Client) GetRunTriggerRaw(ctx context.Context, runTrigger string, opts *GetRunTriggerOptions) (*client.Response, error) {
 	path := "/run-triggers/{run_trigger}"
+	if runTrigger == "" {
+		return nil, fmt.Errorf("runTrigger must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_trigger}", url.PathEscape(runTrigger))
 
 	params := url.Values{}
@@ -90,9 +96,13 @@ func (c *Client) GetRunTriggerRaw(ctx context.Context, runTrigger string, opts *
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -133,5 +143,9 @@ func (c *Client) GetRunTrigger(ctx context.Context, runTrigger string, opts *Get
 type GetRunTriggerOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

@@ -24,6 +24,14 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Hook operations
+const (
+	FilterHook        = "filter[hook]"         // The ID(s) of the Hook(s).
+	FilterName        = "filter[name]"         // The Hook name filter.
+	FilterStatus      = "filter[status]"       // The status of the Hook. Possible values: 'pending', 'active', 'errored'.
+	FilterVcsProvider = "filter[vcs-provider]" // The ID of the VCS provider
+)
+
 // Creates a Hook from a VCS repository. The repository is cloned asynchronously, and the specified folder is archived and uploaded to the Blob storage.
 func (c *Client) CreateHookRaw(ctx context.Context, req *schemas.HookRequest) (*client.Response, error) {
 	path := "/hooks"
@@ -63,6 +71,9 @@ func (c *Client) CreateHook(ctx context.Context, req *schemas.HookRequest) (*sch
 // Deletes a specific hook by its ID.
 func (c *Client) DeleteHookRaw(ctx context.Context, hook string) (*client.Response, error) {
 	path := "/hooks/{hook}"
+	if hook == "" {
+		return nil, fmt.Errorf("hook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +97,9 @@ func (c *Client) DeleteHook(ctx context.Context, hook string) error {
 // Retrieves details of a specific hook by its ID.
 func (c *Client) GetHookRaw(ctx context.Context, hook string, opts *GetHookOptions) (*client.Response, error) {
 	path := "/hooks/{hook}"
+	if hook == "" {
+		return nil, fmt.Errorf("hook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	params := url.Values{}
@@ -93,11 +107,13 @@ func (c *Client) GetHookRaw(ctx context.Context, hook string, opts *GetHookOptio
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -138,9 +154,11 @@ func (c *Client) GetHook(ctx context.Context, hook string, opts *GetHookOptions)
 type GetHookOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of hooks by various filters.
@@ -165,11 +183,13 @@ func (c *Client) ListHooksRaw(ctx context.Context, opts *ListHooksOptions) (*cli
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -257,7 +277,6 @@ func (c *Client) ListHooksIter(ctx context.Context, opts *ListHooksOptions) iter
 				yield(schemas.Hook{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -267,8 +286,10 @@ func (c *Client) ListHooksIter(ctx context.Context, opts *ListHooksOptions) iter
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Hook{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Hook{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -371,14 +392,19 @@ type ListHooksOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Triggers a resync of the Hook.
 func (c *Client) ResyncHookRaw(ctx context.Context, hook string) (*client.Response, error) {
 	path := "/hooks/{hook}/actions/resync"
+	if hook == "" {
+		return nil, fmt.Errorf("hook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -402,6 +428,9 @@ func (c *Client) ResyncHook(ctx context.Context, hook string) error {
 // Updates a specific hook by its ID.
 func (c *Client) UpdateHookRaw(ctx context.Context, hook string, req *schemas.HookRequest) (*client.Response, error) {
 	path := "/hooks/{hook}"
+	if hook == "" {
+		return nil, fmt.Errorf("hook must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook}", url.PathEscape(hook))
 
 	// Wrap request in JSON:API envelope

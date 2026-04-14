@@ -15,9 +15,9 @@ type VariableCategory string
 
 // VariableCategory constants
 const (
-	VariableCategoryTerraform VariableCategory = "terraform"
-	VariableCategoryShell     VariableCategory = "shell"
 	VariableCategoryEnv       VariableCategory = "env"
+	VariableCategoryShell     VariableCategory = "shell"
+	VariableCategoryTerraform VariableCategory = "terraform"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -27,6 +27,7 @@ type Variable struct {
 	Type          string                `json:"type"`
 	Attributes    VariableAttributes    `json:"attributes"`
 	Relationships VariableRelationships `json:"relationships"`
+	Links         *VariableLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -224,6 +225,11 @@ func (r *VariableRelationships) PopulateIncludes(included []map[string]interface
 			}
 		}
 	}
+}
+
+// VariableLinks holds the resource links for Variable (response only).
+type VariableLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

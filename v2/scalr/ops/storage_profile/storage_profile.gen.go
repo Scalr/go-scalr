@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for StorageProfile operations
+const (
+	FilterDefault        = "filter[default]"         // Whether the storage profile is set as default.
+	FilterName           = "filter[name]"            // The resource storage profile name.
+	FilterStorageProfile = "filter[storage-profile]" // The ID of the resource storage profile.
+)
+
 // Create a new storage profile for storing blobs (source code, terraform state, logs, etc).
 func (c *Client) CreateStorageProfileRaw(ctx context.Context, req *schemas.StorageProfileRequest) (*client.Response, error) {
 	path := "/storage-profiles"
@@ -59,6 +66,9 @@ func (c *Client) CreateStorageProfile(ctx context.Context, req *schemas.StorageP
 // Delete a storage profile. The operation is only allowed if the storage profile is not being used by any blobs and is not set as default.
 func (c *Client) DeleteStorageProfileRaw(ctx context.Context, storageProfile string) (*client.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
+	if storageProfile == "" {
+		return nil, fmt.Errorf("storageProfile must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -82,6 +92,9 @@ func (c *Client) DeleteStorageProfile(ctx context.Context, storageProfile string
 // Get storage profile by id.
 func (c *Client) GetStorageProfileRaw(ctx context.Context, storageProfile string) (*client.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
+	if storageProfile == "" {
+		return nil, fmt.Errorf("storageProfile must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -129,9 +142,13 @@ func (c *Client) ListStorageProfilesRaw(ctx context.Context, opts *ListStoragePr
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -215,7 +232,6 @@ func (c *Client) ListStorageProfilesIter(ctx context.Context, opts *ListStorageP
 				yield(schemas.StorageProfile{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -225,8 +241,10 @@ func (c *Client) ListStorageProfilesIter(ctx context.Context, opts *ListStorageP
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.StorageProfile{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.StorageProfile{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -318,13 +336,20 @@ type ListStorageProfilesOptions struct {
 	// Query string
 	Query string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update an existing storage profile. The operation is only allowed if the storage profile is not being used by any blobs.
 func (c *Client) UpdateStorageProfileRaw(ctx context.Context, storageProfile string, req *schemas.StorageProfileRequest) (*client.Response, error) {
 	path := "/storage-profiles/{storage_profile}"
+	if storageProfile == "" {
+		return nil, fmt.Errorf("storageProfile must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{storage_profile}", url.PathEscape(storageProfile))
 
 	// Wrap request in JSON:API envelope

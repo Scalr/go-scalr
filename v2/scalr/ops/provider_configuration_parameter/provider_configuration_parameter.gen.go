@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Create a new Provider configuration parameter.
 func (c *Client) CreateProviderConfigurationParameterRaw(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationParameterRequest) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/parameters"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// Wrap request in JSON:API envelope
@@ -64,6 +67,9 @@ func (c *Client) CreateProviderConfigurationParameter(ctx context.Context, provi
 // The endpoint deletes a Provider configuration parameter by ID.
 func (c *Client) DeleteProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*client.Response, error) {
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
+	if providerConfigurationParameter == "" {
+		return nil, fmt.Errorf("providerConfigurationParameter must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -87,6 +93,9 @@ func (c *Client) DeleteProviderConfigurationParameter(ctx context.Context, provi
 // Show details of a specific Provider configuration parameter.
 func (c *Client) GetProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string) (*client.Response, error) {
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
+	if providerConfigurationParameter == "" {
+		return nil, fmt.Errorf("providerConfigurationParameter must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -122,6 +131,9 @@ func (c *Client) GetProviderConfigurationParameter(ctx context.Context, provider
 // This endpoint returns a list of Provider configuration parameters for specific provider configuration.
 func (c *Client) ListProviderConfigurationParametersRaw(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationParametersOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/parameters"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	params := url.Values{}
@@ -132,9 +144,13 @@ func (c *Client) ListProviderConfigurationParametersRaw(ctx context.Context, pro
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -222,7 +238,6 @@ func (c *Client) ListProviderConfigurationParametersIter(ctx context.Context, pr
 				yield(schemas.ProviderConfigurationParameter{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -232,8 +247,10 @@ func (c *Client) ListProviderConfigurationParametersIter(ctx context.Context, pr
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ProviderConfigurationParameter{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ProviderConfigurationParameter{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -330,12 +347,19 @@ type ListProviderConfigurationParametersOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint allows updates to attributes of an existing Provider configuration parameters.
 func (c *Client) UpdateProviderConfigurationParameterRaw(ctx context.Context, providerConfigurationParameter string, req *schemas.ProviderConfigurationParameterRequest) (*client.Response, error) {
 	path := "/provider-configuration-parameters/{provider_configuration_parameter}"
+	if providerConfigurationParameter == "" {
+		return nil, fmt.Errorf("providerConfigurationParameter must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration_parameter}", url.PathEscape(providerConfigurationParameter))
 
 	// Wrap request in JSON:API envelope

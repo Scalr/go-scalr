@@ -1,8 +1,10 @@
+// Package client provides the HTTP client and error types for the Scalr API.
 package client
 
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 // Sentinel errors for common HTTP status codes to use in errors.Is() checks
@@ -44,7 +46,10 @@ func (e *UnauthorizedError) Error() string {
 	return "unauthorized"
 }
 
-func (e *UnauthorizedError) Unwrap() error        { return e.Err }
+// Unwrap returns the underlying error.
+func (e *UnauthorizedError) Unwrap() error { return e.Err }
+
+// Is reports whether target matches ErrUnauthorized.
 func (e *UnauthorizedError) Is(target error) bool { return target == ErrUnauthorized }
 
 // ForbiddenError represents a 403 Forbidden response
@@ -64,7 +69,10 @@ func (e *ForbiddenError) Error() string {
 	return "forbidden"
 }
 
-func (e *ForbiddenError) Unwrap() error        { return e.Err }
+// Unwrap returns the underlying error.
+func (e *ForbiddenError) Unwrap() error { return e.Err }
+
+// Is reports whether target matches ErrForbidden.
 func (e *ForbiddenError) Is(target error) bool { return target == ErrForbidden }
 
 // NotFoundError represents a 404 Not Found response
@@ -84,7 +92,10 @@ func (e *NotFoundError) Error() string {
 	return "not found"
 }
 
-func (e *NotFoundError) Unwrap() error        { return e.Err }
+// Unwrap returns the underlying error.
+func (e *NotFoundError) Unwrap() error { return e.Err }
+
+// Is reports whether target matches ErrNotFound.
 func (e *NotFoundError) Is(target error) bool { return target == ErrNotFound }
 
 // ConflictError represents a 409 Conflict response
@@ -104,7 +115,10 @@ func (e *ConflictError) Error() string {
 	return "conflict"
 }
 
-func (e *ConflictError) Unwrap() error        { return e.Err }
+// Unwrap returns the underlying error.
+func (e *ConflictError) Unwrap() error { return e.Err }
+
+// Is reports whether target matches ErrConflict.
 func (e *ConflictError) Is(target error) bool { return target == ErrConflict }
 
 // UnprocessableEntityError represents a 422 Unprocessable Entity response
@@ -124,27 +138,39 @@ func (e *UnprocessableEntityError) Error() string {
 	return "unprocessable entity"
 }
 
-func (e *UnprocessableEntityError) Unwrap() error        { return e.Err }
+// Unwrap returns the underlying error.
+func (e *UnprocessableEntityError) Unwrap() error { return e.Err }
+
+// Is reports whether target matches ErrUnprocessableEntity.
 func (e *UnprocessableEntityError) Is(target error) bool { return target == ErrUnprocessableEntity }
 
-// TooManyRequestsError represents a 429 Too Many Requests response
+// TooManyRequestsError represents a 429 Too Many Requests response.
+// RetryAfter is populated when the server sent a Retry-After header;
+// zero means the server did not specify a delay.
 type TooManyRequestsError struct {
 	Message    string
 	StatusCode int
+	RetryAfter time.Duration // from Retry-After header; zero if absent
 	Err        error
 }
 
 func (e *TooManyRequestsError) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("too many requests: %s", e.Err.Error())
-	}
+	base := "too many requests"
 	if e.Message != "" {
-		return fmt.Sprintf("too many requests: %s", e.Message)
+		base = fmt.Sprintf("too many requests: %s", e.Message)
+	} else if e.Err != nil {
+		base = fmt.Sprintf("too many requests: %s", e.Err.Error())
 	}
-	return "too many requests"
+	if e.RetryAfter > 0 {
+		return fmt.Sprintf("%s (retry after %s)", base, e.RetryAfter)
+	}
+	return base
 }
 
-func (e *TooManyRequestsError) Unwrap() error        { return e.Err }
+// Unwrap returns the underlying error.
+func (e *TooManyRequestsError) Unwrap() error { return e.Err }
+
+// Is reports whether target matches ErrTooManyRequests.
 func (e *TooManyRequestsError) Is(target error) bool { return target == ErrTooManyRequests }
 
 // HTTPError represents a generic HTTP error response for status codes

@@ -15,8 +15,8 @@ type PolicyGroupExecuteAs string
 
 // PolicyGroupExecuteAs constants
 const (
-	PolicyGroupExecuteAsPrePlanCheck PolicyGroupExecuteAs = "pre_plan_check"
 	PolicyGroupExecuteAsPolicyCheck  PolicyGroupExecuteAs = "policy_check"
+	PolicyGroupExecuteAsPrePlanCheck PolicyGroupExecuteAs = "pre_plan_check"
 )
 
 // PolicyGroupStatus represents the type for PolicyGroupStatus
@@ -25,9 +25,9 @@ type PolicyGroupStatus string
 
 // PolicyGroupStatus constants
 const (
-	PolicyGroupStatusFetching PolicyGroupStatus = "fetching"
 	PolicyGroupStatusActive   PolicyGroupStatus = "active"
 	PolicyGroupStatusErrored  PolicyGroupStatus = "errored"
+	PolicyGroupStatusFetching PolicyGroupStatus = "fetching"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -37,6 +37,7 @@ type PolicyGroup struct {
 	Type          string                   `json:"type"`
 	Attributes    PolicyGroupAttributes    `json:"attributes"`
 	Relationships PolicyGroupRelationships `json:"relationships"`
+	Links         *PolicyGroupLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -279,6 +280,11 @@ func (r *PolicyGroupRelationships) PopulateIncludes(included []map[string]interf
 			}
 		}
 	}
+}
+
+// PolicyGroupLinks holds the resource links for PolicyGroup (response only).
+type PolicyGroupLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

@@ -4,6 +4,7 @@ package schemas
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
@@ -14,11 +15,11 @@ type CostEstimateStatus string
 
 // CostEstimateStatus constants
 const (
-	CostEstimateStatusPending     CostEstimateStatus = "pending"
-	CostEstimateStatusQueued      CostEstimateStatus = "queued"
-	CostEstimateStatusFinished    CostEstimateStatus = "finished"
 	CostEstimateStatusCanceled    CostEstimateStatus = "canceled"
 	CostEstimateStatusErrored     CostEstimateStatus = "errored"
+	CostEstimateStatusFinished    CostEstimateStatus = "finished"
+	CostEstimateStatusPending     CostEstimateStatus = "pending"
+	CostEstimateStatusQueued      CostEstimateStatus = "queued"
 	CostEstimateStatusUnreachable CostEstimateStatus = "unreachable"
 )
 
@@ -28,6 +29,8 @@ type CostEstimate struct {
 	ID         string                 `json:"id"`
 	Type       string                 `json:"type"`
 	Attributes CostEstimateAttributes `json:"attributes"`
+
+	Links *CostEstimateLinks `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -60,9 +63,18 @@ type CostEstimateAttributes struct {
 	// The Cost estimate's current status. Transient states: * `pending` - Cost estimation has been created but not yet `queued`. * `queued` - Queued and waiting for capacity to be available. Final states: * `canceled` - The cost estimate has been canceled. * `errored` - The cost estimate has finished with an error. Attribute `error-message` contains the details. * `finished` - The cost estimate has completed successfully. * `unreachable` - The cost estimate will not run.
 	Status CostEstimateStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+	StatusTimestamps map[string]time.Time `json:"status-timestamps"`
 	// The number of resources in the terraform plan that were excluded from the estimation.
 	UnmatchedResourcesCount *int `json:"unmatched-resources-count"`
+}
+
+// CostEstimateLinks holds the resource links for CostEstimate (response only).
+type CostEstimateLinks struct {
+	// Link to download the cost breakdown [JSON formatted output](https://www.infracost.io/docs/multi_project/report/#examples).
+	Breakdown *string `json:"breakdown"`
+	// Link to download the raw output of the cost estimation.
+	Output *string `json:"output"`
+	Self   string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests
@@ -109,7 +121,7 @@ type CostEstimateAttributesRequest struct {
 	// The Cost estimate's current status. Transient states: * `pending` - Cost estimation has been created but not yet `queued`. * `queued` - Queued and waiting for capacity to be available. Final states: * `canceled` - The cost estimate has been canceled. * `errored` - The cost estimate has finished with an error. Attribute `error-message` contains the details. * `finished` - The cost estimate has completed successfully. * `unreachable` - The cost estimate will not run.
 	Status *value.Value[CostEstimateStatus] `json:"status,omitempty"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps *value.Value[map[string]interface{}] `json:"status-timestamps,omitempty"`
+	StatusTimestamps *value.Value[map[string]time.Time] `json:"status-timestamps,omitempty"`
 	// The number of resources in the terraform plan that were excluded from the estimation.
 	UnmatchedResourcesCount *value.Value[int] `json:"unmatched-resources-count,omitempty"`
 }

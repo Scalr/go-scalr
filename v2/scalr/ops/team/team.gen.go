@@ -24,6 +24,14 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Team operations
+const (
+	FilterIdentityProvider = "filter[identity-provider]" // The identity provider filter.
+	FilterName             = "filter[name]"              // The team name filter.
+	FilterTeam             = "filter[team]"              // The team filter.
+	FilterUser             = "filter[user]"              // The user filter.
+)
+
 // The endpoint creates an [IAM](https://docs.scalr.io/docs/identity-and-access-management) team. If an external IdP used, the team name must exist in that IdP.
 func (c *Client) CreateTeamRaw(ctx context.Context, req *schemas.TeamRequest, opts *CreateTeamOptions) (*client.Response, error) {
 	path := "/teams"
@@ -33,9 +41,13 @@ func (c *Client) CreateTeamRaw(ctx context.Context, req *schemas.TeamRequest, op
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,12 +90,19 @@ func (c *Client) CreateTeam(ctx context.Context, req *schemas.TeamRequest, opts 
 type CreateTeamOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
 func (c *Client) DeleteTeamRaw(ctx context.Context, team string) (*client.Response, error) {
 	path := "/teams/{team}"
+	if team == "" {
+		return nil, fmt.Errorf("team must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -107,6 +126,9 @@ func (c *Client) DeleteTeam(ctx context.Context, team string) error {
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) team by ID.
 func (c *Client) GetTeamRaw(ctx context.Context, team string, opts *GetTeamOptions) (*client.Response, error) {
 	path := "/teams/{team}"
+	if team == "" {
+		return nil, fmt.Errorf("team must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
 	params := url.Values{}
@@ -114,9 +136,13 @@ func (c *Client) GetTeamRaw(ctx context.Context, team string, opts *GetTeamOptio
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -157,7 +183,11 @@ func (c *Client) GetTeam(ctx context.Context, team string, opts *GetTeamOptions)
 type GetTeamOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) teams. The endpoint supports filtering by team name (`filter[name]`), IdP (`filter[identity-provider]`) and team ID (`filter[team]=in:team-123,team-331`).
@@ -182,9 +212,13 @@ func (c *Client) GetTeamsRaw(ctx context.Context, opts *GetTeamsOptions) (*clien
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -272,7 +306,6 @@ func (c *Client) GetTeamsIter(ctx context.Context, opts *GetTeamsOptions) iter.S
 				yield(schemas.Team{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -282,8 +315,10 @@ func (c *Client) GetTeamsIter(ctx context.Context, opts *GetTeamsOptions) iter.S
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Team{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Team{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -385,13 +420,20 @@ type GetTeamsOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update a team's attributes or users. The endpoint can be used to add or remove users from a team. If the account uses an external identity provider without SCIM provisioning, team membership cannot be managed via this endpoint - the “users“ relationship will be ignored. Use SCIM or manage team membership directly in the identity provider.
 func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*client.Response, error) {
 	path := "/teams/{team}"
+	if team == "" {
+		return nil, fmt.Errorf("team must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{team}", url.PathEscape(team))
 
 	params := url.Values{}
@@ -399,9 +441,13 @@ func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.Te
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -444,5 +490,9 @@ func (c *Client) UpdateTeam(ctx context.Context, team string, req *schemas.TeamR
 type UpdateTeamOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Remove Slack App connection for the account.
 func (c *Client) DeleteSlackConnectionRaw(ctx context.Context, account string) (*client.Response, error) {
 	path := "/integrations/slack/{account}/connection"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -50,7 +53,13 @@ func (c *Client) DeleteSlackConnection(ctx context.Context, account string) erro
 // Get a specific Slack channel by ID.
 func (c *Client) GetSlackChannelRaw(ctx context.Context, account string, channelId string) (*client.Response, error) {
 	path := "/integrations/slack/{account}/connection/channels/{channel_id}"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
+	if channelId == "" {
+		return nil, fmt.Errorf("channelId must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{channel_id}", url.PathEscape(channelId))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -78,6 +87,9 @@ func (c *Client) GetSlackChannel(ctx context.Context, account string, channelId 
 // Show details of account's Slack App connection.
 func (c *Client) GetSlackConnectionRaw(ctx context.Context, account string) (*client.Response, error) {
 	path := "/integrations/slack/{account}/connection"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -113,6 +125,9 @@ func (c *Client) GetSlackConnection(ctx context.Context, account string) (*schem
 // Get a list of channels from associated Slack workspace.
 func (c *Client) ListSlackChannelsRaw(ctx context.Context, account string, opts *ListSlackChannelsOptions) (*client.Response, error) {
 	path := "/integrations/slack/{account}/connection/channels"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	params := url.Values{}
@@ -131,9 +146,13 @@ func (c *Client) ListSlackChannelsRaw(ctx context.Context, account string, opts 
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -172,5 +191,9 @@ type ListSlackChannelsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

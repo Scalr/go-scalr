@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"time"
 	
-	"github.com/scalr/go-scalr/v2/{{ .ApiPackageName }}/value"
+	"github.com/scalr/go-scalr/v2/{{ .APIPackageName }}/value"
 )
 
 {{range .EnumTypes}}
@@ -36,6 +36,7 @@ type {{ .Name }} struct {
 	Type          string                   `json:"type"`
 	{{if .Attributes}}Attributes    {{ .Name }}Attributes     `json:"attributes"`{{end}}
 	{{if .Relationships}}Relationships {{ .Name }}Relationships `json:"relationships"`{{end}}
+	{{if .LinksFields}}Links *{{ .Name }}Links `json:"links,omitempty"`{{else if .LinksIsMap}}Links map[string]string `json:"links,omitempty"`{{end}}
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -183,6 +184,16 @@ func (r *{{ .Name }}Relationships) PopulateIncludes(included []map[string]interf
 }
 {{end}}
 
+{{if .LinksFields}}
+// {{ .Name }}Links holds the resource links for {{ .Name }} (response only).
+type {{ .Name }}Links struct {
+{{range .LinksFields -}}
+	{{if .Description}}// {{ .Description }}
+	{{end -}}
+	{{.Name}} {{.Type}} `json:"{{.JSONName}}"`
+{{end -}}
+}
+{{end}}
 // Request version - used when marshalling for API requests
 {{if .Description}}// {{ .Description }} (for requests){{end}}
 type {{ .Name }}Request struct {
@@ -242,6 +253,25 @@ type {{ .Name }}RelationshipsRequest struct {
 {{end}}
 
 {{range .NestedStructs}}
+{{range .EnumTypes}}
+// {{ .Name }} represents the type for {{ .Name }}
+{{if .Description}}// {{ .Description }}{{end}}
+type {{ .Name }} {{ .BaseType }}
+
+// {{ .Name }} constants
+const (
+{{- $enumTypeName := .Name}}
+{{- $baseType := .BaseType}}
+{{- range .Values}}
+	{{- if eq $baseType "string"}}
+	{{.Name}} {{$enumTypeName}} = "{{.Value}}"
+	{{- else}}
+	{{.Name}} {{$enumTypeName}} = {{.Value}}
+	{{- end}}
+{{- end}}
+)
+
+{{end}}
 {{if .Description}}// {{ .Description }}{{end}}
 type {{ .Name }} struct {
 {{range .Fields -}}
@@ -254,6 +284,25 @@ type {{ .Name }} struct {
 {{end}}
 
 {{range .RequestNestedStructs}}
+{{range .EnumTypes}}
+// {{ .Name }} represents the type for {{ .Name }}
+{{if .Description}}// {{ .Description }}{{end}}
+type {{ .Name }} {{ .BaseType }}
+
+// {{ .Name }} constants
+const (
+{{- $enumTypeName := .Name}}
+{{- $baseType := .BaseType}}
+{{- range .Values}}
+	{{- if eq $baseType "string"}}
+	{{.Name}} {{$enumTypeName}} = "{{.Value}}"
+	{{- else}}
+	{{.Name}} {{$enumTypeName}} = {{.Value}}
+	{{- end}}
+{{- end}}
+)
+
+{{end}}
 {{if .Description}}// {{ .Description }} (for requests){{end}}
 type {{ .Name }} struct {
 {{range .Fields -}}

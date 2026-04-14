@@ -25,9 +25,30 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Run operations
+const (
+	FilterAccount        = "filter[account]"         // The account ID to list runs for.
+	FilterCreatedAt      = "filter[created-at]"      // The run created at filter.
+	FilterCreatedBy      = "filter[created-by]"      // The ID of the User who triggered this run
+	FilterCreatedByRun   = "filter[created-by-run]"  // The ID of the Run which triggered this run
+	FilterEnvOrWs        = "filter[env-or-ws]"       // The list of environment or workspaces IDs to match
+	FilterEnvironment    = "filter[environment]"     // The environment ID to list runs for.
+	FilterIsDry          = "filter[is-dry]"          // The is dry runs filter.
+	FilterResourceDrifts = "filter[resource-drifts]" // Filter the runs by drifted resources count.
+	FilterRun            = "filter[run]"             // The comma-separated list of run IDs.
+	FilterSource         = "filter[source]"          // The run source filter.
+	FilterStatus         = "filter[status]"          // The run status filter.
+	FilterTag            = "filter[tag]"             // Filter runs by tags.
+	FilterVcsRevision    = "filter[vcs-revision]"    // Commit sha that affected runs
+	FilterWorkspace      = "filter[workspace]"       // The workspace ID to list runs for.
+)
+
 // Interrupt a run that is currently planning or applying. Performing a cancel is roughly equivalent to hitting `ctrl+c` during a Terraform plan or apply on the CLI. The running Terraform process is sent an `INT` signal, which instructs Terraform to end its work and wrap up in the safest way possible.
 func (c *Client) CancelRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/cancel"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
@@ -53,6 +74,9 @@ func (c *Client) CancelRun(ctx context.Context, run string, req *schemas.Comment
 // Apply a run that is paused waiting for confirmation after a plan. This includes runs in the `planned` and `policy_checked` states. This action is only required for runs that can't be auto-applied.
 func (c *Client) ConfirmRunRaw(ctx context.Context, run string, req *schemas.ConfirmRequest) (*client.Response, error) {
 	path := "/runs/{run}/actions/apply"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
@@ -87,9 +111,13 @@ func (c *Client) CreateRunRaw(ctx context.Context, req *schemas.RunRequest, opts
 		if opts.VcsTaskId != "" {
 			params.Set("vcs-task-id", opts.VcsTaskId)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -134,12 +162,19 @@ type CreateRunOptions struct {
 	VcsUserId int
 	// The ID of a VCS task which triggered the run. Internal use only.
 	VcsTaskId string
-	Filter    map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Skip any remaining work on runs that are paused waiting for confirmation or priority. This includes runs in the `pending`, `planned`, `policy_checked` and `policy_override` states.
 func (c *Client) DiscardRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/discard"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
@@ -165,6 +200,9 @@ func (c *Client) DiscardRun(ctx context.Context, run string, req *schemas.Commen
 // Get a Zip archive with policy check input data generated for a given run. See [Policy Input](https://docs.scalr.io/docs/policy-as-code) data structure.
 func (c *Client) DownloadPolicyInputRaw(ctx context.Context, run string, opts *DownloadPolicyInputOptions) (*client.Response, error) {
 	path := "/runs/{run}/policy-input"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	params := url.Values{}
@@ -173,9 +211,13 @@ func (c *Client) DownloadPolicyInputRaw(ctx context.Context, run string, opts *D
 		if opts.Stage != "" {
 			params.Set("stage", opts.Stage)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -207,13 +249,20 @@ func (c *Client) DownloadPolicyInput(ctx context.Context, run string, opts *Down
 // DownloadPolicyInputOptions holds optional parameters for DownloadPolicyInput
 type DownloadPolicyInputOptions struct {
 	// The run stage
-	Stage  string
-	Filter map[string]string
+	Stage string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Cancel all previous runs in pending or waiting for confirmation statuses. If the workspace is locked by a finished run, the lock will be automatically removed to allow the forced run to proceed.
 func (c *Client) ForceRunRaw(ctx context.Context, run string, req *schemas.Comment) (*client.Response, error) {
 	path := "/runs/{run}/actions/force"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	// Plain JSON request (not JSON:API)
@@ -239,6 +288,9 @@ func (c *Client) ForceRun(ctx context.Context, run string, req *schemas.Comment)
 // Show details of a specific run.
 func (c *Client) GetRunRaw(ctx context.Context, run string, opts *GetRunOptions) (*client.Response, error) {
 	path := "/runs/{run}"
+	if run == "" {
+		return nil, fmt.Errorf("run must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run}", url.PathEscape(run))
 
 	params := url.Values{}
@@ -246,11 +298,13 @@ func (c *Client) GetRunRaw(ctx context.Context, run string, opts *GetRunOptions)
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -291,9 +345,11 @@ func (c *Client) GetRun(ctx context.Context, run string, opts *GetRunOptions) (*
 type GetRunOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists runs for a specific workspace.
@@ -319,11 +375,13 @@ func (c *Client) GetRunsRaw(ctx context.Context, opts *GetRunsOptions) (*client.
 		if opts.Scheduled != "" {
 			params.Set("scheduled", opts.Scheduled)
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -411,7 +469,6 @@ func (c *Client) GetRunsIter(ctx context.Context, opts *GetRunsOptions) iter.Seq
 				yield(schemas.Run{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -421,8 +478,10 @@ func (c *Client) GetRunsIter(ctx context.Context, opts *GetRunsOptions) iter.Seq
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -525,9 +584,11 @@ type GetRunsOptions struct {
 	Query string
 	// List only runs that are scheduled.
 	Scheduled string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists Runs Queue on allowed scopes.
@@ -553,11 +614,13 @@ func (c *Client) GetRunsQueueRaw(ctx context.Context, opts *GetRunsQueueOptions)
 		if opts.Scheduled != "" {
 			params.Set("scheduled", opts.Scheduled)
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -645,7 +708,6 @@ func (c *Client) GetRunsQueueIter(ctx context.Context, opts *GetRunsQueueOptions
 				yield(schemas.Run{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -655,8 +717,10 @@ func (c *Client) GetRunsQueueIter(ctx context.Context, opts *GetRunsQueueOptions
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Run{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -759,7 +823,9 @@ type GetRunsQueueOptions struct {
 	Query string
 	// List only runs that are scheduled.
 	Scheduled string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

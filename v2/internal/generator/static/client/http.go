@@ -3,12 +3,17 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"math/rand"
+	"net"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -26,12 +31,13 @@ type HTTPClient struct {
 	sleepFunc         func(time.Duration) // For testing - allows mocking sleep
 }
 
+// HTTPClientOption is a functional option for configuring an HTTPClient.
 type HTTPClientOption func(*HTTPClient)
 
 // WithRetryMax sets the maximum number of retries. Default: 5
-func WithRetryMax(max int) HTTPClientOption {
+func WithRetryMax(n int) HTTPClientOption {
 	return func(c *HTTPClient) {
-		c.retryMax = max
+		c.retryMax = n
 	}
 }
 
@@ -107,12 +113,19 @@ func withSleepFunc(fn func(time.Duration)) HTTPClientOption {
 
 // NewHTTPClient creates a new HTTP client
 func NewHTTPClient(baseURL, token string, opts ...HTTPClientOption) *HTTPClient {
+	// Clone the default transport and raise MaxIdleConnsPerHost to match MaxIdleConns.
+	// Because this client talks to a single host, the default cap of 2 idle connections per host
+	// would cause connection thrashing under concurrent use.
+	//nolint:forcetypeassert // DefaultTransport is always *http.Transport; this is a well-known Go idiom.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.MaxIdleConnsPerHost = transport.MaxIdleConns
+
 	client := &HTTPClient{
 		baseURL:        baseURL,
 		token:          token,
 		retryMax:       5,
 		timeout:        30 * time.Second,
-		httpClient:     &http.Client{},
+		httpClient:     &http.Client{Transport: transport},
 		defaultHeaders: make(map[string]string),
 		logger:         NewNoOpLogger(), // Default: no logging
 		userAgent:      UserAgent(),     // Default User-Agent
@@ -123,9 +136,18 @@ func NewHTTPClient(baseURL, token string, opts ...HTTPClientOption) *HTTPClient 
 		opt(client)
 	}
 
-	client.httpClient.Timeout = client.timeout
+	// Do NOT set httpClient.Timeout — we apply the timeout as a per-request
+	// context deadline inside do() so that all timeout errors are uniformly
+	// context.DeadlineExceeded rather than the opaque url.Error that
+	// http.Client.Timeout produces.
 
 	return client
+}
+
+// Close releases idle connections held by the underlying transport.
+// Call this when the client is no longer needed to free resources promptly.
+func (c *HTTPClient) Close() {
+	c.httpClient.CloseIdleConnections()
 }
 
 // WithHeader creates a new HTTPClient with an additional default header
@@ -160,26 +182,60 @@ func (c *HTTPClient) Get(ctx context.Context, path string, headers map[string]st
 }
 
 // Post performs a POST request
-func (c *HTTPClient) Post(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) Post(
+	ctx context.Context,
+	path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	return c.do(ctx, "POST", path, body, headers)
 }
 
 // Patch performs a PATCH request
-func (c *HTTPClient) Patch(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) Patch(
+	ctx context.Context,
+	path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	return c.do(ctx, "PATCH", path, body, headers)
 }
 
 // Put performs a PUT request
-func (c *HTTPClient) Put(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) Put(
+	ctx context.Context,
+	path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	return c.do(ctx, "PUT", path, body, headers)
 }
 
 // Delete performs a DELETE request
-func (c *HTTPClient) Delete(ctx context.Context, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) Delete(
+	ctx context.Context,
+	path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
 	return c.do(ctx, "DELETE", path, body, headers)
 }
 
-func (c *HTTPClient) do(ctx context.Context, method, path string, body interface{}, headers map[string]string) (*http.Response, error) {
+func (c *HTTPClient) do(
+	ctx context.Context,
+	method, path string,
+	body interface{},
+	headers map[string]string,
+) (*http.Response, error) {
+	// Apply per-request timeout via context so all deadline errors are
+	// context.DeadlineExceeded regardless of whether the limit came from
+	// WithTimeout or an external context.
+	if c.timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.timeout)
+		defer cancel()
+	}
+
 	url := c.baseURL + path
 
 	// Log request start
@@ -189,9 +245,12 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 		"url", sanitizeURL(url),
 	)
 
+	// Marshal the body once; retries reuse the same bytes.
+	var marshaledBody []byte
 	var bodyReader io.Reader
 	if body != nil {
-		bodyBytes, err := json.Marshal(body)
+		var err error
+		marshaledBody, err = json.Marshal(body)
 		if err != nil {
 			c.logger.Error("Failed to marshal request body",
 				"error", err,
@@ -200,30 +259,39 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 			)
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)
 		}
-		bodyReader = bytes.NewReader(bodyBytes)
+		bodyReader = bytes.NewReader(marshaledBody)
 
 		c.logger.Debug("Request body prepared",
 			"method", method,
 			"path", path,
-			"bodySize", len(bodyBytes),
+			"bodySize", len(marshaledBody),
 		)
 	}
 
 	var lastErr error
 	var lastStatusCode int
+	var retryAfter time.Duration     // backoff for next retry
+	var lastRetryAfter time.Duration // most recent Retry-After from server (for final error)
 
 	for attempt := 0; attempt <= c.retryMax; attempt++ {
 		if attempt > 0 {
-			// Exponential backoff with jitter: base * 2^attempt + jitter
-			// e.g., attempt 1: 1-2s, attempt 2: 2-4s, attempt 3: 4-8s
-			base := time.Second
-			maxBackoff := base * time.Duration(math.Pow(2, float64(attempt)))
-			jitter := time.Duration(rand.Int63n(int64(maxBackoff)))
-			backoff := maxBackoff + jitter
+			var backoff time.Duration
+			if retryAfter > 0 {
+				// Honour the server's requested delay
+				backoff = retryAfter
+				retryAfter = 0
+			} else {
+				// Exponential backoff with jitter: base * 2^attempt + jitter
+				// e.g., attempt 1: 1-2s, attempt 2: 2-4s, attempt 3: 4-8s
+				base := time.Second
+				maxBackoff := base * time.Duration(math.Pow(2, float64(attempt)))
+				jitter := time.Duration(rand.Int63n(int64(maxBackoff)))
+				backoff = maxBackoff + jitter
 
-			// Cap backoff at 32 seconds
-			if backoff > 32*time.Second {
-				backoff = 32*time.Second + time.Duration(rand.Int63n(int64(time.Second)))
+				// Cap backoff at 32 seconds
+				if backoff > 32*time.Second {
+					backoff = 32*time.Second + time.Duration(rand.Int63n(int64(time.Second)))
+				}
 			}
 
 			// Log retry attempt
@@ -249,10 +317,9 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 			// Sleep (can be mocked in tests)
 			c.sleepFunc(backoff)
 
-			// Reset body reader for retry
-			if body != nil {
-				bodyBytes, _ := json.Marshal(body)
-				bodyReader = bytes.NewReader(bodyBytes)
+			// Reset body reader for retry (reuse already-marshaled bytes)
+			if marshaledBody != nil {
+				bodyReader = bytes.NewReader(marshaledBody)
 			}
 		}
 
@@ -290,6 +357,18 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
+			// Context cancellation/deadline is never retryable — return immediately.
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			if !isRetryableNetworkError(err) {
+				c.logger.Error("Non-retryable network error",
+					"error", err,
+					"method", method,
+					"path", path,
+				)
+				return nil, fmt.Errorf("request failed: %w", err)
+			}
 			lastErr = err
 			c.logger.Error("HTTP request failed",
 				"error", err,
@@ -309,14 +388,18 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 
 		if c.shouldRetry(resp.StatusCode) {
 			lastStatusCode = resp.StatusCode
-			_ = resp.Body.Close() // Ignore error on retry
 
 			if resp.StatusCode == 429 {
+				retryAfter = parseRetryAfter(resp.Header.Get("Retry-After"))
+				if retryAfter > 0 {
+					lastRetryAfter = retryAfter
+				}
 				c.logger.Warn("Rate limit encountered",
 					"method", method,
 					"path", path,
 					"status", 429,
 					"willRetry", true,
+					"retryAfter", retryAfter.String(),
 				)
 			} else if resp.StatusCode >= 500 {
 				c.logger.Warn("Server error encountered",
@@ -327,6 +410,7 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 				)
 			}
 
+			_ = resp.Body.Close()
 			lastErr = fmt.Errorf("request failed with status %d", resp.StatusCode)
 			continue
 		}
@@ -334,7 +418,7 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 		if resp.StatusCode >= 400 {
 			defer func() { _ = resp.Body.Close() }()
 
-			bodyBytes, err := io.ReadAll(resp.Body)
+			bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1 MiB cap
 			if err != nil {
 				c.logger.Error("Failed to read error response body",
 					"error", err,
@@ -354,8 +438,14 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 			var underlyingErr error
 			message := string(bodyBytes)
 			if err := json.Unmarshal(bodyBytes, &doc); err == nil && len(doc.Errors) > 0 {
-				underlyingErr = doc.Errors[0]
-				message = doc.Errors[0].Error()
+				msgs := make([]string, len(doc.Errors))
+				errs := make([]error, len(doc.Errors))
+				for i, e := range doc.Errors {
+					msgs[i] = e.Error()
+					errs[i] = e
+				}
+				message = strings.Join(msgs, "; ")
+				underlyingErr = errors.Join(errs...)
 			}
 
 			c.logger.Error("HTTP request returned error",
@@ -432,11 +522,68 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 		"lastStatus", lastStatusCode,
 	)
 
+	// Return a typed TooManyRequestsError so callers can inspect RetryAfter.
+	if lastStatusCode == 429 {
+		return nil, &TooManyRequestsError{
+			StatusCode: 429,
+			RetryAfter: lastRetryAfter,
+		}
+	}
+
 	if lastErr != nil {
 		return nil, fmt.Errorf("request failed after %d retries: %w", c.retryMax, lastErr)
 	}
 
 	return nil, fmt.Errorf("request failed after %d retries", c.retryMax)
+}
+
+// isRetryableNetworkError returns true if the error is a transient network condition
+// worth retrying. Permanent failures (DNS not found, TLS certificate errors) return
+// false so the caller gets an immediate result instead of waiting through backoff.
+func isRetryableNetworkError(err error) bool {
+	// Context cancellation/deadline exceeded is never retryable.
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	// DNS errors: only retry if the resolver itself says it's temporary.
+	// A not-found or authoritative NXDOMAIN will never succeed on retry.
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return dnsErr.Temporary()
+	}
+	// TLS certificate errors are permanent — retrying won't fix an invalid cert.
+	var certInvalid x509.CertificateInvalidError
+	if errors.As(err, &certInvalid) {
+		return false
+	}
+	var unknownAuth x509.UnknownAuthorityError
+	if errors.As(err, &unknownAuth) {
+		return false
+	}
+	// All other network errors (connection reset, brief timeout, etc.) are
+	// treated as transient and worth retrying.
+	return true
+}
+
+// parseRetryAfter parses the Retry-After header value and returns the duration to wait.
+// Supports both integer (seconds) and HTTP-date formats per RFC 7231.
+// Returns 0 if the header is absent, malformed, or in the past.
+func parseRetryAfter(header string) time.Duration {
+	if header == "" {
+		return 0
+	}
+	// Try integer format first (number of seconds)
+	if secs, err := strconv.Atoi(header); err == nil && secs > 0 {
+		return time.Duration(secs) * time.Second
+	}
+	// Try HTTP-date format
+	if t, err := http.ParseTime(header); err == nil {
+		d := time.Until(t)
+		if d > 0 {
+			return d
+		}
+	}
+	return 0
 }
 
 func (c *HTTPClient) shouldRetry(statusCode int) bool {

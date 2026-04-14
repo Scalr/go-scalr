@@ -24,9 +24,24 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for WebhookIntegrationDelivery operations
+const (
+	FilterEnvironment        = "filter[environment]"         // Environment filter
+	FilterEvent              = "filter[event]"               // Event filter
+	FilterResponseCode       = "filter[response-code]"       // Response code filter
+	FilterRun                = "filter[run]"                 // Run filter
+	FilterStatus             = "filter[status]"              // Status filter
+	FilterTriggeredAt        = "filter[triggered-at]"        // The triggered-at date filter. Example: `filter[date]=between:2024-01-01T00:00:00Z,2024-02-01T00:00:00Z`
+	FilterWebhookIntegration = "filter[webhook-integration]" // Webhook integration filter
+	FilterWorkspace          = "filter[workspace]"           // Workspace filter
+)
+
 // This endpoint returns a single webhook integration delivery.
 func (c *Client) GetWebhookIntegrationDeliveryRaw(ctx context.Context, webhookDelivery string, opts *GetWebhookIntegrationDeliveryOptions) (*client.Response, error) {
 	path := "/integrations/webhook-deliveries/{webhook_delivery}"
+	if webhookDelivery == "" {
+		return nil, fmt.Errorf("webhookDelivery must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{webhook_delivery}", url.PathEscape(webhookDelivery))
 
 	params := url.Values{}
@@ -34,11 +49,13 @@ func (c *Client) GetWebhookIntegrationDeliveryRaw(ctx context.Context, webhookDe
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -79,9 +96,11 @@ func (c *Client) GetWebhookIntegrationDelivery(ctx context.Context, webhookDeliv
 type GetWebhookIntegrationDeliveryOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of webhook integration deliveries filtered according to various criteria.
@@ -106,11 +125,13 @@ func (c *Client) ListWebhookIntegrationDeliveriesRaw(ctx context.Context, opts *
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -198,7 +219,6 @@ func (c *Client) ListWebhookIntegrationDeliveriesIter(ctx context.Context, opts 
 				yield(schemas.WebhookIntegrationDelivery{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -208,8 +228,10 @@ func (c *Client) ListWebhookIntegrationDeliveriesIter(ctx context.Context, opts 
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.WebhookIntegrationDelivery{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.WebhookIntegrationDelivery{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -312,7 +334,9 @@ type ListWebhookIntegrationDeliveriesOptions struct {
 	Sort []string
 	// Query string
 	Query string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

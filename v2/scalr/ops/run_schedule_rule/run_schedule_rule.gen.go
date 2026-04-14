@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for RunScheduleRule operations
+const (
+	FilterScheduleMode = "filter[schedule-mode]" // Filter by the schedule mode.
+	FilterWorkspace    = "filter[workspace]"     // Filter by the ID of the workspace.
+)
+
 // Create a new run schedule rule. In order to create a run schedule rule, the user must have `workspaces:set-schedule` permission.
 func (c *Client) CreateRunScheduleRuleRaw(ctx context.Context, req *schemas.RunScheduleRuleRequest) (*client.Response, error) {
 	path := "/run-schedule-rules"
@@ -62,6 +68,9 @@ func (c *Client) CreateRunScheduleRule(ctx context.Context, req *schemas.RunSche
 
 func (c *Client) DeleteRunScheduleRuleRaw(ctx context.Context, runScheduleRule string) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
+	if runScheduleRule == "" {
+		return nil, fmt.Errorf("runScheduleRule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -84,6 +93,9 @@ func (c *Client) DeleteRunScheduleRule(ctx context.Context, runScheduleRule stri
 // Show details of a specific run schedule rule.
 func (c *Client) GetRunScheduleRuleRaw(ctx context.Context, runScheduleRule string, opts *GetRunScheduleRuleOptions) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
+	if runScheduleRule == "" {
+		return nil, fmt.Errorf("runScheduleRule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
 	params := url.Values{}
@@ -91,9 +103,13 @@ func (c *Client) GetRunScheduleRuleRaw(ctx context.Context, runScheduleRule stri
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -134,7 +150,11 @@ func (c *Client) GetRunScheduleRule(ctx context.Context, runScheduleRule string,
 type GetRunScheduleRuleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of run schedule rules.
@@ -152,9 +172,13 @@ func (c *Client) ListScheduleRulesRaw(ctx context.Context, opts *ListScheduleRul
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -242,7 +266,6 @@ func (c *Client) ListScheduleRulesIter(ctx context.Context, opts *ListScheduleRu
 				yield(schemas.RunScheduleRule{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -252,8 +275,10 @@ func (c *Client) ListScheduleRulesIter(ctx context.Context, opts *ListScheduleRu
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.RunScheduleRule{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.RunScheduleRule{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -352,12 +377,19 @@ type ListScheduleRulesOptions struct {
 	PageSize int
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Updates a specific run schedule rule based on the provided rule ID, schedule mode, and schedule. It validates the cron expression and raises an error if it's invalid.
 func (c *Client) UpdateRunScheduleRuleRaw(ctx context.Context, runScheduleRule string, req *schemas.RunScheduleRuleRequest) (*client.Response, error) {
 	path := "/run-schedule-rules/{run_schedule_rule}"
+	if runScheduleRule == "" {
+		return nil, fmt.Errorf("runScheduleRule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{run_schedule_rule}", url.PathEscape(runScheduleRule))
 
 	// Wrap request in JSON:API envelope

@@ -25,9 +25,25 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ProviderConfiguration operations
+const (
+	FilterAccount               = "filter[account]"                   // The provider configuration account filter.
+	FilterEnvironment           = "filter[environment]"               // The provider configuration environment filter.
+	FilterIsAllowedInModuleTest = "filter[is-allowed-in-module-test]" // Filter provider configurations allowed for use in module tests.
+	FilterName                  = "filter[name]"                      // The provider configuration name filter.
+	FilterProviderConfiguration = "filter[provider-configuration]"    // The ID(s) of provider configuration(s).
+	FilterProviderName          = "filter[provider-name]"             // The provider configuration type filter.
+	FilterStatus                = "filter[status]"                    // The provider configuration status filter.
+	FilterTag                   = "filter[tag]"                       // Filter provider configurations by tags
+	FilterWorkspaceName         = "filter[workspace][name]"           // Filter provider configuration usage by workspace name.
+)
+
 // This endpoint assigns the list of [tags](/docs/tags-1) to the provider configuration.
 func (c *Client) AddProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -96,6 +112,9 @@ func (c *Client) CreateProviderConfiguration(ctx context.Context, req *schemas.P
 // The endpoint deletes a Provider configuration by ID.
 func (c *Client) DeleteProviderConfigurationRaw(ctx context.Context, providerConfiguration string) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -119,6 +138,9 @@ func (c *Client) DeleteProviderConfiguration(ctx context.Context, providerConfig
 // This endpoint removes given [tags](/docs/tags-1) from the provider configuration.
 func (c *Client) DeleteProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -151,6 +173,9 @@ func (c *Client) DeleteProviderConfigurationTags(ctx context.Context, providerCo
 // Show details of a specific Provider configuration.
 func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	params := url.Values{}
@@ -158,9 +183,13 @@ func (c *Client) GetProviderConfigurationRaw(ctx context.Context, providerConfig
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -201,12 +230,19 @@ func (c *Client) GetProviderConfiguration(ctx context.Context, providerConfigura
 type GetProviderConfigurationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Returns a list of workspaces that use the given provider configuration.
 func (c *Client) GetProviderConfigurationWorkspaceUsageRaw(ctx context.Context, providerConfiguration string, opts *GetProviderConfigurationWorkspaceUsageOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/workspaces-usage"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	params := url.Values{}
@@ -220,9 +256,13 @@ func (c *Client) GetProviderConfigurationWorkspaceUsageRaw(ctx context.Context, 
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -258,13 +298,20 @@ type GetProviderConfigurationWorkspaceUsageOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an provider configuration.
 func (c *Client) ListProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, opts *ListProviderConfigurationTagsOptions) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	params := url.Values{}
@@ -275,9 +322,13 @@ func (c *Client) ListProviderConfigurationTagsRaw(ctx context.Context, providerC
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -361,7 +412,6 @@ func (c *Client) ListProviderConfigurationTagsIter(ctx context.Context, provider
 				yield(schemas.Tag{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -371,8 +421,10 @@ func (c *Client) ListProviderConfigurationTagsIter(ctx context.Context, provider
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -461,7 +513,11 @@ type ListProviderConfigurationTagsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Provider configurations by various filters.
@@ -482,11 +538,13 @@ func (c *Client) ListProviderConfigurationsRaw(ctx context.Context, opts *ListPr
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -574,7 +632,6 @@ func (c *Client) ListProviderConfigurationsIter(ctx context.Context, opts *ListP
 				yield(schemas.ProviderConfiguration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -584,8 +641,10 @@ func (c *Client) ListProviderConfigurationsIter(ctx context.Context, opts *ListP
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ProviderConfiguration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ProviderConfiguration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -686,14 +745,19 @@ type ListProviderConfigurationsOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint completely replaces provider configuration's tags with provided list.
 func (c *Client) ReplaceProviderConfigurationTagsRaw(ctx context.Context, providerConfiguration string, req []schemas.Tag) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}/relationships/tags"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -726,6 +790,9 @@ func (c *Client) ReplaceProviderConfigurationTags(ctx context.Context, providerC
 // This endpoint updates attributes of an existing Provider configuration.
 func (c *Client) UpdateProviderConfigurationRaw(ctx context.Context, providerConfiguration string, req *schemas.ProviderConfigurationRequest) (*client.Response, error) {
 	path := "/provider-configurations/{provider_configuration}"
+	if providerConfiguration == "" {
+		return nil, fmt.Errorf("providerConfiguration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_configuration}", url.PathEscape(providerConfiguration))
 
 	// Wrap request in JSON:API envelope

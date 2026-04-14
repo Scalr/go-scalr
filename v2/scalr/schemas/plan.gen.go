@@ -4,6 +4,7 @@ package schemas
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
@@ -14,12 +15,12 @@ type PlanStatus string
 
 // PlanStatus constants
 const (
+	PlanStatusCanceled    PlanStatus = "canceled"
+	PlanStatusErrored     PlanStatus = "errored"
+	PlanStatusFinished    PlanStatus = "finished"
 	PlanStatusPending     PlanStatus = "pending"
 	PlanStatusQueued      PlanStatus = "queued"
 	PlanStatusRunning     PlanStatus = "running"
-	PlanStatusFinished    PlanStatus = "finished"
-	PlanStatusCanceled    PlanStatus = "canceled"
-	PlanStatusErrored     PlanStatus = "errored"
 	PlanStatusUnreachable PlanStatus = "unreachable"
 )
 
@@ -29,6 +30,8 @@ type Plan struct {
 	ID         string         `json:"id"`
 	Type       string         `json:"type"`
 	Attributes PlanAttributes `json:"attributes"`
+
+	Links *PlanLinks `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -47,7 +50,7 @@ func (r Plan) GetResourceType() string {
 // PlanAttributes holds the attributes for Plan (response)
 type PlanAttributes struct {
 	// Plan execution details.
-	ExecutionDetails map[string]interface{} `json:"execution-details"`
+	ExecutionDetails map[string]string `json:"execution-details"`
 	// Indicates if plan has proposed resource changes.
 	HasChanges bool `json:"has-changes"`
 	// The number of new resources that will be added.
@@ -59,7 +62,16 @@ type PlanAttributes struct {
 	// The Plan's current status. Transient states: * `pending` - Plan has been created but not yet queued. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Plan canceled in some way. * `errored` - An error occurred during the plan. See `output` for details. * `finished` - Plan completed successfully. * `unreachable` - Plan will not be run.
 	Status PlanStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+	StatusTimestamps map[string]time.Time `json:"status-timestamps"`
+}
+
+// PlanLinks holds the resource links for Plan (response only).
+type PlanLinks struct {
+	// URL to retrieve the JSON execution plan
+	JsonOutput *string `json:"json-output"`
+	// Link to download the raw output of the terraform plan.
+	Output *string `json:"output"`
+	Self   string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests
@@ -92,7 +104,7 @@ func (r PlanRequest) GetResourceType() string {
 // PlanAttributesRequest holds the attributes for Plan (request)
 type PlanAttributesRequest struct {
 	// Plan execution details.
-	ExecutionDetails *value.Value[map[string]interface{}] `json:"execution-details,omitempty"`
+	ExecutionDetails *value.Value[map[string]string] `json:"execution-details,omitempty"`
 	// Indicates if plan has proposed resource changes.
 	HasChanges *value.Value[bool] `json:"has-changes,omitempty"`
 	// The number of new resources that will be added.
@@ -104,5 +116,5 @@ type PlanAttributesRequest struct {
 	// The Plan's current status. Transient states: * `pending` - Plan has been created but not yet queued. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Plan canceled in some way. * `errored` - An error occurred during the plan. See `output` for details. * `finished` - Plan completed successfully. * `unreachable` - Plan will not be run.
 	Status *value.Value[PlanStatus] `json:"status,omitempty"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps *value.Value[map[string]interface{}] `json:"status-timestamps,omitempty"`
+	StatusTimestamps *value.Value[map[string]time.Time] `json:"status-timestamps,omitempty"`
 }

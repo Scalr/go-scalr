@@ -8,7 +8,7 @@ import (
 )
 
 // TestNoOpLogger tests that NoOpLogger does nothing
-func TestNoOpLogger(t *testing.T) {
+func TestNoOpLogger(_ *testing.T) {
 	logger := NewNoOpLogger()
 
 	// Should not panic or do anything
@@ -187,9 +187,6 @@ func TestDefaultLogger(t *testing.T) {
 		t.Fatal("DefaultLogger() should not return nil")
 	}
 
-	// Should implement Logger interface
-	var _ = Logger(logger)
-
 	// Should be a SlogLogger
 	if _, ok := logger.(*SlogLogger); !ok {
 		t.Error("DefaultLogger() should return *SlogLogger")
@@ -204,9 +201,6 @@ func TestDebugLogger(t *testing.T) {
 	if logger == nil {
 		t.Fatal("DebugLogger() should not return nil")
 	}
-
-	// Should implement Logger interface
-	var _ = Logger(logger)
 
 	// Should be a SlogLogger
 	if _, ok := logger.(*SlogLogger); !ok {
@@ -262,7 +256,7 @@ func TestLoggerInterface(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			// Should not panic
 			tt.logger.Debug("debug")
 			tt.logger.Info("info")

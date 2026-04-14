@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for HookEnvironmentLink operations
+const (
+	FilterEnvironment = "filter[environment]" // The ID of the Environment
+	FilterEvents      = "filter[events]"      // The events to filter by
+)
+
 // Creates a link between a hook and an environment with enabled phases.
 func (c *Client) CreateHookEnvironmentLinkRaw(ctx context.Context, req *schemas.HookEnvironmentLinkRequest) (*client.Response, error) {
 	path := "/hook-environment-links"
@@ -63,6 +69,9 @@ func (c *Client) CreateHookEnvironmentLink(ctx context.Context, req *schemas.Hoo
 // Delete a hook-environment link.
 func (c *Client) DeleteHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
+	if hookEnvironmentLink == "" {
+		return nil, fmt.Errorf("hookEnvironmentLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +95,9 @@ func (c *Client) DeleteHookEnvironmentLink(ctx context.Context, hookEnvironmentL
 // Get a hook-environment link.
 func (c *Client) GetHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string, opts *GetHookEnvironmentLinkOptions) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
+	if hookEnvironmentLink == "" {
+		return nil, fmt.Errorf("hookEnvironmentLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
 	params := url.Values{}
@@ -93,11 +105,13 @@ func (c *Client) GetHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentL
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -138,9 +152,11 @@ func (c *Client) GetHookEnvironmentLink(ctx context.Context, hookEnvironmentLink
 type GetHookEnvironmentLinkOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // List all hook-environment links.
@@ -165,11 +181,13 @@ func (c *Client) ListHookEnvironmentLinksRaw(ctx context.Context, opts *ListHook
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -257,7 +275,6 @@ func (c *Client) ListHookEnvironmentLinksIter(ctx context.Context, opts *ListHoo
 				yield(schemas.HookEnvironmentLink{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -267,8 +284,10 @@ func (c *Client) ListHookEnvironmentLinksIter(ctx context.Context, opts *ListHoo
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.HookEnvironmentLink{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.HookEnvironmentLink{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -371,14 +390,19 @@ type ListHookEnvironmentLinksOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update a hook-environment link.
 func (c *Client) UpdateHookEnvironmentLinkRaw(ctx context.Context, hookEnvironmentLink string, req *schemas.HookEnvironmentLinkRequest) (*client.Response, error) {
 	path := "/hook-environment-links/{hook_environment_link}"
+	if hookEnvironmentLink == "" {
+		return nil, fmt.Errorf("hookEnvironmentLink must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{hook_environment_link}", url.PathEscape(hookEnvironmentLink))
 
 	// Wrap request in JSON:API envelope

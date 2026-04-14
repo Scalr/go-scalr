@@ -14,8 +14,8 @@ type SamlIntegrationSecurityDigestAlgorithm string
 
 // SamlIntegrationSecurityDigestAlgorithm constants
 const (
-	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
 	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmldsigMoresha384 SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#sha384"
+	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha256      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha256"
 	SamlIntegrationSecurityDigestAlgorithmHttpwwwW3Org200104xmlencsha512      SamlIntegrationSecurityDigestAlgorithm = "http://www.w3.org/2001/04/xmlenc#sha512"
 )
 
@@ -25,10 +25,10 @@ type SamlIntegrationSecurityRequestedAuthnContextComparison string
 
 // SamlIntegrationSecurityRequestedAuthnContextComparison constants
 const (
-	SamlIntegrationSecurityRequestedAuthnContextComparisonExact   SamlIntegrationSecurityRequestedAuthnContextComparison = "exact"
-	SamlIntegrationSecurityRequestedAuthnContextComparisonMinimum SamlIntegrationSecurityRequestedAuthnContextComparison = "minimum"
 	SamlIntegrationSecurityRequestedAuthnContextComparisonBetter  SamlIntegrationSecurityRequestedAuthnContextComparison = "better"
+	SamlIntegrationSecurityRequestedAuthnContextComparisonExact   SamlIntegrationSecurityRequestedAuthnContextComparison = "exact"
 	SamlIntegrationSecurityRequestedAuthnContextComparisonMaximum SamlIntegrationSecurityRequestedAuthnContextComparison = "maximum"
+	SamlIntegrationSecurityRequestedAuthnContextComparisonMinimum SamlIntegrationSecurityRequestedAuthnContextComparison = "minimum"
 )
 
 // SamlIntegrationSecuritySignatureAlgorithm represents the type for SamlIntegrationSecuritySignatureAlgorithm
@@ -60,8 +60,8 @@ type SamlIntegrationVerificationStatus string
 // SamlIntegrationVerificationStatus constants
 const (
 	SamlIntegrationVerificationStatusPending SamlIntegrationVerificationStatus = "pending"
-	SamlIntegrationVerificationStatusSuccess SamlIntegrationVerificationStatus = "success"
 	SamlIntegrationVerificationStatusRunning SamlIntegrationVerificationStatus = "running"
+	SamlIntegrationVerificationStatusSuccess SamlIntegrationVerificationStatus = "success"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -71,6 +71,7 @@ type SamlIntegration struct {
 	Type          string                       `json:"type"`
 	Attributes    SamlIntegrationAttributes    `json:"attributes"`
 	Relationships SamlIntegrationRelationships `json:"relationships"`
+	Links         *SamlIntegrationLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -258,6 +259,11 @@ func (r *SamlIntegrationRelationships) PopulateIncludes(included []map[string]in
 			}
 		}
 	}
+}
+
+// SamlIntegrationLinks holds the resource links for SamlIntegration (response only).
+type SamlIntegrationLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

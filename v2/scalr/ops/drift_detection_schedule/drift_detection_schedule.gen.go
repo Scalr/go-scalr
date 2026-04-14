@@ -29,11 +29,13 @@ func (c *Client) CreateDriftDetectionScheduleRaw(ctx context.Context, req *schem
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -74,13 +76,18 @@ func (c *Client) CreateDriftDetectionSchedule(ctx context.Context, req *schemas.
 
 // CreateDriftDetectionScheduleOptions holds optional parameters for CreateDriftDetectionSchedule
 type CreateDriftDetectionScheduleOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteDriftDetectionScheduleRaw(ctx context.Context, driftDetectionSchedule string) (*client.Response, error) {
 	path := "/drift-detection-schedules/{drift_detection_schedule}"
+	if driftDetectionSchedule == "" {
+		return nil, fmt.Errorf("driftDetectionSchedule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{drift_detection_schedule}", url.PathEscape(driftDetectionSchedule))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -102,6 +109,9 @@ func (c *Client) DeleteDriftDetectionSchedule(ctx context.Context, driftDetectio
 
 func (c *Client) GetDriftDetectionScheduleRaw(ctx context.Context, driftDetectionSchedule string) (*client.Response, error) {
 	path := "/drift-detection-schedules/{drift_detection_schedule}"
+	if driftDetectionSchedule == "" {
+		return nil, fmt.Errorf("driftDetectionSchedule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{drift_detection_schedule}", url.PathEscape(driftDetectionSchedule))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -135,6 +145,9 @@ func (c *Client) GetDriftDetectionSchedule(ctx context.Context, driftDetectionSc
 
 func (c *Client) UpdateDriftDetectionScheduleRaw(ctx context.Context, driftDetectionSchedule string, req *schemas.DriftDetectionScheduleRequest) (*client.Response, error) {
 	path := "/drift-detection-schedules/{drift_detection_schedule}"
+	if driftDetectionSchedule == "" {
+		return nil, fmt.Errorf("driftDetectionSchedule must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{drift_detection_schedule}", url.PathEscape(driftDetectionSchedule))
 
 	// Wrap request in JSON:API envelope

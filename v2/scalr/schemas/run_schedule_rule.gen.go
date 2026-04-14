@@ -26,6 +26,7 @@ type RunScheduleRule struct {
 	Type          string                       `json:"type"`
 	Attributes    RunScheduleRuleAttributes    `json:"attributes"`
 	Relationships RunScheduleRuleRelationships `json:"relationships"`
+	Links         *RunScheduleRuleLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -113,6 +114,11 @@ func (r *RunScheduleRuleRelationships) PopulateIncludes(included []map[string]in
 			}
 		}
 	}
+}
+
+// RunScheduleRuleLinks holds the resource links for RunScheduleRule (response only).
+type RunScheduleRuleLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

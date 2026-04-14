@@ -27,6 +27,7 @@ type ConfigurationVersion struct {
 	Type          string                            `json:"type"`
 	Attributes    ConfigurationVersionAttributes    `json:"attributes"`
 	Relationships ConfigurationVersionRelationships `json:"relationships"`
+	Links         *ConfigurationVersionLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -51,7 +52,7 @@ type ConfigurationVersionAttributes struct {
 	// This field contains the error description, when this configuration version's status is `errored`.
 	ErrorMessage *string `json:"error-message"`
 	// The input variables definitions. Example: ```js [ { "description": "The name of the CloudSQL database.", "name": "cloudsql_database", "type": "string" }, {"...": ""..."} ] ```
-	Inputs []interface{} `json:"inputs"`
+	Inputs []json.RawMessage `json:"inputs"`
 	// Indicates the configuration version can only be used to perform dry runs that comprise the plan, cost estimation (if enabled) and policy checks. With this set to `true` the configuration cannot be used for an apply and never requires confirmation.
 	IsDry bool `json:"is-dry"`
 	// A blob size in bytes.
@@ -61,7 +62,7 @@ type ConfigurationVersionAttributes struct {
 	// The Configuration version's current status. * `pending` - waiting for the configuration files to upload. * `uploaded` - upload successful. At this point if the `auto-queue-runs: true` the new run should be `queued`. * `errored` - uploaded files post processing failed. Attribute `error-message` contains the details.
 	Status ConfigurationVersionStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
-	StatusTimestamps map[string]interface{} `json:"status-timestamps"`
+	StatusTimestamps map[string]time.Time `json:"status-timestamps"`
 }
 
 // ConfigurationVersionRelationships holds the relationships for ConfigurationVersion (response)
@@ -160,6 +161,13 @@ func (r *ConfigurationVersionRelationships) PopulateIncludes(included []map[stri
 			}
 		}
 	}
+}
+
+// ConfigurationVersionLinks holds the resource links for ConfigurationVersion (response only).
+type ConfigurationVersionLinks struct {
+	Self string `json:"self"`
+	// URL for terraform configuration templates upload, that could be used to `PUT` a tar.gz archive of a local workspace directory. Available only in the create `configuration-versions` response.
+	Upload *string `json:"upload"`
 }
 
 // Request version - used when marshalling for API requests

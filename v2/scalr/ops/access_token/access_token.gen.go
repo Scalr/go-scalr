@@ -25,6 +25,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for AccessToken operations
+const (
+	FilterIsExpired = "filter[is-expired]" // Returns tokens by expiration status
+)
+
 // This endpoint creates service account's access token.
 func (c *Client) AssumeServiceAccountRaw(ctx context.Context, req *schemas.AssumeServiceAccountRequest) (*client.Response, error) {
 	path := "/service-accounts/assume"
@@ -62,9 +67,13 @@ func (c *Client) CreateAccessTokenRaw(ctx context.Context, req *schemas.AccessTo
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -107,12 +116,19 @@ func (c *Client) CreateAccessToken(ctx context.Context, req *schemas.AccessToken
 type CreateAccessTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint creates agent pool's access token.
 func (c *Client) CreateAgentPoolTokenRaw(ctx context.Context, agentPool string, req *schemas.AccessTokenRequest, opts *CreateAgentPoolTokenOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}/access-tokens"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	params := url.Values{}
@@ -120,9 +136,13 @@ func (c *Client) CreateAgentPoolTokenRaw(ctx context.Context, agentPool string, 
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -165,12 +185,19 @@ func (c *Client) CreateAgentPoolToken(ctx context.Context, agentPool string, req
 type CreateAgentPoolTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint creates service account's access token.
 func (c *Client) CreateServiceAccountTokenRaw(ctx context.Context, serviceAccount string, req *schemas.AccessTokenRequest, opts *CreateServiceAccountTokenOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/access-tokens"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
 	params := url.Values{}
@@ -178,9 +205,13 @@ func (c *Client) CreateServiceAccountTokenRaw(ctx context.Context, serviceAccoun
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -223,12 +254,19 @@ func (c *Client) CreateServiceAccountToken(ctx context.Context, serviceAccount s
 type CreateServiceAccountTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Delete an access token by ID.
 func (c *Client) DeleteAccessTokenRaw(ctx context.Context, accessToken string) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
+	if accessToken == "" {
+		return nil, fmt.Errorf("accessToken must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -252,6 +290,9 @@ func (c *Client) DeleteAccessToken(ctx context.Context, accessToken string) erro
 // Get an access token by ID.
 func (c *Client) GetAccessTokenRaw(ctx context.Context, accessToken string, opts *GetAccessTokenOptions) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
+	if accessToken == "" {
+		return nil, fmt.Errorf("accessToken must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
 	params := url.Values{}
@@ -259,9 +300,13 @@ func (c *Client) GetAccessTokenRaw(ctx context.Context, accessToken string, opts
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -302,7 +347,11 @@ func (c *Client) GetAccessToken(ctx context.Context, accessToken string, opts *G
 type GetAccessTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists user access tokens.
@@ -327,9 +376,13 @@ func (c *Client) ListAccessTokensRaw(ctx context.Context, opts *ListAccessTokens
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -417,7 +470,6 @@ func (c *Client) ListAccessTokensIter(ctx context.Context, opts *ListAccessToken
 				yield(schemas.AccessToken{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -427,8 +479,10 @@ func (c *Client) ListAccessTokensIter(ctx context.Context, opts *ListAccessToken
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -530,12 +584,19 @@ type ListAccessTokensOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) ListAgentPoolAccessTokensRaw(ctx context.Context, agentPool string, opts *ListAgentPoolAccessTokensOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}/access-tokens"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	params := url.Values{}
@@ -556,9 +617,13 @@ func (c *Client) ListAgentPoolAccessTokensRaw(ctx context.Context, agentPool str
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -645,7 +710,6 @@ func (c *Client) ListAgentPoolAccessTokensIter(ctx context.Context, agentPool st
 				yield(schemas.AccessToken{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -655,8 +719,10 @@ func (c *Client) ListAgentPoolAccessTokensIter(ctx context.Context, agentPool st
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -758,13 +824,20 @@ type ListAgentPoolAccessTokensOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists service account's access tokens.
 func (c *Client) ListServiceAccountAccessTokensRaw(ctx context.Context, serviceAccount string, opts *ListServiceAccountAccessTokensOptions) (*client.Response, error) {
 	path := "/service-accounts/{service_account}/access-tokens"
+	if serviceAccount == "" {
+		return nil, fmt.Errorf("serviceAccount must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{service_account}", url.PathEscape(serviceAccount))
 
 	params := url.Values{}
@@ -785,9 +858,13 @@ func (c *Client) ListServiceAccountAccessTokensRaw(ctx context.Context, serviceA
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -875,7 +952,6 @@ func (c *Client) ListServiceAccountAccessTokensIter(ctx context.Context, service
 				yield(schemas.AccessToken{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -885,8 +961,10 @@ func (c *Client) ListServiceAccountAccessTokensIter(ctx context.Context, service
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessToken{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -988,13 +1066,20 @@ type ListServiceAccountAccessTokensOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update an access token by ID.
 func (c *Client) UpdateAccessTokenRaw(ctx context.Context, accessToken string, req *schemas.AccessTokenRequest, opts *UpdateAccessTokenOptions) (*client.Response, error) {
 	path := "/access-tokens/{access_token}"
+	if accessToken == "" {
+		return nil, fmt.Errorf("accessToken must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{access_token}", url.PathEscape(accessToken))
 
 	params := url.Values{}
@@ -1002,9 +1087,13 @@ func (c *Client) UpdateAccessTokenRaw(ctx context.Context, accessToken string, r
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -1047,5 +1136,9 @@ func (c *Client) UpdateAccessToken(ctx context.Context, accessToken string, req 
 type UpdateAccessTokenOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

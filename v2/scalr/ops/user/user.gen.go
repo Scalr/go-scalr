@@ -24,6 +24,17 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for User operations
+const (
+	FilterAccount          = "filter[account]"           // The account filter.
+	FilterEmail            = "filter[email]"             // Email filter.
+	FilterIdentityProvider = "filter[identity-provider]" // The identity provider filter.
+	FilterIsAdmin          = "filter[is-admin]"          // List only users who have admin role on the account.
+	FilterStatus           = "filter[status]"            // The AccountUser status filter.
+	FilterTeam             = "filter[team]"              // The Team filter.
+	FilterUser             = "filter[user]"              // User filter.
+)
+
 // Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) user without access to any account. To invite user to the account /accounts/:id/actions/invite should be used.
 func (c *Client) CreateUserRaw(ctx context.Context, req *schemas.CreateUserRequest, opts *CreateUserOptions) (*client.Response, error) {
 	path := "/users"
@@ -33,9 +44,13 @@ func (c *Client) CreateUserRaw(ctx context.Context, req *schemas.CreateUserReque
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,12 +93,19 @@ func (c *Client) CreateUser(ctx context.Context, req *schemas.CreateUserRequest,
 type CreateUserOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // The endpoint deletes [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
 func (c *Client) DeleteUserRaw(ctx context.Context, user string) (*client.Response, error) {
 	path := "/users/{user}"
+	if user == "" {
+		return nil, fmt.Errorf("user must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -126,9 +148,13 @@ func (c *Client) GetAccountUsersRaw(ctx context.Context, opts *GetAccountUsersOp
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -216,7 +242,6 @@ func (c *Client) GetAccountUsersIter(ctx context.Context, opts *GetAccountUsersO
 				yield(schemas.AccountUser{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -226,8 +251,10 @@ func (c *Client) GetAccountUsersIter(ctx context.Context, opts *GetAccountUsersO
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccountUser{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccountUser{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -330,12 +357,19 @@ type GetAccountUsersOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns an [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
 func (c *Client) GetUserRaw(ctx context.Context, user string, opts *GetUserOptions) (*client.Response, error) {
 	path := "/users/{user}"
+	if user == "" {
+		return nil, fmt.Errorf("user must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
 	params := url.Values{}
@@ -343,9 +377,13 @@ func (c *Client) GetUserRaw(ctx context.Context, user string, opts *GetUserOptio
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -386,7 +424,11 @@ func (c *Client) GetUser(ctx context.Context, user string, opts *GetUserOptions)
 type GetUserOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [IAM](https://docs.scalr.io/docs/identity-and-access-management) users. The response can be filtered by IdP: `filter[identity-provider]` or user ID: `filter[user]`.
@@ -415,9 +457,13 @@ func (c *Client) GetUsersRaw(ctx context.Context, opts *GetUsersOptions) (*clien
 		if opts.AccessQuery != "" {
 			params.Set("access_query", opts.AccessQuery)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -505,7 +551,6 @@ func (c *Client) GetUsersIter(ctx context.Context, opts *GetUsersOptions) iter.S
 				yield(schemas.User{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -515,8 +560,10 @@ func (c *Client) GetUsersIter(ctx context.Context, opts *GetUsersOptions) iter.S
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.User{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -621,12 +668,19 @@ type GetUsersOptions struct {
 	Query string
 	// Query by access on given scope.
 	AccessQuery string
-	Filter      map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Invite the user to the account by adding it to the account teams and/or creating access policies within the account. If the user with a specified email does not exist - a new one will be created. The new user will be in the 'pending' status until the first login to the account. This is the preferred way to create users.
 func (c *Client) InviteUserToAccountRaw(ctx context.Context, account string, req *schemas.UserInviteRequest, opts *InviteUserToAccountOptions) (*client.Response, error) {
 	path := "/accounts/{account}/actions/invite"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
 
 	params := url.Values{}
@@ -634,9 +688,13 @@ func (c *Client) InviteUserToAccountRaw(ctx context.Context, account string, req
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -679,13 +737,23 @@ func (c *Client) InviteUserToAccount(ctx context.Context, account string, req *s
 type InviteUserToAccountOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Removes a user from the account. This revokes all access policies and team memberships associated with the account for that user.
 func (c *Client) RemoveUserFromAccountRaw(ctx context.Context, account string, user string) (*client.Response, error) {
 	path := "/accounts/{account}/actions/remove/{user}"
+	if account == "" {
+		return nil, fmt.Errorf("account must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{account}", url.PathEscape(account))
+	if user == "" {
+		return nil, fmt.Errorf("user must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -709,6 +777,9 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, account string, user
 // This endpoint updates [IAM](https://docs.scalr.io/docs/identity-and-access-management) user by ID.
 func (c *Client) UpdateUserRaw(ctx context.Context, user string, req *schemas.UserRequest, opts *UpdateUserOptions) (*client.Response, error) {
 	path := "/users/{user}"
+	if user == "" {
+		return nil, fmt.Errorf("user must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{user}", url.PathEscape(user))
 
 	params := url.Values{}
@@ -716,9 +787,13 @@ func (c *Client) UpdateUserRaw(ctx context.Context, user string, req *schemas.Us
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -761,5 +836,9 @@ func (c *Client) UpdateUser(ctx context.Context, user string, req *schemas.UserR
 type UpdateUserOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

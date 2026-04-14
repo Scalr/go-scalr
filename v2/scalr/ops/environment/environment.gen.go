@@ -24,9 +24,24 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Environment operations
+const (
+	FilterAccount        = "filter[account]"         // The ID of the Account
+	FilterEnvironment    = "filter[environment]"     // The ID of the Environment
+	FilterFavorite       = "filter[favorite]"        // Filter environments by favorite status. Set to 'true' to show only favorites, 'false' to exclude favorites.
+	FilterLatestRunDate  = "filter[latest-run-date]" // Filter by latest run date. Example: `filter[latest-run-date]=between:2022-01-01T00:00:00Z,2022-02-01T00:00:00Z`
+	FilterName           = "filter[name]"            // The environment name filter.
+	FilterPolicyGroup    = "filter[policy-group]"    // The ID of the Policy Group.
+	FilterStorageProfile = "filter[storage-profile]" // The ID of the Storage Profile.
+	FilterTag            = "filter[tag]"             // Filter environments by tags
+)
+
 // This endpoint assigns the list of [tags](/docs/tags-1) to the environment.
 func (c *Client) AddEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -59,6 +74,9 @@ func (c *Client) AddEnvironmentTags(ctx context.Context, environment string, req
 // Add an environment to the current user's favorites.
 func (c *Client) AddEnvironmentToFavoritesRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}/actions/favorite"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -93,6 +111,9 @@ func (c *Client) AddEnvironmentToFavorites(ctx context.Context, environment stri
 
 func (c *Client) AddFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -127,11 +148,13 @@ func (c *Client) CreateEnvironmentRaw(ctx context.Context, req *schemas.Environm
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -172,13 +195,18 @@ func (c *Client) CreateEnvironment(ctx context.Context, req *schemas.Environment
 
 // CreateEnvironmentOptions holds optional parameters for CreateEnvironment
 type CreateEnvironmentOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteEnvironmentRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -201,6 +229,9 @@ func (c *Client) DeleteEnvironment(ctx context.Context, environment string) erro
 // This endpoint removes given [tags](/docs/tags-1) from the environment.
 func (c *Client) DeleteEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -233,6 +264,9 @@ func (c *Client) DeleteEnvironmentTags(ctx context.Context, environment string, 
 // This endpoint removes provided environments from a list of federated one for a given environment.
 func (c *Client) DeleteFederatedEnvironmentRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -265,6 +299,9 @@ func (c *Client) DeleteFederatedEnvironment(ctx context.Context, environment str
 // Show details of a specific environment.
 func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts *GetEnvironmentOptions) (*client.Response, error) {
 	path := "/environments/{environment}"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	params := url.Values{}
@@ -274,11 +311,13 @@ func (c *Client) GetEnvironmentRaw(ctx context.Context, environment string, opts
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -321,14 +360,19 @@ type GetEnvironmentOptions struct {
 	TrackAccess bool
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [tags](/docs/tags-1), assigned to an environment.
 func (c *Client) ListEnvironmentTagsRaw(ctx context.Context, environment string, opts *ListEnvironmentTagsOptions) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	params := url.Values{}
@@ -339,9 +383,13 @@ func (c *Client) ListEnvironmentTagsRaw(ctx context.Context, environment string,
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -425,7 +473,6 @@ func (c *Client) ListEnvironmentTagsIter(ctx context.Context, environment string
 				yield(schemas.Tag{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -435,8 +482,10 @@ func (c *Client) ListEnvironmentTagsIter(ctx context.Context, environment string
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -525,7 +574,11 @@ type ListEnvironmentTagsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists account environments.
@@ -554,11 +607,13 @@ func (c *Client) ListEnvironmentsRaw(ctx context.Context, opts *ListEnvironments
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -646,7 +701,6 @@ func (c *Client) ListEnvironmentsIter(ctx context.Context, opts *ListEnvironment
 				yield(schemas.Environment{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -656,8 +710,10 @@ func (c *Client) ListEnvironmentsIter(ctx context.Context, opts *ListEnvironment
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Environment{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Environment{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -762,13 +818,18 @@ type ListEnvironmentsOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment string, opts *ListFederatedEnvironmentsOptions) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	params := url.Values{}
@@ -779,9 +840,13 @@ func (c *Client) ListFederatedEnvironmentsRaw(ctx context.Context, environment s
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -864,7 +929,6 @@ func (c *Client) ListFederatedEnvironmentsIter(ctx context.Context, environment 
 				yield(schemas.Environment{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -874,8 +938,10 @@ func (c *Client) ListFederatedEnvironmentsIter(ctx context.Context, environment 
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Environment{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Environment{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -964,12 +1030,19 @@ type ListFederatedEnvironmentsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	Filter   map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint locks an environment.
 func (c *Client) LockEnvironmentRaw(ctx context.Context, environment string, req *schemas.EnvLockReason) (*client.Response, error) {
 	path := "/environments/{environment}/actions/lock"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// Plain JSON request (not JSON:API)
@@ -1007,6 +1080,9 @@ func (c *Client) LockEnvironment(ctx context.Context, environment string, req *s
 // Remove an environment from the current user's favorites.
 func (c *Client) RemoveEnvironmentFromFavoritesRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}/actions/unfavorite"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -1042,6 +1118,9 @@ func (c *Client) RemoveEnvironmentFromFavorites(ctx context.Context, environment
 // This endpoint completely replaces environment's tags with provided list.
 func (c *Client) ReplaceEnvironmentTagsRaw(ctx context.Context, environment string, req []schemas.Tag) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/tags"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -1073,6 +1152,9 @@ func (c *Client) ReplaceEnvironmentTags(ctx context.Context, environment string,
 
 func (c *Client) ReplaceFederatedEnvironmentsRaw(ctx context.Context, environment string, req []schemas.Environment) (*client.Response, error) {
 	path := "/environments/{environment}/relationships/federated-environments"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -1104,6 +1186,9 @@ func (c *Client) ReplaceFederatedEnvironments(ctx context.Context, environment s
 // This endpoint unlocks an environment.
 func (c *Client) UnlockEnvironmentRaw(ctx context.Context, environment string) (*client.Response, error) {
 	path := "/environments/{environment}/actions/unlock"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -1138,15 +1223,20 @@ func (c *Client) UnlockEnvironment(ctx context.Context, environment string) (*sc
 
 func (c *Client) UpdateEnvironmentRaw(ctx context.Context, environment string, req *schemas.EnvironmentRequest, opts *UpdateEnvironmentOptions) (*client.Response, error) {
 	path := "/environments/{environment}"
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -1186,7 +1276,9 @@ func (c *Client) UpdateEnvironment(ctx context.Context, environment string, req 
 
 // UpdateEnvironmentOptions holds optional parameters for UpdateEnvironment
 type UpdateEnvironmentOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

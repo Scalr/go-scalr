@@ -26,6 +26,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Show details of a specific Scalr IAM Permission.
 func (c *Client) GetPermissionRaw(ctx context.Context, permission string) (*client.Response, error) {
 	path := "/permissions/{permission}"
+	if permission == "" {
+		return nil, fmt.Errorf("permission must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{permission}", url.PathEscape(permission))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

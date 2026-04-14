@@ -15,8 +15,8 @@ type TerraformVersionUsageIacPlatform string
 
 // TerraformVersionUsageIacPlatform constants
 const (
-	TerraformVersionUsageIacPlatformTerraform TerraformVersionUsageIacPlatform = "terraform"
 	TerraformVersionUsageIacPlatformOpentofu  TerraformVersionUsageIacPlatform = "opentofu"
+	TerraformVersionUsageIacPlatformTerraform TerraformVersionUsageIacPlatform = "terraform"
 )
 
 // Response version - used when unmarshalling from API responses

@@ -25,6 +25,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for TerraformProviderVersionUsage operations
+const (
+	FilterEnvironment     = "filter[environment]"       // The environment ID to list providers usage for.
+	FilterTfProviderUsage = "filter[tf-provider-usage]" // Filter by terraform provider usage.
+	FilterVersion         = "filter[version]"           // Filter providers usage by version.
+)
+
 // This endpoint lists terraform provider version usages.
 func (c *Client) ListTerraformProviderUsageRaw(ctx context.Context, opts *ListTerraformProviderUsageOptions) (*client.Response, error) {
 	path := "/reports/provider-usage"
@@ -48,14 +55,16 @@ func (c *Client) ListTerraformProviderUsageRaw(ctx context.Context, opts *ListTe
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -143,7 +152,6 @@ func (c *Client) ListTerraformProviderUsageIter(ctx context.Context, opts *ListT
 				yield(schemas.TerraformProviderVersionUsage{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -153,8 +161,10 @@ func (c *Client) ListTerraformProviderUsageIter(ctx context.Context, opts *ListT
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.TerraformProviderVersionUsage{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.TerraformProviderVersionUsage{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -257,11 +267,13 @@ type ListTerraformProviderUsageOptions struct {
 	Format string
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists unique terraform provider versions.
@@ -274,9 +286,13 @@ func (c *Client) ListTerraformProviderVersionsUsageRaw(ctx context.Context, opts
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -308,6 +324,10 @@ func (c *Client) ListTerraformProviderVersionsUsage(ctx context.Context, opts *L
 // ListTerraformProviderVersionsUsageOptions holds optional parameters for ListTerraformProviderVersionsUsage
 type ListTerraformProviderVersionsUsageOptions struct {
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

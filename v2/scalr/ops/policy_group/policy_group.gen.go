@@ -24,6 +24,18 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for PolicyGroup operations
+const (
+	FilterEnvironment     = "filter[environment]"      // The environment ID to list policy check results for.
+	FilterName            = "filter[name]"             // The policy group name filter.
+	FilterPolicyGroup     = "filter[policy-group]"     // Filter by policy group id
+	FilterResult          = "filter[result]"           // Filter results by status.
+	FilterSoftwareVersion = "filter[software-version]" // The ID of the software version
+	FilterTerragruntUnit  = "filter[terragrunt-unit]"  // The unit path filter. Example: `filter[unit_path]=vpc`
+	FilterVcsProvider     = "filter[vcs-provider]"     // The ID of the VCS provider
+	FilterWorkspace       = "filter[workspace]"        // The workspace ID to list policy check results for.
+)
+
 // Create a new [policy group](/docs/policy-governance#open-policy-agent) in the account.
 func (c *Client) CreatePolicyGroupRaw(ctx context.Context, req *schemas.PolicyGroupRequest, opts *CreatePolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups"
@@ -33,9 +45,13 @@ func (c *Client) CreatePolicyGroupRaw(ctx context.Context, req *schemas.PolicyGr
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,11 +94,18 @@ func (c *Client) CreatePolicyGroup(ctx context.Context, req *schemas.PolicyGroup
 type CreatePolicyGroupOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) CreatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	// This is a relationship operation - convert resources to relationship identifiers
@@ -114,6 +137,9 @@ func (c *Client) CreatePolicyGroupEnvironments(ctx context.Context, policyGroup 
 // This endpoint deletes a [policy group](/docs/policy-governance#open-policy-agent) by ID. Only an unused policy group (that is not linked to any environment) can be removed.
 func (c *Client) DeletePolicyGroupRaw(ctx context.Context, policyGroup string) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -136,7 +162,13 @@ func (c *Client) DeletePolicyGroup(ctx context.Context, policyGroup string) erro
 
 func (c *Client) DeletePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, environment string) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments/{environment}"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
+	if environment == "" {
+		return nil, fmt.Errorf("environment must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -159,6 +191,9 @@ func (c *Client) DeletePolicyGroupEnvironments(ctx context.Context, policyGroup 
 // Show details of a specific [policy group](/docs/policy-governance#open-policy-agent).
 func (c *Client) GetPolicyGroupRaw(ctx context.Context, policyGroup string, opts *GetPolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	params := url.Values{}
@@ -166,9 +201,13 @@ func (c *Client) GetPolicyGroupRaw(ctx context.Context, policyGroup string, opts
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -209,7 +248,11 @@ func (c *Client) GetPolicyGroup(ctx context.Context, policyGroup string, opts *G
 type GetPolicyGroupOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [policy groups](/docs/policy-governance#open-policy-agent).
@@ -234,11 +277,13 @@ func (c *Client) ListPolicyGroupsRaw(ctx context.Context, opts *ListPolicyGroups
 		if opts.PageSize > 0 {
 			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -326,7 +371,6 @@ func (c *Client) ListPolicyGroupsIter(ctx context.Context, opts *ListPolicyGroup
 				yield(schemas.PolicyGroup{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -336,8 +380,10 @@ func (c *Client) ListPolicyGroupsIter(ctx context.Context, opts *ListPolicyGroup
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.PolicyGroup{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.PolicyGroup{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -440,13 +486,18 @@ type ListPolicyGroupsOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) ListPullRequestPolicyCheckResultsRaw(ctx context.Context, policyGroup string, opts *ListPullRequestPolicyCheckResultsOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/pull-request-policy-check-results"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	params := url.Values{}
@@ -475,11 +526,13 @@ func (c *Client) ListPullRequestPolicyCheckResultsRaw(ctx context.Context, polic
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -566,7 +619,6 @@ func (c *Client) ListPullRequestPolicyCheckResultsIter(ctx context.Context, poli
 				yield(schemas.PolicyCheckResult{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -576,8 +628,10 @@ func (c *Client) ListPullRequestPolicyCheckResultsIter(ctx context.Context, poli
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.PolicyCheckResult{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.PolicyCheckResult{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -684,14 +738,19 @@ type ListPullRequestPolicyCheckResultsOptions struct {
 	Sort []string
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint resyncs a [policy group](/docs/policy-governance#open-policy-agent).
 func (c *Client) ResyncPolicyGroupRaw(ctx context.Context, policyGroup string) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/actions/resync"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -715,6 +774,9 @@ func (c *Client) ResyncPolicyGroup(ctx context.Context, policyGroup string) erro
 // This endpoint updates a [policy group](/docs/policy-governance#open-policy-agent) by ID.
 func (c *Client) UpdatePolicyGroupRaw(ctx context.Context, policyGroup string, req *schemas.PolicyGroupRequest, opts *UpdatePolicyGroupOptions) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	params := url.Values{}
@@ -722,9 +784,13 @@ func (c *Client) UpdatePolicyGroupRaw(ctx context.Context, policyGroup string, r
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -767,11 +833,18 @@ func (c *Client) UpdatePolicyGroup(ctx context.Context, policyGroup string, req 
 type UpdatePolicyGroupOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) UpdatePolicyGroupEnvironmentsRaw(ctx context.Context, policyGroup string, req []schemas.Environment) (*client.Response, error) {
 	path := "/policy-groups/{policy_group}/relationships/environments"
+	if policyGroup == "" {
+		return nil, fmt.Errorf("policyGroup must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{policy_group}", url.PathEscape(policyGroup))
 
 	// This is a relationship operation - convert resources to relationship identifiers

@@ -217,12 +217,14 @@ func extractTypeName(schema *openapi3.Schema) string {
 
 // SchemaData holds template data for a schema
 type SchemaData struct {
-	ApiPackageName       string
+	APIPackageName       string
 	Name                 string
 	TypeName             string // JSON:API type name (e.g., "workspaces")
 	Description          string
 	Attributes           []Attribute
 	Relationships        []Relationship
+	LinksFields          []NestedField // non-nil = generate typed ${Name}Links struct
+	LinksIsMap           bool          // true = use map[string]string (generic links)
 	NestedStructs        []NestedStruct
 	RequestNestedStructs []NestedStruct
 	EnumTypes            []EnumType
@@ -258,6 +260,7 @@ type NestedStruct struct {
 	Name        string
 	Description string
 	Fields      []NestedField
+	EnumTypes   []EnumType
 }
 
 // NestedField represents a field in a nested struct
@@ -282,7 +285,7 @@ type Relationship struct {
 // buildSchemaData builds template data from OpenAPI schema
 func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLevelSchemas map[string]bool) SchemaData {
 	data := SchemaData{
-		ApiPackageName: g.pkgName,
+		APIPackageName: g.pkgName,
 		Name:           name,
 		TypeName:       extractTypeName(schema),
 		Description:    cleanDescription(schema.Description),
@@ -325,36 +328,45 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 				// Request type: value.Value handles null, so inner type doesn't need pointer
 				// value.Value already provides tri-state: unset/null/set
 				requestType = "*value.Value[" + requestStructName + "]"
-			} else if attrRef.Value.Type.Is("array") && attrRef.Value.Items != nil && attrRef.Value.Items.Value != nil && len(attrRef.Value.Items.Value.Enum) > 0 {
-				// Array of enum
-				enumTypeName := name + strcase.ToCamel(attrName)
-				enumType := g.buildEnumType(enumTypeName, attrRef.Value.Items.Value)
-				data.EnumTypes = append(data.EnumTypes, enumType)
-				sliceType := "[]" + enumTypeName
-				if attrRef.Value.Nullable {
-					responseType = "*" + sliceType
-				} else {
-					responseType = sliceType
-				}
-				requestType = "*value.Value[[]" + enumTypeName + "]"
 			} else {
-				// Check if this is a scalar enum field
+				// Check if this is an enum field or array of enums
 				var enumTypeName string
+
+				// Case 1: Direct enum (e.g., status: enum[...])
 				if len(attrRef.Value.Enum) > 0 {
 					enumTypeName = name + strcase.ToCamel(attrName)
 					enumType := g.buildEnumType(enumTypeName, attrRef.Value)
 					data.EnumTypes = append(data.EnumTypes, enumType)
 				}
 
-				// For non-nested types, use schemaToGoType which handles nullable
-				if enumTypeName != "" {
-					// Use enum type constant as field type
-					if attrRef.Value.Nullable {
-						responseType = "*" + enumTypeName
-					} else {
-						responseType = enumTypeName
+				// Case 2: Array of enums (e.g., types: array[enum[...]])
+				if enumTypeName == "" && attrRef.Value.Type.Is("array") {
+					if attrRef.Value.Items != nil && attrRef.Value.Items.Value != nil {
+						if len(attrRef.Value.Items.Value.Enum) > 0 {
+							enumTypeName = name + strcase.ToCamel(attrName) + "Item"
+							enumType := g.buildEnumType(enumTypeName, attrRef.Value.Items.Value)
+							data.EnumTypes = append(data.EnumTypes, enumType)
+						}
 					}
-					requestType = "*value.Value[" + enumTypeName + "]"
+				}
+
+				if enumTypeName != "" {
+					if attrRef.Value.Type.Is("array") {
+						// Array of enums: []EnumType
+						responseType = "[]" + enumTypeName
+						if attrRef.Value.Nullable {
+							responseType = "*" + responseType
+						}
+						requestType = "*value.Value[[]" + enumTypeName + "]"
+					} else {
+						// Single enum: EnumType
+						if attrRef.Value.Nullable {
+							responseType = "*" + enumTypeName
+						} else {
+							responseType = enumTypeName
+						}
+						requestType = "*value.Value[" + enumTypeName + "]"
+					}
 				} else {
 					// Use standard type
 					responseType = g.schemaToGoType(attrRef.Value)
@@ -427,6 +439,29 @@ func (g *Generator) buildSchemaData(name string, schema *openapi3.Schema, topLev
 		})
 	}
 
+	// Process links (response-only — never included in request structs)
+	if linksRef := schema.Properties["links"]; linksRef != nil && linksRef.Value != nil {
+		linksSchema := linksRef.Value
+		if len(linksSchema.Properties) > 0 {
+			for fieldName, fieldRef := range linksSchema.Properties {
+				if fieldRef == nil || fieldRef.Value == nil {
+					continue
+				}
+				data.LinksFields = append(data.LinksFields, NestedField{
+					Name:        strcase.ToCamel(fieldName),
+					JSONName:    fieldName,
+					Type:        g.schemaToGoType(fieldRef.Value),
+					Description: cleanDescription(fieldRef.Value.Description),
+				})
+			}
+			sort.Slice(data.LinksFields, func(i, j int) bool {
+				return data.LinksFields[i].Name < data.LinksFields[j].Name
+			})
+		} else if linksSchema.AdditionalProperties.Has != nil {
+			data.LinksIsMap = true
+		}
+	}
+
 	return data
 }
 
@@ -465,6 +500,11 @@ func (g *Generator) buildEnumType(typeName string, schema *openapi3.Schema) Enum
 		})
 	}
 
+	// Sort enum values by name for consistent output
+	sort.Slice(enumType.Values, func(i, j int) bool {
+		return enumType.Values[i].Name < enumType.Values[j].Name
+	})
+
 	return enumType
 }
 
@@ -484,16 +524,63 @@ func (g *Generator) buildNestedStruct(name string, schema *openapi3.Schema, useV
 		}
 
 		var fieldType string
+		var enumTypeName string
 
-		if useValue {
-			// For request structs: value.Value handles null, so get base type without nullable pointer
-			baseFieldSchema := *fieldRef.Value
-			baseFieldSchema.Nullable = false
-			baseType := g.schemaToGoType(&baseFieldSchema)
-			fieldType = "*value.Value[" + baseType + "]"
+		// Check for enums (same logic as in buildSchemaData)
+		// Case 1: Direct enum
+		if len(fieldRef.Value.Enum) > 0 {
+			enumTypeName = name + strcase.ToCamel(fieldName)
+			enumType := g.buildEnumType(enumTypeName, fieldRef.Value)
+			nested.EnumTypes = append(nested.EnumTypes, enumType)
+		}
+
+		// Case 2: Array of enums
+		if enumTypeName == "" && fieldRef.Value.Type.Is("array") {
+			if fieldRef.Value.Items != nil && fieldRef.Value.Items.Value != nil {
+				if len(fieldRef.Value.Items.Value.Enum) > 0 {
+					enumTypeName = name + strcase.ToCamel(fieldName) + "Item"
+					enumType := g.buildEnumType(enumTypeName, fieldRef.Value.Items.Value)
+					nested.EnumTypes = append(nested.EnumTypes, enumType)
+				}
+			}
+		}
+
+		if enumTypeName != "" {
+			// Use enum type
+			if fieldRef.Value.Type.Is("array") {
+				// Array of enums
+				if useValue {
+					fieldType = "*value.Value[[]" + enumTypeName + "]"
+				} else {
+					fieldType = "[]" + enumTypeName
+					if fieldRef.Value.Nullable {
+						fieldType = "*" + fieldType
+					}
+				}
+			} else {
+				// Single enum
+				if useValue {
+					fieldType = "*value.Value[" + enumTypeName + "]"
+				} else {
+					if fieldRef.Value.Nullable {
+						fieldType = "*" + enumTypeName
+					} else {
+						fieldType = enumTypeName
+					}
+				}
+			}
 		} else {
-			// For response structs: include nullable pointer if needed
-			fieldType = g.schemaToGoType(fieldRef.Value)
+			// Use standard type
+			if useValue {
+				// For request structs: value.Value handles null, so get base type without nullable pointer
+				baseFieldSchema := *fieldRef.Value
+				baseFieldSchema.Nullable = false
+				baseType := g.schemaToGoType(&baseFieldSchema)
+				fieldType = "*value.Value[" + baseType + "]"
+			} else {
+				// For response structs: include nullable pointer if needed
+				fieldType = g.schemaToGoType(fieldRef.Value)
+			}
 		}
 
 		field := NestedField{
@@ -510,6 +597,11 @@ func (g *Generator) buildNestedStruct(name string, schema *openapi3.Schema, useV
 	// Sort fields by name for consistent output
 	sort.Slice(nested.Fields, func(i, j int) bool {
 		return nested.Fields[i].Name < nested.Fields[j].Name
+	})
+
+	// Sort enum types by name for consistent output
+	sort.Slice(nested.EnumTypes, func(i, j int) bool {
+		return nested.EnumTypes[i].Name < nested.EnumTypes[j].Name
 	})
 
 	return nested
@@ -569,6 +661,54 @@ func (g *Generator) parseRelationship(name string, schema *openapi3.Schema) Rela
 	return rel
 }
 
+// resolveAnyOf maps an anyOf variant list to a Go type using three rules:
+//
+//  1. All variants are string-typed (including string enums) → "string"
+//     Handles patterns like `anyOf: [SomeEnum, string]` where the enum is
+//     a documentation constraint on a string field.
+//
+//  2. All variants are named $ref schemas → "json.RawMessage"
+//     Preserves the raw JSON so callers can unmarshal into whichever
+//     concrete schema they need. This mirrors how go-github handles
+//     polymorphic event payloads.
+//
+//  3. Everything else (mixed primitives, external data) → "interface{}"
+func (g *Generator) resolveAnyOf(variants openapi3.SchemaRefs) string {
+	if len(variants) == 0 {
+		return "interface{}"
+	}
+
+	allStrings := true
+	allRefs := true
+
+	for _, ref := range variants {
+		if ref == nil || ref.Value == nil {
+			allStrings = false
+			allRefs = false
+			continue
+		}
+		if !ref.Value.Type.Is("string") {
+			allStrings = false
+		}
+		// A variant is a named component schema when it was declared as a $ref
+		// (e.g. $ref: '#/components/schemas/RegistryInputOptional'). kin-openapi
+		// stores the original ref string in SchemaRef.Ref; Title is only set when
+		// the schema definition itself has an explicit "title:" field.
+		if ref.Ref == "" {
+			allRefs = false
+		}
+	}
+
+	switch {
+	case allStrings:
+		return "string"
+	case allRefs:
+		return "json.RawMessage"
+	default:
+		return "interface{}"
+	}
+}
+
 // schemaToGoType converts OpenAPI schema type to Go type
 func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 	if schema.Title != "" {
@@ -580,21 +720,31 @@ func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 		return schema.Title
 	}
 
+	// Handle anyOf before the type switch.
+	if len(schema.AnyOf) > 0 {
+		result := g.resolveAnyOf(schema.AnyOf)
+		if schema.Nullable {
+			return "*" + result
+		}
+		return result
+	}
+
 	var baseType string
 
 	if schema.Type.Is("array") {
 		if schema.Items != nil {
 			// Check if items has a $ref
-			if schema.Items.Ref != "" {
+			switch {
+			case schema.Items.Ref != "":
 				// Extract schema name from $ref
 				parts := strings.Split(schema.Items.Ref, "/")
 				schemaName := parts[len(parts)-1]
 				baseType = "[]" + schemaName
-			} else if schema.Items.Value != nil {
+			case schema.Items.Value != nil:
 				// Otherwise recursively process the items schema
 				itemType := g.schemaToGoType(schema.Items.Value)
 				baseType = "[]" + itemType
-			} else {
+			default:
 				baseType = "[]interface{}"
 			}
 		} else {
@@ -632,10 +782,11 @@ func (g *Generator) schemaToGoType(schema *openapi3.Schema) string {
 	case schema.Type.Is("boolean"):
 		baseType = "bool"
 	case schema.Type.Is("object"):
-		// For nested objects, use interface{} or map
-		if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
-			baseType = "map[string]interface{}"
+		if schema.AdditionalProperties.Schema != nil && schema.AdditionalProperties.Schema.Value != nil {
+			// additionalProperties: <schema> — typed map
+			baseType = "map[string]" + g.schemaToGoType(schema.AdditionalProperties.Schema.Value)
 		} else {
+			// additionalProperties: true  or plain object without properties
 			baseType = "map[string]interface{}"
 		}
 	default:
@@ -737,7 +888,7 @@ func (g *Generator) generateSimpleSchema(name string, schema *openapi3.Schema, o
 	filePath := filepath.Join(outputDir, fileName)
 
 	// Build the struct fields
-	var fields []string
+	fields := make([]string, 0, len(schema.Properties))
 	hasID := false
 	hasType := false
 	var typeEnum string

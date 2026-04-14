@@ -8,13 +8,13 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
-// AgentPoolFeatures represents the type for AgentPoolFeatures
+// AgentPoolFeaturesItem represents the type for AgentPoolFeaturesItem
 
-type AgentPoolFeatures string
+type AgentPoolFeaturesItem string
 
-// AgentPoolFeatures constants
+// AgentPoolFeaturesItem constants
 const (
-	AgentPoolFeaturesRelay AgentPoolFeatures = "relay"
+	AgentPoolFeaturesItemRelay AgentPoolFeaturesItem = "relay"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -24,6 +24,7 @@ type AgentPool struct {
 	Type          string                 `json:"type"`
 	Attributes    AgentPoolAttributes    `json:"attributes"`
 	Relationships AgentPoolRelationships `json:"relationships"`
+	Links         *AgentPoolLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -44,7 +45,7 @@ type AgentPoolAttributes struct {
 	// Default agent pool for the entire account. Used by a workspace if no default pool is set at the environment level and no other pool is explicitly linked at the workspace level.
 	Default bool `json:"default"`
 	// The features enabled for all agents in the agent pool.
-	Features []AgentPoolFeatures `json:"features"`
+	Features []AgentPoolFeaturesItem `json:"features"`
 	// Indicates whether the pool is used by any workspace.
 	InUse bool `json:"in-use"`
 	// Indicates whether the pool is managed by Scalr.
@@ -315,6 +316,11 @@ func (r *AgentPoolRelationships) PopulateIncludes(included []map[string]interfac
 			}
 		}
 	}
+}
+
+// AgentPoolLinks holds the resource links for AgentPool (response only).
+type AgentPoolLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

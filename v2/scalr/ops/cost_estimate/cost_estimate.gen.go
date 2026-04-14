@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // Show details of a specific Cost Estimate phase.
 func (c *Client) GetCostEstimateRaw(ctx context.Context, costEstimate string) (*client.Response, error) {
 	path := "/cost-estimates/{cost_estimate}"
+	if costEstimate == "" {
+		return nil, fmt.Errorf("costEstimate must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{cost_estimate}", url.PathEscape(costEstimate))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -58,6 +61,9 @@ func (c *Client) GetCostEstimate(ctx context.Context, costEstimate string) (*sch
 // This endpoint generates a temporary public URL, that can be used to download a [JSON formatted cost breakdown](https://www.infracost.io/docs/multi_project/report/#examples).
 func (c *Client) GetCostEstimateBreakdownRaw(ctx context.Context, costEstimate string) (*client.Response, error) {
 	path := "/cost-estimates/{cost_estimate}/breakdown"
+	if costEstimate == "" {
+		return nil, fmt.Errorf("costEstimate must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{cost_estimate}", url.PathEscape(costEstimate))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -81,6 +87,9 @@ func (c *Client) GetCostEstimateBreakdown(ctx context.Context, costEstimate stri
 // This endpoint generates a temporary public URL, that can be used to download a raw `text/plan` output of the cost estimation.
 func (c *Client) GetCostEstimateLogRaw(ctx context.Context, costEstimate string) (*client.Response, error) {
 	path := "/cost-estimates/{cost_estimate}/output"
+	if costEstimate == "" {
+		return nil, fmt.Errorf("costEstimate must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{cost_estimate}", url.PathEscape(costEstimate))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

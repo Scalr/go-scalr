@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for WorkloadIdentityProvider operations
+const (
+	FilterName                     = "filter[name]"                       // The workload identity provider name filter.
+	FilterUrl                      = "filter[url]"                        // The workload identity provider url filter.
+	FilterWorkloadIdentityProvider = "filter[workload-identity-provider]" // The ID(s) of workload identity provider(s).
+)
+
 // Create a new Workload Identity Provider.
 func (c *Client) CreateWorkloadIdentityProviderRaw(ctx context.Context, req *schemas.WorkloadIdentityProviderRequest) (*client.Response, error) {
 	path := "/workload-identity-providers"
@@ -63,6 +70,9 @@ func (c *Client) CreateWorkloadIdentityProvider(ctx context.Context, req *schema
 // The endpoint deletes a Workload identity provider by ID.
 func (c *Client) DeleteWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string) (*client.Response, error) {
 	path := "/workload-identity-providers/{workload_identity_provider}"
+	if workloadIdentityProvider == "" {
+		return nil, fmt.Errorf("workloadIdentityProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +96,9 @@ func (c *Client) DeleteWorkloadIdentityProvider(ctx context.Context, workloadIde
 // Get Workload Identity Provider.
 func (c *Client) GetWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string) (*client.Response, error) {
 	path := "/workload-identity-providers/{workload_identity_provider}"
+	if workloadIdentityProvider == "" {
+		return nil, fmt.Errorf("workloadIdentityProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -137,9 +150,13 @@ func (c *Client) ListWorkloadIdentityProvidersRaw(ctx context.Context, opts *Lis
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -227,7 +244,6 @@ func (c *Client) ListWorkloadIdentityProvidersIter(ctx context.Context, opts *Li
 				yield(schemas.WorkloadIdentityProvider{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -237,8 +253,10 @@ func (c *Client) ListWorkloadIdentityProvidersIter(ctx context.Context, opts *Li
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.WorkloadIdentityProvider{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.WorkloadIdentityProvider{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -338,13 +356,20 @@ type ListWorkloadIdentityProvidersOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates attributes of an existing Workload Identity Provider.
 func (c *Client) UpdateWorkloadIdentityProviderRaw(ctx context.Context, workloadIdentityProvider string, req *schemas.WorkloadIdentityProviderRequest) (*client.Response, error) {
 	path := "/workload-identity-providers/{workload_identity_provider}"
+	if workloadIdentityProvider == "" {
+		return nil, fmt.Errorf("workloadIdentityProvider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workload_identity_provider}", url.PathEscape(workloadIdentityProvider))
 
 	// Wrap request in JSON:API envelope

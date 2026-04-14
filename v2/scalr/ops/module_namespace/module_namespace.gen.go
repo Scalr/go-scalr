@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for ModuleNamespace operations
+const (
+	FilterEnvironment = "filter[environment]" // Filter module namespaces by environment
+	FilterName        = "filter[name]"        // Filter module namespaces by name
+)
+
 // Create a new module namespace.
 func (c *Client) CreateModuleNamespaceRaw(ctx context.Context, req *schemas.ModuleNamespaceRequest) (*client.Response, error) {
 	path := "/module-namespaces"
@@ -63,6 +69,9 @@ func (c *Client) CreateModuleNamespace(ctx context.Context, req *schemas.ModuleN
 // Delete a module namespace.
 func (c *Client) DeleteModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*client.Response, error) {
 	path := "/module-namespaces/{module_namespace}"
+	if moduleNamespace == "" {
+		return nil, fmt.Errorf("moduleNamespace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +95,9 @@ func (c *Client) DeleteModuleNamespace(ctx context.Context, moduleNamespace stri
 // Show details of a specific module namespace.
 func (c *Client) GetModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*client.Response, error) {
 	path := "/module-namespaces/{module_namespace}"
+	if moduleNamespace == "" {
+		return nil, fmt.Errorf("moduleNamespace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -133,9 +145,13 @@ func (c *Client) ListModuleNamespacesRaw(ctx context.Context, opts *ListModuleNa
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -223,7 +239,6 @@ func (c *Client) ListModuleNamespacesIter(ctx context.Context, opts *ListModuleN
 				yield(schemas.ModuleNamespace{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -233,8 +248,10 @@ func (c *Client) ListModuleNamespacesIter(ctx context.Context, opts *ListModuleN
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.ModuleNamespace{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.ModuleNamespace{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -332,13 +349,20 @@ type ListModuleNamespacesOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update an existing module namespace.
 func (c *Client) UpdateModuleNamespaceRaw(ctx context.Context, moduleNamespace string, req *schemas.ModuleNamespaceRequest) (*client.Response, error) {
 	path := "/module-namespaces/{module_namespace}"
+	if moduleNamespace == "" {
+		return nil, fmt.Errorf("moduleNamespace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
 
 	// Wrap request in JSON:API envelope

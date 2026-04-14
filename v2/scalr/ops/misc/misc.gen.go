@@ -49,6 +49,9 @@ func (c *Client) CreateVcsTask(ctx context.Context, req *schemas.VcsTaskRequest)
 // Creates a link between a workspace and an SSH key.
 func (c *Client) CreateWorkspaceSshKeyLinkRaw(ctx context.Context, workspace string, req *schemas.WorkspaceSSHKeyLinkRequest) (*client.Response, error) {
 	path := "/workspaces/{workspace}/ssh-key-links"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	// Plain JSON request (not JSON:API)
@@ -86,6 +89,9 @@ func (c *Client) CreateWorkspaceSshKeyLink(ctx context.Context, workspace string
 // Deletes a link between a workspace and an SSH key.
 func (c *Client) DeleteWorkspaceSshKeyLinkRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/ssh-key-links"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -154,6 +160,9 @@ func (c *Client) Logout(ctx context.Context) error {
 
 func (c *Client) OauthSigninRaw(ctx context.Context, provider string) (*client.Response, error) {
 	path := "/iam/signin/{provider}"
+	if provider == "" {
+		return nil, fmt.Errorf("provider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider}", url.PathEscape(provider))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -175,6 +184,9 @@ func (c *Client) OauthSignin(ctx context.Context, provider string) error {
 
 func (c *Client) OauthSignupRaw(ctx context.Context, provider string) (*client.Response, error) {
 	path := "/iam/signup/{provider}"
+	if provider == "" {
+		return nil, fmt.Errorf("provider must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider}", url.PathEscape(provider))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)

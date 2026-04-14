@@ -27,6 +27,9 @@ func New(httpClient *client.HTTPClient) *Client {
 // This endpoint returns instance of AI usage.
 func (c *Client) GetAiUsageRaw(ctx context.Context, aiUsage string, opts *GetAiUsageOptions) (*client.Response, error) {
 	path := "/reports/ai-usage/{ai_usage}"
+	if aiUsage == "" {
+		return nil, fmt.Errorf("aiUsage must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{ai_usage}", url.PathEscape(aiUsage))
 
 	params := url.Values{}
@@ -34,11 +37,13 @@ func (c *Client) GetAiUsageRaw(ctx context.Context, aiUsage string, opts *GetAiU
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -79,9 +84,11 @@ func (c *Client) GetAiUsage(ctx context.Context, aiUsage string, opts *GetAiUsag
 type GetAiUsageOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of AI usage for the account.
@@ -103,14 +110,16 @@ func (c *Client) ListAiUsageRaw(ctx context.Context, opts *ListAiUsageOptions) (
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -198,7 +207,6 @@ func (c *Client) ListAiUsageIter(ctx context.Context, opts *ListAiUsageOptions) 
 				yield(schemas.AiUsage{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -208,8 +216,10 @@ func (c *Client) ListAiUsageIter(ctx context.Context, opts *ListAiUsageOptions) 
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AiUsage{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AiUsage{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -310,9 +320,11 @@ type ListAiUsageOptions struct {
 	Query string
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

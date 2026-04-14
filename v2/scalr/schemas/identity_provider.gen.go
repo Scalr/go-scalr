@@ -14,9 +14,9 @@ type IdentityProviderIdpType string
 
 // IdentityProviderIdpType constants
 const (
-	IdentityProviderIdpTypeScalr IdentityProviderIdpType = "scalr"
 	IdentityProviderIdpTypeLdap  IdentityProviderIdpType = "ldap"
 	IdentityProviderIdpTypeSaml  IdentityProviderIdpType = "saml"
+	IdentityProviderIdpTypeScalr IdentityProviderIdpType = "scalr"
 )
 
 // IdentityProviderVerificationStatus represents the type for IdentityProviderVerificationStatus
@@ -26,8 +26,8 @@ type IdentityProviderVerificationStatus string
 // IdentityProviderVerificationStatus constants
 const (
 	IdentityProviderVerificationStatusPending IdentityProviderVerificationStatus = "pending"
-	IdentityProviderVerificationStatusSuccess IdentityProviderVerificationStatus = "success"
 	IdentityProviderVerificationStatusRunning IdentityProviderVerificationStatus = "running"
+	IdentityProviderVerificationStatusSuccess IdentityProviderVerificationStatus = "success"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -37,6 +37,7 @@ type IdentityProvider struct {
 	Type          string                        `json:"type"`
 	Attributes    IdentityProviderAttributes    `json:"attributes"`
 	Relationships IdentityProviderRelationships `json:"relationships"`
+	Links         *IdentityProviderLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -126,6 +127,11 @@ func (r *IdentityProviderRelationships) PopulateIncludes(included []map[string]i
 			}
 		}
 	}
+}
+
+// IdentityProviderLinks holds the resource links for IdentityProvider (response only).
+type IdentityProviderLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

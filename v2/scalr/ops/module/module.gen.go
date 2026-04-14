@@ -25,6 +25,21 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Module operations
+const (
+	FilterAccount                    = "filter[account]"                         // Filter modules by account
+	FilterEnvironment                = "filter[environment]"                     // Filter modules by environment
+	FilterModuleNamespace            = "filter[module-namespace]"                // Filter modules by namespace
+	FilterModuleVersionsIsRootModule = "filter[module-versions][is-root-module]" // Filter modules by module-version is-root-module
+	FilterModuleVersionsStatus       = "filter[module-versions][status]"         // Filter modules by module-version status
+	FilterName                       = "filter[name]"                            // Filter modules by name
+	FilterNamespaceEnvironments      = "filter[namespace][environments]"         // Filter modules by namespace environments
+	FilterProvider                   = "filter[provider]"                        // Filter modules by provider
+	FilterSource                     = "filter[source]"                          // Filter modules by source
+	FilterStatus                     = "filter[status]"                          // Filter modules by status
+	FilterVcsProvider                = "filter[vcs-provider]"                    // The ID of the VCS provider
+)
+
 // This endpoint creates a Module from a VCS repository. The module's source code directory should follow the [standard module structure](https://www.terraform.io/docs/language/modules/develop/structure.html). Scalr extracts various meta information from the module's source: * It's important to provide each `variable` and `output` blocks with a meaningful descriptions, as they will be displayed in a Module and Workspace Variables pages for your internal users. * README or README.md file will be displayed on a Module page. * Nested modules from `modules/` directory will be searchable and available though the Registry just like top-level modules. Modules can be published on both `account` and `environment` scopes. If neither scope is specified in the request body, the module will be published in the same scope that the related `vcs-provider` is published.
 func (c *Client) CreateModuleRaw(ctx context.Context, req *schemas.ModuleRequest) (*client.Response, error) {
 	path := "/modules"
@@ -64,6 +79,9 @@ func (c *Client) CreateModule(ctx context.Context, req *schemas.ModuleRequest) (
 // This endpoint removes the module from the registry.
 func (c *Client) DeleteModuleRaw(ctx context.Context, module string) (*client.Response, error) {
 	path := "/modules/{module}"
+	if module == "" {
+		return nil, fmt.Errorf("module must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -87,6 +105,9 @@ func (c *Client) DeleteModule(ctx context.Context, module string) error {
 // Show details of a specific terraform module.
 func (c *Client) GetModuleRaw(ctx context.Context, module string, opts *GetModuleOptions) (*client.Response, error) {
 	path := "/modules/{module}"
+	if module == "" {
+		return nil, fmt.Errorf("module must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	params := url.Values{}
@@ -94,9 +115,13 @@ func (c *Client) GetModuleRaw(ctx context.Context, module string, opts *GetModul
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -137,12 +162,19 @@ func (c *Client) GetModule(ctx context.Context, module string, opts *GetModuleOp
 type GetModuleOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Returns the changelog content for the module.
 func (c *Client) GetModuleChangelogRaw(ctx context.Context, module string) (*client.Response, error) {
 	path := "/modules/{module}/changelog"
+	if module == "" {
+		return nil, fmt.Errorf("module must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -189,11 +221,13 @@ func (c *Client) ListModulesRaw(ctx context.Context, opts *ListModulesOptions) (
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -281,7 +315,6 @@ func (c *Client) ListModulesIter(ctx context.Context, opts *ListModulesOptions) 
 				yield(schemas.Module{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -291,8 +324,10 @@ func (c *Client) ListModulesIter(ctx context.Context, opts *ListModulesOptions) 
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Module{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Module{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -395,14 +430,19 @@ type ListModulesOptions struct {
 	Include []string
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Trigger resync of the Module associated with the VCS repository.
 func (c *Client) ResyncModuleRaw(ctx context.Context, module string, req *schemas.ModuleResyncRequest) (*client.Response, error) {
 	path := "/modules/{module}/actions/resync"
+	if module == "" {
+		return nil, fmt.Errorf("module must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{module}", url.PathEscape(module))
 
 	// Plain JSON request (not JSON:API)

@@ -16,9 +16,9 @@ type WorkspaceAutoDestroyDays int
 // WorkspaceAutoDestroyDays constants
 const (
 	WorkspaceAutoDestroyDays1  WorkspaceAutoDestroyDays = 1
+	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
 	WorkspaceAutoDestroyDays2  WorkspaceAutoDestroyDays = 2
 	WorkspaceAutoDestroyDays7  WorkspaceAutoDestroyDays = 7
-	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
 )
 
 // WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns
@@ -29,8 +29,8 @@ type WorkspaceAutoQueueRuns string
 const (
 	WorkspaceAutoQueueRunsAlways       WorkspaceAutoQueueRuns = "always"
 	WorkspaceAutoQueueRunsNever        WorkspaceAutoQueueRuns = "never"
-	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
 	WorkspaceAutoQueueRunsOnCreateOnly WorkspaceAutoQueueRuns = "on_create_only"
+	WorkspaceAutoQueueRunsSkipFirst    WorkspaceAutoQueueRuns = "skip_first"
 )
 
 // WorkspaceEnvironmentType represents the type for WorkspaceEnvironmentType
@@ -39,10 +39,10 @@ type WorkspaceEnvironmentType string
 
 // WorkspaceEnvironmentType constants
 const (
+	WorkspaceEnvironmentTypeDevelopment WorkspaceEnvironmentType = "development"
 	WorkspaceEnvironmentTypeProduction  WorkspaceEnvironmentType = "production"
 	WorkspaceEnvironmentTypeStaging     WorkspaceEnvironmentType = "staging"
 	WorkspaceEnvironmentTypeTesting     WorkspaceEnvironmentType = "testing"
-	WorkspaceEnvironmentTypeDevelopment WorkspaceEnvironmentType = "development"
 	WorkspaceEnvironmentTypeUnmapped    WorkspaceEnvironmentType = "unmapped"
 )
 
@@ -52,8 +52,8 @@ type WorkspaceExecutionMode string
 
 // WorkspaceExecutionMode constants
 const (
-	WorkspaceExecutionModeRemote WorkspaceExecutionMode = "remote"
 	WorkspaceExecutionModeLocal  WorkspaceExecutionMode = "local"
+	WorkspaceExecutionModeRemote WorkspaceExecutionMode = "remote"
 )
 
 // WorkspaceIacPlatform represents the type for WorkspaceIacPlatform
@@ -62,8 +62,8 @@ type WorkspaceIacPlatform string
 
 // WorkspaceIacPlatform constants
 const (
-	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
 	WorkspaceIacPlatformOpentofu  WorkspaceIacPlatform = "opentofu"
+	WorkspaceIacPlatformTerraform WorkspaceIacPlatform = "terraform"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -73,6 +73,7 @@ type Workspace struct {
 	Type          string                 `json:"type"`
 	Attributes    WorkspaceAttributes    `json:"attributes"`
 	Relationships WorkspaceRelationships `json:"relationships"`
+	Links         *WorkspaceLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -732,6 +733,11 @@ func (r *WorkspaceRelationships) PopulateIncludes(included []map[string]interfac
 			}
 		}
 	}
+}
+
+// WorkspaceLinks holds the resource links for Workspace (response only).
+type WorkspaceLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

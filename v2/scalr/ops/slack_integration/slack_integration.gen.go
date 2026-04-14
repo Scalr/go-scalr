@@ -24,6 +24,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for SlackIntegration operations
+const (
+	FilterAccount = "filter[account]" // The ID of the Account
+)
+
 // This endpoint creates Slack integration.
 func (c *Client) CreateSlackIntegrationRaw(ctx context.Context, req *schemas.SlackIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/slack"
@@ -63,6 +68,9 @@ func (c *Client) CreateSlackIntegration(ctx context.Context, req *schemas.SlackI
 // This endpoint deletes Slack integration.
 func (c *Client) DeleteSlackIntegrationRaw(ctx context.Context, slackIntegration string) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
+	if slackIntegration == "" {
+		return nil, fmt.Errorf("slackIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +94,9 @@ func (c *Client) DeleteSlackIntegration(ctx context.Context, slackIntegration st
 // Show details of a specific Slack integration.
 func (c *Client) GetSlackIntegrationRaw(ctx context.Context, slackIntegration string, opts *GetSlackIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
+	if slackIntegration == "" {
+		return nil, fmt.Errorf("slackIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
 	params := url.Values{}
@@ -93,9 +104,13 @@ func (c *Client) GetSlackIntegrationRaw(ctx context.Context, slackIntegration st
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -136,7 +151,11 @@ func (c *Client) GetSlackIntegration(ctx context.Context, slackIntegration strin
 type GetSlackIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Slack integrations.
@@ -157,9 +176,13 @@ func (c *Client) ListSlackIntegrationsRaw(ctx context.Context, opts *ListSlackIn
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -247,7 +270,6 @@ func (c *Client) ListSlackIntegrationsIter(ctx context.Context, opts *ListSlackI
 				yield(schemas.SlackIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -257,8 +279,10 @@ func (c *Client) ListSlackIntegrationsIter(ctx context.Context, opts *ListSlackI
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.SlackIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.SlackIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -358,13 +382,20 @@ type ListSlackIntegrationsOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates Slack integration.
 func (c *Client) UpdateSlackIntegrationRaw(ctx context.Context, slackIntegration string, req *schemas.SlackIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/slack/{slack_integration}"
+	if slackIntegration == "" {
+		return nil, fmt.Errorf("slackIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{slack_integration}", url.PathEscape(slackIntegration))
 
 	// Wrap request in JSON:API envelope

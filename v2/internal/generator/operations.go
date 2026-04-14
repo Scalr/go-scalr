@@ -65,11 +65,29 @@ func (g *Generator) generateOperations(doc *openapi3.T, outputDir string) error 
 			return ops[i].Name < ops[j].Name
 		})
 
+		// Collect all unique filter keys across operations in this resource
+		filterKeyMap := make(map[string]FilterKey)
+		for _, op := range ops {
+			for _, fk := range op.FilterKeys {
+				filterKeyMap[fk.Name] = fk
+			}
+		}
+
+		// Convert map to sorted slice
+		var allFilterKeys []FilterKey
+		for _, fk := range filterKeyMap {
+			allFilterKeys = append(allFilterKeys, fk)
+		}
+		sort.Slice(allFilterKeys, func(i, j int) bool {
+			return allFilterKeys[i].Name < allFilterKeys[j].Name
+		})
+
 		data := ResourceClientData{
 			PackageName:    strcase.ToSnake(resource),
 			ResourceName:   resource,
-			ApiPackageName: g.pkgName,
+			APIPackageName: g.pkgName,
 			Operations:     ops,
+			FilterKeys:     allFilterKeys,
 		}
 
 		var buf bytes.Buffer
@@ -96,11 +114,29 @@ func (g *Generator) generateOperations(doc *openapi3.T, outputDir string) error 
 			return standaloneOps[i].Name < standaloneOps[j].Name
 		})
 
+		// Collect all unique filter keys across standalone operations
+		filterKeyMap := make(map[string]FilterKey)
+		for _, op := range standaloneOps {
+			for _, fk := range op.FilterKeys {
+				filterKeyMap[fk.Name] = fk
+			}
+		}
+
+		// Convert map to sorted slice
+		var allFilterKeys []FilterKey
+		for _, fk := range filterKeyMap {
+			allFilterKeys = append(allFilterKeys, fk)
+		}
+		sort.Slice(allFilterKeys, func(i, j int) bool {
+			return allFilterKeys[i].Name < allFilterKeys[j].Name
+		})
+
 		data := ResourceClientData{
 			PackageName:    "misc",
 			ResourceName:   "Misc",
-			ApiPackageName: g.pkgName,
+			APIPackageName: g.pkgName,
 			Operations:     standaloneOps,
+			FilterKeys:     allFilterKeys,
 		}
 
 		var buf bytes.Buffer
@@ -120,8 +156,9 @@ func (g *Generator) generateOperations(doc *openapi3.T, outputDir string) error 
 type ResourceClientData struct {
 	PackageName    string
 	ResourceName   string
-	ApiPackageName string
+	APIPackageName string
 	Operations     []Operation
+	FilterKeys     []FilterKey
 }
 
 // Operation represents an API operation
@@ -132,15 +169,23 @@ type Operation struct {
 	Description          string
 	PathParameters       []Parameter
 	QueryParams          []QueryParam
-	Returns              string // Return type
-	RequestType          string // Request body type (schemas.WorkspaceRequest, schemas.TagRelationshipFieldsetsListingDocument, etc.)
-	IsRelationshipOp     bool   // Is this a relationship operation (needs special handling)
-	IsList               bool   // Is this a listing operation
-	HasBody              bool   // Has request body
-	ReturnsData          bool   // Returns data (vs void)
-	ReturnsText          bool   // Returns plain text (not JSON)
-	ReturnsRelationships bool   // Whether the return type has relationships field
-	UsesPlainJSON        bool   // True if request body is plain JSON (not JSON:API)
+	FilterKeys           []FilterKey // Available filter keys for this operation
+	Returns              string      // Return type
+	RequestType          string      // Request body type (schemas.WorkspaceRequest, schemas.TagRelationshipFieldsetsListingDocument, etc.)
+	IsRelationshipOp     bool        // Is this a relationship operation (needs special handling)
+	IsList               bool        // Is this a listing operation
+	HasBody              bool        // Has request body
+	ReturnsData          bool        // Returns data (vs void)
+	ReturnsText          bool        // Returns plain text (not JSON)
+	ReturnsRelationships bool        // Whether the return type has relationships field
+	UsesPlainJSON        bool        // True if request body is plain JSON (not JSON:API)
+}
+
+// FilterKey represents an available filter key for an operation
+type FilterKey struct {
+	Name        string // Constant name (e.g., FilterAccount)
+	Key         string // Filter key (e.g., "account")
+	Description string
 }
 
 // Parameter represents an operation path parameter
@@ -160,10 +205,16 @@ type QueryParam struct {
 	IsSort       bool
 	IsInclude    bool
 	IsPagination bool
+	IsFields     bool
 }
 
 // parseOperation parses an OpenAPI operation
-func (g *Generator) parseOperation(path, method string, op *openapi3.Operation, doc *openapi3.T, resourceName string) Operation {
+func (g *Generator) parseOperation(
+	path, method string,
+	op *openapi3.Operation,
+	doc *openapi3.T,
+	resourceName string,
+) Operation {
 	operation := Operation{
 		Name:        strcase.ToCamel(op.OperationID),
 		Method:      strings.ToUpper(method),
@@ -187,14 +238,46 @@ func (g *Generator) parseOperation(path, method string, op *openapi3.Operation, 
 				Type:   "string",
 			})
 		case "query":
-			operation.QueryParams = append(operation.QueryParams, g.parseQueryParam(param))
+			qp := g.parseQueryParam(param)
+			operation.QueryParams = append(operation.QueryParams, qp)
+
+			// Extract filters
+			if qp.IsFilter && strings.HasPrefix(param.Name, "filter[") {
+				fullParamName := param.Name
+
+				// filter[account] → FilterAccount
+				// filter[run][status] → FilterRunStatus
+				// filter[vcs-repo][identifier] → FilterVcsRepoIdentifier
+				constNameBase := strings.TrimPrefix(fullParamName, "filter[")
+				constNameBase = strings.TrimSuffix(constNameBase, "]")
+				constNameBase = strings.ReplaceAll(constNameBase, "][", "-")
+				constName := "Filter" + strcase.ToCamel(constNameBase)
+
+				filterKey := FilterKey{
+					Name:        constName,
+					Key:         fullParamName,
+					Description: cleanDescription(param.Description),
+				}
+				operation.FilterKeys = append(operation.FilterKeys, filterKey)
+			}
 		}
 	}
+
+	// Sort filter keys for consistent output
+	sort.Slice(operation.FilterKeys, func(i, j int) bool {
+		return operation.FilterKeys[i].Name < operation.FilterKeys[j].Name
+	})
 
 	// Check if has request body and extract request type
 	if op.RequestBody != nil && op.RequestBody.Value != nil {
 		operation.HasBody = true
-		reqType, isRelationship, usesPlainJSON := g.getRequestBodyType(op.RequestBody.Value, doc, resourceName, path, method)
+		reqType, isRelationship, usesPlainJSON := g.getRequestBodyType(
+			op.RequestBody.Value,
+			doc,
+			resourceName,
+			path,
+			method,
+		)
 		operation.RequestType = reqType
 		operation.IsRelationshipOp = isRelationship
 		operation.UsesPlainJSON = usesPlainJSON
@@ -234,6 +317,10 @@ func (g *Generator) parseQueryParam(param *openapi3.Parameter) QueryParam {
 	case strings.HasPrefix(param.Name, "filter["):
 		qp.IsFilter = true
 		qp.Type = "string"
+	case param.Name == "fields":
+		qp.IsFields = true
+		qp.GoName = "Fields"
+		qp.Type = "map[string]string"
 	case param.Name == "sort":
 		qp.IsSort = true
 		qp.Type = "[]string"
@@ -285,7 +372,8 @@ func (g *Generator) getResponseType(resp *openapi3.Response, doc *openapi3.T, pa
 					return "[]*schemas." + itemType, false
 				}
 				// Fallback: try schema name-based detection for edge cases
-				if strings.Contains(documentSchemaName, "Relationship") && strings.HasSuffix(documentSchemaName, "ListingDocument") {
+				if strings.Contains(documentSchemaName, "Relationship") &&
+					strings.HasSuffix(documentSchemaName, "ListingDocument") {
 					schemaName := strings.TrimSuffix(documentSchemaName, "FieldsetsListingDocument")
 					if schemaRef := doc.Components.Schemas[schemaName]; schemaRef != nil {
 						return "[]*schemas." + schemaName, false
@@ -334,7 +422,11 @@ func (g *Generator) getResponseType(resp *openapi3.Response, doc *openapi3.T, pa
 
 // getRequestBodyType extracts the request body type from a request body
 // Returns (requestType, isRelationshipOp, usesPlainJSON)
-func (g *Generator) getRequestBodyType(reqBody *openapi3.RequestBody, doc *openapi3.T, resourceName, path, method string) (string, bool, bool) {
+func (g *Generator) getRequestBodyType(
+	reqBody *openapi3.RequestBody,
+	doc *openapi3.T,
+	resourceName, path, method string,
+) (string, bool, bool) {
 	// Check if this is a relationship endpoint (path contains /relationships/)
 	isRelationshipEndpoint := strings.Contains(path, "/relationships/")
 
@@ -472,7 +564,8 @@ func (g *Generator) schemaHasRelationships(resp *openapi3.Response, doc *openapi
 				if schemaRef.Value != nil {
 					// Check if schema has a relationships property
 					if schemaRef.Value.Properties != nil {
-						if relProp := schemaRef.Value.Properties["relationships"]; relProp != nil && relProp.Value != nil {
+						if relProp := schemaRef.Value.Properties["relationships"]; relProp != nil &&
+							relProp.Value != nil {
 							// Has relationships property - check if it's not empty
 							return len(relProp.Value.Properties) > 0
 						}

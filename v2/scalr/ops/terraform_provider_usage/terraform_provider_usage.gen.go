@@ -25,18 +25,28 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for TerraformProviderUsage operations
+const (
+	FilterSource = "filter[source]" // Filter providers by source.
+)
+
 // This endpoint returns instance of provider usage.
 func (c *Client) GetProviderUsageRaw(ctx context.Context, providerUsage string, opts *GetProviderUsageOptions) (*client.Response, error) {
 	path := "/reports/providers/{provider_usage}"
+	if providerUsage == "" {
+		return nil, fmt.Errorf("providerUsage must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{provider_usage}", url.PathEscape(providerUsage))
 
 	params := url.Values{}
 	if opts != nil {
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -71,9 +81,11 @@ func (c *Client) GetProviderUsage(ctx context.Context, providerUsage string, opt
 
 // GetProviderUsageOptions holds optional parameters for GetProviderUsage
 type GetProviderUsageOptions struct {
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists unique terraform provider sources.
@@ -86,9 +98,13 @@ func (c *Client) ListTerraformProviderSourcesRaw(ctx context.Context, opts *List
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -120,8 +136,12 @@ func (c *Client) ListTerraformProviderSources(ctx context.Context, opts *ListTer
 // ListTerraformProviderSourcesOptions holds optional parameters for ListTerraformProviderSources
 type ListTerraformProviderSourcesOptions struct {
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint lists terraform provider usages.
@@ -147,11 +167,13 @@ func (c *Client) ListTerraformProviderUsagesRaw(ctx context.Context, opts *ListT
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Handle parameter: Fields (map[string]interface{})
-		// Complex type map[string]interface{} - skip for now
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -235,7 +257,6 @@ func (c *Client) ListTerraformProviderUsagesIter(ctx context.Context, opts *List
 				yield(schemas.TerraformProviderUsage{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -245,8 +266,10 @@ func (c *Client) ListTerraformProviderUsagesIter(ctx context.Context, opts *List
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.TerraformProviderUsage{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.TerraformProviderUsage{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -341,7 +364,9 @@ type ListTerraformProviderUsagesOptions struct {
 	Query string
 	// The comma-separated list of attributes.
 	Sort []string
-	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
-	Fields map[string]interface{}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

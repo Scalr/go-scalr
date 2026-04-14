@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,6 +38,13 @@ func (g *Generator) Generate(specPath string) error {
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
+	loader.ReadFromURIFunc = func(l *openapi3.Loader, u *url.URL) ([]byte, error) {
+		if strings.Contains(u.Path, "/examples/") || strings.HasPrefix(u.Path, "examples/") {
+			// Ignore the examples.
+			return []byte("value: {}"), nil
+		}
+		return openapi3.DefaultReadFromURI(l, u)
+	}
 
 	doc, err := loader.LoadFromFile(specPath)
 	if err != nil {
@@ -55,8 +63,8 @@ func (g *Generator) Generate(specPath string) error {
 	}
 
 	log.Printf("Preparing output directory: %s", g.outputDir)
-	if err := os.RemoveAll(g.outputDir); err != nil {
-		return fmt.Errorf("failed to clean output directory: %w", err)
+	if err := g.cleanGeneratedFiles(g.outputDir); err != nil {
+		return fmt.Errorf("failed to clean generated files: %w", err)
 	}
 
 	if err := os.MkdirAll(g.outputDir, 0755); err != nil {
@@ -116,11 +124,27 @@ func (g *Generator) formatCode(dir string) error {
 
 		formatted, err := imports.Process(path, content, nil)
 		if err != nil {
-			log.Printf("Warning: failed to format %s: %v", path, err)
-			return nil // Don't fail on format errors
+			return fmt.Errorf("syntax error in generated file %s: %w", filepath.Base(path), err)
 		}
 
 		return os.WriteFile(path, formatted, info.Mode())
+	})
+}
+
+// cleanGeneratedFiles removes all *.gen.go files under dir without touching
+// anything else. Safe to call even if dir does not exist yet.
+func (g *Generator) cleanGeneratedFiles(dir string) error {
+	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, ".gen.go") {
+			return os.Remove(path)
+		}
+		return nil
 	})
 }
 
@@ -217,7 +241,7 @@ func sanitizeGoName(name string) string {
 	name = strcase.ToLowerCamel(name)
 	// Escape Go reserved words
 	if IsGoReservedWord(name) {
-		name = name + "_"
+		name += "_"
 	}
 	return name
 }

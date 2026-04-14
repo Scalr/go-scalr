@@ -24,6 +24,11 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for AWSEventBridgeIntegration operations
+const (
+	FilterName = "filter[name]" // Filter by Event Bridge integration name
+)
+
 // This endpoint creates AWS EventBridge integration.
 func (c *Client) CreateAwsEventBridgeIntegrationRaw(ctx context.Context, req *schemas.AWSEventBridgeIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge"
@@ -62,6 +67,9 @@ func (c *Client) CreateAwsEventBridgeIntegration(ctx context.Context, req *schem
 
 func (c *Client) DeleteAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
+	if awsEventBridgeIntegration == "" {
+		return nil, fmt.Errorf("awsEventBridgeIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -84,6 +92,9 @@ func (c *Client) DeleteAwsEventBridgeIntegration(ctx context.Context, awsEventBr
 // Show details of a specific AWS EventBridge integration.
 func (c *Client) GetAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
+	if awsEventBridgeIntegration == "" {
+		return nil, fmt.Errorf("awsEventBridgeIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -131,9 +142,13 @@ func (c *Client) ListAwsEventBridgeIntegrationsRaw(ctx context.Context, opts *Li
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -221,7 +236,6 @@ func (c *Client) ListAwsEventBridgeIntegrationsIter(ctx context.Context, opts *L
 				yield(schemas.AWSEventBridgeIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -231,8 +245,10 @@ func (c *Client) ListAwsEventBridgeIntegrationsIter(ctx context.Context, opts *L
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AWSEventBridgeIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AWSEventBridgeIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -330,13 +346,20 @@ type ListAwsEventBridgeIntegrationsOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates AWS EventBridge integrations.
 func (c *Client) UpdateAwsEventBridgeIntegrationRaw(ctx context.Context, awsEventBridgeIntegration string, req *schemas.AWSEventBridgeIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/aws-event-bridge/{aws_event_bridge_integration}"
+	if awsEventBridgeIntegration == "" {
+		return nil, fmt.Errorf("awsEventBridgeIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{aws_event_bridge_integration}", url.PathEscape(awsEventBridgeIntegration))
 
 	// Wrap request in JSON:API envelope

@@ -33,9 +33,13 @@ func (c *Client) CreateCheckovIntegrationRaw(ctx context.Context, req *schemas.C
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,11 +82,18 @@ func (c *Client) CreateCheckovIntegration(ctx context.Context, req *schemas.Chec
 type CreateCheckovIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) DeleteCheckovIntegrationRaw(ctx context.Context, integration string) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
+	if integration == "" {
+		return nil, fmt.Errorf("integration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -105,6 +116,9 @@ func (c *Client) DeleteCheckovIntegration(ctx context.Context, integration strin
 // Show details of a specific Checkov Integration.
 func (c *Client) GetCheckovIntegrationRaw(ctx context.Context, integration string, opts *GetCheckovIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
+	if integration == "" {
+		return nil, fmt.Errorf("integration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
 	params := url.Values{}
@@ -112,9 +126,13 @@ func (c *Client) GetCheckovIntegrationRaw(ctx context.Context, integration strin
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -155,7 +173,11 @@ func (c *Client) GetCheckovIntegration(ctx context.Context, integration string, 
 type GetCheckovIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of Checkov integrations.
@@ -176,9 +198,13 @@ func (c *Client) ListCheckovIntegrationsRaw(ctx context.Context, opts *ListCheck
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -266,7 +292,6 @@ func (c *Client) ListCheckovIntegrationsIter(ctx context.Context, opts *ListChec
 				yield(schemas.CheckovIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -276,8 +301,10 @@ func (c *Client) ListCheckovIntegrationsIter(ctx context.Context, opts *ListChec
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.CheckovIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.CheckovIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -377,12 +404,19 @@ type ListCheckovIntegrationsOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 func (c *Client) ResyncCheckovIntegrationRaw(ctx context.Context, integration string) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}/actions/resync"
+	if integration == "" {
+		return nil, fmt.Errorf("integration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -405,6 +439,9 @@ func (c *Client) ResyncCheckovIntegration(ctx context.Context, integration strin
 // This endpoint updates Checkov integration.
 func (c *Client) UpdateCheckovIntegrationRaw(ctx context.Context, integration string, req *schemas.CheckovIntegrationRequest, opts *UpdateCheckovIntegrationOptions) (*client.Response, error) {
 	path := "/integrations/checkov/{integration}"
+	if integration == "" {
+		return nil, fmt.Errorf("integration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{integration}", url.PathEscape(integration))
 
 	params := url.Values{}
@@ -412,9 +449,13 @@ func (c *Client) UpdateCheckovIntegrationRaw(ctx context.Context, integration st
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -457,5 +498,9 @@ func (c *Client) UpdateCheckovIntegration(ctx context.Context, integration strin
 type UpdateCheckovIntegrationOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for Tag operations
+const (
+	FilterName         = "filter[name]"          // The tag name filter
+	FilterResourceType = "filter[resource-type]" // The resource type filter
+	FilterTag          = "filter[tag]"           // The ID(s) of tag(s).
+)
+
 // Create a new tag in the account.
 func (c *Client) CreateTagRaw(ctx context.Context, req *schemas.TagRequest) (*client.Response, error) {
 	path := "/tags"
@@ -63,6 +70,9 @@ func (c *Client) CreateTag(ctx context.Context, req *schemas.TagRequest) (*schem
 // The endpoint deletes tag by ID.
 func (c *Client) DeleteTagRaw(ctx context.Context, tag string) (*client.Response, error) {
 	path := "/tags/{tag}"
+	if tag == "" {
+		return nil, fmt.Errorf("tag must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +96,9 @@ func (c *Client) DeleteTag(ctx context.Context, tag string) error {
 // Show details of a specific tag.
 func (c *Client) GetTagRaw(ctx context.Context, tag string) (*client.Response, error) {
 	path := "/tags/{tag}"
+	if tag == "" {
+		return nil, fmt.Errorf("tag must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -137,9 +150,13 @@ func (c *Client) ListTagsRaw(ctx context.Context, opts *ListTagsOptions) (*clien
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -227,7 +244,6 @@ func (c *Client) ListTagsIter(ctx context.Context, opts *ListTagsOptions) iter.S
 				yield(schemas.Tag{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -237,8 +253,10 @@ func (c *Client) ListTagsIter(ctx context.Context, opts *ListTagsOptions) iter.S
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.Tag{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -338,13 +356,20 @@ type ListTagsOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates tag by ID.
 func (c *Client) UpdateTagRaw(ctx context.Context, tag string, req *schemas.TagRequest) (*client.Response, error) {
 	path := "/tags/{tag}"
+	if tag == "" {
+		return nil, fmt.Errorf("tag must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{tag}", url.PathEscape(tag))
 
 	// Wrap request in JSON:API envelope

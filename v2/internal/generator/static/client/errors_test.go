@@ -73,6 +73,7 @@ func TestUnauthorizedError(t *testing.T) {
 
 			// Test Unwrap
 			if tt.err.Err != nil {
+				//nolint:errorlint // Testing pointer identity of the unwrapped error, not semantic equality.
 				if unwrapped := tt.err.Unwrap(); unwrapped != tt.err.Err {
 					t.Errorf("Unwrap() = %v, want %v", unwrapped, tt.err.Err)
 				}
@@ -104,6 +105,7 @@ func TestForbiddenError(t *testing.T) {
 		t.Errorf("Error() = %q, want %q", got, "forbidden: access denied")
 	}
 
+	//nolint:errorlint // Testing pointer identity of the unwrapped error, not semantic equality.
 	if err.Unwrap() != underlyingErr {
 		t.Error("Unwrap() should return underlying error")
 	}
@@ -188,6 +190,7 @@ func TestHTTPError(t *testing.T) {
 			}
 
 			if tt.err.Err != nil {
+				//nolint:errorlint // Testing pointer identity of the unwrapped error, not semantic equality.
 				if unwrapped := tt.err.Unwrap(); unwrapped != tt.err.Err {
 					t.Error("Unwrap() should return underlying error")
 				}

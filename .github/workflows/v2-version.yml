@@ -1,0 +1,37 @@
+name: 'v2 / Version'
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+    branches:
+      - master
+    paths:
+      - v2/**
+
+jobs:
+  guard:
+    name: Guard
+    runs-on: ubuntu-latest
+    if: >-
+      github.actor != 'sudo-github-actions[bot]' &&
+      !contains(github.event.pull_request.labels.*.name, 'bypass-version-guard')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check version files not manually modified
+        run: |
+          if ! git diff --quiet origin/master...HEAD -- \
+              v2/.version.yml \
+              v2/internal/generator/static/client/version.go; then
+            echo "::error:: Version files must only be modified by the release workflow."
+            echo "If this is intentional, add the 'bypass-version-guard' label to the PR."
+            exit 1
+          fi

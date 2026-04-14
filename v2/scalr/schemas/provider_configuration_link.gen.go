@@ -15,6 +15,7 @@ type ProviderConfigurationLink struct {
 	Type          string                                 `json:"type"`
 	Attributes    ProviderConfigurationLinkAttributes    `json:"attributes"`
 	Relationships ProviderConfigurationLinkRelationships `json:"relationships"`
+	Links         *ProviderConfigurationLinkLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -163,6 +164,11 @@ func (r *ProviderConfigurationLinkRelationships) PopulateIncludes(included []map
 			}
 		}
 	}
+}
+
+// ProviderConfigurationLinkLinks holds the resource links for ProviderConfigurationLink (response only).
+type ProviderConfigurationLinkLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

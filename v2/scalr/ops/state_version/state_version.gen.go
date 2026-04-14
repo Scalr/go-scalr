@@ -25,6 +25,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for StateVersion operations
+const (
+	FilterRun       = "filter[run]"
+	FilterWorkspace = "filter[workspace]"
+)
+
 // Create a state version and set it as the current state version for the given workspace.
 func (c *Client) CreateStateVersionRaw(ctx context.Context, req *schemas.StateVersionRequest) (*client.Response, error) {
 	path := "/state-versions"
@@ -64,6 +70,9 @@ func (c *Client) CreateStateVersion(ctx context.Context, req *schemas.StateVersi
 // Fetch the current state version for the given workspace. This state version will be the input state when running terraform operations.
 func (c *Client) GetCurrentStateVersionRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/current-state-version"
+	if workspace == "" {
+		return nil, fmt.Errorf("workspace must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -99,6 +108,9 @@ func (c *Client) GetCurrentStateVersion(ctx context.Context, workspace string) (
 // Show details of a specific state version.
 func (c *Client) GetStateVersionRaw(ctx context.Context, stateVersion string) (*client.Response, error) {
 	path := "/state-versions/{state_version}"
+	if stateVersion == "" {
+		return nil, fmt.Errorf("stateVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{state_version}", url.PathEscape(stateVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -134,6 +146,9 @@ func (c *Client) GetStateVersion(ctx context.Context, stateVersion string) (*sch
 // Download the `terraform.tfstate`
 func (c *Client) GetStateVersionDownloadRaw(ctx context.Context, stateVersion string) (*client.Response, error) {
 	path := "/state-versions/{state_version}/download"
+	if stateVersion == "" {
+		return nil, fmt.Errorf("stateVersion must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{state_version}", url.PathEscape(stateVersion))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -176,9 +191,13 @@ func (c *Client) ListStateVersionsRaw(ctx context.Context, opts *ListStateVersio
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -265,7 +284,6 @@ func (c *Client) ListStateVersionsIter(ctx context.Context, opts *ListStateVersi
 				yield(schemas.StateVersion{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -275,8 +293,10 @@ func (c *Client) ListStateVersionsIter(ctx context.Context, opts *ListStateVersi
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.StateVersion{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.StateVersion{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -376,6 +396,10 @@ type ListStateVersionsOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
-	Filter map[string]string
+	Query string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

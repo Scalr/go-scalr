@@ -16,6 +16,7 @@ type RunTrigger struct {
 	Type          string                  `json:"type"`
 	Attributes    RunTriggerAttributes    `json:"attributes"`
 	Relationships RunTriggerRelationships `json:"relationships"`
+	Links         *RunTriggerLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -133,6 +134,11 @@ func (r *RunTriggerRelationships) PopulateIncludes(included []map[string]interfa
 			}
 		}
 	}
+}
+
+// RunTriggerLinks holds the resource links for RunTrigger (response only).
+type RunTriggerLinks struct {
+	Self string `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

@@ -24,6 +24,17 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for AgentPool operations
+const (
+	FilterAccount     = "filter[account]"     // The account filter.
+	FilterAgentPool   = "filter[agent-pool]"  // The id of the agent pool.
+	FilterEnvironment = "filter[environment]" // The environment filter.
+	FilterInUse       = "filter[in-use]"      // Is the agent pool is used by any workspace.
+	FilterIsShared    = "filter[is-shared]"   // Is the agent pool shared with all environments.
+	FilterName        = "filter[name]"        // The agent pool name.
+	FilterVcsEnabled  = "filter[vcs-enabled]" // Is the agent pool VCS support enabled.
+)
+
 // Create a new [agent pool](/docs/agent-pools) resource. Agent pools can be created at the `account` or `environment` scope. The scope must be defined as part of the agent pool creation. If a pool is created at the account scope, all environments and workspaces within those environments will have access to use the pool. If a pool is created at the environment scope, then only the workspaces in that environment can use that pool. The typical flow for configuring a new agent pool involves the following operations: * Create an agent pool * [Create an access token](create_agent_pool_token) for the pool. The pool token is needed by an agent in order to join the agent pool. During the agent<->server handshake phase, the API server will generate a unique session token for each agent which will be used for all communication with the API server. * Install/Configure an agent on the customer's network.
 func (c *Client) CreateAgentPoolRaw(ctx context.Context, req *schemas.AgentPoolRequest, opts *CreateAgentPoolOptions) (*client.Response, error) {
 	path := "/agent-pools"
@@ -33,9 +44,13 @@ func (c *Client) CreateAgentPoolRaw(ctx context.Context, req *schemas.AgentPoolR
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -78,12 +93,19 @@ func (c *Client) CreateAgentPool(ctx context.Context, req *schemas.AgentPoolRequ
 type CreateAgentPoolOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint deletes an [agent pool](/docs/agent-pools) by ID.
 func (c *Client) DeleteAgentPoolRaw(ctx context.Context, agentPool string) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -107,6 +129,9 @@ func (c *Client) DeleteAgentPool(ctx context.Context, agentPool string) error {
 // Show details of a specific [agent pool](/docs/agent-pools).
 func (c *Client) GetAgentPoolRaw(ctx context.Context, agentPool string, opts *GetAgentPoolOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	params := url.Values{}
@@ -114,9 +139,13 @@ func (c *Client) GetAgentPoolRaw(ctx context.Context, agentPool string, opts *Ge
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -157,7 +186,11 @@ func (c *Client) GetAgentPool(ctx context.Context, agentPool string, opts *GetAg
 type GetAgentPoolOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint returns a list of [agent pools](/docs/agent-pools) by various filters.
@@ -178,9 +211,13 @@ func (c *Client) GetAgentPoolsRaw(ctx context.Context, opts *GetAgentPoolsOption
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -268,7 +305,6 @@ func (c *Client) GetAgentPoolsIter(ctx context.Context, opts *GetAgentPoolsOptio
 				yield(schemas.AgentPool{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -278,8 +314,10 @@ func (c *Client) GetAgentPoolsIter(ctx context.Context, opts *GetAgentPoolsOptio
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AgentPool{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AgentPool{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -379,13 +417,20 @@ type GetAgentPoolsOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // This endpoint updates an [agent pool](/docs/agent-pools) by ID.
 func (c *Client) UpdateAgentPoolRaw(ctx context.Context, agentPool string, req *schemas.AgentPoolRequest, opts *UpdateAgentPoolOptions) (*client.Response, error) {
 	path := "/agent-pools/{agent_pool}"
+	if agentPool == "" {
+		return nil, fmt.Errorf("agentPool must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{agent_pool}", url.PathEscape(agentPool))
 
 	params := url.Values{}
@@ -393,9 +438,13 @@ func (c *Client) UpdateAgentPoolRaw(ctx context.Context, agentPool string, req *
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -438,5 +487,9 @@ func (c *Client) UpdateAgentPool(ctx context.Context, agentPool string, req *sch
 type UpdateAgentPoolOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

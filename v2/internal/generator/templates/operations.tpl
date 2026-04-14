@@ -12,8 +12,8 @@ import (
 	"net/url"
 	"strings"
 	
-	"github.com/scalr/go-scalr/v2/{{ .ApiPackageName }}/client"
-	"github.com/scalr/go-scalr/v2/{{ .ApiPackageName }}/schemas"
+	"github.com/scalr/go-scalr/v2/{{ .APIPackageName }}/client"
+	"github.com/scalr/go-scalr/v2/{{ .APIPackageName }}/schemas"
 )
 
 // Client provides access to {{ .ResourceName }} operations
@@ -26,12 +26,25 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+{{if .FilterKeys -}}
+// Filter key constants for {{ .ResourceName }} operations
+const (
+{{- range .FilterKeys}}
+	{{.Name}} = "{{.Key}}"{{if .Description}}  // {{.Description}}{{end}}
+{{- end}}
+)
+
+{{end -}}
+
 {{range .Operations -}}
 {{if .Description}}// {{ .Description }}
 {{end -}}
 func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{.GoName}} {{.Type}}{{end}}{{if .HasBody}}, req {{.RequestType}}{{end}}{{if .QueryParams}}, opts *{{ .Name }}Options{{end}}) (*client.Response, error) {
 	path := "{{ .Path }}"
 	{{range .PathParameters -}}
+	if {{.GoName}} == "" {
+		return nil, fmt.Errorf("{{.GoName}} must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{{`{`}}{{.Name}}{{`}`}}", url.PathEscape({{.GoName}}))
 	{{end}}
 	
@@ -40,6 +53,7 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 	if opts != nil {
 		{{range .QueryParams -}}
 		{{if .IsFilter -}}
+		{{else if .IsFields -}}
 		{{else if .IsInclude -}}
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
@@ -65,9 +79,13 @@ func (c *Client) {{ .Name }}Raw(ctx context.Context{{range .PathParameters}}, {{
 		{{end -}}
 		{{end -}}
 		{{end -}}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -224,7 +242,6 @@ func (c *Client) {{ .Name }}Iter(ctx context.Context{{range .PathParameters}}, {
 				yield({{trimPrefix .Returns "[]*"}}{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -234,8 +251,10 @@ func (c *Client) {{ .Name }}Iter(ctx context.Context{{range .PathParameters}}, {
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield({{trimPrefix .Returns "[]*"}}{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield({{trimPrefix .Returns "[]*"}}{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -335,13 +354,17 @@ func (c *Client) {{ .Name }}Paged(ctx context.Context{{range .PathParameters}}, 
 // {{ .Name }}Options holds optional parameters for {{ .Name }}
 type {{ .Name }}Options struct {
 	{{range .QueryParams -}}
-	{{if not .IsFilter -}}
+	{{if not (or .IsFilter .IsFields) -}}
 	{{if .Description}}// {{ .Description }}
 	{{end -}}
 	{{.GoName}} {{.Type}}
 	{{end -}}
 	{{end -}}
-	Filter map[string]string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 {{end}}
 

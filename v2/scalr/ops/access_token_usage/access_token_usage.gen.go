@@ -24,6 +24,13 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for AccessTokenUsage operations
+const (
+	FilterCreatedAt  = "filter[created-at]"   // Filter tokens by creation date.
+	FilterIsExpired  = "filter[is-expired]"   // Returns tokens by expiration status
+	FilterUserStatus = "filter[user][status]" // Filter tokens by owner identity status (user or service account). Allowed values: Active, Inactive.
+)
+
 // This endpoint returns a list of access token usage on the account.
 func (c *Client) ListAccessTokenUsageRaw(ctx context.Context, opts *ListAccessTokenUsageOptions) (*client.Response, error) {
 	path := "/reports/access-tokens"
@@ -47,9 +54,13 @@ func (c *Client) ListAccessTokenUsageRaw(ctx context.Context, opts *ListAccessTo
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -133,7 +144,6 @@ func (c *Client) ListAccessTokenUsageIter(ctx context.Context, opts *ListAccessT
 				yield(schemas.AccessTokenUsage{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -143,8 +153,10 @@ func (c *Client) ListAccessTokenUsageIter(ctx context.Context, opts *ListAccessT
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.AccessTokenUsage{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.AccessTokenUsage{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -238,6 +250,10 @@ type ListAccessTokenUsageOptions struct {
 	// Query by token and user email
 	Query string
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }

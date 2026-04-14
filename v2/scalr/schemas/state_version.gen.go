@@ -16,6 +16,7 @@ type StateVersion struct {
 	Type          string                    `json:"type"`
 	Attributes    StateVersionAttributes    `json:"attributes"`
 	Relationships StateVersionRelationships `json:"relationships"`
+	Links         *StateVersionLinks        `json:"links,omitempty"`
 }
 
 // GetID returns the resource ID (implements client.ResourceLike)
@@ -41,11 +42,11 @@ type StateVersionAttributes struct {
 	// The MD5 hash of the terraform.tfstate.
 	Md5 string `json:"md5"`
 	// The list of modules.
-	Modules map[string]interface{} `json:"modules"`
+	Modules map[string]map[string]int `json:"modules"`
 	// The list of output values.
 	Outputs *[]map[string]interface{} `json:"outputs"`
 	// The list of providers.
-	Providers map[string]interface{} `json:"providers"`
+	Providers map[string]map[string]int `json:"providers"`
 	// The list of resources.
 	Resources []map[string]interface{} `json:"resources"`
 	// The serial of the state version which must match the `serial` value from the `terraform.tfstate`.
@@ -216,6 +217,13 @@ func (r *StateVersionRelationships) PopulateIncludes(included []map[string]inter
 			}
 		}
 	}
+}
+
+// StateVersionLinks holds the resource links for StateVersion (response only).
+type StateVersionLinks struct {
+	// The URL to download the `terraform.tfstate`.
+	Download *string `json:"download"`
+	Self     string  `json:"self"`
 }
 
 // Request version - used when marshalling for API requests

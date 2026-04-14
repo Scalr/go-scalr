@@ -42,7 +42,11 @@ type Iterator[T any] struct {
 
 // NewIterator creates a new iterator with the given fetch function.
 // The fetch function should call the list API with the appropriate page number.
-func NewIterator[T any](ctx context.Context, pageSize int, fetchPage func(context.Context, int) ([]*T, *Pagination, error)) *Iterator[T] {
+func NewIterator[T any](
+	ctx context.Context,
+	pageSize int,
+	fetchPage func(context.Context, int) ([]*T, *Pagination, error),
+) *Iterator[T] {
 	return &Iterator[T]{
 		ctx:         ctx,
 		pageSize:    pageSize,
@@ -154,6 +158,9 @@ func (it *Iterator[T]) Remaining() int {
 
 	yielded := (it.currentPage-1)*it.pageSize + it.index
 	remaining := it.totalCount - yielded
+	if remaining < 0 {
+		remaining = 0
+	}
 
 	return remaining
 }

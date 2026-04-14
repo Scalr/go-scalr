@@ -24,6 +24,12 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
+// Filter key constants for SamlIntegration operations
+const (
+	FilterAccount = "filter[account]" // The ID of the Account
+	FilterSource  = "filter[source]"  // Filter by source of SAML integration
+)
+
 // Create SAML Integration.
 func (c *Client) CreateSamlIntegrationRaw(ctx context.Context, req *schemas.SamlIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/saml"
@@ -63,6 +69,9 @@ func (c *Client) CreateSamlIntegration(ctx context.Context, req *schemas.SamlInt
 // Delete SAML Integration.
 func (c *Client) DeleteSamlIntegrationRaw(ctx context.Context, samlIntegration string) (*client.Response, error) {
 	path := "/integrations/saml/{saml_integration}"
+	if samlIntegration == "" {
+		return nil, fmt.Errorf("samlIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
 
 	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
@@ -86,6 +95,9 @@ func (c *Client) DeleteSamlIntegration(ctx context.Context, samlIntegration stri
 // Show details of a specific SAML Integration.
 func (c *Client) GetSamlIntegrationRaw(ctx context.Context, samlIntegration string) (*client.Response, error) {
 	path := "/integrations/saml/{saml_integration}"
+	if samlIntegration == "" {
+		return nil, fmt.Errorf("samlIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
@@ -133,9 +145,13 @@ func (c *Client) ListSamlIntegrationsRaw(ctx context.Context, opts *ListSamlInte
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
-		// Add filters
-		for k, v := range opts.Filter {
-			params.Set("filter["+k+"]", v)
+		// Sparse fieldsets
+		for resourceType, fields := range opts.Fields {
+			params.Set("fields["+resourceType+"]", fields)
+		}
+		// Add filters (keys should be full parameter names like "filter[account]")
+		for k, v := range opts.Filters {
+			params.Set(k, v)
 		}
 	}
 	if len(params) > 0 {
@@ -223,7 +239,6 @@ func (c *Client) ListSamlIntegrationsIter(ctx context.Context, opts *ListSamlInt
 				yield(schemas.SamlIntegration{}, err)
 				return
 			}
-			defer resp.Body.Close()
 
 			// Decode response
 			var result struct {
@@ -233,8 +248,10 @@ func (c *Client) ListSamlIntegrationsIter(ctx context.Context, opts *ListSamlInt
 				} `json:"meta"`
 				Included []map[string]interface{} `json:"included"`
 			}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				yield(schemas.SamlIntegration{}, fmt.Errorf("failed to decode response: %w", err))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if decodeErr != nil {
+				yield(schemas.SamlIntegration{}, fmt.Errorf("failed to decode response: %w", decodeErr))
 				return
 			}
 
@@ -332,13 +349,20 @@ type ListSamlIntegrationsOptions struct {
 	// Page size
 	PageSize int
 	// The comma-separated list of attributes.
-	Sort   []string
-	Filter map[string]string
+	Sort []string
+	// Fields specifies which attributes to return for each resource type.
+	Fields map[string]string
+	// Filters maps filter keys to their values.
+	// Use the Filter* constants defined in this package.
+	Filters map[string]string
 }
 
 // Update SAML Integration.
 func (c *Client) UpdateSamlIntegrationRaw(ctx context.Context, samlIntegration string, req *schemas.SamlIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/saml/{saml_integration}"
+	if samlIntegration == "" {
+		return nil, fmt.Errorf("samlIntegration must not be empty")
+	}
 	path = strings.ReplaceAll(path, "{saml_integration}", url.PathEscape(samlIntegration))
 
 	// Wrap request in JSON:API envelope
