@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,6 +38,10 @@ func (g *Generator) Generate(specPath string) error {
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
+	loader.ReadFromURIFunc = func(_ *openapi3.Loader, _ *url.URL) ([]byte, error) {
+		// Ignore external refs. We don't have any other than the examples.
+		return []byte("value: {}"), nil
+	}
 
 	doc, err := loader.LoadFromFile(specPath)
 	if err != nil {
