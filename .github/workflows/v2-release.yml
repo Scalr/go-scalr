@@ -448,7 +448,7 @@ jobs:
         if: success() && needs.check.outputs.pr_mode == 'false'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          SLACK_WEBHOOK_TYPE: incoming-webhook
         uses: slackapi/slack-github-action@v3
         with:
           payload: |
@@ -469,7 +469,7 @@ jobs:
         if: success() && needs.check.outputs.pr_mode == 'true' && needs.check.outputs.has_breaking != 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          SLACK_WEBHOOK_TYPE: incoming-webhook
         uses: slackapi/slack-github-action@v3
         with:
           payload: |
@@ -490,7 +490,7 @@ jobs:
         if: success() && needs.check.outputs.pr_mode == 'true' && needs.check.outputs.has_breaking == 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          SLACK_WEBHOOK_TYPE: incoming-webhook
         uses: slackapi/slack-github-action@v3
         with:
           payload: |
@@ -511,7 +511,7 @@ jobs:
         if: failure()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          SLACK_WEBHOOK_TYPE: incoming-webhook
         uses: slackapi/slack-github-action@v3
         with:
           payload: |
