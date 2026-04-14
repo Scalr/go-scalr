@@ -1,4 +1,4 @@
-client_version: "v2.0.0-rc.2"
-api_version: "v2603.3.3"
-generated_at: "2026-03-06T13:35:17.218751858+02:00"
-spec_sha256: "e4a20337b5bb6e3c557144abf778129c26f01690ee88f8af3ffe6bdaa9ccbe4f"
+client_version: "v2.0.0-test.1"
+api_version: "v2604.7.5"
+generated_at: "2026-04-14T16:03:46Z"
+spec_sha256: "17e4021c0c9a66b7c94ffd43c6cfbaf60efcc6775f1ec10166fd834fc971e3bd"
