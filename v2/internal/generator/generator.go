@@ -38,9 +38,12 @@ func (g *Generator) Generate(specPath string) error {
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(_ *openapi3.Loader, _ *url.URL) ([]byte, error) {
-		// Ignore external refs. We don't have any other than the examples.
-		return []byte("value: {}"), nil
+	loader.ReadFromURIFunc = func(l *openapi3.Loader, u *url.URL) ([]byte, error) {
+		if strings.Contains(u.Path, "/examples/") || strings.HasPrefix(u.Path, "examples/") {
+			// Ignore the examples.
+			return []byte("value: {}"), nil
+		}
+		return openapi3.DefaultReadFromURI(l, u)
 	}
 
 	doc, err := loader.LoadFromFile(specPath)
