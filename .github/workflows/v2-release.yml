@@ -1,7 +1,6 @@
 name: 'v2 / Release'
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       fatmouse-ref:
@@ -42,13 +41,6 @@ jobs:
     steps:
       - name: Checkout go-scalr
         uses: actions/checkout@v5
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: 'v2/.go-version'
-          cache: true
-          cache-dependency-path: v2/go.sum
 
       - name: Sudo GitHub Token
         id: token
@@ -93,7 +85,7 @@ jobs:
 
       - name: Install oasdiff
         if: steps.spec-check.outputs.spec_changed == 'true'
-        run: go install github.com/tufin/oasdiff@latest
+        run: curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
 
       - name: Detect breaking changes
         id: breaking
