@@ -41,10 +41,11 @@ jobs:
 
       - name: Validate Generated Client
         run: |
-          cd v2 && make generate
-          if [ -n "$(git status --porcelain v2/)" ]; then
-            echo "::error:: Committed generated code is out of date. Run 'make generate' and commit the result."
-            git diff --stat v2/
+          cd v2
+          make generate
+          if [ -n "$(git status --porcelain .)" ]; then
+            echo "::error:: Generated code is out of date. Run 'make generate' and commit the result."
+            git diff --stat .
             exit 1
           fi
 
