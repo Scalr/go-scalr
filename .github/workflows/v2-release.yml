@@ -87,17 +87,45 @@ jobs:
         if: steps.spec-check.outputs.spec_changed == 'true'
         run: curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
 
+      - name: Preprocess OpenAPI specs for oasdiff
+        if: steps.spec-check.outputs.spec_changed == 'true'
+        run: |
+          # oasdiff's openapi loader tries to fetch external $refs, but the files are not available locally.
+          # Since those are only examples ($ref: examples/foo.yml) and are not part of the API contract -
+          # we just strip them from the spec before diffing.
+          python3 - <<'PYEOF'
+          import yaml, sys
+
+          def strip_example_refs(obj):
+              if isinstance(obj, dict):
+                  if '$ref' in obj and 'examples/' in str(obj['$ref']):
+                      return {'value': {}}
+                  return {k: strip_example_refs(v) for k, v in obj.items()}
+              if isinstance(obj, list):
+                  return [strip_example_refs(i) for i in obj]
+              return obj
+
+          for src, dst in [
+              ('v2/openapi-public.yml',     '/tmp/oasdiff-old.yml'),
+              ('v2/openapi-public.yml.new', '/tmp/oasdiff-new.yml'),
+          ]:
+              with open(src) as f:
+                  data = yaml.safe_load(f)
+              with open(dst, 'w') as f:
+                  yaml.dump(strip_example_refs(data), f, default_flow_style=False, allow_unicode=True)
+          PYEOF
+
       - name: Detect breaking changes
         id: breaking
         if: steps.spec-check.outputs.spec_changed == 'true'
         run: |
-          CHANGELOG=$(oasdiff changelog v2/openapi-public.yml v2/openapi-public.yml.new --format text 2>&1 || true)
+          CHANGELOG=$(oasdiff changelog /tmp/oasdiff-old.yml /tmp/oasdiff-new.yml --format text 2>&1 || true)
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           set +e
-          oasdiff breaking v2/openapi-public.yml v2/openapi-public.yml.new --fail-on ERR > /dev/null 2>&1
+          oasdiff breaking /tmp/oasdiff-old.yml /tmp/oasdiff-new.yml --fail-on ERR > /dev/null 2>&1
           EXIT=$?
           set -e
           if [ $EXIT -eq 0 ]; then
