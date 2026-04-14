@@ -433,6 +433,7 @@ jobs:
         with:
           payload: |
             {
+              "channel" : "#release-sync",
               "text": ":tada: go-scalr ${{ steps.version.outputs.tag }} released!",
               "attachments": [{
                 "color": "good",
@@ -440,6 +441,27 @@ jobs:
                   {"title": "Version", "value": "${{ steps.version.outputs.tag }}", "short": true},
                   {"title": "API Version", "value": "${{ steps.version.outputs.api_version }}", "short": true},
                   {"title": "Release", "value": "https://github.com/Scalr/go-scalr/releases/tag/${{ steps.version.outputs.tag }}", "short": false}
+                ]
+              }]
+            }
+
+      - name: Notify Slack — PR created (non-breaking)
+        if: success() && needs.check.outputs.pr_mode == 'true' && needs.check.outputs.has_breaking != 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        uses: slackapi/slack-github-action@v3
+        with:
+          payload: |
+            {
+              "channel" : "#release-sync",
+              "text": ":pr: go-scalr release ${{ steps.version.outputs.tag }} — PR created for review",
+              "attachments": [{
+                "color": "#0075ca",
+                "fields": [
+                  {"title": "Version", "value": "${{ steps.version.outputs.tag }}", "short": true},
+                  {"title": "API Version", "value": "${{ steps.version.outputs.api_version }}", "short": true},
+                  {"title": "PRs", "value": "https://github.com/Scalr/go-scalr/pulls", "short": false}
                 ]
               }]
             }
@@ -453,7 +475,8 @@ jobs:
         with:
           payload: |
             {
-              "text": ":warning: go-scalr ${{ steps.version.outputs.tag }} has breaking API changes — PR requires review",
+              "channel" : "#release-sync",
+              "text": ":warning: go-scalr release ${{ steps.version.outputs.tag }} has breaking API changes — PR requires review",
               "attachments": [{
                 "color": "warning",
                 "fields": [
@@ -473,6 +496,7 @@ jobs:
         with:
           payload: |
             {
+              "channel" : "#release-sync",
               "text": "<!subteam^S043RKZ2F9C> go-scalr release failed for ${{ steps.version.outputs.tag || 'unknown version' }}",
               "attachments": [{
                 "color": "danger",
