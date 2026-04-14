@@ -19,7 +19,7 @@ type Client struct {
 	httpClient *client.HTTPClient
 }
 
-// New creates a new AccessPolicy client
+// New creates a new AccessPolicy client.
 func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }

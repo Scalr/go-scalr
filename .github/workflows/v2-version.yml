@@ -1,4 +1,4 @@
-name: 'v2 / Version guard'
+name: 'v2 / Version'
 
 on:
   pull_request:
@@ -14,8 +14,8 @@ on:
       - v2/**
 
 jobs:
-  version-guard:
-    name: Version guard
+  guard:
+    name: Guard
     runs-on: ubuntu-latest
     if: >-
       github.actor != 'github-actions[bot]' &&
