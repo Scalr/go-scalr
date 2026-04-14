@@ -428,7 +428,7 @@ type GetTeamsOptions struct {
 	Filters map[string]string
 }
 
-// Update a team's attributes or users. The endpoint can be used to add or remove users from a team. If the account uses an external identity provider without SCIM provisioning, team membership cannot be managed via this endpoint - the “users“ relationship will be ignored. Use SCIM or manage team membership directly in the identity provider.
+// Update a team's attributes or users. The endpoint can be used to add or remove users from a team.
 func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*client.Response, error) {
 	path := "/teams/{team}"
 	if team == "" {
@@ -463,7 +463,7 @@ func (c *Client) UpdateTeamRaw(ctx context.Context, team string, req *schemas.Te
 	return &client.Response{Response: httpResp}, nil
 }
 
-// Update a team's attributes or users. The endpoint can be used to add or remove users from a team. If the account uses an external identity provider without SCIM provisioning, team membership cannot be managed via this endpoint - the “users“ relationship will be ignored. Use SCIM or manage team membership directly in the identity provider.
+// Update a team's attributes or users. The endpoint can be used to add or remove users from a team.
 func (c *Client) UpdateTeam(ctx context.Context, team string, req *schemas.TeamRequest, opts *UpdateTeamOptions) (*schemas.Team, error) {
 	resp, err := c.UpdateTeamRaw(ctx, team, req, opts)
 	if err != nil {

@@ -18,7 +18,6 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/configuration_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/cost_estimate"
 	"github.com/scalr/go-scalr/v2/scalr/ops/datadog_integration"
-	"github.com/scalr/go-scalr/v2/scalr/ops/docker_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/drift_detection_schedule"
 	"github.com/scalr/go-scalr/v2/scalr/ops/environment"
 	"github.com/scalr/go-scalr/v2/scalr/ops/event_definition"
@@ -92,7 +91,6 @@ type Client struct {
 	ConfigurationVersion                *configuration_version.Client
 	CostEstimate                        *cost_estimate.Client
 	DatadogIntegration                  *datadog_integration.Client
-	DockerIntegration                   *docker_integration.Client
 	DriftDetectionSchedule              *drift_detection_schedule.Client
 	Environment                         *environment.Client
 	EventDefinition                     *event_definition.Client
@@ -173,7 +171,6 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		ConfigurationVersion:                configuration_version.New(httpClient),
 		CostEstimate:                        cost_estimate.New(httpClient),
 		DatadogIntegration:                  datadog_integration.New(httpClient),
-		DockerIntegration:                   docker_integration.New(httpClient),
 		DriftDetectionSchedule:              drift_detection_schedule.New(httpClient),
 		Environment:                         environment.New(httpClient),
 		EventDefinition:                     event_definition.New(httpClient),
