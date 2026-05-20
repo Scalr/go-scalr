@@ -49,6 +49,10 @@ func (r DriftReport) GetResourceType() string {
 
 // DriftReportAttributes holds the attributes for DriftReport (response)
 type DriftReportAttributes struct {
+	// Whether the drift-detection for the workspace is paused.
+	IsPaused bool `json:"is-paused"`
+	// Reason for pausing the drift-detection for the workspace.
+	PauseReason *string `json:"pause-reason"`
 	// The reason for the drift report action.
 	Reason *string `json:"reason"`
 	// The status of the drift report.
@@ -155,6 +159,10 @@ func (r DriftReportRequest) GetResourceType() string {
 
 // DriftReportAttributesRequest holds the attributes for DriftReport (request)
 type DriftReportAttributesRequest struct {
+	// Whether the drift-detection for the workspace is paused.
+	IsPaused *value.Value[bool] `json:"is-paused,omitempty"`
+	// Reason for pausing the drift-detection for the workspace.
+	PauseReason *value.Value[string] `json:"pause-reason,omitempty"`
 	// The reason for the drift report action.
 	Reason *value.Value[string] `json:"reason,omitempty"`
 	// The status of the drift report.

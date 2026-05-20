@@ -124,6 +124,38 @@ func (c *Client) AddWorkspaceToFavorites(ctx context.Context, workspace string) 
 	return &result.Data, nil
 }
 
+// This endpoint adds provided variable sets to the workspace.
+func (c *Client) AddWorkspaceVariableSetsRaw(ctx context.Context, workspace string, req []schemas.VariableSet) (*client.Response, error) {
+	path := "/workspaces/{workspace}/relationships/var-sets"
+	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint adds provided variable sets to the workspace.
+func (c *Client) AddWorkspaceVariableSets(ctx context.Context, workspace string, req []schemas.VariableSet) error {
+	resp, err := c.AddWorkspaceVariableSetsRaw(ctx, workspace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 // Workspaces represent a unit of infrastructure managed by terraform. To create a workspace you must pass `name` attribute and `environment` relationship. A workspace might be linked to a VCS repository, so that any git push will trigger a terraform Run in the workspace.
 func (c *Client) CreateWorkspaceRaw(ctx context.Context, req *schemas.WorkspaceRequest) (*client.Response, error) {
 	path := "/workspaces"
@@ -237,6 +269,38 @@ func (c *Client) DeleteWorkspaceTagsRaw(ctx context.Context, workspace string, r
 // This endpoint removes given [tags](tags.html#the-tag-resource) from the workspace.
 func (c *Client) DeleteWorkspaceTags(ctx context.Context, workspace string, req []schemas.Tag) error {
 	resp, err := c.DeleteWorkspaceTagsRaw(ctx, workspace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// This endpoint removes provided variable sets from the workspace.
+func (c *Client) DeleteWorkspaceVariableSetsRaw(ctx context.Context, workspace string, req []schemas.VariableSet) (*client.Response, error) {
+	path := "/workspaces/{workspace}/relationships/var-sets"
+	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Delete(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint removes provided variable sets from the workspace.
+func (c *Client) DeleteWorkspaceVariableSets(ctx context.Context, workspace string, req []schemas.VariableSet) error {
+	resp, err := c.DeleteWorkspaceVariableSetsRaw(ctx, workspace, req)
 	if err != nil {
 		return err
 	}
@@ -973,6 +1037,208 @@ type ListWorkspaceTagsOptions struct {
 	Filter   map[string]string
 }
 
+// This endpoint returns a list of variable sets linked to the workspace.
+func (c *Client) ListWorkspaceVariableSetsRaw(ctx context.Context, workspace string, opts *ListWorkspaceVariableSetsOptions) (*client.Response, error) {
+	path := "/workspaces/{workspace}/relationships/var-sets"
+	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
+
+	params := url.Values{}
+	if opts != nil {
+		if opts.PageNumber > 0 {
+			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
+		}
+		if opts.PageSize > 0 {
+			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
+		}
+	}
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint returns a list of variable sets linked to the workspace.
+func (c *Client) ListWorkspaceVariableSets(ctx context.Context, workspace string, opts *ListWorkspaceVariableSetsOptions) ([]*schemas.VariableSet, error) {
+	resp, err := c.ListWorkspaceVariableSetsRaw(ctx, workspace, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data []schemas.VariableSet `json:"data"`
+		Meta struct {
+			Pagination *client.Pagination `json:"pagination"`
+		} `json:"meta"`
+		Included []map[string]interface{} `json:"included"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	resources := make([]*schemas.VariableSet, len(result.Data))
+	for i := range result.Data {
+		resources[i] = &result.Data[i]
+	}
+	return resources, nil
+}
+
+// ListWorkspaceVariableSetsIter returns an iterator for paginated results using Go 1.23+ range over iter.Seq2 feature.
+// This is the recommended and simple way to iterate through all the results.
+//
+// The iterator automatically fetches pages as needed and handles errors inline.
+//
+// Example:
+//
+//	for item, err := range client.Workspace.ListWorkspaceVariableSetsIter(ctx, workspace, opts) {
+//	    if err != nil {
+//	        return err
+//	    }
+//	    // Process item
+//	}
+func (c *Client) ListWorkspaceVariableSetsIter(ctx context.Context, workspace string, opts *ListWorkspaceVariableSetsOptions) iter.Seq2[schemas.VariableSet, error] {
+	return func(yield func(schemas.VariableSet, error) bool) {
+		// Determine page size from opts or use default
+		pageSize := 20
+		if opts != nil && opts.PageSize > 0 {
+			pageSize = opts.PageSize
+		}
+
+		pageNum := 1
+
+		for {
+			// Check context
+			if err := ctx.Err(); err != nil {
+				yield(schemas.VariableSet{}, err)
+				return
+			}
+
+			// Copy options and set page number
+			pageOpts := &ListWorkspaceVariableSetsOptions{}
+			if opts != nil {
+				*pageOpts = *opts
+			}
+			pageOpts.PageNumber = pageNum
+			pageOpts.PageSize = pageSize
+
+			// Fetch page using Raw method to get pagination metadata
+			resp, err := c.ListWorkspaceVariableSetsRaw(ctx, workspace, pageOpts)
+			if err != nil {
+				yield(schemas.VariableSet{}, err)
+				return
+			}
+			defer resp.Body.Close()
+
+			// Decode response
+			var result struct {
+				Data []schemas.VariableSet `json:"data"`
+				Meta struct {
+					Pagination *client.Pagination `json:"pagination"`
+				} `json:"meta"`
+				Included []map[string]interface{} `json:"included"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+				yield(schemas.VariableSet{}, fmt.Errorf("failed to decode response: %w", err))
+				return
+			}
+
+			// Yield each item
+			for i := range result.Data {
+				if !yield(result.Data[i], nil) {
+					return // Consumer requested early exit
+				}
+			}
+
+			// Check if there are more pages
+			if result.Meta.Pagination == nil || result.Meta.Pagination.NextPage == nil {
+				break
+			}
+
+			pageNum++
+		}
+	}
+}
+
+// ListWorkspaceVariableSetsPaged returns a stateful iterator with access to pagination metadata.
+// Use this when you need PageInfo(), Remaining(), or Collect() methods.
+//
+// Example:
+//
+//	iter := client.Workspace.ListWorkspaceVariableSetsPaged(ctx, workspace, opts)
+//	for iter.Next() {
+//	    item := iter.Value()
+//	    fmt.Print(iter.PageInfo()) // -> "page 2/5"
+//	    fmt.Printf("%d items remaining", iter.Remaining())
+//	}
+//	if err := iter.Err(); err != nil {
+//	    // Handle error
+//	}
+func (c *Client) ListWorkspaceVariableSetsPaged(ctx context.Context, workspace string, opts *ListWorkspaceVariableSetsOptions) *client.Iterator[schemas.VariableSet] {
+	// Determine page size from opts or use default
+	pageSize := 20
+	if opts != nil && opts.PageSize > 0 {
+		pageSize = opts.PageSize
+	}
+
+	// Fetch function that will be called for each page
+	fetchPage := func(ctx context.Context, pageNum int) ([]*schemas.VariableSet, *client.Pagination, error) {
+		// Copy options and set page number
+		pageOpts := &ListWorkspaceVariableSetsOptions{}
+		if opts != nil {
+			*pageOpts = *opts
+		}
+		pageOpts.PageNumber = pageNum
+		pageOpts.PageSize = pageSize
+
+		// Call the Raw method to get pagination metadata
+		resp, err := c.ListWorkspaceVariableSetsRaw(ctx, workspace, pageOpts)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer resp.Body.Close()
+
+		// Decode response
+		var result struct {
+			Data []schemas.VariableSet `json:"data"`
+			Meta struct {
+				Pagination *client.Pagination `json:"pagination"`
+			} `json:"meta"`
+			Included []map[string]interface{} `json:"included"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		// Convert to slice of pointers and populate includes
+		items := make([]*schemas.VariableSet, len(result.Data))
+		for i := range result.Data {
+			items[i] = &result.Data[i]
+		}
+
+		return items, result.Meta.Pagination, nil
+	}
+
+	return client.NewIterator[schemas.VariableSet](ctx, pageSize, fetchPage)
+}
+
+// ListWorkspaceVariableSetsOptions holds optional parameters for ListWorkspaceVariableSets
+type ListWorkspaceVariableSetsOptions struct {
+	// Page number
+	PageNumber int
+	// Page size
+	PageSize int
+	Filter   map[string]string
+}
+
 // This endpoint locks a workspace.
 func (c *Client) LockWorkspaceRaw(ctx context.Context, workspace string, req *schemas.Reason) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/lock"
@@ -1101,6 +1367,38 @@ func (c *Client) ReplaceWorkspaceTagsRaw(ctx context.Context, workspace string, 
 // This endpoint completely replaces workspace's tags with provided list.
 func (c *Client) ReplaceWorkspaceTags(ctx context.Context, workspace string, req []schemas.Tag) error {
 	resp, err := c.ReplaceWorkspaceTagsRaw(ctx, workspace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// This endpoint replaces variable sets on the workspace with the provided values.
+func (c *Client) ReplaceWorkspaceVariableSetsRaw(ctx context.Context, workspace string, req []schemas.VariableSet) (*client.Response, error) {
+	path := "/workspaces/{workspace}/relationships/var-sets"
+	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Patch(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint replaces variable sets on the workspace with the provided values.
+func (c *Client) ReplaceWorkspaceVariableSets(ctx context.Context, workspace string, req []schemas.VariableSet) error {
+	resp, err := c.ReplaceWorkspaceVariableSetsRaw(ctx, workspace, req)
 	if err != nil {
 		return err
 	}
