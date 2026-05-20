@@ -152,9 +152,32 @@ func (c *Client) Logout(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) OauthSigninRaw(ctx context.Context, provider string) (*client.Response, error) {
+func (c *Client) OauthSigninRaw(ctx context.Context, provider string, opts *OauthSigninOptions) (*client.Response, error) {
 	path := "/iam/signin/{provider}"
 	path = strings.ReplaceAll(path, "{provider}", url.PathEscape(provider))
+
+	params := url.Values{}
+	if opts != nil {
+		// Handle parameter: PostAuthAction (string)
+		if opts.PostAuthAction != "" {
+			params.Set("post_auth_action", opts.PostAuthAction)
+		}
+		// Handle parameter: PostAuthState (string)
+		if opts.PostAuthState != "" {
+			params.Set("post_auth_state", opts.PostAuthState)
+		}
+		// Handle parameter: PostAuthToken (string)
+		if opts.PostAuthToken != "" {
+			params.Set("post_auth_token", opts.PostAuthToken)
+		}
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
+		}
+	}
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
@@ -163,14 +186,22 @@ func (c *Client) OauthSigninRaw(ctx context.Context, provider string) (*client.R
 	return &client.Response{Response: httpResp}, nil
 }
 
-func (c *Client) OauthSignin(ctx context.Context, provider string) error {
-	resp, err := c.OauthSigninRaw(ctx, provider)
+func (c *Client) OauthSignin(ctx context.Context, provider string, opts *OauthSigninOptions) error {
+	resp, err := c.OauthSigninRaw(ctx, provider, opts)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	return nil
+}
+
+// OauthSigninOptions holds optional parameters for OauthSignin
+type OauthSigninOptions struct {
+	PostAuthAction string
+	PostAuthState  string
+	PostAuthToken  string
+	Filter         map[string]string
 }
 
 func (c *Client) OauthSignupRaw(ctx context.Context, provider string) (*client.Response, error) {

@@ -174,6 +174,8 @@ type ProviderConfigurationAttributes struct {
 	IsCustom *bool `json:"is-custom"`
 	// Indicates whether the provider configuration can be used in any workspace of the account without directly linking it to the environment.
 	IsShared bool `json:"is-shared"`
+	// Indicates whether the provider configuration is currently linked to any module test.
+	IsUsedInModuleTest bool `json:"is-used-in-module-test"`
 	// The name of a Scalr provider configuration. This field is unique for the account.
 	Name string `json:"name"`
 	// The name of a Terraform provider.

@@ -18,9 +18,11 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/configuration_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/cost_estimate"
 	"github.com/scalr/go-scalr/v2/scalr/ops/datadog_integration"
+	"github.com/scalr/go-scalr/v2/scalr/ops/docker_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/drift_detection_schedule"
 	"github.com/scalr/go-scalr/v2/scalr/ops/environment"
 	"github.com/scalr/go-scalr/v2/scalr/ops/event_definition"
+	"github.com/scalr/go-scalr/v2/scalr/ops/gpg_key"
 	"github.com/scalr/go-scalr/v2/scalr/ops/hook"
 	"github.com/scalr/go-scalr/v2/scalr/ops/hook_environment_link"
 	"github.com/scalr/go-scalr/v2/scalr/ops/infracost_integration"
@@ -36,9 +38,11 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/policy_check"
 	"github.com/scalr/go-scalr/v2/scalr/ops/policy_check_result"
 	"github.com/scalr/go-scalr/v2/scalr/ops/policy_group"
+	"github.com/scalr/go-scalr/v2/scalr/ops/provider"
 	"github.com/scalr/go-scalr/v2/scalr/ops/provider_configuration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/provider_configuration_link"
 	"github.com/scalr/go-scalr/v2/scalr/ops/provider_configuration_parameter"
+	"github.com/scalr/go-scalr/v2/scalr/ops/provider_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/role"
 	"github.com/scalr/go-scalr/v2/scalr/ops/run"
 	"github.com/scalr/go-scalr/v2/scalr/ops/run_schedule_rule"
@@ -64,6 +68,8 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/usage_statistic"
 	"github.com/scalr/go-scalr/v2/scalr/ops/user"
 	"github.com/scalr/go-scalr/v2/scalr/ops/variable"
+	"github.com/scalr/go-scalr/v2/scalr/ops/variable_set"
+	"github.com/scalr/go-scalr/v2/scalr/ops/variable_set_variable"
 	"github.com/scalr/go-scalr/v2/scalr/ops/vcs_provider"
 	"github.com/scalr/go-scalr/v2/scalr/ops/webhook_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/webhook_integration_delivery"
@@ -91,9 +97,11 @@ type Client struct {
 	ConfigurationVersion                *configuration_version.Client
 	CostEstimate                        *cost_estimate.Client
 	DatadogIntegration                  *datadog_integration.Client
+	DockerIntegration                   *docker_integration.Client
 	DriftDetectionSchedule              *drift_detection_schedule.Client
 	Environment                         *environment.Client
 	EventDefinition                     *event_definition.Client
+	GPGKey                              *gpg_key.Client
 	Hook                                *hook.Client
 	HookEnvironmentLink                 *hook_environment_link.Client
 	InfracostIntegration                *infracost_integration.Client
@@ -108,9 +116,11 @@ type Client struct {
 	PolicyCheck                         *policy_check.Client
 	PolicyCheckResult                   *policy_check_result.Client
 	PolicyGroup                         *policy_group.Client
+	Provider                            *provider.Client
 	ProviderConfiguration               *provider_configuration.Client
 	ProviderConfigurationLink           *provider_configuration_link.Client
 	ProviderConfigurationParameter      *provider_configuration_parameter.Client
+	ProviderVersion                     *provider_version.Client
 	Role                                *role.Client
 	Run                                 *run.Client
 	RunScheduleRule                     *run_schedule_rule.Client
@@ -136,6 +146,8 @@ type Client struct {
 	UsageStatistic                      *usage_statistic.Client
 	User                                *user.Client
 	Variable                            *variable.Client
+	VariableSet                         *variable_set.Client
+	VariableSetVariable                 *variable_set_variable.Client
 	VcsProvider                         *vcs_provider.Client
 	WebhookIntegration                  *webhook_integration.Client
 	WebhookIntegrationDelivery          *webhook_integration_delivery.Client
@@ -165,9 +177,11 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		ConfigurationVersion:                configuration_version.New(httpClient),
 		CostEstimate:                        cost_estimate.New(httpClient),
 		DatadogIntegration:                  datadog_integration.New(httpClient),
+		DockerIntegration:                   docker_integration.New(httpClient),
 		DriftDetectionSchedule:              drift_detection_schedule.New(httpClient),
 		Environment:                         environment.New(httpClient),
 		EventDefinition:                     event_definition.New(httpClient),
+		GPGKey:                              gpg_key.New(httpClient),
 		Hook:                                hook.New(httpClient),
 		HookEnvironmentLink:                 hook_environment_link.New(httpClient),
 		InfracostIntegration:                infracost_integration.New(httpClient),
@@ -182,9 +196,11 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		PolicyCheck:                         policy_check.New(httpClient),
 		PolicyCheckResult:                   policy_check_result.New(httpClient),
 		PolicyGroup:                         policy_group.New(httpClient),
+		Provider:                            provider.New(httpClient),
 		ProviderConfiguration:               provider_configuration.New(httpClient),
 		ProviderConfigurationLink:           provider_configuration_link.New(httpClient),
 		ProviderConfigurationParameter:      provider_configuration_parameter.New(httpClient),
+		ProviderVersion:                     provider_version.New(httpClient),
 		Role:                                role.New(httpClient),
 		Run:                                 run.New(httpClient),
 		RunScheduleRule:                     run_schedule_rule.New(httpClient),
@@ -210,6 +226,8 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		UsageStatistic:                      usage_statistic.New(httpClient),
 		User:                                user.New(httpClient),
 		Variable:                            variable.New(httpClient),
+		VariableSet:                         variable_set.New(httpClient),
+		VariableSetVariable:                 variable_set_variable.New(httpClient),
 		VcsProvider:                         vcs_provider.New(httpClient),
 		WebhookIntegration:                  webhook_integration.New(httpClient),
 		WebhookIntegrationDelivery:          webhook_integration_delivery.New(httpClient),

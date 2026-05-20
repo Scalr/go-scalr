@@ -9,7 +9,7 @@ import (
 )
 
 // Response version - used when unmarshalling from API responses
-// Tag is a keyword or term associated with a Scalr resource. It is used to label resources across the account to help to identify them, improve searchability or can even participate in a terraform run e.g. as a part of metadata for policy decision. Tags are unique within the account. Deleted tags will be removed from associated resources.
+// Tag is a keyword or term associated with a Scalr resource. It is used to label resources across the account to help to identify them, improve searchability or can even participate in a terraform run e.g. as a part of metadata for policy decision. Tags are unique within the account. Deleted tags will be removed from associated resources. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[tags]`: * in-use
 type Tag struct {
 	ID            string           `json:"id"`
 	Type          string           `json:"type"`
@@ -32,6 +32,8 @@ func (r Tag) GetResourceType() string {
 
 // TagAttributes holds the attributes for Tag (response)
 type TagAttributes struct {
+	// Whether the tag is used by any resource.
+	InUse *bool `json:"in-use"`
 	// The name of the tag. It must be unique within the account.
 	Name string `json:"name"`
 }
@@ -103,7 +105,7 @@ func (r *TagRelationships) PopulateIncludes(included []map[string]interface{}) {
 }
 
 // Request version - used when marshalling for API requests
-// Tag is a keyword or term associated with a Scalr resource. It is used to label resources across the account to help to identify them, improve searchability or can even participate in a terraform run e.g. as a part of metadata for policy decision. Tags are unique within the account. Deleted tags will be removed from associated resources. (for requests)
+// Tag is a keyword or term associated with a Scalr resource. It is used to label resources across the account to help to identify them, improve searchability or can even participate in a terraform run e.g. as a part of metadata for policy decision. Tags are unique within the account. Deleted tags will be removed from associated resources. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[tags]`: * in-use (for requests)
 type TagRequest struct {
 	ID            string                  `json:"id,omitempty"`
 	Type          string                  `json:"type,omitempty"`
