@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"iter"
 	"net/url"
 	"strings"
@@ -411,18 +410,26 @@ func (c *Client) UpdateVarSetVariableRaw(ctx context.Context, vsVar string, req 
 }
 
 // Updates attributes of an existing variable set variable.
-func (c *Client) UpdateVarSetVariable(ctx context.Context, vsVar string, req *schemas.VariableSetVariableRequest, opts *UpdateVarSetVariableOptions) (string, error) {
+func (c *Client) UpdateVarSetVariable(ctx context.Context, vsVar string, req *schemas.VariableSetVariableRequest, opts *UpdateVarSetVariableOptions) (*schemas.VariableSetVariable, error) {
 	resp, err := c.UpdateVarSetVariableRaw(ctx, vsVar, req, opts)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
+	var result struct {
+		Data     schemas.VariableSetVariable `json:"data"`
+		Included []map[string]interface{}    `json:"included"`
 	}
-	return string(bodyBytes), nil
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Populate included resources into relationships
+	if len(result.Included) > 0 {
+		result.Data.Relationships.PopulateIncludes(result.Included)
+	}
+	return &result.Data, nil
 }
 
 // UpdateVarSetVariableOptions holds optional parameters for UpdateVarSetVariable
