@@ -54,3 +54,8 @@ func WorkspaceIaCPlatformPtr(v WorkspaceIaCPlatform) *WorkspaceIaCPlatform {
 func AwsDefaultTagsStrategyPtr(v AwsDefaultTagsStrategy) *AwsDefaultTagsStrategy {
 	return &v
 }
+
+// GoogleDefaultLabelsStrategyPtr returns a pointer to the given GoogleDefaultLabelsStrategy
+func GoogleDefaultLabelsStrategyPtr(v GoogleDefaultLabelsStrategy) *GoogleDefaultLabelsStrategy {
+	return &v
+}
