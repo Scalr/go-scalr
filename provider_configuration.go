@@ -83,7 +83,7 @@ type ProviderConfiguration struct {
 	GoogleCredentials           string                      `jsonapi:"attr,google-credentials"`
 	GoogleUseDefaultProject     bool                        `jsonapi:"attr,google-use-default-project"`
 	GoogleDefaultLabels         *map[string]string          `jsonapi:"attr,google-default-labels"`
-	GoogleDefaultLabelsStrategy GoogleDefaultLabelsStrategy `jsonapi:"attr,google-default-labels-strategy"`
+	GoogleDefaultLabelsStrategy GoogleDefaultLabelsStrategy `jsonapi:"attr,google-default-label-strategy"`
 	ScalrHostname               string                      `jsonapi:"attr,scalr-hostname"`
 	ScalrToken                  string                      `jsonapi:"attr,scalr-token"`
 	ApplyOnly                   bool                        `jsonapi:"attr,apply-only"`
@@ -161,7 +161,7 @@ type ProviderConfigurationCreateOptions struct {
 	GoogleCredentials           *string                      `jsonapi:"attr,google-credentials,omitempty"`
 	GoogleUseDefaultProject     *bool                        `jsonapi:"attr,google-use-default-project,omitempty"`
 	GoogleDefaultLabels         *map[string]string           `jsonapi:"attr,google-default-labels,omitempty"`
-	GoogleDefaultLabelsStrategy *GoogleDefaultLabelsStrategy `jsonapi:"attr,google-default-labels-strategy,omitempty"`
+	GoogleDefaultLabelsStrategy *GoogleDefaultLabelsStrategy `jsonapi:"attr,google-default-label-strategy,omitempty"`
 	ScalrHostname               *string                      `jsonapi:"attr,scalr-hostname,omitempty"`
 	ScalrToken                  *string                      `jsonapi:"attr,scalr-token,omitempty"`
 	ApplyOnly                   *bool                        `jsonapi:"attr,apply-only,omitempty"`
@@ -247,7 +247,7 @@ type ProviderConfigurationUpdateOptions struct {
 	GoogleCredentials           *string                      `jsonapi:"attr,google-credentials"`
 	GoogleUseDefaultProject     *bool                        `jsonapi:"attr,google-use-default-project,omitempty"`
 	GoogleDefaultLabels         *map[string]string           `jsonapi:"attr,google-default-labels"`
-	GoogleDefaultLabelsStrategy *GoogleDefaultLabelsStrategy `jsonapi:"attr,google-default-labels-strategy"`
+	GoogleDefaultLabelsStrategy *GoogleDefaultLabelsStrategy `jsonapi:"attr,google-default-label-strategy"`
 	ScalrHostname               *string                      `jsonapi:"attr,scalr-hostname"`
 	ScalrToken                  *string                      `jsonapi:"attr,scalr-token"`
 	Owners                      []*Team                      `jsonapi:"relation,owners"`
