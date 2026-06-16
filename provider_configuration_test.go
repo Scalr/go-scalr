@@ -260,6 +260,36 @@ func TestProviderConfigurationCreateAwsWithTags(t *testing.T) {
 	})
 }
 
+func TestProviderConfigurationCreateGoogleWithLabels(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+
+	credentials, project := getGoogleTestingCreds(t)
+
+	t.Run("success google with labels", func(t *testing.T) {
+		options := ProviderConfigurationCreateOptions{
+			Account:                     &Account{ID: defaultAccountID},
+			Name:                        String("tst-" + randomString(t)),
+			ProviderName:                String("google"),
+			GoogleProject:               String(project),
+			GoogleCredentials:           String(credentials),
+			GoogleDefaultLabelsStrategy: GoogleDefaultLabelsStrategyPtr(GoogleDefaultLabelsStrategyUpdate),
+			GoogleDefaultLabels:         &map[string]string{"label1": "value1", "label2": "value2"},
+		}
+		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.ProviderConfigurations.Delete(ctx, pcfg.ID)
+
+		pcfg, err = client.ProviderConfigurations.Read(ctx, pcfg.ID)
+		require.NoError(t, err)
+
+		assert.Equal(t, *options.GoogleDefaultLabelsStrategy, pcfg.GoogleDefaultLabelsStrategy)
+		assert.Equal(t, *options.GoogleDefaultLabels, *pcfg.GoogleDefaultLabels)
+	})
+}
+
 func TestProviderConfigurationCreateGoogle(t *testing.T) {
 	client := testClient(t)
 	ctx := context.Background()
@@ -660,6 +690,73 @@ func TestProviderConfigurationUpdateGoogle(t *testing.T) {
 		assert.Equal(t, *updateOptions.ExportShellVariables, updatedConfiguration.ExportShellVariables)
 		assert.Equal(t, *updateOptions.GoogleProject, updatedConfiguration.GoogleProject)
 		assert.Equal(t, "", updatedConfiguration.GoogleCredentials)
+	})
+}
+
+func TestProviderConfigurationUpdateGoogleWithLabels(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+
+	credentials, project := getGoogleTestingCreds(t)
+	name := String("tst-" + randomString(t))
+
+	t.Run("success google update labels", func(t *testing.T) {
+		options := ProviderConfigurationCreateOptions{
+			Account:                     &Account{ID: defaultAccountID},
+			Name:                        name,
+			ProviderName:                String("google"),
+			ExportShellVariables:        Bool(false),
+			GoogleProject:               String(project),
+			GoogleCredentials:           String(credentials),
+			GoogleDefaultLabelsStrategy: GoogleDefaultLabelsStrategyPtr(GoogleDefaultLabelsStrategyUpdate),
+			GoogleDefaultLabels:         &map[string]string{"label1": "value1", "label2": "value2"},
+		}
+		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.ProviderConfigurations.Delete(ctx, pcfg.ID)
+
+		updateOptions := ProviderConfigurationUpdateOptions{
+			Name:                        name,
+			ExportShellVariables:        Bool(false),
+			GoogleProject:               String(project),
+			GoogleCredentials:           String(credentials),
+			GoogleDefaultLabelsStrategy: GoogleDefaultLabelsStrategyPtr(GoogleDefaultLabelsStrategySkip),
+			GoogleDefaultLabels:         &map[string]string{"label1": "newvalue1", "newlabel2": "value2"},
+		}
+		updatedPcfg, err := client.ProviderConfigurations.Update(ctx, pcfg.ID, updateOptions)
+		require.NoError(t, err)
+		assert.Equal(t, *updateOptions.GoogleDefaultLabelsStrategy, updatedPcfg.GoogleDefaultLabelsStrategy)
+		assert.Equal(t, *updateOptions.GoogleDefaultLabels, *updatedPcfg.GoogleDefaultLabels)
+	})
+
+	t.Run("success google remove labels", func(t *testing.T) {
+		options := ProviderConfigurationCreateOptions{
+			Account:                     &Account{ID: defaultAccountID},
+			Name:                        name,
+			ProviderName:                String("google"),
+			ExportShellVariables:        Bool(false),
+			GoogleProject:               String(project),
+			GoogleCredentials:           String(credentials),
+			GoogleDefaultLabelsStrategy: GoogleDefaultLabelsStrategyPtr(GoogleDefaultLabelsStrategyUpdate),
+			GoogleDefaultLabels:         &map[string]string{"label1": "value1", "label2": "value2"},
+		}
+		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.ProviderConfigurations.Delete(ctx, pcfg.ID)
+
+		updateOptions := ProviderConfigurationUpdateOptions{
+			Name:                 name,
+			ExportShellVariables: Bool(false),
+			GoogleProject:        String(project),
+			GoogleCredentials:    String(credentials),
+		}
+		updatedPcfg, err := client.ProviderConfigurations.Update(ctx, pcfg.ID, updateOptions)
+		require.NoError(t, err)
+		assert.Nil(t, updatedPcfg.GoogleDefaultLabels)
 	})
 }
 

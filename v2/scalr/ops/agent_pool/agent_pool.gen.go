@@ -166,6 +166,10 @@ func (c *Client) GetAgentPoolsRaw(ctx context.Context, opts *GetAgentPoolsOption
 
 	params := url.Values{}
 	if opts != nil {
+		// Handle parameter: Query (string)
+		if opts.Query != "" {
+			params.Set("query", opts.Query)
+		}
 		if opts.PageNumber > 0 {
 			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
 		}
@@ -372,6 +376,8 @@ func (c *Client) GetAgentPoolsPaged(ctx context.Context, opts *GetAgentPoolsOpti
 
 // GetAgentPoolsOptions holds optional parameters for GetAgentPools
 type GetAgentPoolsOptions struct {
+	// Query string, search by ID or name.
+	Query string
 	// Page number
 	PageNumber int
 	// Page size

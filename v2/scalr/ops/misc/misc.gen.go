@@ -130,6 +130,76 @@ func (c *Client) GetOpenMetrics(ctx context.Context) (string, error) {
 	return string(bodyBytes), nil
 }
 
+// This endpoint lists drifted workspaces.
+func (c *Client) ListDriftedWorkspacesForEnvironmentRaw(ctx context.Context, environment string, opts *ListDriftedWorkspacesForEnvironmentOptions) (*client.Response, error) {
+	path := "/reports/environments/{environment}/drifted-workspaces"
+	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
+
+	params := url.Values{}
+	if opts != nil {
+		// Handle parameter: Query (string)
+		if opts.Query != "" {
+			params.Set("query", opts.Query)
+		}
+		if opts.PageNumber > 0 {
+			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
+		}
+		if opts.PageSize > 0 {
+			params.Set("page[size]", fmt.Sprintf("%d", opts.PageSize))
+		}
+		if len(opts.Sort) > 0 {
+			params.Set("sort", strings.Join(opts.Sort, ","))
+		}
+		// Handle parameter: Format (string)
+		if opts.Format != "" {
+			params.Set("format", opts.Format)
+		}
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
+		}
+	}
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// This endpoint lists drifted workspaces.
+func (c *Client) ListDriftedWorkspacesForEnvironment(ctx context.Context, environment string, opts *ListDriftedWorkspacesForEnvironmentOptions) (string, error) {
+	resp, err := c.ListDriftedWorkspacesForEnvironmentRaw(ctx, environment, opts)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+	return string(bodyBytes), nil
+}
+
+// ListDriftedWorkspacesForEnvironmentOptions holds optional parameters for ListDriftedWorkspacesForEnvironment
+type ListDriftedWorkspacesForEnvironmentOptions struct {
+	// The search string. Supports search by workspace id or workspace name.
+	Query string
+	// Page number
+	PageNumber int
+	// Page size
+	PageSize int
+	// The comma-separated list of attributes.
+	Sort []string
+	// Format of the response. It can be 'json' or 'csv'.
+	Format string
+	Filter map[string]string
+}
+
 // Destroys user's session. In case of the SAML additionally performs SAML logout action.
 func (c *Client) LogoutRaw(ctx context.Context) (*client.Response, error) {
 	path := "/logout"
