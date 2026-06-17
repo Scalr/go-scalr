@@ -66,11 +66,13 @@ func TestVcsProvidersCreate(t *testing.T) {
 
 	t.Run("with valid options", func(t *testing.T) {
 		options := VcsProviderCreateOptions{
-			Name:               String("vcs-" + randomString(t)),
-			VcsType:            Github,
-			AuthType:           PersonalToken,
-			Token:              os.Getenv("GITHUB_TOKEN"),
-			DraftPrRunsEnabled: Bool(true),
+			Name:                   String("vcs-" + randomString(t)),
+			VcsType:                Github,
+			AuthType:               PersonalToken,
+			Token:                  os.Getenv("GITHUB_TOKEN"),
+			DraftPrRunsEnabled:     Bool(true),
+			CommentsEnabled:        Bool(true),
+			PrMergeCommentsEnabled: Bool(true),
 
 			Environments: []*Environment{envTest},
 			Account:      &Account{ID: defaultAccountID},
@@ -93,6 +95,8 @@ func TestVcsProvidersCreate(t *testing.T) {
 			assert.Equal(t, options.AuthType, item.AuthType)
 			assert.Equal(t, false, item.IsShared)
 			assert.Equal(t, true, item.DraftPrRunsEnabled)
+			assert.Equal(t, true, item.CommentsEnabled)
+			assert.Equal(t, true, item.PrMergeCommentsEnabled)
 		}
 	})
 
@@ -116,6 +120,8 @@ func TestVcsProvidersCreate(t *testing.T) {
 		assert.Equal(t, options.AuthType, vcs.AuthType)
 		assert.Equal(t, *options.IsShared, vcs.IsShared)
 		assert.Equal(t, false, vcs.DraftPrRunsEnabled)
+		assert.Equal(t, false, vcs.CommentsEnabled)
+		assert.Equal(t, false, vcs.PrMergeCommentsEnabled)
 
 	})
 
@@ -224,7 +230,9 @@ func TestVcsProvidersUpdate(t *testing.T) {
 
 	t.Run("with valid options", func(t *testing.T) {
 		options := VcsProviderUpdateOptions{
-			Name: String(randomString(t)),
+			Name:                   String(randomString(t)),
+			CommentsEnabled:        Bool(true),
+			PrMergeCommentsEnabled: Bool(true),
 		}
 
 		vcs, err := client.VcsProviders.Update(ctx, vcsTest.ID, options)
@@ -239,6 +247,8 @@ func TestVcsProvidersUpdate(t *testing.T) {
 			refreshed,
 		} {
 			assert.Equal(t, *options.Name, item.Name)
+			assert.Equal(t, true, item.CommentsEnabled)
+			assert.Equal(t, true, item.PrMergeCommentsEnabled)
 		}
 	})
 
