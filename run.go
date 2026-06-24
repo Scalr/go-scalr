@@ -86,6 +86,9 @@ type RunCreateOptions struct {
 	ID        string `jsonapi:"primary,runs"`
 	IsDestroy *bool  `jsonapi:"attr,is-destroy,omitempty"`
 
+	// Whether this run is going to destroy instead of apply.
+	IsDestroy *bool `jsonapi:"attr,is-destroy,omitempty"`
+
 	// Specifies the configuration version to use for this run.
 	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version,omitempty"`
 	// Specifies the workspace where the run will be executed.
