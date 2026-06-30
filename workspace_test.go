@@ -205,7 +205,7 @@ func TestWorkspacesCreate(t *testing.T) {
 		assert.Equal(
 			t,
 			ResourceNotFoundError{
-				Message: fmt.Sprintf("Invalid Relationship\n\nEnvironment with ID '%s' not found or user unauthorized.", badIdentifier),
+				Message: fmt.Sprintf("Invalid Relationship (source: /data/relationships/environment)\n\nEnvironment with ID '%s' not found or user unauthorized.", badIdentifier),
 			}.Error(),
 			err.Error(),
 		)

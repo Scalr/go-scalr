@@ -94,7 +94,7 @@ func TestTagsCreate(t *testing.T) {
 			Account: &Account{ID: defaultAccountID},
 		})
 		assert.Nil(t, tag)
-		assert.EqualError(t, err, "Invalid Attribute\n\nName cannot be empty.")
+		assert.EqualError(t, err, "Invalid Attribute (source: /data/attributes/name)\n\nName cannot be empty.")
 	})
 }
 
