@@ -94,7 +94,6 @@ jobs:
           github_token: ${{ steps.generate_token.outputs.token }}
           google_cloud_credentials: ${{ secrets.GCP_SA_KEY }}
           run_prefix: e2e-go-scalr-pr
-          deployment_type: saas
           prepare_runner: true
           wait_for_env: true
           no_segment: true
