@@ -14,9 +14,6 @@ var _ ModuleTestConfigurations = (*moduleTestConfigurations)(nil)
 // methods that the Scalr API supports. A test configuration controls whether
 // tofu tests are run for a module, what triggers a test run, and how a test
 // failure is handled.
-//
-// This resource is not part of the public Scalr API yet, so requests are sent
-// with the "Prefer: profile=internal" header.
 type ModuleTestConfigurations interface {
 	// Read a module test configuration by its ID.
 	Read(ctx context.Context, testConfigurationID string) (*ModuleTestConfiguration, error)
@@ -75,7 +72,6 @@ func (s *moduleTestConfigurations) Read(ctx context.Context, testConfigurationID
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Prefer", "profile=internal")
 
 	tc := &ModuleTestConfiguration{}
 	err = s.client.do(ctx, req, tc)
@@ -102,7 +98,6 @@ func (s *moduleTestConfigurations) Update(
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Prefer", "profile=internal")
 
 	tc := &ModuleTestConfiguration{}
 	err = s.client.do(ctx, req, tc)
