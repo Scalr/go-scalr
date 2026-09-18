@@ -222,11 +222,11 @@ func (s *providerConfigurations) Read(ctx context.Context, configurationID strin
 type ProviderConfigurationUpdateOptions struct {
 	ID string `jsonapi:"primary,provider-configurations"`
 
-	Name                        *string                      `jsonapi:"attr,name"`
+	Name                        *string                      `jsonapi:"attr,name,omitempty"`
 	IsShared                    *bool                        `jsonapi:"attr,is-shared,omitempty"`
 	IsAllowedInModuleTest       *bool                        `jsonapi:"attr,is-allowed-in-module-test,omitempty"`
 	Environments                []*Environment               `jsonapi:"relation,environments"`
-	ExportShellVariables        *bool                        `jsonapi:"attr,export-shell-variables"`
+	ExportShellVariables        *bool                        `jsonapi:"attr,export-shell-variables,omitempty"`
 	AwsAccessKey                *string                      `jsonapi:"attr,aws-access-key"`
 	AwsSecretKey                *string                      `jsonapi:"attr,aws-secret-key"`
 	AwsAccountType              *string                      `jsonapi:"attr,aws-account-type"`

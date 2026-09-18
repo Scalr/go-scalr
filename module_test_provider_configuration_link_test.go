@@ -2,18 +2,25 @@ package scalr
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// createModuleTestConfiguration enables the test configuration for the default test module
-// and returns it together with a cleanup function that disables it again.
+// createModuleTestConfiguration enables the test configuration for the module in the
+// MODULE_ID environment variable and returns it together with a cleanup function that
+// disables it again.
 func createModuleTestConfiguration(t *testing.T, client *Client) (*ModuleTestConfiguration, func()) {
+	moduleID := os.Getenv("MODULE_ID")
+	if len(moduleID) == 0 {
+		t.Skip("Please set MODULE_ID to run this test.")
+	}
+
 	ctx := context.Background()
 	tc, err := client.ModuleTestConfigurations.Update(
-		ctx, defaultModuleID, ModuleTestConfigurationUpdateOptions{
+		ctx, moduleID, ModuleTestConfigurationUpdateOptions{
 			Enabled: Bool(true),
 		},
 	)
@@ -23,7 +30,7 @@ func createModuleTestConfiguration(t *testing.T, client *Client) (*ModuleTestCon
 
 	return tc, func() {
 		if _, err := client.ModuleTestConfigurations.Update(
-			ctx, defaultModuleID, ModuleTestConfigurationUpdateOptions{Enabled: Bool(false)},
+			ctx, moduleID, ModuleTestConfigurationUpdateOptions{Enabled: Bool(false)},
 		); err != nil {
 			t.Errorf("Error disabling module test configuration! WARNING: Dangling resources\n"+
 				"may exist! The full error is shown below.\n\n"+
@@ -39,7 +46,7 @@ func createAllowedProviderConfiguration(t *testing.T, client *Client, name strin
 		ProviderConfigurationCreateOptions{
 			Account:               &Account{ID: defaultAccountID},
 			Name:                  String(name),
-			ProviderName:          String("aws"),
+			ProviderName:          String("consul"),
 			IsShared:              Bool(true),
 			IsAllowedInModuleTest: Bool(true),
 		},

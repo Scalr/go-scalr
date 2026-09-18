@@ -2,6 +2,7 @@ package scalr
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,10 +13,21 @@ func TestModuleTestConfigurationsUpdate(t *testing.T) {
 	client := testClient(t)
 	ctx := context.Background()
 
+	moduleID := os.Getenv("MODULE_ID")
+	if len(moduleID) == 0 {
+		t.Skip("Please set MODULE_ID to run this test.")
+	}
+
 	t.Run("success basic", func(t *testing.T) {
+		// The test configuration is a persistent singleton per module (not reset between
+		// test runs), so every field is set explicitly here instead of relying on
+		// get-or-create defaults, which would only apply on the very first run.
 		tc, err := client.ModuleTestConfigurations.Update(
-			ctx, defaultModuleID, ModuleTestConfigurationUpdateOptions{
-				Enabled: Bool(true),
+			ctx, moduleID, ModuleTestConfigurationUpdateOptions{
+				Enabled:                    Bool(true),
+				FailureBehavior:            ModuleTestFailureBehaviorPtr(ModuleTestFailureBehaviorNotify),
+				TriggerOnPrActivityEnabled: Bool(false),
+				TriggerOnNewVersionEnabled: Bool(false),
 			},
 		)
 		require.NoError(t, err)
@@ -33,7 +45,7 @@ func TestModuleTestConfigurationsUpdate(t *testing.T) {
 			TriggerOnPrActivityEnabled: Bool(true),
 			TriggerOnNewVersionEnabled: Bool(true),
 		}
-		tc, err := client.ModuleTestConfigurations.Update(ctx, defaultModuleID, options)
+		tc, err := client.ModuleTestConfigurations.Update(ctx, moduleID, options)
 		require.NoError(t, err)
 
 		assert.True(t, tc.Enabled)
@@ -44,7 +56,7 @@ func TestModuleTestConfigurationsUpdate(t *testing.T) {
 
 	t.Run("success disable", func(t *testing.T) {
 		tc, err := client.ModuleTestConfigurations.Update(
-			ctx, defaultModuleID, ModuleTestConfigurationUpdateOptions{
+			ctx, moduleID, ModuleTestConfigurationUpdateOptions{
 				Enabled: Bool(false),
 			},
 		)
@@ -63,9 +75,14 @@ func TestModuleTestConfigurationsRead(t *testing.T) {
 	client := testClient(t)
 	ctx := context.Background()
 
+	moduleID := os.Getenv("MODULE_ID")
+	if len(moduleID) == 0 {
+		t.Skip("Please set MODULE_ID to run this test.")
+	}
+
 	t.Run("success", func(t *testing.T) {
 		created, err := client.ModuleTestConfigurations.Update(
-			ctx, defaultModuleID, ModuleTestConfigurationUpdateOptions{
+			ctx, moduleID, ModuleTestConfigurationUpdateOptions{
 				Enabled:         Bool(true),
 				FailureBehavior: ModuleTestFailureBehaviorPtr(ModuleTestFailureBehaviorNotify),
 			},
