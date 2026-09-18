@@ -10,10 +10,6 @@ import (
 // Compile-time proof of interface implementation.
 var _ ModuleTestConfigurations = (*moduleTestConfigurations)(nil)
 
-// ModuleTestConfigurations describes all the module test configuration related
-// methods that the Scalr API supports. A test configuration controls whether
-// tofu tests are run for a module, what triggers a test run, and how a test
-// failure is handled.
 type ModuleTestConfigurations interface {
 	// Read a module test configuration by its ID.
 	Read(ctx context.Context, testConfigurationID string) (*ModuleTestConfiguration, error)

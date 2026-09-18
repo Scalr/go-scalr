@@ -10,10 +10,6 @@ import (
 // Compile-time proof of interface implementation.
 var _ ModuleTestProviderConfigurationLinks = (*moduleTestProviderConfigurationLinks)(nil)
 
-// ModuleTestProviderConfigurationLinks describes all the module test provider
-// configuration link related methods that the Scalr API supports. A link
-// attaches a provider configuration (credentials) to a module test
-// configuration, so it can be used while running the module's tests.
 type ModuleTestProviderConfigurationLinks interface {
 	// List all the provider configuration links attached to a test configuration.
 	List(ctx context.Context, testConfigurationID string, options ListOptions) (*ModuleTestProviderConfigurationLinkList, error)

@@ -9,9 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// createModuleTestConfiguration enables the test configuration for the module in the
-// MODULE_ID environment variable and returns it together with a cleanup function that
-// disables it again.
 func createModuleTestConfiguration(t *testing.T, client *Client) (*ModuleTestConfiguration, func()) {
 	moduleID := os.Getenv("MODULE_ID")
 	if len(moduleID) == 0 {
