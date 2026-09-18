@@ -114,6 +114,8 @@ func (c *Client) GetAgentPoolRaw(ctx context.Context, agentPool string, opts *Ge
 		if len(opts.Include) > 0 {
 			params.Set("include", strings.Join(opts.Include, ","))
 		}
+		// Handle parameter: Fields (map[string]interface{})
+		// Complex type map[string]interface{} - skip for now
 		// Add filters
 		for k, v := range opts.Filter {
 			params.Set("filter["+k+"]", v)
@@ -157,7 +159,9 @@ func (c *Client) GetAgentPool(ctx context.Context, agentPool string, opts *GetAg
 type GetAgentPoolOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
-	Filter  map[string]string
+	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
+	Fields map[string]interface{}
+	Filter map[string]string
 }
 
 // This endpoint returns a list of [agent pools](/docs/agent-pools) by various filters.
@@ -166,6 +170,10 @@ func (c *Client) GetAgentPoolsRaw(ctx context.Context, opts *GetAgentPoolsOption
 
 	params := url.Values{}
 	if opts != nil {
+		// Handle parameter: Query (string)
+		if opts.Query != "" {
+			params.Set("query", opts.Query)
+		}
 		if opts.PageNumber > 0 {
 			params.Set("page[number]", fmt.Sprintf("%d", opts.PageNumber))
 		}
@@ -178,6 +186,8 @@ func (c *Client) GetAgentPoolsRaw(ctx context.Context, opts *GetAgentPoolsOption
 		if len(opts.Sort) > 0 {
 			params.Set("sort", strings.Join(opts.Sort, ","))
 		}
+		// Handle parameter: Fields (map[string]interface{})
+		// Complex type map[string]interface{} - skip for now
 		// Add filters
 		for k, v := range opts.Filter {
 			params.Set("filter["+k+"]", v)
@@ -372,6 +382,8 @@ func (c *Client) GetAgentPoolsPaged(ctx context.Context, opts *GetAgentPoolsOpti
 
 // GetAgentPoolsOptions holds optional parameters for GetAgentPools
 type GetAgentPoolsOptions struct {
+	// Query string, search by ID or name.
+	Query string
 	// Page number
 	PageNumber int
 	// Page size
@@ -379,7 +391,9 @@ type GetAgentPoolsOptions struct {
 	// The comma-separated list of relationship paths.
 	Include []string
 	// The comma-separated list of attributes.
-	Sort   []string
+	Sort []string
+	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
+	Fields map[string]interface{}
 	Filter map[string]string
 }
 

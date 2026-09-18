@@ -9,6 +9,21 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// AccountBillingPlanAddons represents the type for AccountBillingPlanAddons
+
+type AccountBillingPlanAddons string
+
+// AccountBillingPlanAddons constants
+const (
+	AccountBillingPlanAddonsBfAuditLog        AccountBillingPlanAddons = "bf-audit-log"
+	AccountBillingPlanAddonsBfStorageProfiles AccountBillingPlanAddons = "bf-storage-profiles"
+	AccountBillingPlanAddonsBfScim            AccountBillingPlanAddons = "bf-scim"
+	AccountBillingPlanAddonsBfByok            AccountBillingPlanAddons = "bf-byok"
+	AccountBillingPlanAddonsBfControlTower    AccountBillingPlanAddons = "bf-control-tower"
+	AccountBillingPlanAddonsBfAiUsage         AccountBillingPlanAddons = "bf-ai-usage"
+	AccountBillingPlanAddonsBfAuditLogSp      AccountBillingPlanAddons = "bf-audit-log-sp"
+)
+
 // Response version - used when unmarshalling from API responses
 // API Resource for the account.
 type Account struct {
@@ -34,10 +49,12 @@ func (r Account) GetResourceType() string {
 // AccountAttributes holds the attributes for Account (response)
 type AccountAttributes struct {
 	// The list of allowed IP networks for IP fencing
-	AllowedIps         []string   `json:"allowed-ips"`
-	CreatedAt          time.Time  `json:"created-at"`
-	LastLoginAttemptAt *time.Time `json:"last-login-attempt-at"`
-	LoginAttempts      *int       `json:"login-attempts"`
+	AllowedIps []string `json:"allowed-ips"`
+	// Enterprise addon features active for this account's billing plan.
+	BillingPlanAddons  *[]AccountBillingPlanAddons `json:"billing-plan-addons"`
+	CreatedAt          time.Time                   `json:"created-at"`
+	LastLoginAttemptAt *time.Time                  `json:"last-login-attempt-at"`
+	LoginAttempts      *int                        `json:"login-attempts"`
 	// The name of the account
 	Name string `json:"name"`
 	// The list of account's quotas
@@ -54,6 +71,8 @@ type AccountRelationships struct {
 	IdentityProvider *IdentityProvider `json:"identity-provider"`
 	// The user that owns this account
 	Owner *User `json:"owner"`
+	// Default runner image version for Scalr-managed agent pools.
+	RunnerImageVersion *ContainerImageVersion `json:"runner-image-version"`
 }
 
 // UnmarshalJSON implements custom unmarshalling for relationships
@@ -118,6 +137,24 @@ func (r *AccountRelationships) UnmarshalJSON(data []byte) error {
 			}
 		}
 	}
+	if raw, ok := temp["runner-image-version"]; ok {
+		// To-one relationship
+		var rel struct {
+			Data *struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.RunnerImageVersion = &ContainerImageVersion{
+				ID:   rel.Data.ID,
+				Type: rel.Data.Type,
+			}
+		}
+	}
 	return nil
 }
 
@@ -174,6 +211,18 @@ func (r *AccountRelationships) PopulateIncludes(included []map[string]interface{
 			}
 		}
 	}
+	// Populate to-one relationship: RunnerImageVersion
+	if r.RunnerImageVersion != nil && r.RunnerImageVersion.ID != "" {
+		key := r.RunnerImageVersion.Type + ":" + r.RunnerImageVersion.ID
+		if fullResource, ok := includedMap[key]; ok {
+			// Unmarshal the full resource
+			data, _ := json.Marshal(fullResource)
+			var full ContainerImageVersion
+			if err := json.Unmarshal(data, &full); err == nil {
+				r.RunnerImageVersion = &full
+			}
+		}
+	}
 }
 
 // Request version - used when marshalling for API requests
@@ -222,6 +271,8 @@ type AccountRelationshipsRequest struct {
 	IdentityProvider *value.Value[IdentityProvider] `json:"identity-provider,omitempty"`
 	// The user that owns this account
 	Owner *value.Value[User] `json:"owner,omitempty"`
+	// Default runner image version for Scalr-managed agent pools.
+	RunnerImageVersion *value.Value[ContainerImageVersion] `json:"runner-image-version,omitempty"`
 }
 
 // The list of account's quotas
@@ -234,7 +285,7 @@ type AccountQuotas struct {
 	BeforeAfterHooksAvailable bool `json:"before-after-hooks-available"`
 	// The maximal number of environments
 	Environments int `json:"environments"`
-	// The maximal number of concurrent runs
+	// The maximal number of concurrent runs, -1 for unlimited
 	MaxConcurrentRuns int `json:"max-concurrent-runs"`
 	// Indicates if the policy group checks are available for an account
 	PolicyGroupChecksAvailable bool `json:"policy-group-checks-available"`
@@ -254,7 +305,7 @@ type AccountQuotas struct {
 	Users int `json:"users"`
 	// The maximal number of VCS providers
 	VcsProviders int `json:"vcs-providers"`
-	// The maximal number of workspaces
+	// The maximal number of workspaces, -1 for unlimited
 	Workspaces int `json:"workspaces"`
 }
 
@@ -268,7 +319,7 @@ type AccountQuotasRequest struct {
 	BeforeAfterHooksAvailable *value.Value[bool] `json:"before-after-hooks-available,omitempty"`
 	// The maximal number of environments
 	Environments *value.Value[int] `json:"environments,omitempty"`
-	// The maximal number of concurrent runs
+	// The maximal number of concurrent runs, -1 for unlimited
 	MaxConcurrentRuns *value.Value[int] `json:"max-concurrent-runs,omitempty"`
 	// Indicates if the policy group checks are available for an account
 	PolicyGroupChecksAvailable *value.Value[bool] `json:"policy-group-checks-available,omitempty"`
@@ -288,6 +339,6 @@ type AccountQuotasRequest struct {
 	Users *value.Value[int] `json:"users,omitempty"`
 	// The maximal number of VCS providers
 	VcsProviders *value.Value[int] `json:"vcs-providers,omitempty"`
-	// The maximal number of workspaces
+	// The maximal number of workspaces, -1 for unlimited
 	Workspaces *value.Value[int] `json:"workspaces,omitempty"`
 }

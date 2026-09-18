@@ -19,6 +19,16 @@ const (
 	ProviderConfigurationAwsAccountTypeCnCloud  ProviderConfigurationAwsAccountType = "cn-cloud"
 )
 
+// ProviderConfigurationAwsCredentialsSource represents the type for ProviderConfigurationAwsCredentialsSource
+// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+type ProviderConfigurationAwsCredentialsSource string
+
+// ProviderConfigurationAwsCredentialsSource constants
+const (
+	ProviderConfigurationAwsCredentialsSourceEc2InstanceMetadata ProviderConfigurationAwsCredentialsSource = "Ec2InstanceMetadata"
+	ProviderConfigurationAwsCredentialsSourceEcsContainer        ProviderConfigurationAwsCredentialsSource = "EcsContainer"
+)
+
 // ProviderConfigurationAwsCredentialsType represents the type for ProviderConfigurationAwsCredentialsType
 // The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
 type ProviderConfigurationAwsCredentialsType string
@@ -70,6 +80,16 @@ const (
 	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
 )
 
+// ProviderConfigurationGoogleDefaultLabelStrategy represents the type for ProviderConfigurationGoogleDefaultLabelStrategy
+// On duplicate key behaviour for default labels. Available options: - `skip`: the existing labels will not be changed - `update`: the existing labels will be replaced with the new one
+type ProviderConfigurationGoogleDefaultLabelStrategy string
+
+// ProviderConfigurationGoogleDefaultLabelStrategy constants
+const (
+	ProviderConfigurationGoogleDefaultLabelStrategySkip   ProviderConfigurationGoogleDefaultLabelStrategy = "skip"
+	ProviderConfigurationGoogleDefaultLabelStrategyUpdate ProviderConfigurationGoogleDefaultLabelStrategy = "update"
+)
+
 // ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
 // Provider configuration status. Can be: `active`, `errored`.
 type ProviderConfigurationStatus string
@@ -112,6 +132,8 @@ type ProviderConfigurationAttributes struct {
 	AwsAccountType *ProviderConfigurationAwsAccountType `json:"aws-account-type"`
 	// The value of the aud claim for the identity token.
 	AwsAudience *string `json:"aws-audience"`
+	// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+	AwsCredentialsSource *ProviderConfigurationAwsCredentialsSource `json:"aws-credentials-source"`
 	// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
 	AwsCredentialsType *ProviderConfigurationAwsCredentialsType `json:"aws-credentials-type"`
 	// Default tags to be applied to all resources created by this provider configuration.
@@ -146,6 +168,10 @@ type ProviderConfigurationAttributes struct {
 	GoogleAuthType *ProviderConfigurationGoogleAuthType `json:"google-auth-type"`
 	// Service account key file in JSON format.
 	GoogleCredentials *string `json:"google-credentials"`
+	// On duplicate key behaviour for default labels. Available options: - `skip`: the existing labels will not be changed - `update`: the existing labels will be replaced with the new one
+	GoogleDefaultLabelStrategy *ProviderConfigurationGoogleDefaultLabelStrategy `json:"google-default-label-strategy"`
+	// Default labels to be applied to all resources created by this provider configuration.
+	GoogleDefaultLabels *map[string]interface{} `json:"google-default-labels"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.
 	GoogleProject *string `json:"google-project"`
 	// The service account email Scalr will use when authenticating to GCP.
@@ -156,10 +182,14 @@ type ProviderConfigurationAttributes struct {
 	GoogleUseDefaultProject *bool `json:"google-use-default-project"`
 	// The canonical name of the workload identity provider.
 	GoogleWorkloadProviderName *string `json:"google-workload-provider-name"`
+	// Indicates whether the provider configuration can be used in module tests.
+	IsAllowedInModuleTest bool `json:"is-allowed-in-module-test"`
 	// Determines if a provider configuration is custom. Note: custom provider configurations do not support built-in features like exporting as shell variables or on-save validation. Provider configuration will be validated during the run only.
 	IsCustom *bool `json:"is-custom"`
 	// Indicates whether the provider configuration can be used in any workspace of the account without directly linking it to the environment.
 	IsShared bool `json:"is-shared"`
+	// Indicates whether the provider configuration is currently linked to any module test.
+	IsUsedInModuleTest bool `json:"is-used-in-module-test"`
 	// The name of a Scalr provider configuration. This field is unique for the account.
 	Name string `json:"name"`
 	// The name of a Terraform provider.
@@ -431,6 +461,8 @@ type ProviderConfigurationAttributesRequest struct {
 	AwsAccountType *value.Value[ProviderConfigurationAwsAccountType] `json:"aws-account-type,omitempty"`
 	// The value of the aud claim for the identity token.
 	AwsAudience *value.Value[string] `json:"aws-audience,omitempty"`
+	// The credential source for the initial assume-role call. Applicable when the trusted entity type is `aws_service`. Available options: `Ec2InstanceMetadata`, `EcsContainer`. Defaults to `Ec2InstanceMetadata`.
+	AwsCredentialsSource *value.Value[ProviderConfigurationAwsCredentialsSource] `json:"aws-credentials-source,omitempty"`
 	// The type of AWS credential, available options: `access_keys`, `role_delegation`, `oidc`.
 	AwsCredentialsType *value.Value[ProviderConfigurationAwsCredentialsType] `json:"aws-credentials-type,omitempty"`
 	// Default tags to be applied to all resources created by this provider configuration.
@@ -463,6 +495,10 @@ type ProviderConfigurationAttributesRequest struct {
 	GoogleAuthType *value.Value[ProviderConfigurationGoogleAuthType] `json:"google-auth-type,omitempty"`
 	// Service account key file in JSON format.
 	GoogleCredentials *value.Value[string] `json:"google-credentials,omitempty"`
+	// On duplicate key behaviour for default labels. Available options: - `skip`: the existing labels will not be changed - `update`: the existing labels will be replaced with the new one
+	GoogleDefaultLabelStrategy *value.Value[ProviderConfigurationGoogleDefaultLabelStrategy] `json:"google-default-label-strategy,omitempty"`
+	// Default labels to be applied to all resources created by this provider configuration.
+	GoogleDefaultLabels *value.Value[map[string]interface{}] `json:"google-default-labels,omitempty"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.
 	GoogleProject *value.Value[string] `json:"google-project,omitempty"`
 	// The service account email Scalr will use when authenticating to GCP.
@@ -471,6 +507,8 @@ type ProviderConfigurationAttributesRequest struct {
 	GoogleUseDefaultProject *value.Value[bool] `json:"google-use-default-project,omitempty"`
 	// The canonical name of the workload identity provider.
 	GoogleWorkloadProviderName *value.Value[string] `json:"google-workload-provider-name,omitempty"`
+	// Indicates whether the provider configuration can be used in module tests.
+	IsAllowedInModuleTest *value.Value[bool] `json:"is-allowed-in-module-test,omitempty"`
 	// Determines if a provider configuration is custom. Note: custom provider configurations do not support built-in features like exporting as shell variables or on-save validation. Provider configuration will be validated during the run only.
 	IsCustom *value.Value[bool] `json:"is-custom,omitempty"`
 	// Indicates whether the provider configuration can be used in any workspace of the account without directly linking it to the environment.

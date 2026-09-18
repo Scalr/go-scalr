@@ -148,6 +148,8 @@ type WorkspaceAttributes struct {
 	// The list of Terraform variables files.
 	VarFiles *[]string         `json:"var-files"`
 	VcsRepo  *WorkspaceVcsRepo `json:"vcs-repo"`
+	// True when the workspace VCS repository returned 403 for its account integration. Configuration versions from this repository cannot be downloaded.
+	VcsRepoInaccessible bool `json:"vcs-repo-inaccessible"`
 	// A relative path where Terraform commands will execute in.
 	WorkingDirectory *string `json:"working-directory"`
 }
@@ -178,6 +180,8 @@ type WorkspaceRelationships struct {
 	ModuleVersion *ModuleVersion `json:"module-version"`
 	// The readme for the workspace.
 	ReadmeId *WorkspaceReadme `json:"readme-id"`
+	// Workspace runner image version for Scalr-managed agent pools.
+	RunnerImageVersion *ContainerImageVersion `json:"runner-image-version"`
 	// The SSH key used to this workspace.
 	SshKey *SSHKey `json:"ssh-key"`
 	Tags   []*Tag  `json:"tags"`
@@ -424,6 +428,24 @@ func (r *WorkspaceRelationships) UnmarshalJSON(data []byte) error {
 		}
 		if rel.Data != nil {
 			r.ReadmeId = &WorkspaceReadme{
+				ID:   rel.Data.ID,
+				Type: rel.Data.Type,
+			}
+		}
+	}
+	if raw, ok := temp["runner-image-version"]; ok {
+		// To-one relationship
+		var rel struct {
+			Data *struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.RunnerImageVersion = &ContainerImageVersion{
 				ID:   rel.Data.ID,
 				Type: rel.Data.Type,
 			}
@@ -680,6 +702,18 @@ func (r *WorkspaceRelationships) PopulateIncludes(included []map[string]interfac
 			}
 		}
 	}
+	// Populate to-one relationship: RunnerImageVersion
+	if r.RunnerImageVersion != nil && r.RunnerImageVersion.ID != "" {
+		key := r.RunnerImageVersion.Type + ":" + r.RunnerImageVersion.ID
+		if fullResource, ok := includedMap[key]; ok {
+			// Unmarshal the full resource
+			data, _ := json.Marshal(fullResource)
+			var full ContainerImageVersion
+			if err := json.Unmarshal(data, &full); err == nil {
+				r.RunnerImageVersion = &full
+			}
+		}
+	}
 	// Populate to-one relationship: SshKey
 	if r.SshKey != nil && r.SshKey.ID != "" {
 		key := r.SshKey.Type + ":" + r.SshKey.ID
@@ -809,7 +843,9 @@ type WorkspaceRelationshipsRequest struct {
 	Environment *value.Value[Environment] `json:"environment,omitempty"`
 	// The ID of the module version.
 	ModuleVersion *value.Value[ModuleVersion] `json:"module-version,omitempty"`
-	Tags          *value.Value[[]Tag]         `json:"tags,omitempty"`
+	// Workspace runner image version for Scalr-managed agent pools.
+	RunnerImageVersion *value.Value[ContainerImageVersion] `json:"runner-image-version,omitempty"`
+	Tags               *value.Value[[]Tag]                 `json:"tags,omitempty"`
 	// VCS provider of the Run's workspace
 	VcsProvider *value.Value[VcsProvider] `json:"vcs-provider,omitempty"`
 }

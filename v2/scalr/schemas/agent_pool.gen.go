@@ -51,6 +51,10 @@ type AgentPoolAttributes struct {
 	IsScalrManaged bool `json:"is-scalr-managed"`
 	// Indicates whether the pool is available in any environment of the account without being directly linked to it.
 	IsShared bool `json:"is-shared"`
+	// Indicates whether mTLS client certificate enforcement is enabled for this pool.
+	MtlsEnforcement bool `json:"mtls-enforcement"`
+	// The active mTLS certificate fingerprints accepted for this pool.
+	MtlsFingerprints []string `json:"mtls-fingerprints"`
 	// The name of the agent pool. This must be unique within a Scalr scope (e.g. account or environment).
 	Name string `json:"name"`
 	// Indicates whether the VCS support is enabled for agents in the pool.

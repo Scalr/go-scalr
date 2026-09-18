@@ -10,23 +10,29 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/account"
 	"github.com/scalr/go-scalr/v2/scalr/ops/agent"
 	"github.com/scalr/go-scalr/v2/scalr/ops/agent_pool"
+	"github.com/scalr/go-scalr/v2/scalr/ops/agent_pool_mtls_certificate"
 	"github.com/scalr/go-scalr/v2/scalr/ops/ai_usage"
 	"github.com/scalr/go-scalr/v2/scalr/ops/apply"
 	"github.com/scalr/go-scalr/v2/scalr/ops/aws_event_bridge_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/billing_usage"
 	"github.com/scalr/go-scalr/v2/scalr/ops/checkov_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/configuration_version"
+	"github.com/scalr/go-scalr/v2/scalr/ops/container_image"
+	"github.com/scalr/go-scalr/v2/scalr/ops/container_image_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/cost_estimate"
 	"github.com/scalr/go-scalr/v2/scalr/ops/datadog_integration"
+	"github.com/scalr/go-scalr/v2/scalr/ops/docker_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/drift_detection_schedule"
 	"github.com/scalr/go-scalr/v2/scalr/ops/environment"
 	"github.com/scalr/go-scalr/v2/scalr/ops/event_definition"
+	"github.com/scalr/go-scalr/v2/scalr/ops/gpg_key"
 	"github.com/scalr/go-scalr/v2/scalr/ops/hook"
 	"github.com/scalr/go-scalr/v2/scalr/ops/hook_environment_link"
 	"github.com/scalr/go-scalr/v2/scalr/ops/infracost_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/misc"
 	"github.com/scalr/go-scalr/v2/scalr/ops/module"
 	"github.com/scalr/go-scalr/v2/scalr/ops/module_namespace"
+	"github.com/scalr/go-scalr/v2/scalr/ops/module_test_provider_configuration_link"
 	"github.com/scalr/go-scalr/v2/scalr/ops/module_usage_namespace"
 	"github.com/scalr/go-scalr/v2/scalr/ops/module_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/permission"
@@ -35,9 +41,11 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/policy_check"
 	"github.com/scalr/go-scalr/v2/scalr/ops/policy_check_result"
 	"github.com/scalr/go-scalr/v2/scalr/ops/policy_group"
+	"github.com/scalr/go-scalr/v2/scalr/ops/provider"
 	"github.com/scalr/go-scalr/v2/scalr/ops/provider_configuration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/provider_configuration_link"
 	"github.com/scalr/go-scalr/v2/scalr/ops/provider_configuration_parameter"
+	"github.com/scalr/go-scalr/v2/scalr/ops/provider_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/role"
 	"github.com/scalr/go-scalr/v2/scalr/ops/run"
 	"github.com/scalr/go-scalr/v2/scalr/ops/run_schedule_rule"
@@ -63,9 +71,12 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/usage_statistic"
 	"github.com/scalr/go-scalr/v2/scalr/ops/user"
 	"github.com/scalr/go-scalr/v2/scalr/ops/variable"
+	"github.com/scalr/go-scalr/v2/scalr/ops/variable_set"
+	"github.com/scalr/go-scalr/v2/scalr/ops/variable_set_variable"
 	"github.com/scalr/go-scalr/v2/scalr/ops/vcs_provider"
 	"github.com/scalr/go-scalr/v2/scalr/ops/webhook_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/webhook_integration_delivery"
+	"github.com/scalr/go-scalr/v2/scalr/ops/wiz_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/workload_identity_provider"
 	"github.com/scalr/go-scalr/v2/scalr/ops/workspace"
 )
@@ -76,70 +87,81 @@ import (
 type Client struct {
 	httpClient *client.HTTPClient
 
-	AWSEventBridgeIntegration      *aws_event_bridge_integration.Client
-	AccessPolicy                   *access_policy.Client
-	AccessToken                    *access_token.Client
-	AccessTokenUsage               *access_token_usage.Client
-	Account                        *account.Client
-	Agent                          *agent.Client
-	AgentPool                      *agent_pool.Client
-	AiUsage                        *ai_usage.Client
-	Apply                          *apply.Client
-	BillingUsage                   *billing_usage.Client
-	CheckovIntegration             *checkov_integration.Client
-	ConfigurationVersion           *configuration_version.Client
-	CostEstimate                   *cost_estimate.Client
-	DatadogIntegration             *datadog_integration.Client
-	DriftDetectionSchedule         *drift_detection_schedule.Client
-	Environment                    *environment.Client
-	EventDefinition                *event_definition.Client
-	Hook                           *hook.Client
-	HookEnvironmentLink            *hook_environment_link.Client
-	InfracostIntegration           *infracost_integration.Client
-	Module                         *module.Client
-	ModuleNamespace                *module_namespace.Client
-	ModuleUsageNamespace           *module_usage_namespace.Client
-	ModuleVersion                  *module_version.Client
-	Permission                     *permission.Client
-	Plan                           *plan.Client
-	Policy                         *policy.Client
-	PolicyCheck                    *policy_check.Client
-	PolicyCheckResult              *policy_check_result.Client
-	PolicyGroup                    *policy_group.Client
-	ProviderConfiguration          *provider_configuration.Client
-	ProviderConfigurationLink      *provider_configuration_link.Client
-	ProviderConfigurationParameter *provider_configuration_parameter.Client
-	Role                           *role.Client
-	Run                            *run.Client
-	RunScheduleRule                *run_schedule_rule.Client
-	RunTrigger                     *run_trigger.Client
-	SSHKey                         *ssh_key.Client
-	SamlIntegration                *saml_integration.Client
-	SecurityRules                  *security_rules.Client
-	ServiceAccount                 *service_account.Client
-	SlackConnection                *slack_connection.Client
-	SlackIntegration               *slack_integration.Client
-	SoftwareVersion                *software_version.Client
-	StateVersion                   *state_version.Client
-	StorageProfile                 *storage_profile.Client
-	Tag                            *tag.Client
-	Team                           *team.Client
-	TerraformModuleUsage           *terraform_module_usage.Client
-	TerraformModuleVersionUsage    *terraform_module_version_usage.Client
-	TerraformProviderUsage         *terraform_provider_usage.Client
-	TerraformProviderVersionUsage  *terraform_provider_version_usage.Client
-	TerraformResourceInstanceUsage *terraform_resource_instance_usage.Client
-	TerraformResourceUsage         *terraform_resource_usage.Client
-	TerraformVersionUsage          *terraform_version_usage.Client
-	UsageStatistic                 *usage_statistic.Client
-	User                           *user.Client
-	Variable                       *variable.Client
-	VcsProvider                    *vcs_provider.Client
-	WebhookIntegration             *webhook_integration.Client
-	WebhookIntegrationDelivery     *webhook_integration_delivery.Client
-	WorkloadIdentityProvider       *workload_identity_provider.Client
-	Workspace                      *workspace.Client
-	Misc                           *misc.Client
+	AWSEventBridgeIntegration           *aws_event_bridge_integration.Client
+	AccessPolicy                        *access_policy.Client
+	AccessToken                         *access_token.Client
+	AccessTokenUsage                    *access_token_usage.Client
+	Account                             *account.Client
+	Agent                               *agent.Client
+	AgentPool                           *agent_pool.Client
+	AgentPoolMTLSCertificate            *agent_pool_mtls_certificate.Client
+	AiUsage                             *ai_usage.Client
+	Apply                               *apply.Client
+	BillingUsage                        *billing_usage.Client
+	CheckovIntegration                  *checkov_integration.Client
+	ConfigurationVersion                *configuration_version.Client
+	ContainerImage                      *container_image.Client
+	ContainerImageVersion               *container_image_version.Client
+	CostEstimate                        *cost_estimate.Client
+	DatadogIntegration                  *datadog_integration.Client
+	DockerIntegration                   *docker_integration.Client
+	DriftDetectionSchedule              *drift_detection_schedule.Client
+	Environment                         *environment.Client
+	EventDefinition                     *event_definition.Client
+	GPGKey                              *gpg_key.Client
+	Hook                                *hook.Client
+	HookEnvironmentLink                 *hook_environment_link.Client
+	InfracostIntegration                *infracost_integration.Client
+	Module                              *module.Client
+	ModuleNamespace                     *module_namespace.Client
+	ModuleTestProviderConfigurationLink *module_test_provider_configuration_link.Client
+	ModuleUsageNamespace                *module_usage_namespace.Client
+	ModuleVersion                       *module_version.Client
+	Permission                          *permission.Client
+	Plan                                *plan.Client
+	Policy                              *policy.Client
+	PolicyCheck                         *policy_check.Client
+	PolicyCheckResult                   *policy_check_result.Client
+	PolicyGroup                         *policy_group.Client
+	Provider                            *provider.Client
+	ProviderConfiguration               *provider_configuration.Client
+	ProviderConfigurationLink           *provider_configuration_link.Client
+	ProviderConfigurationParameter      *provider_configuration_parameter.Client
+	ProviderVersion                     *provider_version.Client
+	Role                                *role.Client
+	Run                                 *run.Client
+	RunScheduleRule                     *run_schedule_rule.Client
+	RunTrigger                          *run_trigger.Client
+	SSHKey                              *ssh_key.Client
+	SamlIntegration                     *saml_integration.Client
+	SecurityRules                       *security_rules.Client
+	ServiceAccount                      *service_account.Client
+	SlackConnection                     *slack_connection.Client
+	SlackIntegration                    *slack_integration.Client
+	SoftwareVersion                     *software_version.Client
+	StateVersion                        *state_version.Client
+	StorageProfile                      *storage_profile.Client
+	Tag                                 *tag.Client
+	Team                                *team.Client
+	TerraformModuleUsage                *terraform_module_usage.Client
+	TerraformModuleVersionUsage         *terraform_module_version_usage.Client
+	TerraformProviderUsage              *terraform_provider_usage.Client
+	TerraformProviderVersionUsage       *terraform_provider_version_usage.Client
+	TerraformResourceInstanceUsage      *terraform_resource_instance_usage.Client
+	TerraformResourceUsage              *terraform_resource_usage.Client
+	TerraformVersionUsage               *terraform_version_usage.Client
+	UsageStatistic                      *usage_statistic.Client
+	User                                *user.Client
+	Variable                            *variable.Client
+	VariableSet                         *variable_set.Client
+	VariableSetVariable                 *variable_set_variable.Client
+	VcsProvider                         *vcs_provider.Client
+	WebhookIntegration                  *webhook_integration.Client
+	WebhookIntegrationDelivery          *webhook_integration_delivery.Client
+	WizIntegration                      *wiz_integration.Client
+	WorkloadIdentityProvider            *workload_identity_provider.Client
+	Workspace                           *workspace.Client
+	Misc                                *misc.Client
 }
 
 // NewClient creates a new API client
@@ -148,70 +170,81 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 	httpClient := client.NewHTTPClient(baseURL, token, opts...)
 
 	return &Client{
-		httpClient:                     httpClient,
-		AWSEventBridgeIntegration:      aws_event_bridge_integration.New(httpClient),
-		AccessPolicy:                   access_policy.New(httpClient),
-		AccessToken:                    access_token.New(httpClient),
-		AccessTokenUsage:               access_token_usage.New(httpClient),
-		Account:                        account.New(httpClient),
-		Agent:                          agent.New(httpClient),
-		AgentPool:                      agent_pool.New(httpClient),
-		AiUsage:                        ai_usage.New(httpClient),
-		Apply:                          apply.New(httpClient),
-		BillingUsage:                   billing_usage.New(httpClient),
-		CheckovIntegration:             checkov_integration.New(httpClient),
-		ConfigurationVersion:           configuration_version.New(httpClient),
-		CostEstimate:                   cost_estimate.New(httpClient),
-		DatadogIntegration:             datadog_integration.New(httpClient),
-		DriftDetectionSchedule:         drift_detection_schedule.New(httpClient),
-		Environment:                    environment.New(httpClient),
-		EventDefinition:                event_definition.New(httpClient),
-		Hook:                           hook.New(httpClient),
-		HookEnvironmentLink:            hook_environment_link.New(httpClient),
-		InfracostIntegration:           infracost_integration.New(httpClient),
-		Module:                         module.New(httpClient),
-		ModuleNamespace:                module_namespace.New(httpClient),
-		ModuleUsageNamespace:           module_usage_namespace.New(httpClient),
-		ModuleVersion:                  module_version.New(httpClient),
-		Permission:                     permission.New(httpClient),
-		Plan:                           plan.New(httpClient),
-		Policy:                         policy.New(httpClient),
-		PolicyCheck:                    policy_check.New(httpClient),
-		PolicyCheckResult:              policy_check_result.New(httpClient),
-		PolicyGroup:                    policy_group.New(httpClient),
-		ProviderConfiguration:          provider_configuration.New(httpClient),
-		ProviderConfigurationLink:      provider_configuration_link.New(httpClient),
-		ProviderConfigurationParameter: provider_configuration_parameter.New(httpClient),
-		Role:                           role.New(httpClient),
-		Run:                            run.New(httpClient),
-		RunScheduleRule:                run_schedule_rule.New(httpClient),
-		RunTrigger:                     run_trigger.New(httpClient),
-		SSHKey:                         ssh_key.New(httpClient),
-		SamlIntegration:                saml_integration.New(httpClient),
-		SecurityRules:                  security_rules.New(httpClient),
-		ServiceAccount:                 service_account.New(httpClient),
-		SlackConnection:                slack_connection.New(httpClient),
-		SlackIntegration:               slack_integration.New(httpClient),
-		SoftwareVersion:                software_version.New(httpClient),
-		StateVersion:                   state_version.New(httpClient),
-		StorageProfile:                 storage_profile.New(httpClient),
-		Tag:                            tag.New(httpClient),
-		Team:                           team.New(httpClient),
-		TerraformModuleUsage:           terraform_module_usage.New(httpClient),
-		TerraformModuleVersionUsage:    terraform_module_version_usage.New(httpClient),
-		TerraformProviderUsage:         terraform_provider_usage.New(httpClient),
-		TerraformProviderVersionUsage:  terraform_provider_version_usage.New(httpClient),
-		TerraformResourceInstanceUsage: terraform_resource_instance_usage.New(httpClient),
-		TerraformResourceUsage:         terraform_resource_usage.New(httpClient),
-		TerraformVersionUsage:          terraform_version_usage.New(httpClient),
-		UsageStatistic:                 usage_statistic.New(httpClient),
-		User:                           user.New(httpClient),
-		Variable:                       variable.New(httpClient),
-		VcsProvider:                    vcs_provider.New(httpClient),
-		WebhookIntegration:             webhook_integration.New(httpClient),
-		WebhookIntegrationDelivery:     webhook_integration_delivery.New(httpClient),
-		WorkloadIdentityProvider:       workload_identity_provider.New(httpClient),
-		Workspace:                      workspace.New(httpClient),
-		Misc:                           misc.New(httpClient),
+		httpClient:                          httpClient,
+		AWSEventBridgeIntegration:           aws_event_bridge_integration.New(httpClient),
+		AccessPolicy:                        access_policy.New(httpClient),
+		AccessToken:                         access_token.New(httpClient),
+		AccessTokenUsage:                    access_token_usage.New(httpClient),
+		Account:                             account.New(httpClient),
+		Agent:                               agent.New(httpClient),
+		AgentPool:                           agent_pool.New(httpClient),
+		AgentPoolMTLSCertificate:            agent_pool_mtls_certificate.New(httpClient),
+		AiUsage:                             ai_usage.New(httpClient),
+		Apply:                               apply.New(httpClient),
+		BillingUsage:                        billing_usage.New(httpClient),
+		CheckovIntegration:                  checkov_integration.New(httpClient),
+		ConfigurationVersion:                configuration_version.New(httpClient),
+		ContainerImage:                      container_image.New(httpClient),
+		ContainerImageVersion:               container_image_version.New(httpClient),
+		CostEstimate:                        cost_estimate.New(httpClient),
+		DatadogIntegration:                  datadog_integration.New(httpClient),
+		DockerIntegration:                   docker_integration.New(httpClient),
+		DriftDetectionSchedule:              drift_detection_schedule.New(httpClient),
+		Environment:                         environment.New(httpClient),
+		EventDefinition:                     event_definition.New(httpClient),
+		GPGKey:                              gpg_key.New(httpClient),
+		Hook:                                hook.New(httpClient),
+		HookEnvironmentLink:                 hook_environment_link.New(httpClient),
+		InfracostIntegration:                infracost_integration.New(httpClient),
+		Module:                              module.New(httpClient),
+		ModuleNamespace:                     module_namespace.New(httpClient),
+		ModuleTestProviderConfigurationLink: module_test_provider_configuration_link.New(httpClient),
+		ModuleUsageNamespace:                module_usage_namespace.New(httpClient),
+		ModuleVersion:                       module_version.New(httpClient),
+		Permission:                          permission.New(httpClient),
+		Plan:                                plan.New(httpClient),
+		Policy:                              policy.New(httpClient),
+		PolicyCheck:                         policy_check.New(httpClient),
+		PolicyCheckResult:                   policy_check_result.New(httpClient),
+		PolicyGroup:                         policy_group.New(httpClient),
+		Provider:                            provider.New(httpClient),
+		ProviderConfiguration:               provider_configuration.New(httpClient),
+		ProviderConfigurationLink:           provider_configuration_link.New(httpClient),
+		ProviderConfigurationParameter:      provider_configuration_parameter.New(httpClient),
+		ProviderVersion:                     provider_version.New(httpClient),
+		Role:                                role.New(httpClient),
+		Run:                                 run.New(httpClient),
+		RunScheduleRule:                     run_schedule_rule.New(httpClient),
+		RunTrigger:                          run_trigger.New(httpClient),
+		SSHKey:                              ssh_key.New(httpClient),
+		SamlIntegration:                     saml_integration.New(httpClient),
+		SecurityRules:                       security_rules.New(httpClient),
+		ServiceAccount:                      service_account.New(httpClient),
+		SlackConnection:                     slack_connection.New(httpClient),
+		SlackIntegration:                    slack_integration.New(httpClient),
+		SoftwareVersion:                     software_version.New(httpClient),
+		StateVersion:                        state_version.New(httpClient),
+		StorageProfile:                      storage_profile.New(httpClient),
+		Tag:                                 tag.New(httpClient),
+		Team:                                team.New(httpClient),
+		TerraformModuleUsage:                terraform_module_usage.New(httpClient),
+		TerraformModuleVersionUsage:         terraform_module_version_usage.New(httpClient),
+		TerraformProviderUsage:              terraform_provider_usage.New(httpClient),
+		TerraformProviderVersionUsage:       terraform_provider_version_usage.New(httpClient),
+		TerraformResourceInstanceUsage:      terraform_resource_instance_usage.New(httpClient),
+		TerraformResourceUsage:              terraform_resource_usage.New(httpClient),
+		TerraformVersionUsage:               terraform_version_usage.New(httpClient),
+		UsageStatistic:                      usage_statistic.New(httpClient),
+		User:                                user.New(httpClient),
+		Variable:                            variable.New(httpClient),
+		VariableSet:                         variable_set.New(httpClient),
+		VariableSetVariable:                 variable_set_variable.New(httpClient),
+		VcsProvider:                         vcs_provider.New(httpClient),
+		WebhookIntegration:                  webhook_integration.New(httpClient),
+		WebhookIntegrationDelivery:          webhook_integration_delivery.New(httpClient),
+		WizIntegration:                      wiz_integration.New(httpClient),
+		WorkloadIdentityProvider:            workload_identity_provider.New(httpClient),
+		Workspace:                           workspace.New(httpClient),
+		Misc:                                misc.New(httpClient),
 	}
 }

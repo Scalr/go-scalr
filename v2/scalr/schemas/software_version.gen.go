@@ -21,6 +21,7 @@ const (
 	SoftwareVersionSoftwareTypeOpentofu   SoftwareVersionSoftwareType = "opentofu"
 	SoftwareVersionSoftwareTypeTerragrunt SoftwareVersionSoftwareType = "terragrunt"
 	SoftwareVersionSoftwareTypeCheckov    SoftwareVersionSoftwareType = "checkov"
+	SoftwareVersionSoftwareTypeWiz        SoftwareVersionSoftwareType = "wiz"
 )
 
 // SoftwareVersionStatus represents the type for SoftwareVersionStatus

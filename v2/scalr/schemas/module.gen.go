@@ -9,6 +9,16 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// ModuleSourceType represents the type for ModuleSourceType
+// The upstream source type for the module.
+type ModuleSourceType string
+
+// ModuleSourceType constants
+const (
+	ModuleSourceTypeVcs    ModuleSourceType = "vcs"
+	ModuleSourceTypeDocker ModuleSourceType = "docker"
+)
+
 // ModuleStatus represents the type for ModuleStatus
 // The Module's current status. Initial status: * `pending` - The initial status of a module once it has been created. Now Scalr will download the code from the VCS, and create a `module-version` resource for each matching Git tag. Ending statuses: * `no_version_tags` - a Module has been created, however the Module source repository has no tags. * `setup_complete` - a Module has been created, and at least one ModuleVersion has been successfully uploaded. Scalr assigns this status while some module-versions upload might be still in-progress. If you want to ensure a specific version was uploaded, you can poll [List Module Versions](module-versions.html#list-module-versions) for the `ok` status. * `errored` - Module has been created, however its synchronization has failed. Attribute `error-message` contains the details.
 type ModuleStatus string
@@ -49,6 +59,8 @@ type ModuleAttributes struct {
 	CreatedAt time.Time `json:"created-at"`
 	// The description of the module. By default, this is taken from the VCS repository description. For mono repos you likely want to override this behavior by passing this argument in a [Create Module](modules.html#create-a-module) operation.
 	Description string `json:"description"`
+	// Docker/OCI image repository path for OCI-backed modules.
+	DockerImage *string `json:"docker-image"`
 	// This field contains the error description, when this module's status is `errored`.
 	ErrorMessage *string `json:"error-message"`
 	// The module name.
@@ -57,9 +69,11 @@ type ModuleAttributes struct {
 	Provider string `json:"provider"`
 	// The `source` by which the module should be addressed from a HCL template.
 	Source string `json:"source"`
+	// The upstream source type for the module.
+	SourceType ModuleSourceType `json:"source-type"`
 	// The Module's current status. Initial status: * `pending` - The initial status of a module once it has been created. Now Scalr will download the code from the VCS, and create a `module-version` resource for each matching Git tag. Ending statuses: * `no_version_tags` - a Module has been created, however the Module source repository has no tags. * `setup_complete` - a Module has been created, and at least one ModuleVersion has been successfully uploaded. Scalr assigns this status while some module-versions upload might be still in-progress. If you want to ensure a specific version was uploaded, you can poll [List Module Versions](module-versions.html#list-module-versions) for the `ok` status. * `errored` - Module has been created, however its synchronization has failed. Attribute `error-message` contains the details.
-	Status  ModuleStatus  `json:"status"`
-	VcsRepo ModuleVcsRepo `json:"vcs-repo"`
+	Status  ModuleStatus   `json:"status"`
+	VcsRepo *ModuleVcsRepo `json:"vcs-repo"`
 }
 
 // ModuleRelationships holds the relationships for Module (response)
@@ -68,6 +82,8 @@ type ModuleRelationships struct {
 	Account *Account `json:"account"`
 	// The user who has created the module.
 	CreatedBy *User `json:"created-by"`
+	// Docker registry connection used by OCI-backed modules.
+	DockerIntegration *DockerIntegration `json:"docker-integration"`
 	// The relationship `environment` is deprecated. Use `namespace` instead.
 	Environment *Environment `json:"environment"`
 	// The module's latest version.
@@ -121,6 +137,24 @@ func (r *ModuleRelationships) UnmarshalJSON(data []byte) error {
 		}
 		if rel.Data != nil {
 			r.CreatedBy = &User{
+				ID:   rel.Data.ID,
+				Type: rel.Data.Type,
+			}
+		}
+	}
+	if raw, ok := temp["docker-integration"]; ok {
+		// To-one relationship
+		var rel struct {
+			Data *struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.DockerIntegration = &DockerIntegration{
 				ID:   rel.Data.ID,
 				Type: rel.Data.Type,
 			}
@@ -281,6 +315,18 @@ func (r *ModuleRelationships) PopulateIncludes(included []map[string]interface{}
 			}
 		}
 	}
+	// Populate to-one relationship: DockerIntegration
+	if r.DockerIntegration != nil && r.DockerIntegration.ID != "" {
+		key := r.DockerIntegration.Type + ":" + r.DockerIntegration.ID
+		if fullResource, ok := includedMap[key]; ok {
+			// Unmarshal the full resource
+			data, _ := json.Marshal(fullResource)
+			var full DockerIntegration
+			if err := json.Unmarshal(data, &full); err == nil {
+				r.DockerIntegration = &full
+			}
+		}
+	}
 	// Populate to-one relationship: Environment
 	if r.Environment != nil && r.Environment.ID != "" {
 		key := r.Environment.Type + ":" + r.Environment.ID
@@ -389,15 +435,21 @@ func (r ModuleRequest) GetResourceType() string {
 
 // ModuleAttributesRequest holds the attributes for Module (request)
 type ModuleAttributesRequest struct {
+	// Docker/OCI image repository path for OCI-backed modules.
+	DockerImage *value.Value[string] `json:"docker-image,omitempty"`
 	// The module name.
 	Name *value.Value[string] `json:"name,omitempty"`
 	// A name of a system, this module was written for. For multi-cloud modules this argument should match terraform provider name (ex: `aws` or `google`), in other cases the convention is to name it `system`
-	Provider *value.Value[string]               `json:"provider,omitempty"`
-	VcsRepo  *value.Value[ModuleVcsRepoRequest] `json:"vcs-repo,omitempty"`
+	Provider *value.Value[string] `json:"provider,omitempty"`
+	// The upstream source type for the module.
+	SourceType *value.Value[ModuleSourceType]     `json:"source-type,omitempty"`
+	VcsRepo    *value.Value[ModuleVcsRepoRequest] `json:"vcs-repo,omitempty"`
 }
 
 // ModuleRelationshipsRequest holds the relationships for Module (request)
 type ModuleRelationshipsRequest struct {
+	// Docker registry connection used by OCI-backed modules.
+	DockerIntegration *value.Value[DockerIntegration] `json:"docker-integration,omitempty"`
 	// The relationship `environment` is deprecated. Use `namespace` instead.
 	Environment *value.Value[Environment] `json:"environment,omitempty"`
 	// The module namespace this module belongs to.

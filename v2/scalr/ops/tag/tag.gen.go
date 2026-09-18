@@ -137,6 +137,8 @@ func (c *Client) ListTagsRaw(ctx context.Context, opts *ListTagsOptions) (*clien
 		if opts.Query != "" {
 			params.Set("query", opts.Query)
 		}
+		// Handle parameter: Fields (map[string]interface{})
+		// Complex type map[string]interface{} - skip for now
 		// Add filters
 		for k, v := range opts.Filter {
 			params.Set("filter["+k+"]", v)
@@ -338,7 +340,9 @@ type ListTagsOptions struct {
 	// The comma-separated list of attributes.
 	Sort []string
 	// Query string
-	Query  string
+	Query string
+	// The value of the fields[resource-type] parameter is a comma-separated list that refers to the name of the fields to be returned for the resource. An empty value indicates that no fields should be returned.
+	Fields map[string]interface{}
 	Filter map[string]string
 }
 

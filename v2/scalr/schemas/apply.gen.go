@@ -54,6 +54,10 @@ type ApplyAttributes struct {
 	ResourceChanges *int `json:"resource-changes"`
 	// The number of resources destroyed.
 	ResourceDestructions *int `json:"resource-destructions"`
+	// The number of resources forgotten.
+	ResourceForgets *int `json:"resource-forgets"`
+	// The number of resources imported.
+	ResourceImports *int `json:"resource-imports"`
 	// The Apply's current status. Transient states: * `pending` - Apply has been created but not yet `queued`. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Apply canceled in some way. * `errored` - An error occurred during the apply. See `output` for details. * `finished` - Apply completed successfully. * `unreachable` - Apply will not be run.
 	Status ApplyStatus `json:"status"`
 	// Date/Time of transition to each status that has occurred.
@@ -97,6 +101,10 @@ type ApplyAttributesRequest struct {
 	ResourceChanges *value.Value[int] `json:"resource-changes,omitempty"`
 	// The number of resources destroyed.
 	ResourceDestructions *value.Value[int] `json:"resource-destructions,omitempty"`
+	// The number of resources forgotten.
+	ResourceForgets *value.Value[int] `json:"resource-forgets,omitempty"`
+	// The number of resources imported.
+	ResourceImports *value.Value[int] `json:"resource-imports,omitempty"`
 	// The Apply's current status. Transient states: * `pending` - Apply has been created but not yet `queued`. * `queued` - Queued and waiting for capacity/and or quota to be available. * `running` - Running. Final states: * `canceled` - Apply canceled in some way. * `errored` - An error occurred during the apply. See `output` for details. * `finished` - Apply completed successfully. * `unreachable` - Apply will not be run.
 	Status *value.Value[ApplyStatus] `json:"status,omitempty"`
 	// Date/Time of transition to each status that has occurred.
