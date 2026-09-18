@@ -383,6 +383,59 @@ func TestProviderConfigurationCreateShared(t *testing.T) {
 	})
 }
 
+func TestProviderConfigurationCreateAllowedInModuleTest(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+
+	t.Run("success", func(t *testing.T) {
+		options := ProviderConfigurationCreateOptions{
+			Account:               &Account{ID: defaultAccountID},
+			Name:                  String("consul_module_test"),
+			ProviderName:          String("consul"),
+			IsShared:              Bool(true),
+			IsAllowedInModuleTest: Bool(true),
+		}
+		pcfg, err := client.ProviderConfigurations.Create(ctx, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.ProviderConfigurations.Delete(ctx, pcfg.ID)
+
+		pcfg, err = client.ProviderConfigurations.Read(ctx, pcfg.ID)
+		require.NoError(t, err)
+
+		assert.True(t, pcfg.IsAllowedInModuleTest)
+		assert.False(t, pcfg.IsUsedInModuleTest)
+	})
+}
+
+func TestProviderConfigurationUpdateAllowedInModuleTest(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+
+	createOptions := ProviderConfigurationCreateOptions{
+		Account:      &Account{ID: defaultAccountID},
+		Name:         String("consul_module_test_update"),
+		ProviderName: String("consul"),
+		IsShared:     Bool(true),
+	}
+	pcfg, err := client.ProviderConfigurations.Create(ctx, createOptions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.ProviderConfigurations.Delete(ctx, pcfg.ID)
+	assert.False(t, pcfg.IsAllowedInModuleTest)
+
+	t.Run("success", func(t *testing.T) {
+		updateOptions := ProviderConfigurationUpdateOptions{
+			IsAllowedInModuleTest: Bool(true),
+		}
+		updated, err := client.ProviderConfigurations.Update(ctx, pcfg.ID, updateOptions)
+		require.NoError(t, err)
+		assert.True(t, updated.IsAllowedInModuleTest)
+	})
+}
+
 func TestProviderConfigurationRead(t *testing.T) {
 	client := testClient(t)
 	ctx := context.Background()
