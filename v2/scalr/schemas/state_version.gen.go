@@ -35,25 +35,29 @@ func (r StateVersion) GetResourceType() string {
 type StateVersionAttributes struct {
 	// The resource creation timestamp.
 	CreatedAt time.Time `json:"created-at"`
-	Force     bool      `json:"force"`
+	// The error description, when the state version's status is `errored` or `discarded`
+	ErrorMessage *string `json:"error-message"`
+	Force        bool    `json:"force"`
 	// Lineage of the state version. Should match the lineage extracted from the `terraform.tfstate`.
 	Lineage *string `json:"lineage"`
 	// The MD5 hash of the terraform.tfstate.
 	Md5 string `json:"md5"`
-	// The list of modules.
+	// The list of modules. This attribute is deprecated and will be removed. Parse the state file from blob download link instead.
 	Modules map[string]interface{} `json:"modules"`
 	// The list of output values.
 	Outputs *[]map[string]interface{} `json:"outputs"`
-	// The list of providers.
+	// The list of providers. This attribute is deprecated and will be removed. Parse the state file from blob download link instead.
 	Providers map[string]interface{} `json:"providers"`
-	// The list of resources.
+	// The list of resources. This attribute is deprecated and will be removed. Parse the state file from blob download link instead.
 	Resources []map[string]interface{} `json:"resources"`
 	// The serial of the state version which must match the `serial` value from the `terraform.tfstate`.
 	Serial int `json:"serial"`
-	// Size of the `terraform.tfstate` in bytes.
-	Size int `json:"size"`
+	// Size of the `terraform.tfstate` in bytes. `null` while `status` is `pending`.
+	Size *int `json:"size"`
 	// Base64 encoded `terraform.tfstate`
 	State *string `json:"state"`
+	// The state version's processing status. * `pending` - created for a direct-to-storage upload, waiting for the state to be uploaded. * `finalized` - the state has been uploaded and processed. * `errored` - the uploaded state failed validation or processing. * `discarded` - superseded by a newer state version before it could be finalized.
+	Status string `json:"status"`
 }
 
 // StateVersionRelationships holds the relationships for StateVersion (response)
