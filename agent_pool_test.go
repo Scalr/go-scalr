@@ -268,7 +268,7 @@ func TestAgentPoolsCreate(t *testing.T) {
 		assert.Equal(
 			t,
 			ResourceNotFoundError{
-				Message: fmt.Sprintf("Invalid Relationship\n\nEnvironment with ID '%s' not found or user unauthorized.", envID),
+				Message: fmt.Sprintf("Invalid Relationship (source: /data/relationships/environment)\n\nEnvironment with ID '%s' not found or user unauthorized.", envID),
 			}.Error(),
 			err.Error(),
 		)
@@ -306,7 +306,7 @@ func TestAgentPoolsCreate(t *testing.T) {
 		assert.Equal(
 			t,
 			ResourceNotFoundError{
-				Message: fmt.Sprintf("Invalid Relationship\n\nRelationship 'workspaces' with ID '%s' not found or user unauthorized.", wsID),
+				Message: fmt.Sprintf("Invalid Relationship (source: /data/relationships/workspaces)\n\nRelationship 'workspaces' with ID '%s' not found or user unauthorized.", wsID),
 			}.Error(),
 			err.Error(),
 		)

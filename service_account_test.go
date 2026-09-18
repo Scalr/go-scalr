@@ -115,7 +115,7 @@ func TestServiceAccountsCreate(t *testing.T) {
 			Name:    String(" "),
 			Account: &Account{ID: defaultAccountID},
 		})
-		assert.EqualError(t, err, "Invalid Attribute\n\nService account name can not be empty.")
+		assert.EqualError(t, err, "Invalid Attribute (source: /data/attributes/name)\n\nService account name can not be empty.")
 	})
 
 	t.Run("when options has account missing", func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestServiceAccountsCreate(t *testing.T) {
 		assert.Equal(
 			t,
 			ResourceNotFoundError{
-				Message: fmt.Sprintf("Invalid Relationship\n\nAccount with ID '%s' not found or user unauthorized.", accountId),
+				Message: fmt.Sprintf("Invalid Relationship (source: /data/relationships/account)\n\nAccount with ID '%s' not found or user unauthorized.", accountId),
 			}.Error(),
 			err.Error(),
 		)

@@ -553,9 +553,22 @@ func checkResponseCode(r *http.Response) error {
 		}
 	}
 
-	// Decode the error payload.
-	errPayload := &jsonapi.ErrorsPayload{}
-	err := json.NewDecoder(r.Body).Decode(errPayload)
+	// Decode the error payload. Use a local struct to capture source.pointer,
+	// which the jsonapi.ErrorObject type does not include.
+	type errorSource struct {
+		Pointer string `json:"pointer"`
+	}
+	type errorObject struct {
+		Title  string      `json:"title"`
+		Detail string      `json:"detail"`
+		Source errorSource `json:"source"`
+	}
+	type errorsPayload struct {
+		Errors []errorObject `json:"errors"`
+	}
+
+	var errPayload errorsPayload
+	err := json.NewDecoder(r.Body).Decode(&errPayload)
 	if err != nil || len(errPayload.Errors) == 0 {
 		if r.StatusCode == 404 {
 			return ResourceNotFoundError{}
@@ -567,11 +580,14 @@ func checkResponseCode(r *http.Response) error {
 	// Parse and format the errors.
 	var errs []string
 	for _, e := range errPayload.Errors {
-		if e.Detail == "" {
-			errs = append(errs, e.Title)
-		} else {
-			errs = append(errs, fmt.Sprintf("%s\n\n%s", e.Title, e.Detail))
+		msg := e.Title
+		if e.Source.Pointer != "" {
+			msg += fmt.Sprintf(" (source: %s)", e.Source.Pointer)
 		}
+		if e.Detail != "" {
+			msg += fmt.Sprintf("\n\n%s", e.Detail)
+		}
+		errs = append(errs, msg)
 	}
 
 	if r.StatusCode == 404 {
