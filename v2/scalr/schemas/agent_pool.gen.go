@@ -4,6 +4,7 @@ package schemas
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
@@ -51,14 +52,22 @@ type AgentPoolAttributes struct {
 	IsScalrManaged bool `json:"is-scalr-managed"`
 	// Indicates whether the pool is available in any environment of the account without being directly linked to it.
 	IsShared bool `json:"is-shared"`
+	// Indicates whether mTLS client certificate enforcement is enabled for this pool.
+	MtlsEnforcement bool `json:"mtls-enforcement"`
+	// The active mTLS certificate fingerprints accepted for this pool.
+	MtlsFingerprints []string `json:"mtls-fingerprints"`
 	// The name of the agent pool. This must be unique within a Scalr scope (e.g. account or environment).
 	Name string `json:"name"`
 	// Indicates whether the VCS support is enabled for agents in the pool.
 	VcsEnabled bool `json:"vcs-enabled"`
+	// The number of consecutive webhook delivery failures.
+	WebhookConsecutiveFailures *int `json:"webhook-consecutive-failures"`
 	// Indicates whether the serverless agent support is enabled. If enabled, provided url will be informed about new work available for agent.
 	WebhookEnabled bool `json:"webhook-enabled"`
 	// A list of HTTP headers to be included in the request.
 	WebhookHeaders *[]map[string]interface{} `json:"webhook-headers"`
+	// The UTC datetime of the last successful webhook delivery.
+	WebhookLastDeliveryAt *time.Time `json:"webhook-last-delivery-at"`
 	// HTTP(s) destination URL.
 	WebhookUrl *string `json:"webhook-url"`
 }

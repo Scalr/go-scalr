@@ -42,6 +42,7 @@ func (r BillingPlan) GetResourceType() string {
 
 // BillingPlanAttributes holds the attributes for BillingPlan (response)
 type BillingPlanAttributes struct {
+	AddonsNumber int                      `json:"addons-number"`
 	Amount       int                      `json:"amount"`
 	IncludedRuns *int                     `json:"included-runs"`
 	PlanType     BillingPlanPlanType      `json:"plan-type"`
@@ -77,6 +78,7 @@ func (r BillingPlanRequest) GetResourceType() string {
 
 // BillingPlanAttributesRequest holds the attributes for BillingPlan (request)
 type BillingPlanAttributesRequest struct {
+	AddonsNumber *value.Value[int]                      `json:"addons-number,omitempty"`
 	Amount       *value.Value[int]                      `json:"amount,omitempty"`
 	IncludedRuns *value.Value[int]                      `json:"included-runs,omitempty"`
 	PlanType     *value.Value[BillingPlanPlanType]      `json:"plan-type,omitempty"`
