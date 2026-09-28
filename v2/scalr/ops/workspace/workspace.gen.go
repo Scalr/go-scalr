@@ -277,7 +277,7 @@ func (c *Client) DeleteWorkspaceTags(ctx context.Context, workspace string, req 
 	return nil
 }
 
-// This endpoint removes provided variable sets from the workspace.
+// This endpoint removes provided variable sets from the workspace. Variable sets that are not applied to the workspace are ignored.
 func (c *Client) DeleteWorkspaceVariableSetsRaw(ctx context.Context, workspace string, req []schemas.VariableSet) (*client.Response, error) {
 	path := "/workspaces/{workspace}/relationships/var-sets"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
@@ -298,7 +298,7 @@ func (c *Client) DeleteWorkspaceVariableSetsRaw(ctx context.Context, workspace s
 	return &client.Response{Response: httpResp}, nil
 }
 
-// This endpoint removes provided variable sets from the workspace.
+// This endpoint removes provided variable sets from the workspace. Variable sets that are not applied to the workspace are ignored.
 func (c *Client) DeleteWorkspaceVariableSets(ctx context.Context, workspace string, req []schemas.VariableSet) error {
 	resp, err := c.DeleteWorkspaceVariableSetsRaw(ctx, workspace, req)
 	if err != nil {

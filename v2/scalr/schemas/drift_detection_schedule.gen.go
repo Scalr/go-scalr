@@ -28,6 +28,20 @@ const (
 	DriftDetectionScheduleScheduleWeekly DriftDetectionScheduleSchedule = "weekly"
 )
 
+// DriftDetectionScheduleTimeWindow represents the type for DriftDetectionScheduleTimeWindow
+// Preferred UTC time window within which drift checks are scheduled.
+type DriftDetectionScheduleTimeWindow string
+
+// DriftDetectionScheduleTimeWindow constants
+const (
+	DriftDetectionScheduleTimeWindow00000400 DriftDetectionScheduleTimeWindow = "00:00-04:00"
+	DriftDetectionScheduleTimeWindow04000800 DriftDetectionScheduleTimeWindow = "04:00-08:00"
+	DriftDetectionScheduleTimeWindow08001200 DriftDetectionScheduleTimeWindow = "08:00-12:00"
+	DriftDetectionScheduleTimeWindow12001600 DriftDetectionScheduleTimeWindow = "12:00-16:00"
+	DriftDetectionScheduleTimeWindow16002000 DriftDetectionScheduleTimeWindow = "16:00-20:00"
+	DriftDetectionScheduleTimeWindow20002400 DriftDetectionScheduleTimeWindow = "20:00-24:00"
+)
+
 // Response version - used when unmarshalling from API responses
 
 type DriftDetectionSchedule struct {
@@ -56,6 +70,8 @@ type DriftDetectionScheduleAttributes struct {
 	RunMode DriftDetectionScheduleRunMode `json:"run-mode"`
 	// The schedule of the drift detection.
 	Schedule DriftDetectionScheduleSchedule `json:"schedule"`
+	// Preferred UTC time window within which drift checks are scheduled.
+	TimeWindow *DriftDetectionScheduleTimeWindow `json:"time-window"`
 	// The workspace filters to monitor for drift.
 	WorkspaceFilters DriftDetectionScheduleWorkspaceFilters `json:"workspace-filters"`
 }
@@ -160,6 +176,8 @@ type DriftDetectionScheduleAttributesRequest struct {
 	RunMode *value.Value[DriftDetectionScheduleRunMode] `json:"run-mode,omitempty"`
 	// The schedule of the drift detection.
 	Schedule *value.Value[DriftDetectionScheduleSchedule] `json:"schedule,omitempty"`
+	// Preferred UTC time window within which drift checks are scheduled.
+	TimeWindow *value.Value[DriftDetectionScheduleTimeWindow] `json:"time-window,omitempty"`
 	// The workspace filters to monitor for drift.
 	WorkspaceFilters *value.Value[DriftDetectionScheduleWorkspaceFiltersRequest] `json:"workspace-filters,omitempty"`
 }

@@ -80,14 +80,14 @@ const (
 	ProviderConfigurationGoogleAuthTypeOidc              ProviderConfigurationGoogleAuthType = "oidc"
 )
 
-// ProviderConfigurationGoogleDefaultLabelsStrategy represents the type for ProviderConfigurationGoogleDefaultLabelsStrategy
+// ProviderConfigurationGoogleDefaultLabelStrategy represents the type for ProviderConfigurationGoogleDefaultLabelStrategy
 // On duplicate key behaviour for default labels. Available options: - `skip`: the existing labels will not be changed - `update`: the existing labels will be replaced with the new one
-type ProviderConfigurationGoogleDefaultLabelsStrategy string
+type ProviderConfigurationGoogleDefaultLabelStrategy string
 
-// ProviderConfigurationGoogleDefaultLabelsStrategy constants
+// ProviderConfigurationGoogleDefaultLabelStrategy constants
 const (
-	ProviderConfigurationGoogleDefaultLabelsStrategySkip   ProviderConfigurationGoogleDefaultLabelsStrategy = "skip"
-	ProviderConfigurationGoogleDefaultLabelsStrategyUpdate ProviderConfigurationGoogleDefaultLabelsStrategy = "update"
+	ProviderConfigurationGoogleDefaultLabelStrategySkip   ProviderConfigurationGoogleDefaultLabelStrategy = "skip"
+	ProviderConfigurationGoogleDefaultLabelStrategyUpdate ProviderConfigurationGoogleDefaultLabelStrategy = "update"
 )
 
 // ProviderConfigurationStatus represents the type for ProviderConfigurationStatus
@@ -168,10 +168,10 @@ type ProviderConfigurationAttributes struct {
 	GoogleAuthType *ProviderConfigurationGoogleAuthType `json:"google-auth-type"`
 	// Service account key file in JSON format.
 	GoogleCredentials *string `json:"google-credentials"`
+	// On duplicate key behaviour for default labels. Available options: - `skip`: the existing labels will not be changed - `update`: the existing labels will be replaced with the new one
+	GoogleDefaultLabelStrategy *ProviderConfigurationGoogleDefaultLabelStrategy `json:"google-default-label-strategy"`
 	// Default labels to be applied to all resources created by this provider configuration.
 	GoogleDefaultLabels *map[string]interface{} `json:"google-default-labels"`
-	// On duplicate key behaviour for default labels. Available options: - `skip`: the existing labels will not be changed - `update`: the existing labels will be replaced with the new one
-	GoogleDefaultLabelsStrategy *ProviderConfigurationGoogleDefaultLabelsStrategy `json:"google-default-labels-strategy"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.
 	GoogleProject *string `json:"google-project"`
 	// The service account email Scalr will use when authenticating to GCP.
@@ -495,10 +495,10 @@ type ProviderConfigurationAttributesRequest struct {
 	GoogleAuthType *value.Value[ProviderConfigurationGoogleAuthType] `json:"google-auth-type,omitempty"`
 	// Service account key file in JSON format.
 	GoogleCredentials *value.Value[string] `json:"google-credentials,omitempty"`
+	// On duplicate key behaviour for default labels. Available options: - `skip`: the existing labels will not be changed - `update`: the existing labels will be replaced with the new one
+	GoogleDefaultLabelStrategy *value.Value[ProviderConfigurationGoogleDefaultLabelStrategy] `json:"google-default-label-strategy,omitempty"`
 	// Default labels to be applied to all resources created by this provider configuration.
 	GoogleDefaultLabels *value.Value[map[string]interface{}] `json:"google-default-labels,omitempty"`
-	// On duplicate key behaviour for default labels. Available options: - `skip`: the existing labels will not be changed - `update`: the existing labels will be replaced with the new one
-	GoogleDefaultLabelsStrategy *value.Value[ProviderConfigurationGoogleDefaultLabelsStrategy] `json:"google-default-labels-strategy,omitempty"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.
 	GoogleProject *value.Value[string] `json:"google-project,omitempty"`
 	// The service account email Scalr will use when authenticating to GCP.

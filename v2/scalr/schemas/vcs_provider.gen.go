@@ -83,6 +83,8 @@ type VcsProviderAttributes struct {
 	DraftPrRunsEnabled bool `json:"draft-pr-runs-enabled"`
 	// Contains error message, if the connection to VCS provider is broken.
 	ErrorMessage *string `json:"error-message"`
+	// Repository IDs that returned 403 for this VCS provider.
+	InaccessibleRepos []string `json:"inaccessible-repos"`
 	// Indicates whether the VCS provider can be used in any account environments or only linked one.
 	IsShared bool `json:"is-shared"`
 	// VCS provider name, which must be unique within the account.
@@ -93,7 +95,7 @@ type VcsProviderAttributes struct {
 	PrMergeCommentsEnabled bool `json:"pr-merge-comments-enabled"`
 	// Access token for an API client for using to connect to the VCS Provider.
 	Token *string `json:"token"`
-	// The URL to the VCS provider installation. Required for GitHub Enterprise, GitLab Enterprise and Bitbucket Data Center.
+	// The URL to the VCS provider installation. Required for GitHub Enterprise, GitLab Enterprise and Bitbucket Data Center. For GitHub it may be set to a GitHub Enterprise Cloud with data residency tenant URL (`https://<subdomain>.ghe.com`).
 	Url *string `json:"url"`
 	// Username for personal_token auth type. This field is required for bitbucket_enterprise provider.
 	Username *string `json:"username"`
@@ -292,7 +294,7 @@ type VcsProviderAttributesRequest struct {
 	PrMergeCommentsEnabled *value.Value[bool] `json:"pr-merge-comments-enabled,omitempty"`
 	// Access token for an API client for using to connect to the VCS Provider.
 	Token *value.Value[string] `json:"token,omitempty"`
-	// The URL to the VCS provider installation. Required for GitHub Enterprise, GitLab Enterprise and Bitbucket Data Center.
+	// The URL to the VCS provider installation. Required for GitHub Enterprise, GitLab Enterprise and Bitbucket Data Center. For GitHub it may be set to a GitHub Enterprise Cloud with data residency tenant URL (`https://<subdomain>.ghe.com`).
 	Url *value.Value[string] `json:"url,omitempty"`
 	// Username for personal_token auth type. This field is required for bitbucket_enterprise provider.
 	Username *value.Value[string] `json:"username,omitempty"`

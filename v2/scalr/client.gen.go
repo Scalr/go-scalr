@@ -10,12 +10,15 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/account"
 	"github.com/scalr/go-scalr/v2/scalr/ops/agent"
 	"github.com/scalr/go-scalr/v2/scalr/ops/agent_pool"
+	"github.com/scalr/go-scalr/v2/scalr/ops/agent_pool_mtls_certificate"
 	"github.com/scalr/go-scalr/v2/scalr/ops/ai_usage"
 	"github.com/scalr/go-scalr/v2/scalr/ops/apply"
 	"github.com/scalr/go-scalr/v2/scalr/ops/aws_event_bridge_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/billing_usage"
 	"github.com/scalr/go-scalr/v2/scalr/ops/checkov_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/configuration_version"
+	"github.com/scalr/go-scalr/v2/scalr/ops/container_image"
+	"github.com/scalr/go-scalr/v2/scalr/ops/container_image_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/cost_estimate"
 	"github.com/scalr/go-scalr/v2/scalr/ops/datadog_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/docker_integration"
@@ -73,6 +76,7 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/vcs_provider"
 	"github.com/scalr/go-scalr/v2/scalr/ops/webhook_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/webhook_integration_delivery"
+	"github.com/scalr/go-scalr/v2/scalr/ops/wiz_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/workload_identity_provider"
 	"github.com/scalr/go-scalr/v2/scalr/ops/workspace"
 )
@@ -90,11 +94,14 @@ type Client struct {
 	Account                             *account.Client
 	Agent                               *agent.Client
 	AgentPool                           *agent_pool.Client
+	AgentPoolMTLSCertificate            *agent_pool_mtls_certificate.Client
 	AiUsage                             *ai_usage.Client
 	Apply                               *apply.Client
 	BillingUsage                        *billing_usage.Client
 	CheckovIntegration                  *checkov_integration.Client
 	ConfigurationVersion                *configuration_version.Client
+	ContainerImage                      *container_image.Client
+	ContainerImageVersion               *container_image_version.Client
 	CostEstimate                        *cost_estimate.Client
 	DatadogIntegration                  *datadog_integration.Client
 	DockerIntegration                   *docker_integration.Client
@@ -151,6 +158,7 @@ type Client struct {
 	VcsProvider                         *vcs_provider.Client
 	WebhookIntegration                  *webhook_integration.Client
 	WebhookIntegrationDelivery          *webhook_integration_delivery.Client
+	WizIntegration                      *wiz_integration.Client
 	WorkloadIdentityProvider            *workload_identity_provider.Client
 	Workspace                           *workspace.Client
 	Misc                                *misc.Client
@@ -170,11 +178,14 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		Account:                             account.New(httpClient),
 		Agent:                               agent.New(httpClient),
 		AgentPool:                           agent_pool.New(httpClient),
+		AgentPoolMTLSCertificate:            agent_pool_mtls_certificate.New(httpClient),
 		AiUsage:                             ai_usage.New(httpClient),
 		Apply:                               apply.New(httpClient),
 		BillingUsage:                        billing_usage.New(httpClient),
 		CheckovIntegration:                  checkov_integration.New(httpClient),
 		ConfigurationVersion:                configuration_version.New(httpClient),
+		ContainerImage:                      container_image.New(httpClient),
+		ContainerImageVersion:               container_image_version.New(httpClient),
 		CostEstimate:                        cost_estimate.New(httpClient),
 		DatadogIntegration:                  datadog_integration.New(httpClient),
 		DockerIntegration:                   docker_integration.New(httpClient),
@@ -231,6 +242,7 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		VcsProvider:                         vcs_provider.New(httpClient),
 		WebhookIntegration:                  webhook_integration.New(httpClient),
 		WebhookIntegrationDelivery:          webhook_integration_delivery.New(httpClient),
+		WizIntegration:                      wiz_integration.New(httpClient),
 		WorkloadIdentityProvider:            workload_identity_provider.New(httpClient),
 		Workspace:                           workspace.New(httpClient),
 		Misc:                                misc.New(httpClient),

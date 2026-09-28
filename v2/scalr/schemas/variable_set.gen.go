@@ -10,7 +10,7 @@ import (
 )
 
 // Response version - used when unmarshalling from API responses
-// A named container of variables. Variable sets can be granted access to environments and applied to workspaces.
+// A named container of variables. Variable sets can be granted access to environments and applied to workspaces. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[var-sets]`: * applied-at * applied-by-email
 type VariableSet struct {
 	ID            string                   `json:"id"`
 	Type          string                   `json:"type"`
@@ -33,6 +33,10 @@ func (r VariableSet) GetResourceType() string {
 
 // VariableSetAttributes holds the attributes for VariableSet (response)
 type VariableSetAttributes struct {
+	// UTC timestamp when this variable set was applied to the workspace. Only present when filtering by a single workspace.
+	AppliedAt *time.Time `json:"applied-at"`
+	// Email of the user who applied this variable set to the workspace. Only present when filtering by a single workspace.
+	AppliedByEmail *string `json:"applied-by-email"`
 	// Optional description of the variable set.
 	Description *string `json:"description"`
 	// If true, the variable set is available in all current and future environments of the account without explicitly linking it to each environment.
@@ -190,7 +194,7 @@ func (r *VariableSetRelationships) PopulateIncludes(included []map[string]interf
 }
 
 // Request version - used when marshalling for API requests
-// A named container of variables. Variable sets can be granted access to environments and applied to workspaces. (for requests)
+// A named container of variables. Variable sets can be granted access to environments and applied to workspaces. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[var-sets]`: * applied-at * applied-by-email (for requests)
 type VariableSetRequest struct {
 	ID            string                          `json:"id,omitempty"`
 	Type          string                          `json:"type,omitempty"`
