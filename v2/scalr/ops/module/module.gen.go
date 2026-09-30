@@ -389,7 +389,7 @@ type ListModulesOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	// Query string, search by id, name, provider, and submodules recursively
+	// Query string, search by id, name, provider, namespace name, and submodules recursively
 	Query string
 	// The comma-separated list of relationship paths.
 	Include []string
