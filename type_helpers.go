@@ -59,3 +59,8 @@ func AwsDefaultTagsStrategyPtr(v AwsDefaultTagsStrategy) *AwsDefaultTagsStrategy
 func GoogleDefaultLabelsStrategyPtr(v GoogleDefaultLabelsStrategy) *GoogleDefaultLabelsStrategy {
 	return &v
 }
+
+// ModuleTestFailureBehaviorPtr returns a pointer to the given ModuleTestFailureBehavior
+func ModuleTestFailureBehaviorPtr(v ModuleTestFailureBehavior) *ModuleTestFailureBehavior {
+	return &v
+}
