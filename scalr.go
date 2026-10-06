@@ -115,52 +115,54 @@ type Client struct {
 	retryLogHook      RetryLogHook
 	retryServerErrors bool
 
-	AccessPolicies                  AccessPolicies
-	AccessTokens                    AccessTokens
-	AccountUsers                    AccountUsers
-	Accounts                        Accounts
-	AgentPoolTokens                 AgentPoolTokens
-	AgentPools                      AgentPools
-	AssumeServiceAccountPolicies    AssumeServiceAccountPolicies
-	ConfigurationVersions           ConfigurationVersions
-	CheckovIntegrations             CheckovIntegrations
-	DriftDetections                 DriftDetections
-	EnvironmentHooks                EnvironmentHooks
-	EnvironmentTags                 EnvironmentTags
-	Environments                    Environments
-	EventBridgeIntegrations         EventBridgeIntegrations
-	FederatedEnvironments           FederatedEnvironments
-	Hooks                           Hooks
-	InfracostIntegrations           InfracostIntegrations
-	ModuleNamespaces                ModuleNamespaces
-	ModuleVersions                  ModuleVersions
-	Modules                         Modules
-	PolicyGroupEnvironments         PolicyGroupEnvironments
-	PolicyGroups                    PolicyGroups
-	ProviderConfigurationLinks      ProviderConfigurationLinks
-	ProviderConfigurationParameters ProviderConfigurationParameters
-	ProviderConfigurations          ProviderConfigurations
-	RemoteStateConsumers            RemoteStateConsumers
-	Roles                           Roles
-	RunScheduleRules                RunScheduleRules
-	RunTriggers                     RunTriggers
-	Runs                            Runs
-	SSHKeys                         SSHKeys
-	SSHKeysLinks                    SSHKeysLinks
-	ServiceAccountTokens            ServiceAccountTokens
-	ServiceAccounts                 ServiceAccounts
-	SlackIntegrations               SlackIntegrations
-	StorageProfiles                 StorageProfiles
-	Tags                            Tags
-	Teams                           Teams
-	Users                           Users
-	Variables                       Variables
-	VcsProviders                    VcsProviders
-	VcsRevisions                    VcsRevisions
-	WebhookIntegrations             WebhookIntegrations
-	WorkloadIdentityProviders       WorkloadIdentityProviders
-	WorkspaceTags                   WorkspaceTags
-	Workspaces                      Workspaces
+	AccessPolicies                       AccessPolicies
+	AccessTokens                         AccessTokens
+	AccountUsers                         AccountUsers
+	Accounts                             Accounts
+	AgentPoolTokens                      AgentPoolTokens
+	AgentPools                           AgentPools
+	AssumeServiceAccountPolicies         AssumeServiceAccountPolicies
+	ConfigurationVersions                ConfigurationVersions
+	CheckovIntegrations                  CheckovIntegrations
+	DriftDetections                      DriftDetections
+	EnvironmentHooks                     EnvironmentHooks
+	EnvironmentTags                      EnvironmentTags
+	Environments                         Environments
+	EventBridgeIntegrations              EventBridgeIntegrations
+	FederatedEnvironments                FederatedEnvironments
+	Hooks                                Hooks
+	InfracostIntegrations                InfracostIntegrations
+	ModuleNamespaces                     ModuleNamespaces
+	ModuleTestConfigurations             ModuleTestConfigurations
+	ModuleTestProviderConfigurationLinks ModuleTestProviderConfigurationLinks
+	ModuleVersions                       ModuleVersions
+	Modules                              Modules
+	PolicyGroupEnvironments              PolicyGroupEnvironments
+	PolicyGroups                         PolicyGroups
+	ProviderConfigurationLinks           ProviderConfigurationLinks
+	ProviderConfigurationParameters      ProviderConfigurationParameters
+	ProviderConfigurations               ProviderConfigurations
+	RemoteStateConsumers                 RemoteStateConsumers
+	Roles                                Roles
+	RunScheduleRules                     RunScheduleRules
+	RunTriggers                          RunTriggers
+	Runs                                 Runs
+	SSHKeys                              SSHKeys
+	SSHKeysLinks                         SSHKeysLinks
+	ServiceAccountTokens                 ServiceAccountTokens
+	ServiceAccounts                      ServiceAccounts
+	SlackIntegrations                    SlackIntegrations
+	StorageProfiles                      StorageProfiles
+	Tags                                 Tags
+	Teams                                Teams
+	Users                                Users
+	Variables                            Variables
+	VcsProviders                         VcsProviders
+	VcsRevisions                         VcsRevisions
+	WebhookIntegrations                  WebhookIntegrations
+	WorkloadIdentityProviders            WorkloadIdentityProviders
+	WorkspaceTags                        WorkspaceTags
+	Workspaces                           Workspaces
 }
 
 // NewClient creates a new Scalr API client.
@@ -245,6 +247,8 @@ func NewClient(cfg *Config) (*Client, error) {
 	client.Hooks = &hooks{client: client}
 	client.InfracostIntegrations = &infracostIntegrations{client: client}
 	client.ModuleNamespaces = &moduleNamespaces{client: client}
+	client.ModuleTestConfigurations = &moduleTestConfigurations{client: client}
+	client.ModuleTestProviderConfigurationLinks = &moduleTestProviderConfigurationLinks{client: client}
 	client.ModuleVersions = &moduleVersions{client: client}
 	client.Modules = &modules{client: client}
 	client.PolicyGroupEnvironments = &policyGroupEnvironment{client: client}
@@ -333,7 +337,7 @@ func (c *Client) newRequest(method, path string, v interface{}) (*retryablehttp.
 			}
 			u.RawQuery = q.Encode()
 		}
-	case "DELETE", "PATCH", "POST":
+	case "DELETE", "PATCH", "POST", "PUT":
 		reqHeaders.Set("Accept", "application/vnd.api+json")
 		reqHeaders.Set("Content-Type", "application/vnd.api+json")
 
@@ -344,10 +348,6 @@ func (c *Client) newRequest(method, path string, v interface{}) (*retryablehttp.
 			}
 			body = buf
 		}
-	case "PUT":
-		reqHeaders.Set("Accept", "application/json")
-		reqHeaders.Set("Content-Type", "application/octet-stream")
-		body = v
 	}
 
 	return c.createRequest(method, u.String(), body, reqHeaders)
