@@ -375,3 +375,26 @@ type ListContainerImagesOptions struct {
 	Fields map[string]interface{}
 	Filter map[string]string
 }
+
+// Schedule synchronization of the semantic version tags of a custom container image. The response carries the image in the “pending“ state; poll it for the outcome.
+func (c *Client) SyncContainerImageRaw(ctx context.Context, containerImage string) (*client.Response, error) {
+	path := "/container-images/{container_image}/actions/sync"
+	path = strings.ReplaceAll(path, "{container_image}", url.PathEscape(containerImage))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Schedule synchronization of the semantic version tags of a custom container image. The response carries the image in the “pending“ state; poll it for the outcome.
+func (c *Client) SyncContainerImage(ctx context.Context, containerImage string) error {
+	resp, err := c.SyncContainerImageRaw(ctx, containerImage)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}

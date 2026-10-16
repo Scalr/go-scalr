@@ -39,6 +39,10 @@ type SecurityRulesAttributes struct {
 	MaxPersonalTokenLifetime *int `json:"max-personal-token-lifetime"`
 	// The maximum lifetime of a service account access token in minutes.
 	MaxServiceAccountTokenLifetime *int `json:"max-service-account-token-lifetime"`
+	// Whether to require owners when saving module namespaces.
+	RequireOwnersForModuleNamespaces bool `json:"require-owners-for-module-namespaces"`
+	// Whether to require owners when saving provider configurations.
+	RequireOwnersForProviderConfigurations bool `json:"require-owners-for-provider-configurations"`
 	// Whether to require owners for service accounts.
 	RequireOwnersForServiceAccounts bool `json:"require-owners-for-service-accounts"`
 }
@@ -80,6 +84,10 @@ type SecurityRulesAttributesRequest struct {
 	MaxPersonalTokenLifetime *value.Value[int] `json:"max-personal-token-lifetime,omitempty"`
 	// The maximum lifetime of a service account access token in minutes.
 	MaxServiceAccountTokenLifetime *value.Value[int] `json:"max-service-account-token-lifetime,omitempty"`
+	// Whether to require owners when saving module namespaces.
+	RequireOwnersForModuleNamespaces *value.Value[bool] `json:"require-owners-for-module-namespaces,omitempty"`
+	// Whether to require owners when saving provider configurations.
+	RequireOwnersForProviderConfigurations *value.Value[bool] `json:"require-owners-for-provider-configurations,omitempty"`
 	// Whether to require owners for service accounts.
 	RequireOwnersForServiceAccounts *value.Value[bool] `json:"require-owners-for-service-accounts,omitempty"`
 }

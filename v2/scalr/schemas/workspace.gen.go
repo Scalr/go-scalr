@@ -19,6 +19,9 @@ const (
 	WorkspaceAutoDestroyDays2  WorkspaceAutoDestroyDays = 2
 	WorkspaceAutoDestroyDays7  WorkspaceAutoDestroyDays = 7
 	WorkspaceAutoDestroyDays14 WorkspaceAutoDestroyDays = 14
+	WorkspaceAutoDestroyDays30 WorkspaceAutoDestroyDays = 30
+	WorkspaceAutoDestroyDays60 WorkspaceAutoDestroyDays = 60
+	WorkspaceAutoDestroyDays90 WorkspaceAutoDestroyDays = 90
 )
 
 // WorkspaceAutoQueueRuns represents the type for WorkspaceAutoQueueRuns

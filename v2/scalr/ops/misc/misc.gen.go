@@ -193,7 +193,7 @@ type ListDriftedWorkspacesForEnvironmentOptions struct {
 	PageNumber int
 	// Page size
 	PageSize int
-	// The comma-separated list of attributes.
+	// The comma-separated list of attributes. `status` sorts by priority: `awaiting_manual_action` and `errored` first, `no_drift_detected` last. Ties are ordered by workspace name.
 	Sort []string
 	// Format of the response. It can be 'json' or 'csv'.
 	Format string

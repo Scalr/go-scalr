@@ -369,10 +369,23 @@ type GetWorkspaceOptions struct {
 	Filter map[string]string
 }
 
-// This endpoint returns a list of outputs from current state version run output.
-func (c *Client) GetWorkspaceOutputsRaw(ctx context.Context, workspace string) (*client.Response, error) {
+// This endpoint returns a list of outputs from current state version run output. Sensitive output values are `null` unless `sensitive=true` is requested. That requires the `state-versions:read` permission, and for a run of another workspace, access through the workspace state sharing settings. Sensitive values stay `null` when Scalr does not store the workspace state or it uses OpenTofu state encryption.
+func (c *Client) GetWorkspaceOutputsRaw(ctx context.Context, workspace string, opts *GetWorkspaceOutputsOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}/outputs"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
+
+	params := url.Values{}
+	if opts != nil {
+		// Handle parameter: Sensitive (bool)
+		params.Set("sensitive", fmt.Sprintf("%t", opts.Sensitive))
+		// Add filters
+		for k, v := range opts.Filter {
+			params.Set("filter["+k+"]", v)
+		}
+	}
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
 
 	httpResp, err := c.httpClient.Get(ctx, path, nil)
 	if err != nil {
@@ -381,9 +394,9 @@ func (c *Client) GetWorkspaceOutputsRaw(ctx context.Context, workspace string) (
 	return &client.Response{Response: httpResp}, nil
 }
 
-// This endpoint returns a list of outputs from current state version run output.
-func (c *Client) GetWorkspaceOutputs(ctx context.Context, workspace string) (string, error) {
-	resp, err := c.GetWorkspaceOutputsRaw(ctx, workspace)
+// This endpoint returns a list of outputs from current state version run output. Sensitive output values are `null` unless `sensitive=true` is requested. That requires the `state-versions:read` permission, and for a run of another workspace, access through the workspace state sharing settings. Sensitive values stay `null` when Scalr does not store the workspace state or it uses OpenTofu state encryption.
+func (c *Client) GetWorkspaceOutputs(ctx context.Context, workspace string, opts *GetWorkspaceOutputsOptions) (string, error) {
+	resp, err := c.GetWorkspaceOutputsRaw(ctx, workspace, opts)
 	if err != nil {
 		return "", err
 	}
@@ -394,6 +407,12 @@ func (c *Client) GetWorkspaceOutputs(ctx context.Context, workspace string) (str
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 	return string(bodyBytes), nil
+}
+
+// GetWorkspaceOutputsOptions holds optional parameters for GetWorkspaceOutputs
+type GetWorkspaceOutputsOptions struct {
+	Sensitive bool
+	Filter    map[string]string
 }
 
 func (c *Client) GetWorkspacesRaw(ctx context.Context, opts *GetWorkspacesOptions) (*client.Response, error) {

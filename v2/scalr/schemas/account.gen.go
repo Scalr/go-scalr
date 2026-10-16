@@ -277,12 +277,8 @@ type AccountRelationshipsRequest struct {
 
 // The list of account's quotas
 type AccountQuotas struct {
-	// Indicates if the agent relay is available for an account
-	AgentRelayAvailable bool `json:"agent-relay-available"`
 	// The maximal number of agents
 	Agents int `json:"agents"`
-	// Indicates if the before-after hooks are available for an account
-	BeforeAfterHooksAvailable bool `json:"before-after-hooks-available"`
 	// The maximal number of environments
 	Environments int `json:"environments"`
 	// The maximal number of concurrent runs, -1 for unlimited
@@ -293,14 +289,8 @@ type AccountQuotas struct {
 	PolicyGroups int `json:"policy-groups"`
 	// The maximal number of registry modules
 	RegistryModules int `json:"registry-modules"`
-	// The maximal number of registry templates
-	RegistryTemplates int `json:"registry-templates"`
 	// The maximal number of run triggers
 	RunTriggers int `json:"run-triggers"`
-	// Indicates if the service accounts are available for an account
-	ServiceAccountsAvailable bool `json:"service-accounts-available"`
-	// Indicates if the SSO is available for an account
-	SsoAvailable bool `json:"sso-available"`
 	// The maximal number of users
 	Users int `json:"users"`
 	// The maximal number of VCS providers
@@ -311,12 +301,8 @@ type AccountQuotas struct {
 
 // The list of account's quotas (for requests)
 type AccountQuotasRequest struct {
-	// Indicates if the agent relay is available for an account
-	AgentRelayAvailable *value.Value[bool] `json:"agent-relay-available,omitempty"`
 	// The maximal number of agents
 	Agents *value.Value[int] `json:"agents,omitempty"`
-	// Indicates if the before-after hooks are available for an account
-	BeforeAfterHooksAvailable *value.Value[bool] `json:"before-after-hooks-available,omitempty"`
 	// The maximal number of environments
 	Environments *value.Value[int] `json:"environments,omitempty"`
 	// The maximal number of concurrent runs, -1 for unlimited
@@ -327,14 +313,8 @@ type AccountQuotasRequest struct {
 	PolicyGroups *value.Value[int] `json:"policy-groups,omitempty"`
 	// The maximal number of registry modules
 	RegistryModules *value.Value[int] `json:"registry-modules,omitempty"`
-	// The maximal number of registry templates
-	RegistryTemplates *value.Value[int] `json:"registry-templates,omitempty"`
 	// The maximal number of run triggers
 	RunTriggers *value.Value[int] `json:"run-triggers,omitempty"`
-	// Indicates if the service accounts are available for an account
-	ServiceAccountsAvailable *value.Value[bool] `json:"service-accounts-available,omitempty"`
-	// Indicates if the SSO is available for an account
-	SsoAvailable *value.Value[bool] `json:"sso-available,omitempty"`
 	// The maximal number of users
 	Users *value.Value[int] `json:"users,omitempty"`
 	// The maximal number of VCS providers
