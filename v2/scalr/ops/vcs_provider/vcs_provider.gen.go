@@ -24,7 +24,7 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
-// Create a new VCS connection between Scalr and a VCS provider. VCS providers can be created at the Scalr account. Self-hosted Scalr also supports the creation of global VCS providers. If a VCS provider is created globally, all accounts within the self-hosted installation will have access to use the VCS provider. Only VCS providers with `personal_token` auth type, can be created through the API. If you need to set up `oauth2` provider, you should use Scalr [web interface](/docs/github) to do this.
+// Create a new VCS connection between Scalr and a VCS provider. VCS providers are created at the Scalr account. Only VCS providers with `personal_token` auth type, can be created through the API. If you need to set up `oauth2` provider, you should use Scalr [web interface](/docs/github) to do this.
 func (c *Client) CreateVcsProviderRaw(ctx context.Context, req *schemas.VcsProviderRequest) (*client.Response, error) {
 	path := "/vcs-providers"
 
@@ -37,7 +37,7 @@ func (c *Client) CreateVcsProviderRaw(ctx context.Context, req *schemas.VcsProvi
 	return &client.Response{Response: httpResp}, nil
 }
 
-// Create a new VCS connection between Scalr and a VCS provider. VCS providers can be created at the Scalr account. Self-hosted Scalr also supports the creation of global VCS providers. If a VCS provider is created globally, all accounts within the self-hosted installation will have access to use the VCS provider. Only VCS providers with `personal_token` auth type, can be created through the API. If you need to set up `oauth2` provider, you should use Scalr [web interface](/docs/github) to do this.
+// Create a new VCS connection between Scalr and a VCS provider. VCS providers are created at the Scalr account. Only VCS providers with `personal_token` auth type, can be created through the API. If you need to set up `oauth2` provider, you should use Scalr [web interface](/docs/github) to do this.
 func (c *Client) CreateVcsProvider(ctx context.Context, req *schemas.VcsProviderRequest) (*schemas.VcsProvider, error) {
 	resp, err := c.CreateVcsProviderRaw(ctx, req)
 	if err != nil {
@@ -143,7 +143,7 @@ type GetVcsProviderOptions struct {
 	Filter map[string]string
 }
 
-// This endpoint returns a list of VCS providers by various filters. To list VCS providers accessible from a specific environment - `filter[environment]`, or when from a specific account - `filter[account]` has to be specified. For self-hosted Scalr there's also an option to list all VCS providers created globally - both `filter[account]=null` and `filter[environment]=null` has to be specified. If no `environment` or `account` filters were specified, all VCS providers to which a current user has read access will be returned.
+// This endpoint returns a list of VCS providers by various filters. To list VCS providers accessible from a specific environment - `filter[environment]`, or when from a specific account - `filter[account]` has to be specified. If no `environment` or `account` filters were specified, all VCS providers to which a current user has read access will be returned.
 func (c *Client) ListVcsProvidersRaw(ctx context.Context, opts *ListVcsProvidersOptions) (*client.Response, error) {
 	path := "/vcs-providers"
 
@@ -183,7 +183,7 @@ func (c *Client) ListVcsProvidersRaw(ctx context.Context, opts *ListVcsProviders
 	return &client.Response{Response: httpResp}, nil
 }
 
-// This endpoint returns a list of VCS providers by various filters. To list VCS providers accessible from a specific environment - `filter[environment]`, or when from a specific account - `filter[account]` has to be specified. For self-hosted Scalr there's also an option to list all VCS providers created globally - both `filter[account]=null` and `filter[environment]=null` has to be specified. If no `environment` or `account` filters were specified, all VCS providers to which a current user has read access will be returned.
+// This endpoint returns a list of VCS providers by various filters. To list VCS providers accessible from a specific environment - `filter[environment]`, or when from a specific account - `filter[account]` has to be specified. If no `environment` or `account` filters were specified, all VCS providers to which a current user has read access will be returned.
 func (c *Client) ListVcsProviders(ctx context.Context, opts *ListVcsProvidersOptions) ([]*schemas.VcsProvider, error) {
 	resp, err := c.ListVcsProvidersRaw(ctx, opts)
 	if err != nil {

@@ -163,6 +163,4 @@ type DatadogIntegrationAttributesRequest struct {
 
 // DatadogIntegrationRelationshipsRequest holds the relationships for DatadogIntegration (request)
 type DatadogIntegrationRelationshipsRequest struct {
-	// The account this integration belongs to.
-	Account *value.Value[Account] `json:"account,omitempty"`
 }

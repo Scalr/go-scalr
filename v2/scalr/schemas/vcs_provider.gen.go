@@ -28,6 +28,27 @@ const (
 	VcsProviderCompareStrategyPreviousCommit VcsProviderCompareStrategy = "previous-commit"
 )
 
+// VcsProviderReportMethod represents the type for VcsProviderReportMethod
+// Designates where run results are reported in the VCS. `check` and `both` are available only for GitHub providers connected through the Scalr GitHub App.
+type VcsProviderReportMethod string
+
+// VcsProviderReportMethod constants
+const (
+	VcsProviderReportMethodCommitStatus VcsProviderReportMethod = "commit-status"
+	VcsProviderReportMethodCheck        VcsProviderReportMethod = "check"
+	VcsProviderReportMethodBoth         VcsProviderReportMethod = "both"
+)
+
+// VcsProviderReportMode represents the type for VcsProviderReportMode
+// Designates how run results are grouped when reported.
+type VcsProviderReportMode string
+
+// VcsProviderReportMode constants
+const (
+	VcsProviderReportModePerWorkspace VcsProviderReportMode = "per-workspace"
+	VcsProviderReportModeCumulative   VcsProviderReportMode = "cumulative"
+)
+
 // VcsProviderVcsType represents the type for VcsProviderVcsType
 // VCS provider type.
 type VcsProviderVcsType string
@@ -73,8 +94,6 @@ type VcsProviderAttributes struct {
 	AuthType VcsProviderAuthType `json:"auth-type"`
 	// Designates whether to automatically merge the base branch into the head before run execution.
 	AutoMerge bool `json:"auto-merge"`
-	// Indicates whether checks are enabled for this VCS provider.
-	ChecksEnabled bool `json:"checks-enabled"`
 	// Indicates whether commenting on PRs is enabled for this VCS provider.
 	CommentsEnabled bool `json:"comments-enabled"`
 	// Designates which commit is compared with the head commit to produce diff changes.
@@ -93,6 +112,10 @@ type VcsProviderAttributes struct {
 	PlansEnabled bool `json:"plans-enabled"`
 	// Indicates whether comment should be posted on PR after merge with results of triggered runs.
 	PrMergeCommentsEnabled bool `json:"pr-merge-comments-enabled"`
+	// Designates where run results are reported in the VCS. `check` and `both` are available only for GitHub providers connected through the Scalr GitHub App.
+	ReportMethod VcsProviderReportMethod `json:"report-method"`
+	// Designates how run results are grouped when reported.
+	ReportMode VcsProviderReportMode `json:"report-mode"`
 	// Access token for an API client for using to connect to the VCS Provider.
 	Token *string `json:"token"`
 	// The URL to the VCS provider installation. Required for GitHub Enterprise, GitLab Enterprise and Bitbucket Data Center. For GitHub it may be set to a GitHub Enterprise Cloud with data residency tenant URL (`https://<subdomain>.ghe.com`).
@@ -276,8 +299,6 @@ type VcsProviderAttributesRequest struct {
 	AuthType *value.Value[VcsProviderAuthType] `json:"auth-type,omitempty"`
 	// Designates whether to automatically merge the base branch into the head before run execution.
 	AutoMerge *value.Value[bool] `json:"auto-merge,omitempty"`
-	// Indicates whether checks are enabled for this VCS provider.
-	ChecksEnabled *value.Value[bool] `json:"checks-enabled,omitempty"`
 	// Indicates whether commenting on PRs is enabled for this VCS provider.
 	CommentsEnabled *value.Value[bool] `json:"comments-enabled,omitempty"`
 	// Designates which commit is compared with the head commit to produce diff changes.
@@ -292,6 +313,10 @@ type VcsProviderAttributesRequest struct {
 	PlansEnabled *value.Value[bool] `json:"plans-enabled,omitempty"`
 	// Indicates whether comment should be posted on PR after merge with results of triggered runs.
 	PrMergeCommentsEnabled *value.Value[bool] `json:"pr-merge-comments-enabled,omitempty"`
+	// Designates where run results are reported in the VCS. `check` and `both` are available only for GitHub providers connected through the Scalr GitHub App.
+	ReportMethod *value.Value[VcsProviderReportMethod] `json:"report-method,omitempty"`
+	// Designates how run results are grouped when reported.
+	ReportMode *value.Value[VcsProviderReportMode] `json:"report-mode,omitempty"`
 	// Access token for an API client for using to connect to the VCS Provider.
 	Token *value.Value[string] `json:"token,omitempty"`
 	// The URL to the VCS provider installation. Required for GitHub Enterprise, GitLab Enterprise and Bitbucket Data Center. For GitHub it may be set to a GitHub Enterprise Cloud with data residency tenant URL (`https://<subdomain>.ghe.com`).

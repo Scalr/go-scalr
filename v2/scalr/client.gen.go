@@ -29,6 +29,7 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/hook"
 	"github.com/scalr/go-scalr/v2/scalr/ops/hook_environment_link"
 	"github.com/scalr/go-scalr/v2/scalr/ops/infracost_integration"
+	"github.com/scalr/go-scalr/v2/scalr/ops/mcp_connection"
 	"github.com/scalr/go-scalr/v2/scalr/ops/misc"
 	"github.com/scalr/go-scalr/v2/scalr/ops/module"
 	"github.com/scalr/go-scalr/v2/scalr/ops/module_namespace"
@@ -68,6 +69,7 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/terraform_resource_instance_usage"
 	"github.com/scalr/go-scalr/v2/scalr/ops/terraform_resource_usage"
 	"github.com/scalr/go-scalr/v2/scalr/ops/terraform_version_usage"
+	"github.com/scalr/go-scalr/v2/scalr/ops/test_configuration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/usage_statistic"
 	"github.com/scalr/go-scalr/v2/scalr/ops/user"
 	"github.com/scalr/go-scalr/v2/scalr/ops/variable"
@@ -112,6 +114,7 @@ type Client struct {
 	Hook                                *hook.Client
 	HookEnvironmentLink                 *hook_environment_link.Client
 	InfracostIntegration                *infracost_integration.Client
+	McpConnection                       *mcp_connection.Client
 	Module                              *module.Client
 	ModuleNamespace                     *module_namespace.Client
 	ModuleTestProviderConfigurationLink *module_test_provider_configuration_link.Client
@@ -150,6 +153,7 @@ type Client struct {
 	TerraformResourceInstanceUsage      *terraform_resource_instance_usage.Client
 	TerraformResourceUsage              *terraform_resource_usage.Client
 	TerraformVersionUsage               *terraform_version_usage.Client
+	TestConfiguration                   *test_configuration.Client
 	UsageStatistic                      *usage_statistic.Client
 	User                                *user.Client
 	Variable                            *variable.Client
@@ -196,6 +200,7 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		Hook:                                hook.New(httpClient),
 		HookEnvironmentLink:                 hook_environment_link.New(httpClient),
 		InfracostIntegration:                infracost_integration.New(httpClient),
+		McpConnection:                       mcp_connection.New(httpClient),
 		Module:                              module.New(httpClient),
 		ModuleNamespace:                     module_namespace.New(httpClient),
 		ModuleTestProviderConfigurationLink: module_test_provider_configuration_link.New(httpClient),
@@ -234,6 +239,7 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		TerraformResourceInstanceUsage:      terraform_resource_instance_usage.New(httpClient),
 		TerraformResourceUsage:              terraform_resource_usage.New(httpClient),
 		TerraformVersionUsage:               terraform_version_usage.New(httpClient),
+		TestConfiguration:                   test_configuration.New(httpClient),
 		UsageStatistic:                      usage_statistic.New(httpClient),
 		User:                                user.New(httpClient),
 		Variable:                            variable.New(httpClient),

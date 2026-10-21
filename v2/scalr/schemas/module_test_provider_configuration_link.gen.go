@@ -33,6 +33,7 @@ func (r ModuleTestProviderConfigurationLink) GetResourceType() string {
 // ModuleTestProviderConfigurationLinkRelationships holds the relationships for ModuleTestProviderConfigurationLink (response)
 type ModuleTestProviderConfigurationLinkRelationships struct {
 	ProviderConfiguration *ProviderConfiguration `json:"provider-configuration"`
+	TestConfiguration     *TestConfiguration     `json:"test-configuration"`
 }
 
 // UnmarshalJSON implements custom unmarshalling for relationships
@@ -56,6 +57,24 @@ func (r *ModuleTestProviderConfigurationLinkRelationships) UnmarshalJSON(data []
 		}
 		if rel.Data != nil {
 			r.ProviderConfiguration = &ProviderConfiguration{
+				ID:   rel.Data.ID,
+				Type: rel.Data.Type,
+			}
+		}
+	}
+	if raw, ok := temp["test-configuration"]; ok {
+		// To-one relationship
+		var rel struct {
+			Data *struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &rel); err != nil {
+			return err
+		}
+		if rel.Data != nil {
+			r.TestConfiguration = &TestConfiguration{
 				ID:   rel.Data.ID,
 				Type: rel.Data.Type,
 			}
@@ -90,6 +109,18 @@ func (r *ModuleTestProviderConfigurationLinkRelationships) PopulateIncludes(incl
 			var full ProviderConfiguration
 			if err := json.Unmarshal(data, &full); err == nil {
 				r.ProviderConfiguration = &full
+			}
+		}
+	}
+	// Populate to-one relationship: TestConfiguration
+	if r.TestConfiguration != nil && r.TestConfiguration.ID != "" {
+		key := r.TestConfiguration.Type + ":" + r.TestConfiguration.ID
+		if fullResource, ok := includedMap[key]; ok {
+			// Unmarshal the full resource
+			data, _ := json.Marshal(fullResource)
+			var full TestConfiguration
+			if err := json.Unmarshal(data, &full); err == nil {
+				r.TestConfiguration = &full
 			}
 		}
 	}
