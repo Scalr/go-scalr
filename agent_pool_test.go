@@ -132,8 +132,9 @@ func TestAgentPoolsCreate(t *testing.T) {
 
 	t.Run("when provider is shared", func(t *testing.T) {
 		options := AgentPoolCreateOptions{
-			Name:     String("test-shared-" + randomString(t)),
-			IsShared: Bool(true),
+			Name:                  String("test-shared-" + randomString(t)),
+			IsShared:              Bool(true),
+			RunAcquisitionTimeout: Int(60),
 		}
 
 		agentPool, err := client.AgentPools.Create(ctx, options)
@@ -151,6 +152,7 @@ func TestAgentPoolsCreate(t *testing.T) {
 			assert.Equal(t, *options.Name, item.Name)
 			assert.Equal(t, &Account{ID: defaultAccountID}, item.Account)
 			assert.Equal(t, true, item.IsShared)
+			assert.Equal(t, *options.RunAcquisitionTimeout, item.RunAcquisitionTimeout)
 		}
 		err = client.AgentPools.Delete(ctx, agentPool.ID)
 		require.NoError(t, err)
@@ -369,6 +371,17 @@ func TestAgentPoolsUpdate(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, *options.Name, agentPoolAfter.Name)
+	})
+
+	t.Run("when updating the run acquisition timeout", func(t *testing.T) {
+		options := AgentPoolUpdateOptions{
+			RunAcquisitionTimeout: Int(4320),
+		}
+
+		agentPoolAfter, err := client.AgentPools.Update(ctx, agentPoolTest.ID, options)
+		require.NoError(t, err)
+
+		assert.Equal(t, *options.RunAcquisitionTimeout, agentPoolAfter.RunAcquisitionTimeout)
 	})
 
 	t.Run("when updating the workspaces", func(t *testing.T) {
