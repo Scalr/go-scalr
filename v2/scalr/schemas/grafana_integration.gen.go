@@ -38,7 +38,6 @@ const (
 	GrafanaIntegrationStatusActive   GrafanaIntegrationStatus = "active"
 	GrafanaIntegrationStatusDisabled GrafanaIntegrationStatus = "disabled"
 	GrafanaIntegrationStatusFailed   GrafanaIntegrationStatus = "failed"
-	GrafanaIntegrationStatusPending  GrafanaIntegrationStatus = "pending"
 )
 
 // Response version - used when unmarshalling from API responses
@@ -75,7 +74,7 @@ type GrafanaIntegrationAttributes struct {
 	Kind GrafanaIntegrationKind `json:"kind"`
 	// Name of the Grafana integration.
 	Name string `json:"name"`
-	// Basic auth password or bearer token.
+	// Basic auth password or bearer token. On Grafana Cloud, an access policy token.
 	Secret *string `json:"secret"`
 	// Status of the integration.
 	Status GrafanaIntegrationStatus `json:"status"`
@@ -189,7 +188,7 @@ type GrafanaIntegrationAttributesRequest struct {
 	Kind *value.Value[GrafanaIntegrationKind] `json:"kind,omitempty"`
 	// Name of the Grafana integration.
 	Name *value.Value[string] `json:"name,omitempty"`
-	// Basic auth password or bearer token.
+	// Basic auth password or bearer token. On Grafana Cloud, an access policy token.
 	Secret *value.Value[string] `json:"secret,omitempty"`
 	// Status of the integration.
 	Status *value.Value[GrafanaIntegrationStatus] `json:"status,omitempty"`
