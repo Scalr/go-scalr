@@ -1,0 +1,101 @@
+name: Run go-scalr V1 tests against a fatmouse branch
+on:
+  workflow_call:
+    inputs:
+      fatmouse_ref:
+        description: The fatmouse branch to build the preview environment from
+        type: string
+        required: true
+      caller_job_name:
+        description: The name of the calling job, which GitHub prepends to this workflow's job name
+        type: string
+        required: true
+    secrets:
+      scalr_token:
+        description: The token of the preview environment's mainiacp account
+        required: true
+      google_cloud_credentials:
+        description: GCP credentials to create the preview environment
+        required: true
+      TEST_AWS_ACCESS_KEY:
+        required: false
+      TEST_AWS_SECRET_KEY:
+        required: false
+      TEST_AWS_ROLE_ARN:
+        required: false
+      TEST_AWS_EXTERNAL_ID:
+        required: false
+      TEST_ARM_CLIENT_ID:
+        required: false
+      TEST_ARM_CLIENT_SECRET:
+        required: false
+      TEST_ARM_TENANT_ID:
+        required: false
+      TEST_ARM_SUBSCRIPTION_ID:
+        required: false
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    env:
+      SCALR_TOKEN: ${{ secrets.scalr_token }}
+    steps:
+      # A called workflow checks out the caller's repository by default
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: Scalr/go-scalr
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: "1.18"
+
+      - name: Clone Fatmouse Repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: Scalr/fatmouse
+          path: fatmouse
+          ref: ${{ inputs.fatmouse_ref }}
+
+      - uses: ./fatmouse/.github/actions/preview-env
+        name: Create preview environment
+        id: create-preview-env
+        env:
+          JOB_NAME: ${{ inputs.caller_job_name }} / Tests
+        with:
+          ref: ${{ inputs.fatmouse_ref }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          google_cloud_credentials: ${{ secrets.google_cloud_credentials }}
+          run_prefix: e2e-go-scalr-upstream
+          prepare_runner: true
+          wait_for_env: true
+          no_segment: true
+          working_directory: fatmouse
+          secrets_bucket: scalr-tacobell-secrets
+
+      - name: Get Scalr Hostname
+        shell: bash
+        run: |
+          SCALR_HOST=${{ steps.create-preview-env.outputs.host }}
+          echo "SCALR_ADDRESS=https://mainiacp.${SCALR_HOST/https:\/\//}" >> $GITHUB_ENV
+
+      - name: Run Tests
+        env:
+          SCALR_ADDRESS: ${{ env.SCALR_ADDRESS }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEST_AWS_ACCESS_KEY: ${{ secrets.TEST_AWS_ACCESS_KEY }}
+          TEST_AWS_SECRET_KEY: ${{ secrets.TEST_AWS_SECRET_KEY }}
+          TEST_AWS_ROLE_ARN: ${{ secrets.TEST_AWS_ROLE_ARN }}
+          TEST_AWS_EXTERNAL_ID: ${{ secrets.TEST_AWS_EXTERNAL_ID }}
+          TEST_ARM_CLIENT_ID: ${{ secrets.TEST_ARM_CLIENT_ID }}
+          TEST_ARM_CLIENT_SECRET: ${{ secrets.TEST_ARM_CLIENT_SECRET }}
+          TEST_ARM_TENANT_ID: ${{ secrets.TEST_ARM_TENANT_ID }}
+          TEST_ARM_SUBSCRIPTION_ID: ${{ secrets.TEST_ARM_SUBSCRIPTION_ID }}
+        run: make test
+
+      - name: Delete Container
+        if: ${{ always() }}
+        working-directory: fatmouse
+        shell: bash
+        run: |
+          tacocli te rm --no-wait ${{ steps.create-preview-env.outputs.env_name }}
