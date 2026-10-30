@@ -26,6 +26,7 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/environment"
 	"github.com/scalr/go-scalr/v2/scalr/ops/event_definition"
 	"github.com/scalr/go-scalr/v2/scalr/ops/gpg_key"
+	"github.com/scalr/go-scalr/v2/scalr/ops/grafana_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/hook"
 	"github.com/scalr/go-scalr/v2/scalr/ops/hook_environment_link"
 	"github.com/scalr/go-scalr/v2/scalr/ops/infracost_integration"
@@ -111,6 +112,7 @@ type Client struct {
 	Environment                         *environment.Client
 	EventDefinition                     *event_definition.Client
 	GPGKey                              *gpg_key.Client
+	GrafanaIntegration                  *grafana_integration.Client
 	Hook                                *hook.Client
 	HookEnvironmentLink                 *hook_environment_link.Client
 	InfracostIntegration                *infracost_integration.Client
@@ -197,6 +199,7 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		Environment:                         environment.New(httpClient),
 		EventDefinition:                     event_definition.New(httpClient),
 		GPGKey:                              gpg_key.New(httpClient),
+		GrafanaIntegration:                  grafana_integration.New(httpClient),
 		Hook:                                hook.New(httpClient),
 		HookEnvironmentLink:                 hook_environment_link.New(httpClient),
 		InfracostIntegration:                infracost_integration.New(httpClient),
