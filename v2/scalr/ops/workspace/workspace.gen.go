@@ -369,7 +369,7 @@ type GetWorkspaceOptions struct {
 	Filter map[string]string
 }
 
-// This endpoint returns a list of outputs from current state version run output. Sensitive output values are `null` unless `sensitive=true` is requested. That requires the `state-versions:read` permission, and for a run of another workspace, access through the workspace state sharing settings. Sensitive values stay `null` when Scalr does not store the workspace state or it uses OpenTofu state encryption.
+// This endpoint returns a list of outputs from current state version run output. Depending on the account settings, a run of another workspace can read them only if the workspace state sharing settings allow it. Sensitive output values are `null` unless `sensitive=true` is requested. That requires the `state-versions:read` permission, and for a run of another workspace, access through the workspace state sharing settings. Sensitive values stay `null` when Scalr does not store the workspace state or it uses OpenTofu state encryption.
 func (c *Client) GetWorkspaceOutputsRaw(ctx context.Context, workspace string, opts *GetWorkspaceOutputsOptions) (*client.Response, error) {
 	path := "/workspaces/{workspace}/outputs"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
@@ -394,7 +394,7 @@ func (c *Client) GetWorkspaceOutputsRaw(ctx context.Context, workspace string, o
 	return &client.Response{Response: httpResp}, nil
 }
 
-// This endpoint returns a list of outputs from current state version run output. Sensitive output values are `null` unless `sensitive=true` is requested. That requires the `state-versions:read` permission, and for a run of another workspace, access through the workspace state sharing settings. Sensitive values stay `null` when Scalr does not store the workspace state or it uses OpenTofu state encryption.
+// This endpoint returns a list of outputs from current state version run output. Depending on the account settings, a run of another workspace can read them only if the workspace state sharing settings allow it. Sensitive output values are `null` unless `sensitive=true` is requested. That requires the `state-versions:read` permission, and for a run of another workspace, access through the workspace state sharing settings. Sensitive values stay `null` when Scalr does not store the workspace state or it uses OpenTofu state encryption.
 func (c *Client) GetWorkspaceOutputs(ctx context.Context, workspace string, opts *GetWorkspaceOutputsOptions) (string, error) {
 	resp, err := c.GetWorkspaceOutputsRaw(ctx, workspace, opts)
 	if err != nil {
@@ -1426,6 +1426,27 @@ func (c *Client) ReplaceWorkspaceVariableSets(ctx context.Context, workspace str
 	return nil
 }
 
+func (c *Client) ResumeScheduleRaw(ctx context.Context, workspace string) (*client.Response, error) {
+	path := "/workspaces/{workspace}/actions/resume-schedule"
+	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
+
+	httpResp, err := c.httpClient.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+func (c *Client) ResumeSchedule(ctx context.Context, workspace string) error {
+	resp, err := c.ResumeScheduleRaw(ctx, workspace)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 // This endpoint triggers a Configuration Version resync for a Workspace associated with a VCS repository.
 func (c *Client) ResyncWorkspaceRaw(ctx context.Context, workspace string) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/resync"
@@ -1461,6 +1482,7 @@ func (c *Client) ResyncWorkspace(ctx context.Context, workspace string) (*schema
 	return &result.Data, nil
 }
 
+// An attribute set to `null` removes that schedule; an omitted one keeps it.
 func (c *Client) SetScheduleRaw(ctx context.Context, workspace string, req *schemas.WorkspaceSchedule) (*client.Response, error) {
 	path := "/workspaces/{workspace}/actions/set-schedule"
 	path = strings.ReplaceAll(path, "{workspace}", url.PathEscape(workspace))
@@ -1474,6 +1496,7 @@ func (c *Client) SetScheduleRaw(ctx context.Context, workspace string, req *sche
 	return &client.Response{Response: httpResp}, nil
 }
 
+// An attribute set to `null` removes that schedule; an omitted one keeps it.
 func (c *Client) SetSchedule(ctx context.Context, workspace string, req *schemas.WorkspaceSchedule) (*schemas.Workspace, error) {
 	resp, err := c.SetScheduleRaw(ctx, workspace, req)
 	if err != nil {

@@ -141,6 +141,8 @@ type WorkspaceAttributes struct {
 	RemoteStateSharing bool `json:"remote-state-sharing"`
 	// The timeout for the Terraform Run operations (in minutes).
 	RunOperationTimeout *int `json:"run-operation-timeout"`
+	// Whether scheduled runs stopped after consecutive failed scheduled runs.
+	SchedulePaused bool `json:"schedule-paused"`
 	// The version of Terraform the workspace performs runs on. If omitted, the system default version is assigned.
 	TerraformVersion string               `json:"terraform-version"`
 	Terragrunt       *WorkspaceTerragrunt `json:"terragrunt"`
@@ -151,7 +153,9 @@ type WorkspaceAttributes struct {
 	// The list of Terraform variables files.
 	VarFiles *[]string         `json:"var-files"`
 	VcsRepo  *WorkspaceVcsRepo `json:"vcs-repo"`
-	// True when the workspace VCS repository returned 403 for its account integration. Configuration versions from this repository cannot be downloaded.
+	// The last error the VCS returned for the workspace VCS repository. Null while the repository is accessible.
+	VcsRepoError *WorkspaceVcsRepoError `json:"vcs-repo-error"`
+	// True when the VCS provider can no longer access the workspace VCS repository (403 or 404 from the VCS). Configuration versions from this repository cannot be downloaded.
 	VcsRepoInaccessible bool `json:"vcs-repo-inaccessible"`
 	// A relative path where Terraform commands will execute in.
 	WorkingDirectory *string `json:"working-directory"`
@@ -894,6 +898,14 @@ type WorkspaceVcsRepo struct {
 	VersionConstraint *string `json:"version-constraint"`
 }
 
+// The last error the VCS returned for the workspace VCS repository. Null while the repository is accessible.
+type WorkspaceVcsRepoError struct {
+	// The description of the error, with the VCS response when there is one.
+	Message string `json:"message"`
+	// The HTTP status the VCS returned.
+	StatusCode int `json:"status-code"`
+}
+
 type WorkspaceHooksRequest struct {
 	// Command that should be run after terraform apply operation executed.
 	PostApply *value.Value[string] `json:"post-apply,omitempty"`
@@ -914,6 +926,14 @@ type WorkspaceTerragruntRequest struct {
 	UseRunAll *value.Value[bool] `json:"use-run-all,omitempty"`
 	// The version of Terragrunt the workspace performs runs on.
 	Version *value.Value[string] `json:"version,omitempty"`
+}
+
+// The last error the VCS returned for the workspace VCS repository. Null while the repository is accessible. (for requests)
+type WorkspaceVcsRepoErrorRequest struct {
+	// The description of the error, with the VCS response when there is one.
+	Message *value.Value[string] `json:"message,omitempty"`
+	// The HTTP status the VCS returned.
+	StatusCode *value.Value[int] `json:"status-code,omitempty"`
 }
 
 type WorkspaceVcsRepoRequest struct {

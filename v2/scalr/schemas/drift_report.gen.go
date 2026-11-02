@@ -23,6 +23,7 @@ const (
 	DriftReportStatusDiscarded            DriftReportStatus = "discarded"
 	DriftReportStatusAcceptState          DriftReportStatus = "accept_state"
 	DriftReportStatusResetState           DriftReportStatus = "reset_state"
+	DriftReportStatusResolved             DriftReportStatus = "resolved"
 )
 
 // Response version - used when unmarshalling from API responses
