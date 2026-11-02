@@ -14,7 +14,6 @@ type GrafanaIntegrationAuthType string
 
 // GrafanaIntegrationAuthType constants
 const (
-	GrafanaIntegrationAuthTypeNone   GrafanaIntegrationAuthType = "none"
 	GrafanaIntegrationAuthTypeBasic  GrafanaIntegrationAuthType = "basic"
 	GrafanaIntegrationAuthTypeBearer GrafanaIntegrationAuthType = "bearer"
 )

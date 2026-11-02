@@ -24,7 +24,7 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
-// This endpoint creates a Grafana integration. A rejected connection check creates the integration with the failed status.
+// This endpoint checks the connection and creates a Grafana integration.
 func (c *Client) CreateGrafanaIntegrationRaw(ctx context.Context, req *schemas.GrafanaIntegrationRequest) (*client.Response, error) {
 	path := "/integrations/grafana"
 
@@ -37,7 +37,7 @@ func (c *Client) CreateGrafanaIntegrationRaw(ctx context.Context, req *schemas.G
 	return &client.Response{Response: httpResp}, nil
 }
 
-// This endpoint creates a Grafana integration. A rejected connection check creates the integration with the failed status.
+// This endpoint checks the connection and creates a Grafana integration.
 func (c *Client) CreateGrafanaIntegration(ctx context.Context, req *schemas.GrafanaIntegrationRequest) (*schemas.GrafanaIntegration, error) {
 	resp, err := c.CreateGrafanaIntegrationRaw(ctx, req)
 	if err != nil {
