@@ -57,6 +57,7 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/ops/slack_connection"
 	"github.com/scalr/go-scalr/v2/scalr/ops/slack_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/software_version"
+	"github.com/scalr/go-scalr/v2/scalr/ops/splunk_integration"
 	"github.com/scalr/go-scalr/v2/scalr/ops/ssh_key"
 	"github.com/scalr/go-scalr/v2/scalr/ops/state_version"
 	"github.com/scalr/go-scalr/v2/scalr/ops/storage_profile"
@@ -142,6 +143,7 @@ type Client struct {
 	SlackConnection                     *slack_connection.Client
 	SlackIntegration                    *slack_integration.Client
 	SoftwareVersion                     *software_version.Client
+	SplunkIntegration                   *splunk_integration.Client
 	StateVersion                        *state_version.Client
 	StorageProfile                      *storage_profile.Client
 	Tag                                 *tag.Client
@@ -228,6 +230,7 @@ func NewClient(domain string, token string, opts ...client.HTTPClientOption) *Cl
 		SlackConnection:                     slack_connection.New(httpClient),
 		SlackIntegration:                    slack_integration.New(httpClient),
 		SoftwareVersion:                     software_version.New(httpClient),
+		SplunkIntegration:                   splunk_integration.New(httpClient),
 		StateVersion:                        state_version.New(httpClient),
 		StorageProfile:                      storage_profile.New(httpClient),
 		Tag:                                 tag.New(httpClient),
