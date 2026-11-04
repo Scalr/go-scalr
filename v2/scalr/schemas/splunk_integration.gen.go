@@ -43,18 +43,14 @@ func (r SplunkIntegration) GetResourceType() string {
 
 // SplunkIntegrationAttributes holds the attributes for SplunkIntegration (response)
 type SplunkIntegrationAttributes struct {
-	// Base HTTP Event Collector URL, for example `https://splunk.example.com:8088`.
+	// Base HTTP Event Collector URL.
 	Endpoint string `json:"endpoint"`
 	// Message from service that points to the nature of a problem.
 	ErrMessage *string `json:"err-message"`
-	// Splunk index for the events. The HEC token must be allowed to write to it.
-	Index string `json:"index"`
+	// Splunk index for the events. If not set, events go to the default index of the HEC token.
+	Index *string `json:"index"`
 	// Name of the Splunk integration.
 	Name string `json:"name"`
-	// Labels where events come from. Use it to filter Scalr events in Splunk searches. Defaults to `scalr`.
-	Source *string `json:"source"`
-	// Tells Splunk how to parse events. Scalr sends JSON, so keep `_json` unless your Splunk admin uses a custom sourcetype. Defaults to `_json`.
-	Sourcetype *string `json:"sourcetype"`
 	// Status of the integration.
 	Status SplunkIntegrationStatus `json:"status"`
 	// HTTP Event Collector token.
@@ -157,16 +153,12 @@ func (r SplunkIntegrationRequest) GetResourceType() string {
 
 // SplunkIntegrationAttributesRequest holds the attributes for SplunkIntegration (request)
 type SplunkIntegrationAttributesRequest struct {
-	// Base HTTP Event Collector URL, for example `https://splunk.example.com:8088`.
+	// Base HTTP Event Collector URL.
 	Endpoint *value.Value[string] `json:"endpoint,omitempty"`
-	// Splunk index for the events. The HEC token must be allowed to write to it.
+	// Splunk index for the events. If not set, events go to the default index of the HEC token.
 	Index *value.Value[string] `json:"index,omitempty"`
 	// Name of the Splunk integration.
 	Name *value.Value[string] `json:"name,omitempty"`
-	// Labels where events come from. Use it to filter Scalr events in Splunk searches. Defaults to `scalr`.
-	Source *value.Value[string] `json:"source,omitempty"`
-	// Tells Splunk how to parse events. Scalr sends JSON, so keep `_json` unless your Splunk admin uses a custom sourcetype. Defaults to `_json`.
-	Sourcetype *value.Value[string] `json:"sourcetype,omitempty"`
 	// Status of the integration.
 	Status *value.Value[SplunkIntegrationStatus] `json:"status,omitempty"`
 	// HTTP Event Collector token.
