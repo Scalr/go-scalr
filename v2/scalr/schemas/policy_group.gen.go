@@ -333,19 +333,23 @@ type PolicyGroupRelationshipsRequest struct {
 }
 
 type PolicyGroupVcsRepo struct {
-	// Branch of a repository the policy group is associated with. If omitted, the repository default branch will be used.
+	// Branch of a repository the policy group is associated with. Every push to this branch updates the policies. If omitted, the repository default branch will be used. This option conflicts with `tag`.
 	Branch *string `json:"branch"`
 	// A reference to your VCS repository. For GitHub, GitHub Enterprise and GitLab the format is `<org>/<repo>`. For Azure DevOps Services the format is `<org>/<project>/<repo>`.
 	Identifier string `json:"identifier"`
 	// The sub-directory of the VCS repository where OPA policies are stored. The `scalr-policy.hcl` file must exist in this directory. Files and directories outside this directory will be ignored during a sync from VCS, and changing them won't trigger a policy group update. If omitted or submitted as an empty string, this defaults to the repository's root.
 	Path *string `json:"path"`
+	// Git tag the policy group is pinned to. While pinned, the policies stay at this tag and pushes to the repository do not change them. Submit another tag to promote the policy group, or submit a `branch` to go back to tracking that branch. This option conflicts with `branch`.
+	Tag *string `json:"tag"`
 }
 
 type PolicyGroupVcsRepoRequest struct {
-	// Branch of a repository the policy group is associated with. If omitted, the repository default branch will be used.
+	// Branch of a repository the policy group is associated with. Every push to this branch updates the policies. If omitted, the repository default branch will be used. This option conflicts with `tag`.
 	Branch *value.Value[string] `json:"branch,omitempty"`
 	// A reference to your VCS repository. For GitHub, GitHub Enterprise and GitLab the format is `<org>/<repo>`. For Azure DevOps Services the format is `<org>/<project>/<repo>`.
 	Identifier *value.Value[string] `json:"identifier,omitempty"`
 	// The sub-directory of the VCS repository where OPA policies are stored. The `scalr-policy.hcl` file must exist in this directory. Files and directories outside this directory will be ignored during a sync from VCS, and changing them won't trigger a policy group update. If omitted or submitted as an empty string, this defaults to the repository's root.
 	Path *value.Value[string] `json:"path,omitempty"`
+	// Git tag the policy group is pinned to. While pinned, the policies stay at this tag and pushes to the repository do not change them. Submit another tag to promote the policy group, or submit a `branch` to go back to tracking that branch. This option conflicts with `branch`.
+	Tag *value.Value[string] `json:"tag,omitempty"`
 }

@@ -281,6 +281,8 @@ type AccountQuotas struct {
 	Agents int `json:"agents"`
 	// The maximal number of environments
 	Environments int `json:"environments"`
+	// The maximal number of concurrent runs on self-hosted agents, -1 for unlimited
+	MaxConcurrentAgentRuns int `json:"max-concurrent-agent-runs"`
 	// The maximal number of concurrent runs, -1 for unlimited
 	MaxConcurrentRuns int `json:"max-concurrent-runs"`
 	// Indicates if the policy group checks are available for an account
@@ -305,6 +307,8 @@ type AccountQuotasRequest struct {
 	Agents *value.Value[int] `json:"agents,omitempty"`
 	// The maximal number of environments
 	Environments *value.Value[int] `json:"environments,omitempty"`
+	// The maximal number of concurrent runs on self-hosted agents, -1 for unlimited
+	MaxConcurrentAgentRuns *value.Value[int] `json:"max-concurrent-agent-runs,omitempty"`
 	// The maximal number of concurrent runs, -1 for unlimited
 	MaxConcurrentRuns *value.Value[int] `json:"max-concurrent-runs,omitempty"`
 	// Indicates if the policy group checks are available for an account
