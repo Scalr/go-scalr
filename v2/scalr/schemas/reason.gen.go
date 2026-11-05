@@ -2,6 +2,7 @@
 
 package schemas
 
+// Payload of the lock action.
 type Reason struct {
 	Reason string `json:"reason,omitempty"`
 }
