@@ -8,6 +8,16 @@ import (
 	"github.com/scalr/go-scalr/v2/scalr/value"
 )
 
+// CheckovIntegrationScanMode represents the type for CheckovIntegrationScanMode
+// What Checkov scans. `code` scans the configuration files before the plan. `plan` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan` scan is skipped when the plan has no changes.
+type CheckovIntegrationScanMode string
+
+// CheckovIntegrationScanMode constants
+const (
+	CheckovIntegrationScanModeCode CheckovIntegrationScanMode = "code"
+	CheckovIntegrationScanModePlan CheckovIntegrationScanMode = "plan"
+)
+
 // CheckovIntegrationStatus represents the type for CheckovIntegrationStatus
 // Status of the integration.
 type CheckovIntegrationStatus string
@@ -54,6 +64,8 @@ type CheckovIntegrationAttributes struct {
 	IsShared bool `json:"is-shared"`
 	// Name of the Checkov integration.
 	Name string `json:"name"`
+	// What Checkov scans. `code` scans the configuration files before the plan. `plan` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan` scan is skipped when the plan has no changes.
+	ScanMode CheckovIntegrationScanMode `json:"scan-mode"`
 	// Status of the integration.
 	Status  CheckovIntegrationStatus   `json:"status"`
 	VcsRepo *CheckovIntegrationVcsRepo `json:"vcs-repo"`
@@ -204,6 +216,8 @@ type CheckovIntegrationAttributesRequest struct {
 	IsShared *value.Value[bool] `json:"is-shared,omitempty"`
 	// Name of the Checkov integration.
 	Name *value.Value[string] `json:"name,omitempty"`
+	// What Checkov scans. `code` scans the configuration files before the plan. `plan` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan` scan is skipped when the plan has no changes.
+	ScanMode *value.Value[CheckovIntegrationScanMode] `json:"scan-mode,omitempty"`
 	// Status of the integration.
 	Status  *value.Value[CheckovIntegrationStatus]         `json:"status,omitempty"`
 	VcsRepo *value.Value[CheckovIntegrationVcsRepoRequest] `json:"vcs-repo,omitempty"`

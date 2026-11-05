@@ -2,6 +2,7 @@
 
 package schemas
 
+// Payload of the set-schedule action: cron expressions of the apply and destroy runs.
 type WorkspaceSchedule struct {
 	ApplySchedule   *string `json:"apply-schedule,omitempty"`
 	DestroySchedule *string `json:"destroy-schedule,omitempty"`

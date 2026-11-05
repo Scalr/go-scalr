@@ -138,6 +138,8 @@ type ProviderConfigurationAttributes struct {
 	AwsCredentialsType *ProviderConfigurationAwsCredentialsType `json:"aws-credentials-type"`
 	// Default tags to be applied to all resources created by this provider configuration.
 	AwsDefaultTags *map[string]interface{} `json:"aws-default-tags"`
+	// Fail the run when the `default_tags` block of the aws provider in the configuration cannot be evaluated to merge with `aws-default-tags`. When disabled, the run continues without the Scalr default tags and shows a warning.
+	AwsDefaultTagsFailOnMergeError *bool `json:"aws-default-tags-fail-on-merge-error"`
 	// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
 	AwsDefaultTagsStrategy *ProviderConfigurationAwsDefaultTagsStrategy `json:"aws-default-tags-strategy"`
 	// External identifier to use when assuming the role. This option is required with the `role_delegation` credential type.
@@ -172,6 +174,8 @@ type ProviderConfigurationAttributes struct {
 	GoogleDefaultLabelStrategy *ProviderConfigurationGoogleDefaultLabelStrategy `json:"google-default-label-strategy"`
 	// Default labels to be applied to all resources created by this provider configuration.
 	GoogleDefaultLabels *map[string]interface{} `json:"google-default-labels"`
+	// Fail the run when `default_labels` of the google provider in the configuration cannot be evaluated to merge with `google-default-labels`. When disabled, the run continues without the Scalr default labels and shows a warning.
+	GoogleDefaultLabelsFailOnMergeError *bool `json:"google-default-labels-fail-on-merge-error"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.
 	GoogleProject *string `json:"google-project"`
 	// The service account email Scalr will use when authenticating to GCP.
@@ -467,6 +471,8 @@ type ProviderConfigurationAttributesRequest struct {
 	AwsCredentialsType *value.Value[ProviderConfigurationAwsCredentialsType] `json:"aws-credentials-type,omitempty"`
 	// Default tags to be applied to all resources created by this provider configuration.
 	AwsDefaultTags *value.Value[map[string]interface{}] `json:"aws-default-tags,omitempty"`
+	// Fail the run when the `default_tags` block of the aws provider in the configuration cannot be evaluated to merge with `aws-default-tags`. When disabled, the run continues without the Scalr default tags and shows a warning.
+	AwsDefaultTagsFailOnMergeError *value.Value[bool] `json:"aws-default-tags-fail-on-merge-error,omitempty"`
 	// On duplicate key behaviour for default tags. Available options: - `skip`: the existing tags will not be changed - `update`: the existing tags will be replaced with the new one
 	AwsDefaultTagsStrategy *value.Value[ProviderConfigurationAwsDefaultTagsStrategy] `json:"aws-default-tags-strategy,omitempty"`
 	// External identifier to use when assuming the role. This option is required with the `role_delegation` credential type.
@@ -499,6 +505,8 @@ type ProviderConfigurationAttributesRequest struct {
 	GoogleDefaultLabelStrategy *value.Value[ProviderConfigurationGoogleDefaultLabelStrategy] `json:"google-default-label-strategy,omitempty"`
 	// Default labels to be applied to all resources created by this provider configuration.
 	GoogleDefaultLabels *value.Value[map[string]interface{}] `json:"google-default-labels,omitempty"`
+	// Fail the run when `default_labels` of the google provider in the configuration cannot be evaluated to merge with `google-default-labels`. When disabled, the run continues without the Scalr default labels and shows a warning.
+	GoogleDefaultLabelsFailOnMergeError *value.Value[bool] `json:"google-default-labels-fail-on-merge-error,omitempty"`
 	// The default project to manage resources in. If another project is specified on a resource, it will take precedence.
 	GoogleProject *value.Value[string] `json:"google-project,omitempty"`
 	// The service account email Scalr will use when authenticating to GCP.
