@@ -58,6 +58,8 @@ type AgentPoolAttributes struct {
 	MtlsFingerprints []string `json:"mtls-fingerprints"`
 	// The name of the agent pool. This must be unique within a Scalr scope (e.g. account or environment).
 	Name string `json:"name"`
+	// The time in minutes a run waits for an agent of the pool to pick it up. When it expires, the run is canceled.
+	RunAcquisitionTimeout int `json:"run-acquisition-timeout"`
 	// Indicates whether the VCS support is enabled for agents in the pool.
 	VcsEnabled bool `json:"vcs-enabled"`
 	// The number of consecutive webhook delivery failures.
@@ -362,6 +364,8 @@ type AgentPoolAttributesRequest struct {
 	IsShared *value.Value[bool] `json:"is-shared,omitempty"`
 	// The name of the agent pool. This must be unique within a Scalr scope (e.g. account or environment).
 	Name *value.Value[string] `json:"name,omitempty"`
+	// The time in minutes a run waits for an agent of the pool to pick it up. When it expires, the run is canceled.
+	RunAcquisitionTimeout *value.Value[int] `json:"run-acquisition-timeout,omitempty"`
 	// Indicates whether the VCS support is enabled for agents in the pool.
 	VcsEnabled *value.Value[bool] `json:"vcs-enabled,omitempty"`
 	// Indicates whether the serverless agent support is enabled. If enabled, provided url will be informed about new work available for agent.

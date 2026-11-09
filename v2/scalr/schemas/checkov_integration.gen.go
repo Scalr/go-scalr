@@ -9,13 +9,13 @@ import (
 )
 
 // CheckovIntegrationScanMode represents the type for CheckovIntegrationScanMode
-// What Checkov scans. `code` scans the configuration files before the plan. `plan` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan` scan is skipped when the plan has no changes.
+// What Checkov scans. `configuration-files` scans the static configuration files before the plan. `plan-json` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan-json` scan is skipped when the plan has no changes.
 type CheckovIntegrationScanMode string
 
 // CheckovIntegrationScanMode constants
 const (
-	CheckovIntegrationScanModeCode CheckovIntegrationScanMode = "code"
-	CheckovIntegrationScanModePlan CheckovIntegrationScanMode = "plan"
+	CheckovIntegrationScanModeConfigurationFiles CheckovIntegrationScanMode = "configuration-files"
+	CheckovIntegrationScanModePlanJson           CheckovIntegrationScanMode = "plan-json"
 )
 
 // CheckovIntegrationStatus represents the type for CheckovIntegrationStatus
@@ -64,7 +64,7 @@ type CheckovIntegrationAttributes struct {
 	IsShared bool `json:"is-shared"`
 	// Name of the Checkov integration.
 	Name string `json:"name"`
-	// What Checkov scans. `code` scans the configuration files before the plan. `plan` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan` scan is skipped when the plan has no changes.
+	// What Checkov scans. `configuration-files` scans the static configuration files before the plan. `plan-json` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan-json` scan is skipped when the plan has no changes.
 	ScanMode CheckovIntegrationScanMode `json:"scan-mode"`
 	// Status of the integration.
 	Status  CheckovIntegrationStatus   `json:"status"`
@@ -216,7 +216,7 @@ type CheckovIntegrationAttributesRequest struct {
 	IsShared *value.Value[bool] `json:"is-shared,omitempty"`
 	// Name of the Checkov integration.
 	Name *value.Value[string] `json:"name,omitempty"`
-	// What Checkov scans. `code` scans the configuration files before the plan. `plan` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan` scan is skipped when the plan has no changes.
+	// What Checkov scans. `configuration-files` scans the static configuration files before the plan. `plan-json` scans the plan JSON after the plan phase of OpenTofu run, so findings reflect the resources the run actually provisions. A `plan-json` scan is skipped when the plan has no changes.
 	ScanMode *value.Value[CheckovIntegrationScanMode] `json:"scan-mode,omitempty"`
 	// Status of the integration.
 	Status  *value.Value[CheckovIntegrationStatus]         `json:"status,omitempty"`
