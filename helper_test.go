@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/go-uuid"
 )
@@ -22,6 +23,9 @@ func testClient(t *testing.T) *Client {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	client.RetryServerErrors(true)
+	client.http.RetryWaitMax = 2 * time.Second
 
 	return client
 }
