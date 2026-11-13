@@ -40,13 +40,14 @@ type AgentPoolHeader struct {
 
 // AgentPool represents a Scalr agent pool.
 type AgentPool struct {
-	ID             string             `jsonapi:"primary,agent-pools"`
-	Name           string             `jsonapi:"attr,name"`
-	VcsEnabled     bool               `jsonapi:"attr,vcs-enabled"`
-	IsShared       bool               `jsonapi:"attr,is-shared"`
-	WebhookEnabled bool               `jsonapi:"attr,webhook-enabled"`
-	WebhookUrl     string             `jsonapi:"attr,webhook-url"`
-	WebhookHeaders []*AgentPoolHeader `jsonapi:"attr,webhook-headers"`
+	ID                    string             `jsonapi:"primary,agent-pools"`
+	Name                  string             `jsonapi:"attr,name"`
+	VcsEnabled            bool               `jsonapi:"attr,vcs-enabled"`
+	IsShared              bool               `jsonapi:"attr,is-shared"`
+	WebhookEnabled        bool               `jsonapi:"attr,webhook-enabled"`
+	WebhookUrl            string             `jsonapi:"attr,webhook-url"`
+	WebhookHeaders        []*AgentPoolHeader `jsonapi:"attr,webhook-headers"`
+	RunAcquisitionTimeout int                `jsonapi:"attr,run-acquisition-timeout"`
 	// Relations
 
 	// The agent pool's scope
@@ -63,13 +64,14 @@ type AgentPool struct {
 
 // AgentPoolCreateOptions represents the options for creating a new AgentPool.
 type AgentPoolCreateOptions struct {
-	ID             string             `jsonapi:"primary,agent-pools"`
-	Name           *string            `jsonapi:"attr,name"`
-	VcsEnabled     *bool              `jsonapi:"attr,vcs-enabled,omitempty"`
-	IsShared       *bool              `jsonapi:"attr,is-shared,omitempty"`
-	WebhookEnabled *bool              `jsonapi:"attr,webhook-enabled,omitempty"`
-	WebhookUrl     *string            `jsonapi:"attr,webhook-url,omitempty"`
-	WebhookHeaders []*AgentPoolHeader `jsonapi:"attr,webhook-headers,omitempty"`
+	ID                    string             `jsonapi:"primary,agent-pools"`
+	Name                  *string            `jsonapi:"attr,name"`
+	VcsEnabled            *bool              `jsonapi:"attr,vcs-enabled,omitempty"`
+	IsShared              *bool              `jsonapi:"attr,is-shared,omitempty"`
+	WebhookEnabled        *bool              `jsonapi:"attr,webhook-enabled,omitempty"`
+	WebhookUrl            *string            `jsonapi:"attr,webhook-url,omitempty"`
+	WebhookHeaders        []*AgentPoolHeader `jsonapi:"attr,webhook-headers,omitempty"`
+	RunAcquisitionTimeout *int               `jsonapi:"attr,run-acquisition-timeout,omitempty"`
 
 	// The agent pool's scope
 	Environment *Environment `jsonapi:"relation,environment,omitempty"`
@@ -171,12 +173,13 @@ func (s *agentPools) Read(ctx context.Context, agentPoolID string) (*AgentPool, 
 
 // AgentPoolUpdateOptions represents the options for updating an agent pool.
 type AgentPoolUpdateOptions struct {
-	ID             string             `jsonapi:"primary,agent-pools"`
-	Name           *string            `jsonapi:"attr,name,omitempty"`
-	IsShared       *bool              `jsonapi:"attr,is-shared,omitempty"`
-	WebhookEnabled *bool              `jsonapi:"attr,webhook-enabled,omitempty"`
-	WebhookUrl     *string            `jsonapi:"attr,webhook-url,omitempty"`
-	WebhookHeaders []*AgentPoolHeader `jsonapi:"attr,webhook-headers,omitempty"`
+	ID                    string             `jsonapi:"primary,agent-pools"`
+	Name                  *string            `jsonapi:"attr,name,omitempty"`
+	IsShared              *bool              `jsonapi:"attr,is-shared,omitempty"`
+	WebhookEnabled        *bool              `jsonapi:"attr,webhook-enabled,omitempty"`
+	WebhookUrl            *string            `jsonapi:"attr,webhook-url,omitempty"`
+	WebhookHeaders        []*AgentPoolHeader `jsonapi:"attr,webhook-headers,omitempty"`
+	RunAcquisitionTimeout *int               `jsonapi:"attr,run-acquisition-timeout,omitempty"`
 
 	// Workspaces this pool is connected to
 	Workspaces   []*Workspace   `jsonapi:"relation,workspaces"`
