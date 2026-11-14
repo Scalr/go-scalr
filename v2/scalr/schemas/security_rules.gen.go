@@ -33,7 +33,7 @@ func (r SecurityRules) GetResourceType() string {
 type SecurityRulesAttributes struct {
 	// Whether to require a self-hosted agent pool when creating workspaces.
 	EnforceAgentPool bool `json:"enforce-agent-pool"`
-	// Whether to require assume service account policies to include a claim condition other than 'contains' or an all-wildcard 'like' pattern.
+	// Whether to require assume service account policies to include an 'eq' claim condition on a claim other than 'aud' or 'iss'.
 	EnforceAnchoredAssumePolicyConditions bool `json:"enforce-anchored-assume-policy-conditions"`
 	// The maximum lifetime of a personal user access token in minutes.
 	MaxPersonalTokenLifetime *int `json:"max-personal-token-lifetime"`
@@ -78,7 +78,7 @@ func (r SecurityRulesRequest) GetResourceType() string {
 type SecurityRulesAttributesRequest struct {
 	// Whether to require a self-hosted agent pool when creating workspaces.
 	EnforceAgentPool *value.Value[bool] `json:"enforce-agent-pool,omitempty"`
-	// Whether to require assume service account policies to include a claim condition other than 'contains' or an all-wildcard 'like' pattern.
+	// Whether to require assume service account policies to include an 'eq' claim condition on a claim other than 'aud' or 'iss'.
 	EnforceAnchoredAssumePolicyConditions *value.Value[bool] `json:"enforce-anchored-assume-policy-conditions,omitempty"`
 	// The maximum lifetime of a personal user access token in minutes.
 	MaxPersonalTokenLifetime *value.Value[int] `json:"max-personal-token-lifetime,omitempty"`
