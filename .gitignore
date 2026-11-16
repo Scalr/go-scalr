@@ -2,6 +2,7 @@
 .vscode/
 .idea/
 covprofile
+rerun-report.txt
 
 # Go workspace files
 go.work
