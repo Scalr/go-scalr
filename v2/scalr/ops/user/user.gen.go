@@ -24,7 +24,7 @@ func New(httpClient *client.HTTPClient) *Client {
 	return &Client{httpClient: httpClient}
 }
 
-// Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) user without access to any account. To invite user to the account /accounts/:id/actions/invite should be used.
+// Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) user owned by the account from the request hostname. The admin API accepts an explicit account instead. To grant access, invite the user through /accounts/:id/actions/invite.
 func (c *Client) CreateUserRaw(ctx context.Context, req *schemas.CreateUserRequest, opts *CreateUserOptions) (*client.Response, error) {
 	path := "/users"
 
@@ -51,7 +51,7 @@ func (c *Client) CreateUserRaw(ctx context.Context, req *schemas.CreateUserReque
 	return &client.Response{Response: httpResp}, nil
 }
 
-// Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) user without access to any account. To invite user to the account /accounts/:id/actions/invite should be used.
+// Create a new [IAM](https://docs.scalr.io/docs/identity-and-access-management) user owned by the account from the request hostname. The admin API accepts an explicit account instead. To grant access, invite the user through /accounts/:id/actions/invite.
 func (c *Client) CreateUser(ctx context.Context, req *schemas.CreateUserRequest, opts *CreateUserOptions) (*schemas.CreateUser, error) {
 	resp, err := c.CreateUserRaw(ctx, req, opts)
 	if err != nil {
