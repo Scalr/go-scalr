@@ -78,7 +78,8 @@ func TestAccountUpdate(t *testing.T) {
 		}
 		account, err := client.Accounts.Update(ctx, defaultAccountID, options)
 		assert.Nil(t, account)
-		assert.EqualError(t, err, "Invalid Attribute (source: /data/attributes/allowed-ips/0)\n\nvalue is not a valid IPv4 network")
+		require.Error(t, err)
+		assert.Regexp(t, `^Invalid Attribute \(source: /data/attributes/allowed-ips/0\)\n\n(value|Input) is not a valid IPv4 network$`, err.Error())
 	})
 
 	t.Run("invalid allowed ips ipv6", func(t *testing.T) {
@@ -87,7 +88,8 @@ func TestAccountUpdate(t *testing.T) {
 		}
 		account, err := client.Accounts.Update(ctx, defaultAccountID, options)
 		assert.Nil(t, account)
-		assert.EqualError(t, err, "Invalid Attribute (source: /data/attributes/allowed-ips/0)\n\nvalue is not a valid IPv4 network")
+		require.Error(t, err)
+		assert.Regexp(t, `^Invalid Attribute \(source: /data/attributes/allowed-ips/0\)\n\n(value|Input) is not a valid IPv4 network$`, err.Error())
 	})
 
 	t.Run("reset allowed ips", func(t *testing.T) {
