@@ -19,7 +19,7 @@ const (
 )
 
 // Response version - used when unmarshalling from API responses
-// With the agent pool resource you can manage a pool of [self-hosted agents](/docs/agent-pools) A workspace may be configured to use an agent pool to execute terraform [runs](/docs/workspaces-runs). Agents could be hosted on a physical or virtual machines within the customer's network.
+// With the agent pool resource you can manage a pool of [self-hosted agents](/docs/agent-pools) A workspace may be configured to use an agent pool to execute terraform [runs](/docs/workspaces-runs). Agents could be hosted on a physical or virtual machines within the customer's network. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[agent-pools]`: * webhook-client-certificate
 type AgentPool struct {
 	ID            string                 `json:"id"`
 	Type          string                 `json:"type"`
@@ -62,6 +62,12 @@ type AgentPoolAttributes struct {
 	RunAcquisitionTimeout int `json:"run-acquisition-timeout"`
 	// Indicates whether the VCS support is enabled for agents in the pool.
 	VcsEnabled bool `json:"vcs-enabled"`
+	// PEM-encoded client certificate presented to the webhook endpoint for mTLS. Requires an HTTPS URL and `webhook-client-key`. Returned only when explicitly requested via sparse fields.
+	WebhookClientCertificate *string `json:"webhook-client-certificate"`
+	// The identity of `webhook-client-certificate`, parsed when it was saved. `null` when the pool has no client certificate.
+	WebhookClientCertificateIdentity *AgentPoolWebhookClientCertificateIdentity `json:"webhook-client-certificate-identity"`
+	// PEM-encoded unencrypted private key of `webhook-client-certificate`. Write-only: it is never returned. Omit it or send null on update to keep the stored key.
+	WebhookClientKey *string `json:"webhook-client-key"`
 	// The number of consecutive webhook delivery failures.
 	WebhookConsecutiveFailures *int `json:"webhook-consecutive-failures"`
 	// Indicates whether the serverless agent support is enabled. If enabled, provided url will be informed about new work available for agent.
@@ -329,7 +335,7 @@ func (r *AgentPoolRelationships) PopulateIncludes(included []map[string]interfac
 }
 
 // Request version - used when marshalling for API requests
-// With the agent pool resource you can manage a pool of [self-hosted agents](/docs/agent-pools) A workspace may be configured to use an agent pool to execute terraform [runs](/docs/workspaces-runs). Agents could be hosted on a physical or virtual machines within the customer's network. (for requests)
+// With the agent pool resource you can manage a pool of [self-hosted agents](/docs/agent-pools) A workspace may be configured to use an agent pool to execute terraform [runs](/docs/workspaces-runs). Agents could be hosted on a physical or virtual machines within the customer's network. The extra fields below are not available in response by default. Ask for them explicitly in the query parameter `fields[agent-pools]`: * webhook-client-certificate (for requests)
 type AgentPoolRequest struct {
 	ID            string                        `json:"id,omitempty"`
 	Type          string                        `json:"type,omitempty"`
@@ -368,6 +374,10 @@ type AgentPoolAttributesRequest struct {
 	RunAcquisitionTimeout *value.Value[int] `json:"run-acquisition-timeout,omitempty"`
 	// Indicates whether the VCS support is enabled for agents in the pool.
 	VcsEnabled *value.Value[bool] `json:"vcs-enabled,omitempty"`
+	// PEM-encoded client certificate presented to the webhook endpoint for mTLS. Requires an HTTPS URL and `webhook-client-key`. Returned only when explicitly requested via sparse fields.
+	WebhookClientCertificate *value.Value[string] `json:"webhook-client-certificate,omitempty"`
+	// PEM-encoded unencrypted private key of `webhook-client-certificate`. Write-only: it is never returned. Omit it or send null on update to keep the stored key.
+	WebhookClientKey *value.Value[string] `json:"webhook-client-key,omitempty"`
 	// Indicates whether the serverless agent support is enabled. If enabled, provided url will be informed about new work available for agent.
 	WebhookEnabled *value.Value[bool] `json:"webhook-enabled,omitempty"`
 	// A list of HTTP headers to be included in the request.
@@ -384,4 +394,32 @@ type AgentPoolRelationshipsRequest struct {
 	Environments *value.Value[[]Environment] `json:"environments,omitempty"`
 	// The list of workspaces attached to the pool. Can be used to bulk link/unlink workspaces.
 	Workspaces *value.Value[[]Workspace] `json:"workspaces,omitempty"`
+}
+
+// The identity of `webhook-client-certificate`, parsed when it was saved. `null` when the pool has no client certificate.
+type AgentPoolWebhookClientCertificateIdentity struct {
+	// The SHA-256 fingerprint of the certificate as a hex string.
+	Fingerprint string `json:"fingerprint"`
+	// The certificate issuer as an RFC 4514 string.
+	Issuer string `json:"issuer"`
+	// The UTC datetime after which the certificate expires.
+	NotValidAfter time.Time `json:"not-valid-after"`
+	// The certificate serial number as a hexadecimal string.
+	SerialNumber string `json:"serial-number"`
+	// The certificate subject as an RFC 4514 string.
+	Subject string `json:"subject"`
+}
+
+// The identity of `webhook-client-certificate`, parsed when it was saved. `null` when the pool has no client certificate. (for requests)
+type AgentPoolWebhookClientCertificateIdentityRequest struct {
+	// The SHA-256 fingerprint of the certificate as a hex string.
+	Fingerprint *value.Value[string] `json:"fingerprint,omitempty"`
+	// The certificate issuer as an RFC 4514 string.
+	Issuer *value.Value[string] `json:"issuer,omitempty"`
+	// The UTC datetime after which the certificate expires.
+	NotValidAfter *value.Value[time.Time] `json:"not-valid-after,omitempty"`
+	// The certificate serial number as a hexadecimal string.
+	SerialNumber *value.Value[string] `json:"serial-number,omitempty"`
+	// The certificate subject as an RFC 4514 string.
+	Subject *value.Value[string] `json:"subject,omitempty"`
 }

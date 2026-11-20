@@ -22,6 +22,20 @@ const (
 	RunActorScalrSystem    RunActor = "scalr-system"
 )
 
+// RunAiTools represents the type for RunAiTools
+
+type RunAiTools string
+
+// RunAiTools constants
+const (
+	RunAiToolsClaudeCode RunAiTools = "claude-code"
+	RunAiToolsCodex      RunAiTools = "codex"
+	RunAiToolsCopilot    RunAiTools = "copilot"
+	RunAiToolsCursor     RunAiTools = "cursor"
+	RunAiToolsGemini     RunAiTools = "gemini"
+	RunAiToolsOther      RunAiTools = "other"
+)
+
 // RunIacPlatform represents the type for RunIacPlatform
 // The IaC platform for the run.
 type RunIacPlatform string
@@ -94,6 +108,10 @@ func (r Run) GetResourceType() string {
 type RunAttributes struct {
 	// The category of the principal that created the run, determined by Scalr from the request credentials and client headers. The identity itself is the `created-by` relationship.
 	Actor RunActor `json:"actor"`
+	// Whether the commit messages of the run's VCS revision carry the markers of AI coding tools, such as a `Co-authored-by` trailer of an AI tool. Scalr detects the markers when it receives the commits and copies the result to the run when the run is created. `null` when unknown, for example when the run has no VCS revision, or Scalr could not list all its commits and found no markers in the listed ones. Commit authors write these markers themselves, so the value is informational, not a security control.
+	AiAssisted *bool `json:"ai-assisted"`
+	// The AI coding tools whose markers the commit messages of the run's VCS revision carry, in a fixed order. Empty unless `ai-assisted` is `true`. If Scalr could only read part of the commit range, this list may be incomplete. Commit authors write these markers themselves.
+	AiTools []RunAiTools `json:"ai-tools"`
 	// The UTC datetime at which the Apply should be queued.
 	ApplyAt *time.Time `json:"apply-at"`
 	// Indicates whether `terraform apply` should automatically run when terraform plan ends without error. Defaults to the current Auto Apply setting in the workspace. Auto-apply will be disallowed as a safety restriction if the workspace's current state version originates from an open Pull Request and the branch of this Pull Request is different from the branch of the run's configuration version. This prevents automatic applies when the current state is potentially based on unmerged code.

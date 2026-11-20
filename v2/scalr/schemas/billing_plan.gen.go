@@ -42,11 +42,13 @@ func (r BillingPlan) GetResourceType() string {
 
 // BillingPlanAttributes holds the attributes for BillingPlan (response)
 type BillingPlanAttributes struct {
-	AddonsNumber int                      `json:"addons-number"`
-	Amount       int                      `json:"amount"`
-	IncludedRuns *int                     `json:"included-runs"`
-	PlanType     BillingPlanPlanType      `json:"plan-type"`
-	Prices       []map[string]interface{} `json:"prices"`
+	AddonsNumber    int                      `json:"addons-number"`
+	Amount          int                      `json:"amount"`
+	HasStripePrices bool                     `json:"has-stripe-prices"`
+	IncludedRuns    *int                     `json:"included-runs"`
+	IsPrivate       bool                     `json:"is-private"`
+	PlanType        BillingPlanPlanType      `json:"plan-type"`
+	Prices          []map[string]interface{} `json:"prices"`
 }
 
 // Request version - used when marshalling for API requests
@@ -78,9 +80,11 @@ func (r BillingPlanRequest) GetResourceType() string {
 
 // BillingPlanAttributesRequest holds the attributes for BillingPlan (request)
 type BillingPlanAttributesRequest struct {
-	AddonsNumber *value.Value[int]                      `json:"addons-number,omitempty"`
-	Amount       *value.Value[int]                      `json:"amount,omitempty"`
-	IncludedRuns *value.Value[int]                      `json:"included-runs,omitempty"`
-	PlanType     *value.Value[BillingPlanPlanType]      `json:"plan-type,omitempty"`
-	Prices       *value.Value[[]map[string]interface{}] `json:"prices,omitempty"`
+	AddonsNumber    *value.Value[int]                      `json:"addons-number,omitempty"`
+	Amount          *value.Value[int]                      `json:"amount,omitempty"`
+	HasStripePrices *value.Value[bool]                     `json:"has-stripe-prices,omitempty"`
+	IncludedRuns    *value.Value[int]                      `json:"included-runs,omitempty"`
+	IsPrivate       *value.Value[bool]                     `json:"is-private,omitempty"`
+	PlanType        *value.Value[BillingPlanPlanType]      `json:"plan-type,omitempty"`
+	Prices          *value.Value[[]map[string]interface{}] `json:"prices,omitempty"`
 }

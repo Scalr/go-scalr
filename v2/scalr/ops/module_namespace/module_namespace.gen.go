@@ -60,6 +60,38 @@ func (c *Client) CreateModuleNamespace(ctx context.Context, req *schemas.ModuleN
 	return &result.Data, nil
 }
 
+// Link environments to a module namespace. Environments that are already linked are left untouched, and links created by other means are preserved.
+func (c *Client) CreateModuleNamespaceEnvironmentsRaw(ctx context.Context, moduleNamespace string, req []schemas.Environment) (*client.Response, error) {
+	path := "/module-namespaces/{module_namespace}/relationships/environments"
+	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
+
+	// This is a relationship operation - convert resources to relationship identifiers
+	relationshipData := make([]map[string]interface{}, len(req))
+	for i, item := range req {
+		relationshipData[i] = map[string]interface{}{
+			"id":   item.GetID(),
+			"type": item.GetResourceType(),
+		}
+	}
+	body := map[string]interface{}{"data": relationshipData}
+	httpResp, err := c.httpClient.Post(ctx, path, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Link environments to a module namespace. Environments that are already linked are left untouched, and links created by other means are preserved.
+func (c *Client) CreateModuleNamespaceEnvironments(ctx context.Context, moduleNamespace string, req []schemas.Environment) error {
+	resp, err := c.CreateModuleNamespaceEnvironmentsRaw(ctx, moduleNamespace, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 // Delete a module namespace.
 func (c *Client) DeleteModuleNamespaceRaw(ctx context.Context, moduleNamespace string) (*client.Response, error) {
 	path := "/module-namespaces/{module_namespace}"
@@ -75,6 +107,30 @@ func (c *Client) DeleteModuleNamespaceRaw(ctx context.Context, moduleNamespace s
 // Delete a module namespace.
 func (c *Client) DeleteModuleNamespace(ctx context.Context, moduleNamespace string) error {
 	resp, err := c.DeleteModuleNamespaceRaw(ctx, moduleNamespace)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// Unlink a single environment from a module namespace. Other environment links are left untouched.
+func (c *Client) DeleteModuleNamespaceEnvironmentsRaw(ctx context.Context, moduleNamespace string, environment string) (*client.Response, error) {
+	path := "/module-namespaces/{module_namespace}/relationships/environments/{environment}"
+	path = strings.ReplaceAll(path, "{module_namespace}", url.PathEscape(moduleNamespace))
+	path = strings.ReplaceAll(path, "{environment}", url.PathEscape(environment))
+
+	httpResp, err := c.httpClient.Delete(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Response{Response: httpResp}, nil
+}
+
+// Unlink a single environment from a module namespace. Other environment links are left untouched.
+func (c *Client) DeleteModuleNamespaceEnvironments(ctx context.Context, moduleNamespace string, environment string) error {
+	resp, err := c.DeleteModuleNamespaceEnvironmentsRaw(ctx, moduleNamespace, environment)
 	if err != nil {
 		return err
 	}
